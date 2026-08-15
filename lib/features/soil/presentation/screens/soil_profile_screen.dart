@@ -15,8 +15,8 @@ class SoilProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      appBar: AppBar(title: Text('SOIL')),
-      body: Center(child: Text('soil_profile_screen - Pending Team Assignment')),
+      appBar: AppBar(title: const Text('SOIL')),
+      body: const Center(child: Text('soil_profile_screen - Pending Team Assignment')),
     );
   }
 }
