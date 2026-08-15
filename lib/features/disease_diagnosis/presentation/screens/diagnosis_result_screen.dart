@@ -15,8 +15,8 @@ class DiagnosisResultScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      appBar: AppBar(title: Text('DISEASEDIAGNOSIS')),
-      body: Center(child: Text('diagnosis_result_screen - Pending Team Assignment')),
+      appBar: AppBar(title: const Text('DISEASEDIAGNOSIS')),
+      body: const Center(child: Text('diagnosis_result_screen - Pending Team Assignment')),
     );
   }
 }

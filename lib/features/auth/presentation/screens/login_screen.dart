@@ -15,8 +15,8 @@ class LoginScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      appBar: AppBar(title: Text('AUTH')),
-      body: Center(child: Text('login_screen - Pending Team Assignment')),
+      appBar: AppBar(title: const Text('AUTH')),
+      body: const Center(child: Text('login_screen - Pending Team Assignment')),
     );
   }
 }
