@@ -110,13 +110,11 @@ agrietech-frontend/
 │   │
 │   └── shared/                             # ApiResponse models & BuildContext extensions
 │
-└── docs/                                   # 📚 Comprehensive Documentation
-    ├── ARCHITECTURE_OVERVIEW.md            # Mobile architecture & data layer patterns
-    ├── STATE_MANAGEMENT_GUIDE.md           # Riverpod 2.x & Hive offline caching guide
-    ├── UI_UX_DESIGN_SYSTEM.md              # Material 3 tokens, colors & Amharic fonts
-    ├── FEATURE_ROADMAP.md                  # Screen-by-screen feature specifications
-    ├── OFFLINE_FIRST_AND_SYNC_GUIDE.md     # Offline resilience & Workmanager sync
-    └── TEAM_ASSIGNMENT_GUIDE.md            # Frontend developer task matrix
+└── docs/                                   # 📚 Authoritative Architecture & Team Documentation
+    ├── ARCHITECTURE.md                     # Clean architecture, Riverpod 2.x, Hive & Sync
+    ├── DESIGN_SYSTEM.md                    # Design tokens, bilingual typography & components
+    ├── TEAM_TASKS.md                       # Team assignments, sprint plan & acceptance criteria
+    └── MODULES_CATALOG.md                  # Complete directory, screen & provider catalog
 ```
 
 ---
@@ -145,11 +143,55 @@ flutter run
 
 ---
 
+## 👥 Development Team
+
+| # | Full Name | Student ID | Frontend Role | Assigned Modules |
+|---|---|---|---|---|
+| 3 | **Abraham Amogne** | `CTC-329-26` | 🏆 **Team Lead & Core** | `lib/core/*` · `lib/app.dart` · `lib/main.dart` · `lib/features/auth/*` · `lib/features/boundaries/*` |
+| 1 | **Abenezer Endrias** | `CTC-1826-26` | Weather & Analytics UI | `lib/features/weather/*` · `lib/features/analytics/*` |
+| 2 | **Abinu Mathewos** | `CTC-1258-26` | Farms, Soil & AI Diagnosis | `lib/features/farms/*` · `lib/features/soil/*` · `lib/features/disease_diagnosis/*` |
+| 4 | **Alen Biruk** | `CTC-2176-26` | Multi-Hazard Dashboards | `lib/features/risk_dashboard/*` · `lib/features/drought/*` · `lib/features/flood/*` · `lib/features/vegetation/*` · `lib/features/locust_pest/*` |
+| 5 | **Banchamlak Golla** | `CTC-2952-26` | Alerts & Real-Time Sync | `lib/features/alerts/*` · `lib/features/offline_sync/*` |
+
+> Full task breakdown, acceptance criteria, and 7-day sprint schedule: [docs/TEAM_TASKS.md](./docs/TEAM_TASKS.md)
+
+---
+
+## 🔀 Contributing Workflow
+
+All contributors must follow the branching strategy enforced by the Team Lead (Abraham Amogne):
+
+```bash
+# 1. Create your feature branch from main
+git checkout -b feature/<your-name>/<feature-name>
+# Example:
+git checkout -b feature/abenezer/weather-meteogram
+
+# 2. Make your changes and verify quality
+flutter analyze     # Must return 0 errors
+flutter test        # Must pass all tests
+
+# 3. Commit with a descriptive message
+git commit -m "feat(weather): implement 16-day meteogram with fl_chart"
+
+# 4. Push your branch
+git push origin feature/abenezer/weather-meteogram
+
+# 5. Open a Pull Request → Team Lead reviews → Merge to main
+```
+
+### Branch Naming Convention
+| Branch Type | Pattern | Example |
+|---|---|---|
+| Feature | `feature/<name>/<module>` | `feature/abenu/farm-polygon-map` |
+| Bug Fix | `fix/<name>/<description>` | `fix/alen/drought-gauge-animation` |
+| Release | `release/<version>` | `release/1.0.0` |
+
+---
+
 ## 📑 Team Documentation Hub
-Every frontend engineer must review their assigned documentation:
-- 📱 [Frontend Architecture Overview](./docs/ARCHITECTURE_OVERVIEW.md)
-- 🔄 [State Management & Riverpod Guide](./docs/STATE_MANAGEMENT_GUIDE.md)
-- 🎨 [UI/UX Design System Guidelines](./docs/UI_UX_DESIGN_SYSTEM.md)
-- 🗺️ [Feature Roadmap & Screens](./docs/FEATURE_ROADMAP.md)
-- 💾 [Offline-First & Sync Guide](./docs/OFFLINE_FIRST_AND_SYNC_GUIDE.md)
-- 👥 [Frontend Team Assignment Guide](./docs/TEAM_ASSIGNMENT_GUIDE.md)
+Every frontend engineer must review their assigned documentation before writing code:
+- 📱 [Architecture & Data Layer Guide](./docs/ARCHITECTURE.md)
+- 🎨 [UI/UX Design System Specification](./docs/DESIGN_SYSTEM.md)
+- 👥 [Team Task Assignments & Sprint Plan](./docs/TEAM_TASKS.md)
+- 📂 [Feature Modules & Directory Catalog](./docs/MODULES_CATALOG.md)
