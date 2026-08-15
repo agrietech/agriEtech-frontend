@@ -15,8 +15,8 @@ class FloodRiskScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      appBar: AppBar(title: Text('FLOOD')),
-      body: Center(child: Text('flood_risk_screen - Pending Team Assignment')),
+      appBar: AppBar(title: const Text('FLOOD')),
+      body: const Center(child: Text('flood_risk_screen - Pending Team Assignment')),
     );
   }
 }
