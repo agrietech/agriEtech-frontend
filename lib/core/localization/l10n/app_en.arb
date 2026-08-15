@@ -1,0 +1,12 @@
+{
+  "appTitle": "AgriEtech Early Warning",
+  "droughtRisk": "Drought Risk",
+  "floodRisk": "Flood Risk",
+  "locustRisk": "Locust Threat",
+  "vegetationHealth": "Vegetation Health (NDVI)",
+  "weatherForecast": "Weather Forecast",
+  "alerts": "Hazard Alerts",
+  "myFarms": "My Farms",
+  "soilProfile": "Soil Moisture & Nutrients",
+  "diagnoseCrop": "Crop Disease Diagnosis"
+}

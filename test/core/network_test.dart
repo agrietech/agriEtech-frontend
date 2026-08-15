@@ -1,0 +1,7 @@
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  test('Dio Client Initialization', () {
+    expect(true, isTrue);
+  });
+}

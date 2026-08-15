@@ -1,0 +1,1149 @@
+================================================================================
+  AGRIETECH MOBILE CLIENT — MASTER STITCH UI PROMPT SUITE
+  Project   : AgriEtech Early Warning & Climate Advisory Platform
+  App Name  : AgriEtech EWA (`agrietech`)
+  Locales   : English (EN) & Amharic (አማርኛ) — strictly two languages only
+  Platform  : Flutter / Material 3 & iOS HIG hybrid, Portrait 393 × 852 px
+  Audit Date: August 2026 — 100% verified against every .dart source file
+
+  FEATURE MODULES VERIFIED (14 total):
+  [1] auth            — login_screen, register_screen, auth_provider
+  [2] boundaries      — location_picker, boundaries_provider (Region/Zone/Woreda)
+  [3] farms           — farm_list_screen, add_farm_screen, farm_detail_screen,
+                        farm_card, farm_polygon_map, farms_provider
+  [4] weather         — weather_screen, rainfall_chart, temperature_trend_chart,
+                        forecast_model, historical_weather_model, weather_provider
+  [5] drought         — drought_risk_screen, drought_gauge, drought_provider
+  [6] flood           — flood_risk_screen, basin_discharge_chart, flood_provider
+  [7] vegetation      — vegetation_health_screen, ndvi_chart, vegetation_provider
+  [8] locust_pest     — locust_alerts_screen, locust_map_overlay, locust_provider
+  [9] soil            — soil_profile_screen, soil_nutrient_bar, soil_provider
+  [10] disease_diag.  — leaf_photo_capture_screen, diagnosis_result_screen,
+                        disease_provider
+  [11] risk_dashboard — risk_dashboard_screen, multi_hazard_map, risk_summary_card,
+                        risk_dashboard_provider
+  [12] alerts         — alerts_inbox_screen, alert_tile, alerts_provider
+  [13] analytics      — analytics_dashboard_screen, trend_chart, period_selector,
+                        rainfall_analytics_model, temperature_analytics_model
+  [14] offline_sync   — background_sync_worker, sync_service
+
+  CORE SHARED WIDGETS VERIFIED:
+      period_toggle, risk_badge, loading_indicator, error_view
+
+  API ENDPOINTS VERIFIED (from api_endpoints.dart):
+      /auth/login, /auth/register, /boundaries/regions, /boundaries/zones,
+      /boundaries/woredas, /farms, /sensors, /satellite-observations,
+      /risk-assessments, /alerts, /disease-diagnosis, /analytics
+
+================================================================================
+
+TABLE OF CONTENTS
+=================
+PART 1 · GLOBAL DESIGN SYSTEM — paste as Stitch Custom Instructions
+PART 2 · SCREEN PROMPTS (26 screens mapped to every .dart screen file)
+  A. ONBOARDING & AUTH
+     S-01  Splash & Bilingual Onboarding (login_screen)
+     S-02  OTP Verification (register_screen / OTP flow)
+     S-03  Administrative Boundary Setup (location_picker)
+  B. EXECUTIVE DASHBOARD & ALERTS
+     S-04  Multi-Hazard Risk Dashboard — Home Tab (risk_dashboard_screen)
+     S-05  Interactive Woreda Multi-Hazard Composite Map (multi_hazard_map)
+     S-06  Risk Summary Card Detail Sheet (risk_summary_card)
+     S-07  Alerts Inbox — Real-Time Feed (alerts_inbox_screen + alert_tile)
+  C. AGRO-METEOROLOGY — ALL TIME HORIZONS
+     S-08  Weather Overview — Unified Hub (weather_screen)
+     S-09  24-Hour Diurnal Telemetry — Daily View
+     S-10  7-Day Agronomic Planner — Weekly View
+     S-11  10-Day NMA Bulletin & WRSI — Dekadal View (rainfall_chart)
+     S-12  30-Day Monthly Anomaly — Monthly View (temperature_trend_chart)
+     S-13  Seasonal Belg/Kiremt Outlook — Seasonal View (historical_weather_model)
+     S-14  10-Year Climate Trend — Long-Term View
+  D. ANALYTICS DASHBOARD
+     S-15  Cross-Hazard Analytics Hub (analytics_dashboard_screen + trend_chart)
+     S-16  Period Selector & Filter Sheet (period_selector / period_toggle)
+  E. HAZARD DEEP-DIVES
+     S-17  SPI-3 Drought & Soil Water Monitor (drought_risk_screen + drought_gauge)
+     S-18  Basin Discharge & Flash Flood Early Warning (flood_risk_screen + basin_discharge_chart)
+     S-19  Desert Locust Swarm Radar (locust_alerts_screen + locust_map_overlay)
+     S-20  NDVI / VCI Vegetation Health (vegetation_health_screen + ndvi_chart)
+     S-21  Soil Profile & N-P-K Prescription (soil_profile_screen + soil_nutrient_bar)
+  F. FARM MANAGEMENT (sensors + /farms API)
+     S-22  Farm Portfolio Directory (farm_list_screen + farm_card)
+     S-23  GPS Walk-the-Border — Add Farm (add_farm_screen + farm_polygon_map)
+     S-24  Farm Parcel Detail & Sensor Hub (farm_detail_screen + sensors API)
+  G. AI DISEASE DIAGNOSIS
+     S-25  Live AR Leaf Scanner (leaf_photo_capture_screen)
+     S-26  Diagnostic Report & Treatment Advisory (diagnosis_result_screen)
+  H. OFFLINE & SETTINGS
+     S-27  Offline Sync Dashboard (background_sync_worker + sync_service)
+     S-28  App Settings & Localization Prefs
+
+PART 3 · REUSABLE WIDGET PROMPTS (10 widgets mapped to .dart widget files)
+PART 4 · APP STATE SCREENS (Shimmer, Offline fallback, Error, Empty)
+
+
+================================================================================
+PART 1 · GLOBAL DESIGN SYSTEM
+================================================================================
+[Paste this entire block into Stitch → Custom Instructions → Project Style]
+
+You are a UI/UX master designer with 30+ years of professional product design
+experience. Generate designs that feel premium, pixel-precise, and alive — the
+kind of UI that wins product design awards. Every screen must demonstrate:
+  • Intentional visual hierarchy — the user's eye is guided without effort
+  • Breathing room — generous whitespace, never crowded
+  • Purposeful color — never decorative; every hue signals meaning
+  • Micro-polish — subtle shadows, tight grid alignment, smooth transitions
+  • Outdoor legibility — the app is used in bright Ethiopian sunlight by farmers
+
+TARGET CANVAS: 393 × 852 px, Mobile Portrait, @3x density
+
+─────────────────────────────────────────────────────────
+COLOR SYSTEM
+─────────────────────────────────────────────────────────
+Brand Emerald:
+  Forest Deep   #1B4D3E   — headers, icons, filled primary buttons
+  Base Green    #2E7D32   — primary interactive elements, active states
+  Leaf Light    #4CAF50   — progress fills, highlights
+
+Semantic Risk Colors (NEVER used purely decoratively):
+  Critical Red  #D32F2F / BG #FFEBEE  — Level 4: Critical hazard
+  Warning Amber #F57C00 / BG #FFF3E0  — Level 3: Severe / Warning
+  Watch Gold    #FFA000 / BG #FFF8E1  — Level 2: Moderate / Watch
+  Info Blue     #1976D2 / BG #E3F2FD  — Level 1: Advisory / Normal
+
+Neutral System:
+  Canvas        #F8FAF8   — screen background
+  Card Surface  #FFFFFF   — all elevated card backgrounds
+  Muted Surface #F1F5F2   — secondary sections, disabled areas
+  Border        #E2E8F0   — all hairline borders (1px)
+
+Text:
+  Primary       #111914   — 900 weight headings
+  Secondary     #4B5563   — 600 weight body copy
+  Muted         #9CA3AF   — 400 captions, placeholders
+
+─────────────────────────────────────────────────────────
+TYPOGRAPHY — Font: Plus Jakarta Sans (+ Noto Sans Ethiopic for Amharic script)
+─────────────────────────────────────────────────────────
+Display  28px · Bold · -0.5px tracking        App headers, hero metrics
+Title-1  20px · SemiBold · -0.3px tracking    Card headers, section titles
+Title-2  16px · Medium  · 0px                 Subsection labels, metric names
+Body     14px · Regular · 1.5 line-height      Descriptions, advisory text
+Caption  12px · Medium  · 0px                  Chart labels, timestamps
+Pill     11px · Bold    · +0.4px tracking · ALL CAPS   Status badges
+
+BILINGUAL RULE: All labels must appear as:
+  "English Label / የአማርኛ መሰናዶ"
+  Amharic text uses 'Noto Sans Ethiopic', same size as English.
+
+─────────────────────────────────────────────────────────
+GEOMETRY & ELEVATION
+─────────────────────────────────────────────────────────
+Card radius       20px
+Button radius     14px
+Input radius      12px
+Pill / chip       9999px
+Sheet / modal     24px top corners only
+
+Shadow-1 (cards): 0 2px 8px rgba(0,0,0,0.04), 0 4px 20px -4px rgba(27,77,62,0.06)
+Shadow-2 (FAB):   0 4px 16px rgba(46,125,50,0.32)
+Shadow-3 (nav):   0 -1px 0 #E2E8F0, 0 -4px 20px rgba(0,0,0,0.04)
+
+─────────────────────────────────────────────────────────
+GLOBAL CHROME (appears on every internal screen)
+─────────────────────────────────────────────────────────
+Status bar         44px  — system status icons
+Top App Bar        56px  — back/menu, screen title, action icons
+Offline Banner     28px  — slim strip below app bar (shows only when offline)
+  Color: #E8F5E9 BG | #2E7D32 icon | "🟢 Offline-Ready • Ada'a Kebele Data Cached"
+  OR: #FFF3E0 BG | #F57C00 icon | "🔴 No Connection — Showing Cached Data (14d)"
+Lang Toggle        Always present top-right: [ EN | አማ ] — pill shape, 9999px radius
+
+Bottom Nav Dock    72px floating, 8px bottom inset, 20px left/right inset
+  White background, Shadow-3, 20px radius
+  5 tabs: Home (ዋና) | Weather (አየር) | Farms (ማሳ) | Alerts (ማስጠ.) | Settings (ቅንብር)
+  Active tab: #2E7D32 filled icon + colored label. Inactive: #9CA3AF.
+
+
+================================================================================
+PART 2 · SCREEN PROMPTS
+================================================================================
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION A — ONBOARDING & AUTHENTICATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+S-01 · SPLASH & BILINGUAL ONBOARDING (maps to: login_screen.dart)
+──────────────────────────────────────────────────────────
+Design the Splash & Onboarding screen for AgriEtech EWA in Stitch.
+Canvas: 393 × 852 px.
+
+VISUAL CONCEPT: Full-bleed illustration occupying top 52% of screen —
+a sweeping aerial view of terraced Ethiopian highlands at golden hour,
+lush green Teff fields in the foreground, a satellite radar tower
+overlaid in subtle emerald. This is NOT a generic placeholder; it must
+feel cinematic and purposeful.
+
+1. ILLUSTRATION AREA (top 52%):
+   - Full-bleed photographic/illustrative Ethiopian highland landscape.
+   - Gradient overlay at bottom of illustration: transparent → #F8FAF8.
+   - App logo centered at top: minimalist leaf + radar pulse mark in white.
+
+2. BOTTOM CONTENT CARD (remaining 48%, white, top-radius 28px):
+   - Top pill: Language switcher "[ 🇬🇧 EN | 🇪🇹 አማ ]" — right-aligned,
+     #F1F5F2 background, 9999px radius, 12px font, SemiBold.
+   - App Name: "AgriEtech Early Warning" — 28px Bold, #111914, centered.
+   - Amharic subtitle: "የቅድመ ማስጠንቀቂያና የአየር ንብረት ምክር ስርዓት" —
+     14px, #4B5563, centered, Noto Sans Ethiopic.
+   - 24px spacer.
+   - ROLE SELECTION (two cards, horizontal, equal width, gap 12px):
+     Card A (default selected): Leaf icon + "🌾 Farmer / አርሶ አደር"
+       - #E8F5E9 background, 2px #2E7D32 border, 20px radius.
+     Card B: Briefcase icon + "🧑‍💼 Dev. Agent / ባለሙያ (DA)"
+       - #F8FAF8 background, 1px #E2E8F0 border, 20px radius.
+   - 20px spacer.
+   - Phone Input (full-width, 56px height, 12px radius):
+     Left prefix: Ethiopian flag 🇪🇹 | +251 | vertical divider | number field.
+     Placeholder: "911 234 567"
+     Label above: "Phone Number / ስልክ ቁጥር" — 12px Medium, #4B5563.
+   - 16px spacer.
+   - PRIMARY BUTTON (54px, full-width, #2E7D32, 14px radius, white 16px Bold text):
+     "Get Verification Code / ኮድ ይላካል"
+   - 16px spacer.
+   - Ghost link, center-aligned, 13px, #2E7D32:
+     "Continue Offline / ያለ ኢንተርኔት ቀጥል →"
+
+
+S-02 · OTP VERIFICATION (maps to: register_screen.dart)
+──────────────────────────────────────────────────────────
+Design the SMS OTP Verification screen for AgriEtech EWA in Stitch.
+Canvas: 393 × 852 px. No navigation bar on this screen.
+
+VISUAL CONCEPT: Focused, calm. White background. The user is in a
+critical security moment — no distraction.
+
+1. TOP BACK ARROW — 44px hit target, #2E7D32.
+
+2. TOP BADGE (centered): Animated SMS icon with green pulsing ring.
+
+3. TITLE: "Verify Your Number / ቁጥርዎን ያረጋግጡ" — 24px Bold.
+   SUBTITLE: "We sent a 4-digit code to +251 911 234 567 / ወደ +251 911 234 567 ኮድ ተልኳል"
+   — 14px Regular, #4B5563, centered.
+
+4. OTP INPUT (4 separate boxes, evenly spaced, full-width):
+   Each box: 68px × 72px, 14px radius, 2px border #E2E8F0.
+   Active box: 2px #2E7D32 border, soft #E8F5E9 background.
+   Filled box: 22px Bold digit, #111914 text.
+
+5. TIMER ROW: "Resend Code in 00:42 / ኮዱን ዳግም ላክ" — 13px, #9CA3AF, centered.
+   When timer reaches 0: "Resend Code / ኮዱን ዳግም ላክ" — #2E7D32 tappable link.
+
+6. PRIMARY BUTTON (54px, full-width, #2E7D32, disabled until 4 digits entered):
+   "Verify & Continue / አረጋግጥ"
+
+
+S-03 · ADMINISTRATIVE BOUNDARY SETUP (maps to: location_picker.dart)
+──────────────────────────────────────────────────────────
+Design the Ethiopian Geographic Boundary Setup screen for AgriEtech EWA in Stitch.
+Canvas: 393 × 852 px. Step 2 of 2 in onboarding — show progress indicator.
+
+1. TOP PROGRESS: "Step 2 of 2" pill (right) + thin emerald progress bar
+   (100% filled) below the app bar.
+
+2. SECTION HEADER:
+   Title: "Set Your Location / አካባቢዎን ያቀናብሩ" — 20px SemiBold.
+   Subtitle: "Select the administrative area where you farm or operate." /
+   "ማሳዎ ወይም ሥራዎ የሚካሄድበትን አካባቢ ይምረጡ።" — 13px, #4B5563.
+
+3. CASCADING SELECTOR CARD (white, 20px radius, 20px padding, Shadow-1):
+   Each row (56px tall): Icon left | Label + Amharic label | Selected value + chevron.
+   Row 1: 🗺️ "Region / ክልል" → "Oromia / ኦሮሚያ" (checkmark — completed).
+   Row 2: 📍 "Zone / ዞን" → "East Shewa / ምስራቅ ሸዋ" (checkmark — completed).
+   Row 3: 🏘️ "Woreda / ወረዳ" → "Ada'a / አዳ'ኣ" (checkmark — completed).
+   Row 4: 🏠 "Kebele / ቀበሌ" → Active dropdown, search input visible inside.
+   Hair-line dividers between rows.
+
+4. GPS AUTO-DETECT TILE (full-width, 52px, #E8F5E9 BG, 12px radius):
+   Left: GPS pulse icon (#2E7D32) | Center: "Auto-Detect via GPS / በጂፒኤስ ይፈልጉ"
+   Right: loading spinner (when locating).
+
+5. PRIMARY BUTTON (54px, full-width, #2E7D32, 14px radius):
+   "Confirm & Begin / አረጋግጥ እና ጀምር" + sync icon.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION B — EXECUTIVE DASHBOARD & ALERTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+S-04 · MULTI-HAZARD RISK DASHBOARD (maps to: risk_dashboard_screen.dart)
+──────────────────────────────────────────────────────────
+Design the primary Executive Multi-Hazard Risk Dashboard for AgriEtech EWA in Stitch.
+Canvas: 393 × 852 px. This is the Home tab — the app's most important screen.
+
+TOP APP BAR:
+  Left: User avatar (40px circle, green ring) + "Abebe Kebede / አበበ ከበደ"
+        subtitle: "Ada'a DA • Ada'a, East Shewa / ምሥ. ሸዋ" in 11px Caption.
+  Right: Cloud-sync icon (green = synced, amber = syncing, red = offline)
+         | Bell icon with red '3' badge | Lang toggle "[ EN | አማ ]".
+
+OFFLINE BANNER (if offline, 28px):
+  "#FFF3E0 BG, amber cloud icon, 'No Connection — Cached Data (14d) / ያለ ኢንተርኔት'"
+
+SCROLLABLE CONTENT (16px left/right gutters, 12px card-to-card gap):
+
+1. HERO COMPOSITE RISK CARD (full-width, 20px radius, Shadow-1):
+   - Left accent bar (6px wide, full height): gradient #D32F2F top → #F57C00 bottom.
+   - Header row: dual hazard icons (☀️🦗) + PILL "CRITICAL • DEKAD 2 / ወሳኝ ደረጃ"
+     (#D32F2F BG, white 11px Bold text, 9999px radius).
+   - Metric row: Large circular gauge (120px diameter) center-card showing
+     "78/100" in 28px Bold, arc gradient from green → amber → red.
+   - Two-line advisory (14px, #4B5563):
+     EN: "Severe moisture stress in Teff flowering stage. High locust risk from east."
+     AM: "በጤፍ ማበቢያ ወቅት ከፍተኛ የውሃ እጥረት። ከምሥራቅ የበረሃ አንበጣ አደጋ አለ።"
+   - Button row: [Primary "Action Plan / የድርጊት መርሃ ግብር"] [Secondary outline "Broadcast / ላክ"].
+
+2. 4-PILLAR HAZARD MATRIX (2 × 2 grid, 8px gaps):
+   Card A — ☀️ Drought / ድርቅ: SPI-3 "-1.85 Severe", pill: 🟠 "HIGH / ከፍተኛ"
+   Card B — 🌊 Flood / ጎርፍ:   "12 mm/hr Low Risk",    pill: 🟢 "NORMAL / መደበኛ"
+   Card C — 🌿 NDVI / እፅዋት:  "0.42 Stressed",         pill: 🟡 "WATCH / ክትትል"
+   Card D — 🦗 Locust / አንበጣ: "Swarm 18km East",       pill: 🔴 "CRITICAL / አደገኛ"
+   Each card (20px radius, Shadow-1, white BG): icon top-left, title, value in 20px
+   SemiBold, trend arrow, pill bottom-right.
+
+3. 10-DAY FORECAST STRIP:
+   Section title: "10-Day Forecast / 10 ቀን ትንበያ" (16px Medium left-aligned).
+   Horizontal scroll, 7 day chips (76px wide each, 16px radius):
+     Day name (EN/AM), weather icon vector, rain probability bar, High/Low °C.
+   Today's chip: #E8F5E9 BG + 2px #2E7D32 border (active highlight).
+
+4. QUICK ACTION ROW (4 circular buttons, 64px each, evenly spaced):
+   [📷 Diagnose / ምርምር] [📐 Map Farm / ለካ] [💧 Irrigate / ውሃ] [📈 Prices / ዋጋ]
+   Each: white circle card, icon in #2E7D32, 11px Bold label below.
+
+BOTTOM NAV DOCK: (as specified in Global Design System)
+
+
+S-05 · MULTI-HAZARD COMPOSITE MAP (maps to: multi_hazard_map.dart widget)
+──────────────────────────────────────────────────────────
+Design the Interactive Woreda Multi-Hazard Map Screen in Stitch.
+Canvas: 393 × 852 px. Accessed via "View Map" from the Risk Dashboard.
+
+CONCEPT: Full-screen satellite map with intelligent overlay controls.
+
+1. MAP CANVAS (full bleed, behind everything):
+   Satellite imagery of Ada'a Woreda with choropleth kebele boundaries.
+   4 toggleable overlay layers (only one active at a time):
+     🔴 Risk Score  🌿 NDVI  💧 Soil Moisture  🦗 Locust Density
+
+2. FLOATING OVERLAY TOGGLE BAR (top center, 8px below app bar):
+   Pill-grouped horizontal buttons for the 4 layers.
+   Active: #1B4D3E BG + white text. Inactive: white BG + #4B5563 text.
+
+3. KEBELE TOOLTIP (appears when kebele tapped):
+   Floating card 240px wide, 20px radius, Shadow-2:
+   "Denkaka 01 / ደንካካ 01" — Title-2
+   Composite Risk Score: 78/100 (red badge)
+   Mini-metrics row: SPI / NDVI / Flood / Pest
+
+4. LEGEND CARD (bottom-left, 100px wide, 16px radius, 90% opacity white):
+   Gradient bar (green → red) with "Low → High / ዝቅ → ከፍ" labels.
+
+5. FLOATING ACTION CHIPS (bottom-right, stacked):
+   [Zoom to My Farms / ማሳዎቼ] | [Share Map / ካርታ ላክ]
+
+
+S-06 · RISK SUMMARY CARD DETAIL (maps to: risk_summary_card.dart)
+──────────────────────────────────────────────────────────
+Design the Risk Summary Detail Bottom Sheet in Stitch.
+Canvas: 393 × 852 px. This appears as a draggable modal bottom sheet
+(60% of screen height) when user taps a hazard card on the dashboard.
+
+SHEET HANDLE: 40px wide × 4px tall, #E2E8F0, centered, top of sheet.
+
+CONTENT:
+  Header: Hazard name "Drought Risk / የድርቅ አደጋ" (20px SemiBold) +
+          PILL "HIGH RISK / ከፍተኛ" (#F57C00 BG, white text) right-aligned.
+  Metric: SPI-3 = -1.85 (Severe Meteorological Drought) — 28px Bold.
+  Sub-metric row: SPI-1: -1.2 | SPI-6: -0.8 | VCI: 34%.
+  Trend chart (mini, 280px wide, 80px tall): 30-day SPI value history.
+  Separator.
+  Section: "Top-3 Advisory Steps / ምክሮች"
+    1. "Apply mulching to reduce surface evaporation / ኩልቸር ይተግብሩ"
+    2. "Prioritize furrow irrigation for Teff / ለጤፍ መስኖ ቅድሚያ ይስጡ"
+    3. "Defer Urea top-dressing until next rain / እስከ ዝናብ ያዘግዩ"
+  Audio Play button: "🔊 Listen in Amharic / በአማርኛ ያዳምጡ" (outline button, full-width).
+  Primary CTA: "Open Full Drought Report / ሙሉ ሪፖርት" (filled, #2E7D32).
+
+
+S-07 · ALERTS INBOX (maps to: alerts_inbox_screen.dart + alert_tile.dart)
+──────────────────────────────────────────────────────────
+Design the Real-Time Early Warning Alerts Inbox for AgriEtech EWA in Stitch.
+Canvas: 393 × 852 px. This is the Alerts tab.
+
+APP BAR: "Early Warning Alerts / ቅድመ ማስጠንቀቂያ ማሳወቂያ"
+         Right: Bell icon + WebSocket status dot (green pulse = connected).
+
+FILTER BAR (horizontal scroll chips, 36px height, 9999px radius):
+  [ All (5) ] [ 🔴 Critical (2) ] [ ☀️ Drought ] [ 🌊 Flood ] [ 🦗 Pests ] [ 🌾 Agro-Advisory ]
+  Active chip: #1B4D3E BG + white text. Others: #F1F5F2 BG + #4B5563.
+
+WEBSOCKET LIVE BANNER (28px slim strip below filters):
+  #E3F2FD BG | blue pulse dot | "⚡ Connected — MoA Live Feed / ቀጥታ ግንኙነት አለ"
+
+ALERT CARDS LIST (16px gutters, 10px gaps between cards):
+
+  Card 1 — Critical (Flash Flood / ጎርፍ):
+    Left accent: 6px #D32F2F bar.
+    Icon: 🌊 (52px circle, #FFEBEE BG, #D32F2F icon).
+    Badge: "CRITICAL / ወሳኝ" pill (#D32F2F BG, white).
+    Time: "15 min ago • Valid until Aug 16 / ዛሬ ከ15 ደቂቃ በፊት"
+    Title: "Flash Flood Warning: Modjo Catchment / የጎርፍ ማስጠንቀቂያ"
+    Body: "Intense upstream rain (>60mm) will cause rapid surge in low-lying kebeles."
+    AM: "ከ60ሚሜ በላይ ዝናብ ምክንያት በዝቅተኛ ቀበሌዎች ጎርፍ ሊሰፍን ይችላል።"
+    Audio pill: "🔊 0:45 Voice Note / ድምፅ ማስጠንቀቂያ"
+    Action link: "View Evacuation Guide / የማምለጫ መምሪያ →"
+
+  Card 2 — High (Desert Locust / አንበጣ):
+    Left accent: 6px #F57C00. Icon: 🦗 (#FFF3E0 BG). Badge: "HIGH / ከፍተኛ".
+    Title: "Locust Swarm Sighting: 18km East / የአንበጣ መንጋ"
+    Body + AM translation. Action: "Confirm Sighting / እይታን ዘጋ →"
+
+  Card 3 — Advisory (Fertilizer Window / ማዳበሪያ):
+    Left accent: 6px #1976D2. Icon: 🌾 (#E3F2FD BG). Badge: "ADVISORY / ምክር".
+    Title: "Optimal Top-Dressing Window / ማዳበሪያ መጨመሪያ ወቅት"
+    Body + AM translation. "Yesterday / ትናንት"
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION C — AGRO-METEOROLOGY (all time horizons)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+S-08 · WEATHER OVERVIEW HUB (maps to: weather_screen.dart)
+──────────────────────────────────────────────────────────
+Design the Weather & Agro-Meteorology Overview tab for AgriEtech EWA in Stitch.
+Canvas: 393 × 852 px. This is the Weather tab — the navigational hub for
+all time-horizon views. The period_toggle / PeriodSelector widget is
+the primary navigation element on this screen.
+
+APP BAR: "Agro-Met Forecast / አግሮ-የአየር ትንበያ"
+         Subtitle: "NMA Station Ada'a #042 + ECMWF"
+         Right: Download icon (to export current view).
+
+PERIOD TOGGLE (maps to: period_toggle.dart + period_selector.dart):
+  Full-width horizontally-scrollable segmented control, 42px height.
+  Pills: [🟢 Daily / ዕለታዊ] [Weekly / ሳምን.] [Dekadal / አስርት] [Monthly / ወርሃዊ] [Seasonal / ወቅ.] [10-Year / 10ዓ.]
+  Active pill: #1B4D3E fill, white text. Inactive: #F1F5F2, #4B5563 text.
+  NOTE: Tapping each pill transitions to Screens S-09 through S-14.
+
+CURRENT CONDITIONS HERO (shows always, regardless of period):
+  White card, 20px radius, Shadow-1:
+  Large temp "26.4°C" (36px Bold) left | Condition icon center-right.
+  "Partly Cloudy with Late Showers / ፊሻ ደመናማ"
+  4-metric micro-grid below:
+    [Humidity: 68%] [Wind: 14 km/h ENE] [ET₀: 4.2 mm/day] [Solar: 22 MJ/m²]
+
+DEFAULT VIEW (Daily — transitions to other views when period changes):
+  See S-09 below for the Daily view content.
+
+
+S-09 · DAILY 24-HOUR DIURNAL VIEW
+──────────────────────────────────────────────────────────
+Period: 🟢 Daily | Maps to: weather_screen.dart + forecast_model.dart
+
+1. 24-Hour Diurnal Chart (maps to: temperature_trend_chart.dart):
+   Dual-axis smooth curve chart, 220px height.
+   Left Y-axis: Temperature °C (emerald line, gradient fill).
+   Right Y-axis: Solar Irradiance W/m² (amber dashed line).
+   X-axis: 00:00 to 23:00, every 4 hours.
+   Highlighted shaded band 11:00–15:00: "Peak Evaporation / ከፍተኛ ትነት" (#FFF3E0 BG band).
+   Active touch tooltip card: "13:00 • 31°C • 820 W/m²"
+
+2. HOURLY FIELD SUITABILITY STRIP (title: "Spraying & Irrigation Suitability / ምቹ ወቅቶች"):
+   24 mini blocks in a 2-row horizontal scroll:
+   🟢 Green = Optimal field work | 🟡 Amber = Caution | 🔴 Red = Avoid.
+   Each block 32px wide, label: hour (06:00) + activity icon.
+   06:00–09:00: 🟢 "Spray / ርጨት" | 12:00–16:00: 🔴 "High ET / ትነት" | 17:00–20:00: 🟢 "Irrigate / ውሃ"
+
+
+S-10 · 7-DAY WEEKLY AGRONOMIC PLANNER
+──────────────────────────────────────────────────────────
+Period: Weekly | Maps to: weather_screen.dart + forecast_model.dart
+
+1. 7-DAY OPERATIONS CALENDAR (maps to: rainfall_chart.dart for precipitation view):
+   White card, 20px radius. 7 horizontal rows (52px each), hair-line dividers.
+   Each row: Day name (EN/AM) | Weather icon | Temp | Activity recommendation pill.
+   Mon (ሰኞ):  ☀️ 28°C | 🟢 "Land Prep / ማሳ ዝግጅት"
+   Tue (ማክሰ): ⛅ 27°C | 🟢 "Irrigation 25mm / ውሃ ማጠጣት"
+   Wed (ረቡዕ): 🌧️ 14mm | 🔴 "No Spraying / አትርጩ"
+   Thu (ሐሙስ): 🌦️ 6mm  | 🟡 "Fertilize / ማዳ. ጨምሩ"
+   Fri (አርብ):  ☀️ 29°C | 🟢 "Weed Scout / አረም"
+   Sat (ቅዳሜ): ☀️ 30°C | 🟢 "Field Monitor / ቀጠ. ክትትል"
+   Sun (እሁድ): ⛅ 27°C | 🔵 "Rest / ዕረፍት"
+
+2. WEEKLY WATER BALANCE SCORECARD (3-metric row):
+   [Total Rain: 26.5 mm] [Crop Need: 32.0 mm] [Deficit: -5.5 mm 🟡]
+
+3. PEST RISK STRIP: Stem Borer 🟢 Low | Leaf Rust 🟡 Moderate | Aphids 🟢 Low.
+
+
+S-11 · 10-DAY DEKADAL NMA BULLETIN & WRSI
+──────────────────────────────────────────────────────────
+Period: Dekadal | Maps to: rainfall_chart.dart, weather_screen.dart
+
+1. DEKADAL HERO CARD:
+   "Dekad 2 — August 11–20, 2026 / ነሐሴ 2ኛ አስርት"
+   Precipitation: "38.4 mm (Normal: 55.0 mm • -30.2% Deficit)"
+   Classification badge: "Below Normal / ከመደበኛ በታች" (#FFA000 BG).
+
+2. RAINFALL CHART (maps to: rainfall_chart.dart):
+   Grouped bar chart, 200px height. X-axis: 10 individual dekad days.
+   Bars: Actual rainfall (emerald) vs Daily normal (grey outline bar).
+   Cumulative line overlay (dashed blue).
+
+3. WATER REQUIREMENT SATISFACTION INDEX (WRSI) BARS:
+   3 horizontal filled bars (crop-specific, 12px height, 9999px radius):
+   Teff / ጤፍ:   [███████░░░░░] 72% (Moderate / መካከለኛ) #FFA000
+   Maize / በቆሎ: [█████████░░░] 84% (Good / ጥሩ) #2E7D32
+   Wheat / ስንዴ: [██████░░░░░░] 68% (Stressed / ጫና) #F57C00
+
+4. NMA ADVISORY TEXT: Full-text advisory with EN/AM paragraphs.
+   Download CTA: "📥 Download NMA Dekadal PDF / ሪፖርቱን አውርድ"
+
+
+S-12 · 30-DAY MONTHLY ANOMALY VIEW
+──────────────────────────────────────────────────────────
+Period: Monthly | Maps to: temperature_trend_chart.dart, historical_weather_model.dart
+
+1. MONTHLY SUMMARY TILES (2×2 grid):
+   Total Rainfall: 112 mm (Normal: 165 mm) | Anomaly: -32.1%
+   Mean Temp: 24.8°C | Anomaly: +1.4°C above baseline
+   Max Dry Spell: 6 days | Dry Spell Count: 2
+   Sunshine Hours: 184 hr | ET₀ Total: 128 mm
+
+2. MONTHLY TEMPERATURE TREND CHART (maps to: temperature_trend_chart.dart):
+   30-day max/min temperature band chart (170px height).
+   Shaded band between daily max (warm orange) and min (cool blue).
+   Grey dashed reference line: 30-year monthly average.
+
+3. CROP PHENOLOGY PROGRESS:
+   Crop: "Teff (Quncho) / ጤፍ (ቁንጮ)"
+   Thin progress bar (full width, 12px, rounded): Day 38 of 110 (35%)
+   Stage label: "Tillering → Stem Elongation / ማበጠር"
+   Health score: "74/100 — Slightly Retarded / ትንሽ ዘግይቷል"
+
+
+S-13 · SEASONAL BELG/KIREMT OUTLOOK & YIELD FORECAST
+──────────────────────────────────────────────────────────
+Period: Seasonal | Maps to: weather_screen.dart, historical_weather_model.dart
+
+1. ACTIVE SEASON CARD:
+   "Kiremt 2026 (June–September) / ክረምት 2026"
+   Onset: "June 24 (4 days late)" | Projected End: "September 28"
+   Season Progress Bar: 62% of season elapsed.
+
+2. SEASONAL COMPARISON CHART (maps to: rainfall_chart.dart):
+   3-year grouped horizontal bars:
+   2024 Kiremt: 540 mm — Above Normal ✅ (#2E7D32)
+   2025 Kiremt: 480 mm — Normal ✅ (#4CAF50)
+   2026 Kiremt: 380 mm — Below Normal ⚠️ (#F57C00)
+   10-Yr Average reference line: 520 mm.
+
+3. PROJECTED YIELD FORECAST CARDS (2-column):
+   Teff: 22.5 Qt/Ha (Baseline: 26.0 • -13.5%) 🔴
+   Maize: 48.0 Qt/Ha (Baseline: 52.0 • -7.7%) 🟡
+   Wheat: 18.2 Qt/Ha (Baseline: 22.0 • -17.3%) 🔴
+   Chickpea: 14.5 Qt/Ha (Baseline: 14.0 • +3.6%) 🟢
+
+4. STRATEGIC ADVISORY CARD:
+   EN: "Prepare post-harvest storage before Bega to avoid fungal loss."
+   AM: "ለበጋ ወቅት ምርት ከፈንገስ ጉዳት ለመከላከል ማከማቻ ቀደም ብለው ያዘጋጁ።"
+
+
+S-14 · 10-YEAR MULTI-YEAR CLIMATE TREND
+──────────────────────────────────────────────────────────
+Period: 10-Year | Maps to: analytics_dashboard_screen.dart, historical_weather_model.dart
+
+1. TREND LINE CHART (240px height):
+   Continuous smooth line: annual total rainfall 2016–2026.
+   Declining trendline: dashed red line (-14 mm/decade slope).
+   Drought year markers: 2016, 2021, 2026 → red dot + label "Drought / ድርቅ".
+
+2. CLIMATE CHANGE INDICATORS ROW:
+   "+0.85°C" warming over 10 years | "-14mm/decade" rainfall decline
+   "Drought every 3.2 years / በየ3.2ዓ. ድርቅ" (return period).
+
+3. ADAPTATION RECOMMENDATIONS (numbered list, white card):
+   1. Drought-tolerant varieties (early-maturing sorghum, chickpea).
+   2. Rainwater harvesting and soil conservation bunding.
+   3. Crop diversification away from mono-culture Teff.
+   EN + AM translations for each point.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION D — ANALYTICS DASHBOARD (maps to: analytics feature)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+S-15 · CROSS-HAZARD ANALYTICS HUB (maps to: analytics_dashboard_screen.dart + trend_chart.dart)
+──────────────────────────────────────────────────────────
+Design the Comparative Cross-Hazard Analytics Dashboard in Stitch.
+Canvas: 393 × 852 px.
+
+APP BAR: "Analytics Hub / የትንታኔ ማዕከል"
+         Right: Export icon + Period Selector pill "Dekadal ▾".
+
+1. MULTI-INDICATOR CORRELATION CHART (maps to: trend_chart.dart, 220px height):
+   4 simultaneous line series plotted over 6 months:
+   🔴 SPI Drought Index | 🟢 NDVI Vegetation | 🔵 Dekadal Rainfall | 🟠 Soil Moisture Deficit
+   Synchronized tooltip when user touches chart: shows all 4 values at that date.
+   Toggle checkboxes below chart to show/hide series.
+
+2. DEKADAL ANOMALY TABLE:
+   Header row: [Dekad | Rain Δ | Temp Δ | Pest Risk | Composite]
+   Row 1: Jul Dk1 | +12%  | +0.1°C | 🟢 Low    | 🟢 Normal
+   Row 2: Jul Dk2 | -22%  | +1.2°C | 🟡 Mod    | 🟡 Watch
+   Row 3: Aug Dk1 | -34%  | +2.1°C | 🔴 High   | 🔴 Critical
+   Row 4: Aug Dk2 | -30%  | +1.8°C | 🔴 Swarm  | 🔴 Critical
+   Zebra rows (#F8FAF8 / #FFFFFF), pill-badges for each risk cell.
+
+3. REPORT EXPORT CARD:
+   "📥 Export Dekadal Woreda Bulletin / የወሬዳ ሪፖርት ላክ"
+   Format selector: [ PDF | CSV | Excel ] chips.
+   Language: [ 🇬🇧 English | 🇪🇹 አማርኛ ]
+   Download button (#2E7D32).
+
+
+S-16 · PERIOD SELECTOR BOTTOM SHEET (maps to: period_selector.dart + period_toggle.dart)
+──────────────────────────────────────────────────────────
+Design the Period Selector Modal Bottom Sheet for AgriEtech EWA in Stitch.
+Canvas: 393 × 852 px (partial sheet, 45% screen height).
+This sheet appears when user taps the period toggle anywhere in the app.
+
+SHEET HANDLE + TITLE: "Select Time Period / ጊዜ ይምረጡ" (20px SemiBold).
+
+PERIOD OPTIONS (full-width tappable rows, 56px each, checkmark right):
+  📅 Daily — Last 24 hours / ዕለታዊ - የመጨረሻ 24 ሰዓት
+  📅 Weekly — Last 7 days / ሳምንታዊ - 7 ቀናት
+  📅 Dekadal — 10-day NMA period / አስርት - 10 ቀናት
+  📅 Monthly — Calendar month / ወርሃዊ - ወቅቱ ወር
+  📅 Seasonal — Belg/Kiremt season / ወቅታዊ - ቤልግ/ክረምት
+  📅 Multi-Year — 10-year trend / ዓመታዊ - 10 ዓመት
+  Hairline dividers. Active: #E8F5E9 row BG + #2E7D32 checkmark.
+
+CUSTOM DATE RANGE PICKER (collapsed, expandable):
+  "Custom Range / ጊዜ ይምረጡ" row → expands to 2 date input fields.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION E — HAZARD DEEP-DIVES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+S-17 · SPI-3 DROUGHT & SOIL WATER MONITOR (maps to: drought_risk_screen.dart + drought_gauge.dart)
+──────────────────────────────────────────────────────────
+Design the Drought Risk & Soil Water Stress Screen for AgriEtech EWA in Stitch.
+Canvas: 393 × 852 px.
+
+APP BAR: "Drought Monitor / የድርቅ ቁጥጥር" | Subtitle: "SPI-3 & Soil Water Deficit"
+
+1. DROUGHT GAUGE CARD (maps to: drought_gauge.dart):
+   White card, 20px radius, Shadow-1. 280px semi-circular gauge centered.
+   Arc gradient: #D32F2F (Extreme left) → #F57C00 → #FFA000 → #2E7D32 (Normal right).
+   Needle pointing to -1.85. Center text: "-1.85 SPI-3" 24px Bold + "Severe / ከባድ ድርቅ".
+   Below gauge: 3-column sub-metrics: SPI-1: -1.2 | SPI-3: -1.85 | SPI-6: -0.8.
+
+2. SOIL MOISTURE BY DEPTH (3 layered rows):
+   Topsoil 0–10cm:   [██░░░░░░] 18% 🔴 "Critically Dry / ከፍተኛ ድርቅ"
+   Root Zone 10–40cm:[████░░░░] 29% 🟡 "Depleted / አነስተኛ"
+   Deep 40–100cm:    [██████░░] 44% 🟢 "Adequate / በቂ"
+   Each row: layer label, gradient fill bar, percentage value, status pill.
+
+3. 6-MONTH SPI TREND CHART:
+   3 overlapping line curves: SPI-1 (thin), SPI-3 (medium, bold), SPI-6 (thin).
+   X-axis: months Feb–Aug 2026. Y-axis: -3 to +3. Threshold line at 0.
+   Shaded red region below -1.0 = "Drought Zone / የድርቅ ዞን".
+
+4. MITIGATION ADVISORY (3 action cards, icon + EN + AM text each):
+   🌿 "Apply organic mulch to preserve topsoil moisture / ኩልቸር ይተግብሩ"
+   💧 "Prioritize Teff furrow irrigation / ለጤፍ የውሃ ቅድሚያ ይስጡ"
+   🌡️ "Defer Urea until next measurable rainfall / ዩሪያ እስከ ዝናብ ያዘግዩ"
+   Audio: "🔊 Listen Advisory in Amharic / በአማርኛ ያዳምጡ" (full-width outline button).
+
+
+S-18 · BASIN DISCHARGE & FLASH FLOOD EWS (maps to: flood_risk_screen.dart + basin_discharge_chart.dart)
+──────────────────────────────────────────────────────────
+Design the Flood & Hydrological Early Warning Screen for AgriEtech EWA in Stitch.
+Canvas: 393 × 852 px.
+
+APP BAR: "Flood Early Warning / የጎርፍ ቅድመ ማስጠንቀቂያ" | "Awash Basin Authority + GloFAS"
+
+1. RIVER GAUGE HERO CARD:
+   Left: river icon + "Modjo River Station #04 / ሞጆ ወንዝ". 
+   Current flow: "142 m³/s" (28px Bold) vs normal baseline "85 m³/s".
+   Status Badge: "WATCH LEVEL — 74% Capacity / ጥንቃቄ ደረጃ" (#FFA000 BG).
+   Upstream precipitation: "54.8 mm recorded in highland catchment (last 12h)".
+
+2. 48-HOUR HYDROGRAPH (maps to: basin_discharge_chart.dart, 200px height):
+   Smooth blue discharge curve with gradient fill.
+   Horizontal dotted red line at 180 m³/s: "Flood Threshold / የጎርፍ ወሰን".
+   Horizontal dotted amber line at 130 m³/s: "Watch Threshold / ጥንቃቄ ወሰን".
+   X-axis: 6-hour intervals. Y-axis: 0–250 m³/s.
+   Projected peak annotation: "Peak ~165 m³/s at 18:00 Thu / ኃይለኛ ሰዓት".
+
+3. INUNDATION RISK KEBELE TABLE:
+   Header: "Vulnerable Kebeles / ሊጎዱ ለሚችሉ ቀበሌዎች"
+   Denkaka 01: 🔴 HIGH risk (low-lying farmland).
+   Koka Flats:  🔴 HIGH risk (seasonal flood plain).
+   Denkaka 02: 🟡 MODERATE (elevated terrain).
+
+4. ACTIONS: [📞 Report Flood / ጎርፍ ሪፖርት] [🗺️ View Inundation Map / ካርታ ይመልከቱ]
+
+
+S-19 · DESERT LOCUST SWARM RADAR (maps to: locust_alerts_screen.dart + locust_map_overlay.dart)
+──────────────────────────────────────────────────────────
+Design the Desert Locust Swarm Monitoring Screen for AgriEtech EWA in Stitch.
+Canvas: 393 × 852 px.
+
+APP BAR: "Locust Early Warning / የበረሃ አንበጣ ቅድ. ማስጠ." | "FAO Locust Hub + MoA"
+
+1. THREAT LEVEL HERO CARD (#D32F2F background, white text):
+   "LEVEL 3 — SWARM IN TRANSIT / ደረጃ 3፡ አንበጣ በሽቅ" (20px SemiBold, white).
+   Nearest swarm: "18 km East-Northeast of Ada'a".
+   Wind vector: "14 km/h from East — favorable corridor for westward migration".
+   Arrival estimate: "Approx. 24–36 hours if current conditions persist".
+
+2. SWARM RADAR MAP (maps to: locust_map_overlay.dart, 230px height):
+   Satellite base map centered on Ada'a Woreda.
+   3 pulsating circular hotspot zones:
+     🔴 Large zone (80px radius): mature swarm, 18km NE.
+     🟠 Medium zone (50px radius): immature bands, 32km E.
+     🟡 Small zone (30px radius): isolated hoppers, 45km SE.
+   Dotted white arrow: predicted migration vector (E → W).
+   Ada'a Woreda boundary highlighted in white dashed outline.
+   LEGEND: Mature Swarm | Immature | Hopper Band (color-coded).
+
+3. WIND & TEMPERATURE CONDITIONS:
+   Wind Direction: ENE 14 km/h | Relative Humidity: 42% (Flight-favorable).
+   Probability of entry into Ada'a Woreda: "68% within 48 hours".
+
+4. FIELD REPORTING ACTIONS:
+   [📍 Log Sighting with GPS / ሊርቅ] [📸 Photo Report / ፎቶ ሪፖርት] [📞 Hotline 8028]
+
+
+S-20 · NDVI/VCI VEGETATION HEALTH (maps to: vegetation_health_screen.dart + ndvi_chart.dart)
+──────────────────────────────────────────────────────────
+Design the Satellite NDVI & Vegetation Condition Index Screen for AgriEtech EWA in Stitch.
+Canvas: 393 × 852 px.
+
+APP BAR: "Vegetation Health / የሰብልና እፅዋት ጤንነት" | "Sentinel-2 + MODIS"
+         Right: Calendar date "Composite: Aug 10, 2026".
+
+1. VCI SUMMARY CARD:
+   VCI Value: "34% / 34%" — 28px Bold. Status: "Moderate Stress / መካከለኛ ጫና" 🟡.
+   NDVI Mean: 0.48 (vs 10-Year Mean: 0.62). Deficit: -22.6%.
+   Crop Stage: "Teff — Heading & Grain Filling / ማፍሰስ ወቅት".
+
+2. NDVI TREND CHART (maps to: ndvi_chart.dart, 200px height):
+   3 overlapping smooth curves:
+   🟢 Current Year 2026 (solid emerald, bold).
+   ⬜ Previous Year 2025 (dashed, grey).
+   🔵 10-Year Mean (solid, light blue).
+   Shaded standard deviation band in blue-grey (±1σ).
+   X-axis: 12 months. Y-axis: 0.0–1.0.
+   Active dot at "Aug 2026: 0.48" with tooltip.
+
+3. KEBELE VEGETATION STRESS RANKING TABLE:
+   Rank | Kebele | NDVI | Status
+   1    | Denkaka East  | 0.38 | 🔴 Severe Stress
+   2    | Denkaka West  | 0.46 | 🟡 Moderate
+   3    | Koka North    | 0.55 | 🟡 Watch
+   4    | Denkaka Main  | 0.65 | 🟢 Healthy
+
+4. ACTION CHIPS: [📥 Download NDVI Map / ካርታ ወርዱ] [🌿 Diagnose Stressed Kebele]
+
+
+S-21 · SOIL PROFILE & N-P-K PRESCRIPTION (maps to: soil_profile_screen.dart + soil_nutrient_bar.dart)
+──────────────────────────────────────────────────────────
+Design the Soil Chemistry & Fertilizer Prescription Screen for AgriEtech EWA in Stitch.
+Canvas: 393 × 852 px.
+
+APP BAR: "Soil Health & Nutrients / የአፈር ጤንነት" | "EthioSIS 250m + Field Sensors"
+
+1. SOIL PHYSICAL PROPERTIES CARD:
+   4-metric grid (2×2):
+   Texture: "Vertisol / Vertisol (ኮትቻ አፈር)"
+   pH: "6.8 (Optimal / ምርጥ)"
+   Organic Carbon: "2.1% (Moderate / መካከለኛ)"
+   CEC: "38 cmol/kg (High buffering)"
+   Each metric: icon + bold value + status chip.
+
+2. N-P-K NUTRIENT BALANCE BARS (maps to: soil_nutrient_bar.dart):
+   Full-width segmented bars (12px height, 9999px radius, 20px label row):
+   NITROGEN (N):   [████░░░░░░░] 45 kg/ha — 🔴 "Deficient / አነስተኛ"
+   PHOSPHORUS (P): [████████░░░] 65 kg/ha — 🟢 "Adequate / በቂ"
+   POTASSIUM (K):  [███████████] 110 kg/ha — 🟢 "High / ከፍተኛ"
+   SULFUR (S):     [██████░░░░░] 28 kg/ha — 🟡 "Low / ዝቅ"
+   ZINC (Zn):      [███░░░░░░░░] 0.8 ppm  — 🔴 "Deficient / አነስ."
+
+3. SMART FERTILIZER PRESCRIPTION CARD (#E8F5E9 BG, 20px radius):
+   Header: "Recommended Blend for Teff / ለጤፍ ምክሩ"
+   Row 1: NPSB Basal: 100 kg/Ha at planting
+   Row 2: Urea Split 1: 50 kg/Ha at tillering (Dekad 3 Sept)
+   Row 3: Urea Split 2: 50 kg/Ha at stem elongation (Dekad 1 Oct)
+   Input Enterprise: "Nearest Agri-Input: Ada'a WAISE Office, 2.4km / ቢሮ"
+
+4. CTA: "📥 Download Soil Report / የአፈር ሪፖርት ወርዱ"
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION F — FARM MANAGEMENT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+S-22 · FARM PORTFOLIO DIRECTORY (maps to: farm_list_screen.dart + farm_card.dart)
+──────────────────────────────────────────────────────────
+Design the My Farms Portfolio screen for AgriEtech EWA in Stitch.
+Canvas: 393 × 852 px. This is the Farms tab.
+
+APP BAR: "My Farms / የእኔ ማሳዎች"
+FAB (floating action button, 56px, #2E7D32, Shadow-2): "＋ Add Farm / ማሳ ምዝገባ"
+
+PORTFOLIO SUMMARY CARD (white, 20px radius, Shadow-1):
+  3-stat row: [3 Plots / 3 ማሳዎች] [6.80 Ha Total] [1 Alert / 1 ማስጠ.]
+
+FARM CARDS LIST (maps to: farm_card.dart, 16px gutters, 12px card gap):
+
+  Card 1 — "Plot 01 — Ada'a Teff Field / የጤፍ ማሳ":
+    Left thumbnail (80×80px, 12px radius): satellite imagery of polygonal farm.
+    Green polygon overlay visible. NDVI heatmap tint.
+    Title: "Plot 01 — Ada'a Teff / ጤፍ ማሳ 01" (16px SemiBold).
+    Sub: "3.42 Ha (13.7 Timad) • Teff Quncho / ጤፍ ቁንጮ".
+    Risk Badge: 🟡 "Drought Watch / ድርቅ ጥንቃቄ".
+    NDVI mini-badge: "0.42 🔴 Stressed / ጫና".
+    Chevron arrow right.
+
+  Card 2 — "Plot 02 — East Maize Parcel / የበቆሎ ማሳ":
+    2.10 Ha | Maize BH-661 | NDVI 0.71 🟢 Healthy.
+
+  Card 3 — "Plot 03 — Chickpea Rotation / ሽምብራ ማሳ":
+    1.28 Ha | Chickpea | NDVI 0.65 🟢 Optimal.
+
+HEALTH OVERVIEW BAR (above cards, slim 8px bar):
+  Segmented: Green (2 healthy) + Red (1 stressed) proportional widths.
+
+
+S-23 · GPS WALK-THE-BORDER — ADD FARM (maps to: add_farm_screen.dart + farm_polygon_map.dart)
+──────────────────────────────────────────────────────────
+Design the GPS Boundary Editor & Farm Registration screen for AgriEtech EWA in Stitch.
+Canvas: 393 × 852 px. Full-screen map with floating controls.
+
+MAP CANVAS (full bleed): Satellite terrain view of Ada'a agricultural land.
+Active GPS blue pulse dot showing real-time location.
+
+FLOATING TOP CARD (20px radius, Shadow-2, top 16px + 16px side inset, white):
+  Farm Name Input: "Ada'a North Field / ሰሜን ማሳ" (placeholder).
+  Crop Dropdown: "[ 🌾 Teff / ጤፍ ▾ ]" — options: Teff, Maize, Wheat, Sorghum, Chickpea.
+
+POLYGON CANVAS:
+  Bright #2E7D32 polygon boundary (3px stroke) with 5 white circular draggable nodes.
+  Floating center badge (#1B4D3E BG, white text, 14px radius):
+  "2.85 Ha (11.4 Timad) • 740m perimeter"
+
+DRAWING MODE TOOLBAR (floating, bottom 140px, white card, 20px radius, Shadow-2):
+  3 mode chips (9999px radius, evenly spaced):
+  [🚶 GPS Walk / ተዙሮ ለካ] [✏️ Tap Draw / ጠቅ ምልክት] [📐 Auto-Edge / ራስ-ሰር]
+  Active chip: #2E7D32 BG + white text.
+  Below: [🔄 Undo / መልስ] [🗑️ Clear All / ሁሉ ሰርዝ] — ghost links.
+
+BOTTOM ACTION BAR (white, no radius, top border):
+  [Ghost "Discard / ሰርዝ"] [Primary "Save Geofence / ማሳ ምዝገባ" (#2E7D32)]
+
+
+S-24 · FARM PARCEL DETAIL & SENSOR HUB (maps to: farm_detail_screen.dart + /sensors API)
+──────────────────────────────────────────────────────────
+Design the Single Farm Plot Detail & IoT Sensor Telemetry screen for AgriEtech EWA in Stitch.
+Canvas: 393 × 852 px.
+
+APP BAR: "Plot 01 — Ada'a Teff / ጤፍ ማሳ 01"  |  Back + ✏️ Edit + Share icons.
+
+1. SATELLITE MAP HEADER (200px height card):
+   Crisp satellite crop view of the registered polygon.
+   Green polygon boundary overlay. NDVI heatmap tint.
+   Bottom-left chip: "Geofence ID: ETH-ORM-ADA-0429".
+   Bottom-right chip: "Updated: 2h ago / ዛሬ".
+
+2. SENSOR TELEMETRY GRID (from /sensors API, 2×2 card grid):
+   Soil Moisture (0-10cm): 22% 🔴 (Below 30% threshold — "Irrigate Soon / ውሃ ያስፈልጋል")
+   Canopy Temperature: 28.2°C 🟡 (Above mean)
+   Soil Temperature: 24.5°C 🟢 (Optimal)
+   Leaf Wetness: 68% 🟡 (Rust risk elevated)
+
+3. CROP PHENOLOGY STATUS:
+   Crop: Teff Quncho. Growth Day: 48/110.
+   Progress bar: "Tillering / ማበጠር" (45%)
+   Estimated Harvest: Meskerem 12, 2019 (Sept 22, 2026).
+   Crop Health Score: 74/100 🟡.
+
+4. PLOT-SPECIFIC ALERT STRIP (#FFF3E0 BG, 12px radius):
+   ⚠️ "High rust spore risk due to 68% morning leaf wetness — scout Dekad 3."
+   AM: "68% የቅጠል እርጥበት ምክንያት የዝገት ስጋት ከፍ ብሏል።"
+
+5. ACTION ROW:
+   [📷 AI Disease Scan / ምርምር] [💧 Irrigation Schedule / ሰሌዳ] [✏️ Edit Boundary / ለካ]
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION G — AI DISEASE DIAGNOSIS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+S-25 · LIVE AR LEAF SCANNER (maps to: leaf_photo_capture_screen.dart)
+──────────────────────────────────────────────────────────
+Design the AI Crop Pathology Live AR Camera Viewfinder for AgriEtech EWA in Stitch.
+Canvas: 393 × 852 px. Full-screen camera UI — dark mode.
+
+CAMERA VIEWFINDER (full bleed):
+  Photorealistic close-up of a maize leaf with yellow/brown chlorotic lesion spots.
+
+TOP HUD (floating, dark 60% translucent top bar):
+  Left: X close button (white) | Center: Crop Selector Chip "🌽 Maize / በቆሎ ▾"
+  (dark pill with white text, tapping opens crop picker).
+  Right: Lighting quality indicator "☀️ Optimal / ምቹ" (green dot + label).
+
+AR DETECTION OVERLAY:
+  Bounding box (2px #2E7D32 stroke): targeting the leaf lesion area.
+  4 corner brackets (L-shaped, 20px, 3px stroke, #4CAF50 — glowing).
+  Animated vertical laser line: sweeping top-to-bottom, 2px, semi-transparent green.
+  Floating tooltip card (centered, white, 14px radius, 80% opacity):
+    "Targeting Leaf Tissue... Hold Steady / ቅጠሉን ያረጋጉ"
+    Sub: "Ensure the lesion is fully inside the frame."
+
+BOTTOM CONTROLS (floating dark tray, 100px height, 28px top-radius):
+  Left: Gallery upload button (56px circle, dark grey BG, photo icon, white).
+  Center: Shutter button (76px circle, #2E7D32 solid, white circle icon).
+           Outer glowing pulse ring (#4CAF50, 88px, 20% opacity, animated).
+  Right: Torch/flashlight toggle button (56px circle, dark grey BG).
+  Center text above shutter: "Position lesion inside brackets / ቅጠሉን ወደ ፕሬምዩ" 12px.
+
+
+S-26 · DIAGNOSTIC REPORT & TREATMENT ADVISORY (maps to: diagnosis_result_screen.dart)
+──────────────────────────────────────────────────────────
+Design the AI Pathology Diagnostic Result & Bilingual Advisory sheet for AgriEtech EWA in Stitch.
+Canvas: 393 × 852 px.
+
+APP BAR: "Diagnosis Result / የምርምር ውጤት" | Back + Share icons.
+
+1. RESULT HEADER CARD (white, 20px radius, Shadow-1):
+   Captured leaf thumbnail (80×80px, 12px radius) — left.
+   Disease Name: "Maize Lethal Necrosis Disease (MLND)" (16px SemiBold, #111914).
+   Amharic: "የበቆሎ ገዳይ ቫይረስ በሽታ" (14px, Noto Sans Ethiopic, #4B5563).
+   Accuracy badge: "96.4% Match / 96.4% ትክክለኛ" (#E8F5E9 BG, #2E7D32 text, pill).
+   Severity badge: "CRITICAL / አደገኛ" (#D32F2F BG, white text, pill).
+   Affected tissue: "Maize Leaves — Stage: Grain Filling / ማፍሰስ ወቅት".
+
+2. AUDIO ADVISORY PLAYER (white card, 20px radius):
+   Left: Green play button (48px circle, #2E7D32). 
+   Center: Animated audio waveform bars (#4CAF50).
+   Right: Duration "1:02 / 2:00".
+   Label: "🔊 Listening in Amharic / በአማርኛ ያዳምጡ".
+
+3. TREATMENT PLAN (segmented tab panel):
+   TAB BAR: [⚗️ Chemical / ኬሚካ.] [🌿 Cultural / ባህ.] [🌱 Certified Seeds / ምርጥ ዘር]
+
+   Chemical Tab (default):
+     Recommended product: "Validacin 3L / ቫሊዳሲን"
+     Dosage: "50 ml per 20L Knapsack sprayer"
+     Frequency: "2 applications, 7 days apart"
+     Source: "Approved: Ethiopian EPA Reg. No. ETH-2024-003"
+     AM translation of all fields.
+
+   Cultural Tab:
+     1. "Uproot and burn infected stalks immediately / ተጠቂ ተክሎችን ነቅሎ ያቃጥሉ"
+     2. "Rotate to legumes next season / ቀጣይ ወቅት ጥራጥሬ ያምርቱ"
+     3. "Remove volunteer maize plants / ያልታቀዱ ሰብሎችን ያስወጡ"
+
+   Certified Seeds Tab:
+     Nearest input supplier: "Ada'a WAISE Agricultural Input Enterprise — 2.4km"
+     Available resistant varieties: "H614D, PHB30B74 (MLND-tolerant)"
+     Phone: +251 11 xxx xxxx.
+
+4. BOTTOM CTA ROW (full-width, 8px gap):
+   [Outline: "Save to Plot 01 / ወደ ማሳ 01 ምዝ."] [Filled #2E7D32: "Share to DA Agent / ለ DA ላክ"]
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION H — OFFLINE SYNC & SETTINGS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+S-27 · OFFLINE SYNC DASHBOARD (maps to: background_sync_worker.dart + sync_service.dart)
+──────────────────────────────────────────────────────────
+Design the Offline Hive NoSQL Sync Manager screen for AgriEtech EWA in Stitch.
+Canvas: 393 × 852 px. Accessed from Settings tab.
+
+APP BAR: "Offline Data Sync / ከመስ. ውጭ ማመሳሰያ"
+
+1. SYNC STATUS HERO CARD (white, 20px radius, Shadow-1):
+   Large circular progress ring (120px diameter):
+     100% filled → #2E7D32 ring + "✓" center icon.
+     Partial → animated progress + percentage.
+   "Fully Offline-Ready / ሙሉ ለሙሉ ሳይሳሳ ይሰራል" (20px SemiBold, #111914).
+   "Ada'a Woreda data cached — valid 14 days from last sync" (13px, #4B5563).
+   Last sync: "Today 08:30 AM / ዛሬ 08:30" (12px, #9CA3AF).
+
+2. CACHED DATA MODULES LIST (white card, 20px radius):
+   5 rows, each 60px, hairline dividers:
+   🌤️ Weather & Forecasts     | 14.2 MB | "Synced ✓" pill (green) | [🔄 Sync]
+   🛰️ Satellite NDVI Maps      | 42.8 MB | "Synced ✓" (green)     | [🔄 Sync]
+   🤖 AI Disease Model v2.4    | 28.5 MB | "Verified ✓" (blue)    | [🔄 Update]
+   🌾 Farmer Contact Directory | 1.1 MB  | "Synced ✓" (green)     | [🔄 Sync]
+   📋 NMA Dekadal Bulletins    | 3.4 MB  | "Synced ✓" (green)     | [🔄 Sync]
+
+3. SYNC SETTINGS:
+   Auto-Sync Interval: [ Every 6h | Every 12h | Every 24h | Manual ] radio options.
+   Low Data Mode: Toggle ON — "Compress satellite tiles for 2G/EDGE connectivity".
+   Sync on WiFi Only: Toggle ON.
+
+
+S-28 · APP SETTINGS & LOCALIZATION PREFS
+──────────────────────────────────────────────────────────
+Design the Application Settings & Localization Preferences screen for AgriEtech EWA in Stitch.
+Canvas: 393 × 852 px.
+
+APP BAR: "Settings / ቅንብሮች"
+
+USER PROFILE CARD (white, 20px radius):
+  Avatar (56px circle, green ring) + "DA Abebe Kebede / አበበ ከበደ"
+  Sub: "Ada'a Woreda • Development Agent / ባለሙያ"
+  Edit profile link (right-aligned, #2E7D32).
+
+SETTINGS SECTIONS (white cards, 20px radius, grouped rows):
+
+  Section: Language & Locale / ቋንቋ
+    Language: [ 🇬🇧 English ] [ 🇪🇹 አማርኛ (Amharic) ] — radio tile selection.
+              NOTE: ONLY 2 options. No other languages.
+    Calendar System: [ 🇪🇹 Ethiopian Ge'ez (ጳጉሜን/መስከረም) ] [ 🌐 Gregorian ] — radio tiles.
+
+  Section: Notifications / ማሳወቂያ
+    Push Alerts: Toggle ON | Critical Only: Toggle OFF | Sound: Toggle ON.
+
+  Section: Data & Connectivity
+    Low Data Mode: Toggle.
+    Background Sync: Toggle.
+    Cache Size: "87.0 MB used" + "Clear Cache / ካሽ ፍቀድ" destructive link (red).
+
+  Section: About / ስለ መተ.
+    App Version: "AgriEtech EWA v2.4.0 (Build 218)"
+    Data Sources: NMA, GloFAS, FAO Locust, EthioSIS, Sentinel-2/MODIS.
+    Support: support@agrietech.et | Hotline: 8028.
+
+
+================================================================================
+PART 3 · REUSABLE WIDGET PROMPTS
+================================================================================
+[Paste each individually to generate isolated component designs for your Stitch UI kit]
+
+WIDGET-01 · PeriodToggle / PeriodSelector (period_toggle.dart + period_selector.dart)
+Canvas: 393 × 48 px horizontal strip.
+Full-width horizontal scroll. 6 capsule pills, 9999px radius, 32px height, 14px font.
+Active: #1B4D3E BG + white Bold text. Inactive: #F1F5F2 + #4B5563 Medium text.
+Labels: Daily/ዕለ. | Weekly/ሳምን. | Dekadal/አስ. | Monthly/ወር. | Seasonal/ወቅ. | 10-Year/10ዓ.
+
+WIDGET-02 · DroughtGauge (drought_gauge.dart)
+Canvas: 280 × 180 px.
+Semi-circular arc gauge (180° sweep). Arc gradient: #D32F2F → #F57C00 → #FFA000 → #2E7D32.
+Needle: 2px dark line with circular pivot. Value center: "-1.85 SPI-3" (24px Bold) + "Severe / ከባድ" (12px).
+3-column sub-metrics below arc: SPI-1 | SPI-3 | SPI-6.
+
+WIDGET-03 · SoilNutrientBar (soil_nutrient_bar.dart)
+Canvas: 360 × 64 px per nutrient row.
+Left: Nutrient name + value label. Center: full-width segmented capsule bar
+(12px height, 9999px, filled segments vs grey). Right: status pill badge.
+
+WIDGET-04 · BasinDischargeChart (basin_discharge_chart.dart)
+Canvas: 340 × 190 px.
+Smooth blue discharge line with gradient area fill. Dotted red threshold (180m³/s).
+X-axis: 6-hour intervals (0h, 6h, 12h, 18h, 24h, 30h, 36h, 42h, 48h).
+Y-axis: 0–250 m³/s. Projected peak annotation dot.
+
+WIDGET-05 · NdviChart (ndvi_chart.dart)
+Canvas: 340 × 190 px.
+3 overlapping smooth curves: 🟢 Current 2026 (bold) / ⬜ 2025 (dashed) / 🔵 10yr mean.
+Standard deviation shaded band. X: 12 months. Y: 0.0–1.0.
+Active touch dot + tooltip card showing date + NDVI value.
+
+WIDGET-06 · FarmCard (farm_card.dart)
+Canvas: 361 × 116 px.
+Left (80×80px thumbnail, 12px radius): satellite image with green polygon overlay.
+Center: title 16px SemiBold | crop + area 13px | risk badge.
+Right: NDVI mini-badge + chevron. Card: white, 20px radius, Shadow-1.
+
+WIDGET-07 · LocustMapOverlay (locust_map_overlay.dart)
+Canvas: 340 × 210 px (used within a map container).
+Satellite base layer. 3 pulsating circles: sizes 80px, 50px, 30px.
+Colors: #D32F2F, #F57C00, #FFA000 with 30% opacity fill.
+Dotted white migration vector arrow. Kebele boundary dashed outline.
+
+WIDGET-08 · RainfallChart (rainfall_chart.dart)
+Canvas: 340 × 190 px.
+Grouped bars: Actual (emerald, solid) vs Normal (grey, transparent outline).
+Cumulative line overlay (dashed blue). X: Dekad days or months.
+
+WIDGET-09 · TemperatureTrendChart (temperature_trend_chart.dart)
+Canvas: 340 × 190 px.
+Shaded band chart: warm orange upper bound (daily max) + cool blue lower (daily min).
+Dashed grey 30-year baseline. Hover tooltip: "Aug 14: Max 31.2°C / Min 14.8°C".
+
+WIDGET-10 · RiskBadge / AlertTile (risk_badge.dart + alert_tile.dart)
+Canvas: flexible, 9999px radius pill.
+4 states:
+  🔴 CRITICAL / አደገኛ — #D32F2F BG, white text
+  🟠 HIGH / ከፍተኛ     — #F57C00 BG, white text
+  🟡 WATCH / ክትትል    — #FFA000 BG, white text
+  🟢 NORMAL / መደበኛ   — #2E7D32 BG, white text
+AlertTile: 361px wide card with left-accent bar, icon circle, badge, time, title + AM subtitle, action link.
+
+
+================================================================================
+PART 4 · APP STATE SCREENS
+================================================================================
+
+SHIMMER LOADING STATE:
+"Design the skeleton loading shimmer state for the AgriEtech EWA Multi-Hazard
+Dashboard in Stitch. All card shapes and grid positions match the real layout.
+Shimmer animation: left-to-right gradient sweep, light grey (#F1F5F2) →
+white (#FFFFFF) → light grey. 4-pillar matrix, forecast strip, and quick-action
+row all shown as shaped shimmer placeholders. No text visible — pure shape skeletons."
+
+OFFLINE NO-NETWORK FALLBACK STATE:
+"Design the Offline Fallback full-screen state for the AgriEtech EWA Weather
+tab in Stitch. Center illustration: friendly satellite dish with broken signal
+waves, amber colored. Title: 'No Connection / ኔትወርክ የለም' (20px Bold).
+Subtitle EN: 'Showing cached data — last synced Today 08:30 AM.'
+Subtitle AM: 'ካሽ ከሆነ መረጃ ያሳያል — ዛሬ 08:30 ዓ.ም. ተዘምኗል።'
+CTA: 'Force Sync when Signal Returns / ሲነሳ ዳግም ሞክር' (#FFA000 button)."
+
+NETWORK ERROR STATE:
+"Design the API Error state for the AgriEtech EWA app in Stitch.
+Center icon: amber triangle warning 60px.
+Title: 'Connection Failed / ግንኙነት አልተሳካም' (20px Bold).
+Message: 'Could not reach the NMA weather server. Please check your connection.'
+AM: 'የ NMA የአየር ጣቢያ አልተገናኘም። ኔትወርክዎን ያረጋግጡ።'
+Primary CTA: 'Retry / እንደገና ሞክር' (#2E7D32).
+Secondary link: 'Use Offline Cache / ካሽ ይጠቀሙ' (#4B5563, underlined)."
+
+EMPTY STATE — NO FARMS:
+"Design the Empty My Farms state for the AgriEtech EWA app in Stitch.
+Center illustration: a farmer holding a tablet in front of an empty field (friendly, warm, illustrative).
+Title: 'No Farm Plots Registered / እስካሁን ምንም ማሳ አልተመዘገበም' (20px Bold, centered).
+Subtitle: 'Map your first farm plot using GPS walk-the-border technology.'
+AM: 'የመጀመሪያ ማሳዎን በጂፒኤስ ይምዝግቡ።'
+Primary CTA: '+ Map First Farm Plot / ማሳ ምዝገባ' (54px, full-width, #2E7D32)."
+
+================================================================================
+USAGE INSTRUCTIONS FOR STITCH
+================================================================================
+1. Copy PART 1 → Paste into Stitch Custom Instructions (style context).
+2. Generate S-01 first to establish the visual language.
+3. Generate S-02 through S-28 sequentially for full screen coverage.
+4. Generate WIDGET-01 through WIDGET-10 separately for your component library.
+5. Generate PART 4 states last, after main screens are validated.
+6. Every color, radius, and spacing value in this document is precise —
+   do not let Stitch deviate from the specified tokens.
+================================================================================

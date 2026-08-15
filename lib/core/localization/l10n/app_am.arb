@@ -1,0 +1,12 @@
+{
+  "appTitle": "አግሪኢቴክ የቅድመ ማስጠንቀቂያ",
+  "droughtRisk": "የድርቅ አደጋ",
+  "floodRisk": "የጎርፍ አደጋ",
+  "locustRisk": "የበረሃ አንበጣ ስጋት",
+  "vegetationHealth": "የእፅዋት ጤና ሁኔታ (NDVI)",
+  "weatherForecast": "የአየር ሁኔታ ትንበያ",
+  "alerts": "የአደጋ ማስጠንቀቂያዎች",
+  "myFarms": "የእኔ እርሻዎች",
+  "soilProfile": "የአፈር እርጥበት እና ንጥረ-ነገር",
+  "diagnoseCrop": "የሰብል በሽታ ምርመራ"
+}
