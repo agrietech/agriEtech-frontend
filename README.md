@@ -1,155 +1,203 @@
-# AgriEtech Flutter Mobile Client (`agrietech_ewa_app`)
-> **Cross-Platform Multi-Hazard Early Warning & Climate Advisory Mobile Client for Ethiopia**
+# AgriEtech Flutter Mobile Client
+
+> Cross-Platform Multi-Hazard Early Warning & Agro-Climate Advisory System for Ethiopia
 
 ---
 
-## 📖 Executive Summary & Mission
-The AgriEtech mobile application is a high-performance, offline-first Flutter application designed for smallholder farmers, agricultural extension workers (Development Agents), and Woreda agricultural officers across Ethiopia.
+## System Overview
 
-### Key Capabilities:
-1. **Interactive Multi-Hazard Dashboard**: Live composite risk visualizations for Drought, Flood, Desert Locust, and Vegetation Stress.
-2. **Offline-First Resilience**: Automatic local caching via Hive NoSQL; full access to historical forecasts and advisories even without cellular reception in remote kebeles.
-3. **Bilingual Localization**: Native support for **Amharic (አማርኛ)** with Ge'ez script support alongside **English**.
-4. **Farm Geofencing**: Interactive GPS boundary drawing on OpenStreetMap using `flutter_map`.
-5. **Agro-Meteorological Analytics**: 16-day meteograms, dekadal rainfall charts, and seasonal Belg/Kiremt comparison via `fl_chart`.
-6. **AI Crop Disease Diagnosis**: Leaf photo capture and instant pathology diagnosis with agronomic treatments.
-7. **Real-time Alert Push & WebSockets**: Instant hazard warnings with audio and push notifications.
+AgriEtech is a dual-mode Flutter mobile application engineered for smallholder farmers, agricultural development agents, and Woreda agricultural officers across Ethiopia. The platform connects users directly to real-time agrometeorological intelligence, satellite-derived risk analytics, and localized advisory services.
+
+The application operates in a **Hybrid Dual-Mode** model:
+- **Connected Mode (Online)**: Streams live multi-hazard sensor feeds, receives instant WebSocket alerts, conducts real-time AI leaf disease diagnoses via cloud inference, downloads high-resolution map tiles, and synchronizes farm telemetry with the backend PostgreSQL/PostGIS database.
+- **Resilient Mode (Offline)**: Automatically persists forecasts, advisories, hazard zones, and farm boundaries to a local Hive NoSQL database. Field workers can record farm polygons, log crop symptoms, and review advisories with zero connectivity; all offline mutations queue locally and automatically reconcile upon reconnection.
+
+### Core Capabilities
+
+- **Multi-Hazard Risk Engine**: Real-time composite scoring and spatial visualization for Drought (SPI), Flood (GloFAS river discharge), Desert Locust (FAO swarm tracking), and Vegetation Stress (MODIS/Sentinel-2 NDVI).
+- **Dual-Mode Data Layer**: Online live HTTP/WebSocket communication paired with transparent Hive NoSQL caching for zero-latency screen transitions (<16ms) and uninterrupted field productivity.
+- **Bilingual Interface**: Native support for **Amharic (አማርኛ)** with complete Ge'ez script typography alongside **English**.
+- **Interactive Farm Geofencing**: GPS boundary drawing and acreage calculation on OpenStreetMap using `flutter_map`.
+- **Agrometeorological Visualizations**: 16-day meteograms, hourly temperature curves, dekadal rainfall charts, and seasonal Belg/Kiremt anomaly analytics using `fl_chart`.
+- **AI Crop Pathology**: Camera capture workflow for on-field crop disease diagnosis with localized treatment recommendations.
+- **Multi-Channel Alert Dispatch**: Live WebSocket notifications on the app, backed by automated SMS and USSD fallback for non-smartphone users.
 
 ---
 
-## 🏛️ Architecture Topology (Clean Architecture + Feature-First)
+## Technical Architecture
+
+The frontend strictly enforces **Clean Architecture** organized by **Feature-First** modular boundaries.
 
 ```mermaid
 flowchart TD
-    subgraph Presentation Layer
-        Screens[Screens & Pages]
-        Widgets[Reusable UI Widgets]
-        Providers[Riverpod StateNotifier / AsyncNotifier Providers]
+    subgraph Presentation_Layer["Presentation Layer (Flutter)"]
+        UI_Screens["Feature Screens & Pages"]
+        UI_Widgets["Custom UI Components & Charts"]
+        State_Providers["Riverpod AsyncNotifiers & StateNotifiers"]
     end
 
-    subgraph Domain Layer
-        Services[Domain Services & Business Logic]
-        Entities[Domain Entities / Value Objects]
+    subgraph Domain_Layer["Domain Layer (Pure Dart)"]
+        Domain_Services["Business Logic & Validation Services"]
+        Domain_Entities["Domain Entities & Value Objects"]
     end
 
-    subgraph Data Layer
-        Repositories[Repository Implementations]
-        RemoteData[Dio Client + SocketClient]
-        LocalData[Hive NoSQL Boxes + FlutterSecureStorage]
+    subgraph Data_Layer["Data Layer (Repositories & Sources)"]
+        Data_Repos["Repository Implementations"]
+        Remote_Source["Dio HTTP Client + Socket.IO Client"]
+        Local_Source["Hive NoSQL Cache + FlutterSecureStorage"]
     end
 
-    Screens --> Providers
-    Widgets --> Providers
-    Providers --> Services
-    Services --> Repositories
-    Repositories --> RemoteData
-    Repositories --> LocalData
+    subgraph Backend_Cloud["AgriEtech Cloud Backend"]
+        REST_API["Express REST API (PostgreSQL / PostGIS)"]
+        WS_Stream["Socket.IO Live Alert Gateway"]
+    end
+
+    UI_Screens --> State_Providers
+    UI_Widgets --> State_Providers
+    State_Providers --> Domain_Services
+    Domain_Services --> Data_Repos
+    Data_Repos --> Remote_Source
+    Data_Repos --> Local_Source
+    Remote_Source <--> REST_API
+    Remote_Source <--> WS_Stream
 ```
 
 ---
 
-## 📂 Source Code Layout & Responsibilities
+## Directory Organization
 
 ```
 agrietech-frontend/
 ├── assets/
-│   ├── images/                             # Brand assets, illustrations, agro-icons
-│   ├── icons/                              # Hazard icons (drought, flood, locust, leaf)
+│   ├── images/                          # Agro-illustrations and branded graphics
+│   ├── icons/                           # Hazard indicators (drought, flood, locust, leaf)
 │   └── translations/
 │
 ├── lib/
-│   ├── main.dart                           # Entry point, Hive bootstrap, ProviderScope
-│   ├── app.dart                            # MaterialApp.router, Material 3 Theme, Localization
+│   ├── main.dart                        # Application bootstrap, Hive initialization, ProviderScope
+│   ├── app.dart                         # MaterialApp.router, Material 3 theme configuration, l10n
 │   │
-│   ├── core/                               # CORE REUSABLE INFRASTRUCTURE
+│   ├── core/                            # Cross-cutting foundational infrastructure
 │   │   ├── config/
-│   │   │   ├── env.dart                    # AppEnv configuration (API base URLs)
-│   │   │   ├── app_theme.dart              # Earth Green & Warning Amber Theme tokens
-│   │   │   └── app_router.dart             # GoRouter route declarations & bottom nav shell
+│   │   │   ├── env.dart                 # Environment configuration (API and WebSocket URLs)
+│   │   │   ├── app_theme.dart           # Agricultural green and severity color palette tokens
+│   │   │   └── app_router.dart          # GoRouter declarations with bottom navigation shell
 │   │   ├── constants/
-│   │   │   ├── api_endpoints.dart          # REST API endpoints
-│   │   │   └── app_constants.dart          # Business constants & cache durations
+│   │   │   ├── api_endpoints.dart       # REST API route constants
+│   │   │   └── app_constants.dart       # Business thresholds and cache expiry durations
 │   │   ├── network/
-│   │   │   ├── dio_client.dart             # Configured Dio instance
-│   │   │   ├── api_interceptors.dart       # JWT Bearer token & error interceptors
-│   │   │   └── socket_client.dart          # Socket.IO client for live alert streams
+│   │   │   ├── dio_client.dart          # Configured Dio HTTP client with retry and timeout policies
+│   │   │   ├── api_interceptors.dart    # JWT Bearer authentication and refresh interceptors
+│   │   │   └── socket_client.dart       # Socket.IO client for live woreda alert broadcasts
 │   │   ├── storage/
-│   │   │   ├── secure_storage_service.dart # FlutterSecureStorage for auth tokens
-│   │   │   ├── hive_service.dart           # Hive NoSQL initialization & adapters
-│   │   │   └── local_cache_boxes.dart      # Cache box identifiers
+│   │   │   ├── secure_storage_service.dart  # Encrypted keystore storage for auth tokens
+│   │   │   ├── hive_service.dart            # Hive database lifecycle and adapter registration
+│   │   │   └── local_cache_boxes.dart       # Cache box identifiers
 │   │   ├── localization/
-│   │   │   ├── app_localizations.dart      # Localization contracts
+│   │   │   ├── app_localizations.dart   # Localization lookup contracts
 │   │   │   └── l10n/
-│   │   │       ├── app_en.arb              # English translation dictionary
-│   │   │       └── app_am.arb              # Amharic (አማርኛ) translation dictionary
+│   │   │       ├── app_en.arb           # English translation catalog
+│   │   │       └── app_am.arb           # Amharic (አማርኛ) translation catalog
 │   │   ├── utils/
-│   │   │   ├── date_utils.dart             # Ethiopian (Ge'ez) date converters
-│   │   │   ├── geo_utils.dart              # GPS & polygon area calculators
-│   │   │   └── validators.dart             # Ethiopian phone & form validators
+│   │   │   ├── date_utils.dart          # Ethiopian (Ge'ez) calendar converters
+│   │   │   ├── geo_utils.dart           # GPS coordinates and polygon geometry helpers
+│   │   │   └── validators.dart          # Ethiopian phone number and form validators
 │   │   └── widgets/
-│   │       ├── period_toggle.dart          # Segmented daily/dekadal/monthly filter
-│   │       ├── risk_badge.dart             # Severity status chip (LOW/MODERATE/HIGH/CRITICAL)
-│   │       ├── loading_indicator.dart      # Animated shimmer / circular progress
-│   │       └── error_view.dart             # Offline error view with retry button
+│   │       ├── period_toggle.dart       # Daily / Dekadal / Monthly / Seasonal filter control
+│   │       ├── risk_badge.dart          # Severity indicator: LOW / MODERATE / HIGH / CRITICAL
+│   │       ├── loading_indicator.dart   # Shimmer skeleton and progress indicators
+│   │       └── error_view.dart          # Network and system error view with retry callback
 │   │
-│   ├── features/                           # 14 INDEPENDENT DOMAIN MODULES
-│   │   ├── auth/                           # Login, Register, OTP verification
-│   │   ├── boundaries/                     # Cascading Region -> Zone -> Woreda selector
-│   │   ├── farms/                          # Farm polygon boundary editor & plot details
-│   │   ├── weather/                        # 16-day meteogram & historical charts
-│   │   ├── drought/                        # Radial drought risk gauge & SPI trends
-│   │   ├── flood/                          # GloFAS discharge hydrograph chart
-│   │   ├── vegetation/                     # MODIS/Sentinel NDVI index charts
-│   │   ├── locustPest/                     # FAO Locust swarm map overlay & GPS proximity
-│   │   ├── soil/                           # SoilGrids nutrient & moisture bars
-│   │   ├── diseaseDiagnosis/               # Camera photo upload & AI pathology advice
-│   │   ├── riskDashboard/                  # Multi-hazard composite overview card & map
-│   │   ├── alerts/                         # Advisory notification inbox
-│   │   ├── analytics/                      # Belg/Kiremt comparative analytics
-│   │   └── offlineSync/                    # Workmanager background sync queue
+│   ├── features/                        # 14 isolated domain modules
+│   │   ├── auth/                        # Phone authentication, registration, OTP verification
+│   │   ├── boundaries/                  # Region -> Zone -> Woreda administrative selector
+│   │   ├── farms/                       # Farm profile management and polygon map editor
+│   │   ├── weather/                     # 16-day meteogram and historical weather analytics
+│   │   ├── drought/                     # Radial SPI drought gauge and precipitation deficit
+│   │   ├── flood/                       # GloFAS discharge hydrographs and flood return periods
+│   │   ├── vegetation/                  # MODIS / Sentinel-2 NDVI vegetation health curves
+│   │   ├── locustPest/                  # FAO desert locust swarm tracking and proximity alerts
+│   │   ├── soil/                        # SoilGrids nutrient and moisture composition gauges
+│   │   ├── diseaseDiagnosis/            # Leaf photography capture and AI diagnostic results
+│   │   ├── riskDashboard/               # Composite Woreda risk score and multi-hazard map
+│   │   ├── alerts/                      # Advisory notification center with bilingual content
+│   │   ├── analytics/                   # Multi-year historical climatology comparisons
+│   │   └── offlineSync/                 # Workmanager queue for background synchronization
 │   │
-│   └── shared/                             # ApiResponse models & BuildContext extensions
+│   └── shared/                          # Generic API response envelope and context extensions
 │
-└── docs/                                   # 📚 Comprehensive Documentation
-    ├── ARCHITECTURE_OVERVIEW.md            # Mobile architecture & data layer patterns
-    ├── STATE_MANAGEMENT_GUIDE.md           # Riverpod 2.x & Hive offline caching guide
-    ├── UI_UX_DESIGN_SYSTEM.md              # Material 3 tokens, colors & Amharic fonts
-    ├── FEATURE_ROADMAP.md                  # Screen-by-screen feature specifications
-    ├── OFFLINE_FIRST_AND_SYNC_GUIDE.md     # Offline resilience & Workmanager sync
-    └── TEAM_ASSIGNMENT_GUIDE.md            # Frontend developer task matrix
+└── docs/                                # Technical documentation suite
+    ├── ARCHITECTURE_OVERVIEW.md         # Layer design, dual-mode data model, and dependency rules
+    ├── STATE_MANAGEMENT_GUIDE.md        # Riverpod 2.x AsyncNotifier and caching patterns
+    ├── UI_UX_DESIGN_SYSTEM.md           # Material 3 tokens, accessibility, and typography
+    ├── FEATURE_ROADMAP.md               # Screen specifications and acceptance criteria
+    └── TEAM_ASSIGNMENT_GUIDE.md         # Frontend developer responsibilities and checklists
 ```
 
 ---
 
-## ⚡ Quick Start & Running the App
+## Getting Started
 
-### 1. Requirements
-- **Flutter SDK**: `>= 3.19.0`
-- **Dart SDK**: `>= 3.3.0`
-- Android Studio / Xcode / VS Code with Flutter Extension
+### Prerequisites
 
-### 2. Setup Commands
+| Requirement | Supported Version | Notes |
+|---|---|---|
+| Flutter SDK | `>= 3.19.0` | Channel `stable` |
+| Dart SDK | `>= 3.3.0` | Bundled with Flutter SDK |
+| Java Development Kit | OpenJDK 17 | Required for Android build toolchain |
+| Android SDK Platform | API Level 34 | Android 14.0 |
+| Development Tools | VS Code / Android Studio | Flutter & Dart plugins installed |
+
+### Installation and Run
+
 ```bash
-# 1. Navigate to frontend directory
+# 1. Clone the repository
+git clone https://github.com/your-org/agrietech-frontend.git
 cd agrietech-frontend
 
-# 2. Configure environment
+# 2. Configure environment parameters
 cp .env.example .env
 
-# 3. Install Flutter dependencies
+# 3. Retrieve package dependencies
 flutter pub get
 
-# 4. Run the app on emulator or connected device
+# 4. Run the code generation engine (if modifying models)
+dart run build_runner build --delete-conflicting-outputs
+
+# 5. Launch the application on a target device or emulator
 flutter run
 ```
 
 ---
 
-## 📑 Team Documentation Hub
-Every frontend engineer must review their assigned documentation:
-- 📱 [Frontend Architecture Overview](./docs/ARCHITECTURE_OVERVIEW.md)
-- 🔄 [State Management & Riverpod Guide](./docs/STATE_MANAGEMENT_GUIDE.md)
-- 🎨 [UI/UX Design System Guidelines](./docs/UI_UX_DESIGN_SYSTEM.md)
-- 🗺️ [Feature Roadmap & Screens](./docs/FEATURE_ROADMAP.md)
-- 💾 [Offline-First & Sync Guide](./docs/OFFLINE_FIRST_AND_SYNC_GUIDE.md)
-- 👥 [Frontend Team Assignment Guide](./docs/TEAM_ASSIGNMENT_GUIDE.md)
+## Development Team & Engineering Ownership
+
+The frontend client is engineered and maintained by a team of 5 developers, each leading dedicated feature slices:
+
+| # | Engineer | Student ID | Primary Frontend Domains | Key Module Responsibilities |
+|---|---|---|---|---|
+| 1 | **Abraham Amogne** | `CTC-329-26` | **Frontend Lead · Core Infra & AI Diagnostics** | Application lifecycle, GoRouter navigation shell, Material 3 theme system, SecureStorage auth tokens, AI leaf camera diagnosis, and master risk dashboard. |
+| 2 | **Abenezer Endrias** | `CTC-1826-26` | **Farm Geofencing & Administrative Maps** | Region/Zone/Woreda cascading selectors, interactive `flutter_map` GPS polygon drawing, and plot acreage computation. |
+| 3 | **Abinu Mathewos** | `CTC-1258-26` | **Weather Visualizations & Agro-Analytics** | 16-day numerical weather meteograms, hourly temperature curves, dekadal rainfall charts, and Belg/Kiremt seasonal analytics. |
+| 4 | **Alen Biruk** | `CTC-2176-26` | **Drought Risk & Hydrology UI** | Radial SPI drought meter, precipitation deficit trend charts, GloFAS river discharge hydrographs, and flood return-period badges. |
+| 5 | **Banchamlak Golla** | `CTC-2952-26` | **Vegetation, Locust Alerts & Offline Sync** | MODIS/Sentinel-2 NDVI trend lines, FAO locust swarm map overlays with GPS proximity alerts, SoilGrids nutrient bars, and Workmanager sync queue. |
+
+---
+
+## Technical Documentation Hub
+
+The [`docs/`](./docs/) directory contains essential technical specifications for frontend developers:
+
+| Document | Focus Area |
+|---|---|
+| [Architecture Overview](./docs/ARCHITECTURE_OVERVIEW.md) | Clean Architecture layers, dual-mode operational model, and directory boundaries. |
+| [State Management Guide](./docs/STATE_MANAGEMENT_GUIDE.md) | Riverpod 2.x `AsyncNotifier` patterns, Hive caching integration, and UI consumer templates. |
+| [UI/UX Design System](./docs/UI_UX_DESIGN_SYSTEM.md) | Material 3 design tokens, Amharic Ge'ez typography (Noto Sans Ethiopic), and hazard color palettes. |
+| [Feature Roadmap](./docs/FEATURE_ROADMAP.md) | 14 feature domain screens, custom widget structures, and technical acceptance criteria. |
+| [Team Assignment Guide](./docs/TEAM_ASSIGNMENT_GUIDE.md) | Developer feature assignments, file boundaries, and quality checklists. |
+
+---
+
+## License
+
+Proprietary — AgriEtech Engineering Team. All rights reserved.
