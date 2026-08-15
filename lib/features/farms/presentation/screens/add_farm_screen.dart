@@ -15,8 +15,8 @@ class AddFarmScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      appBar: AppBar(title: Text('FARMS')),
-      body: Center(child: Text('add_farm_screen - Pending Team Assignment')),
+      appBar: AppBar(title: const Text('FARMS')),
+      body: const Center(child: Text('add_farm_screen - Pending Team Assignment')),
     );
   }
 }
