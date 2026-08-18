@@ -15,8 +15,8 @@ class AnalyticsDashboardScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      appBar: AppBar(title: Text('ANALYTICS')),
-      body: Center(child: Text('analytics_dashboard_screen - Pending Team Assignment')),
+      appBar: AppBar(title: const Text('ANALYTICS')),
+      body: const Center(child: Text('analytics_dashboard_screen - Pending Team Assignment')),
     );
   }
 }
