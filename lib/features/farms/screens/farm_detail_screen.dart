@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 import '../providers/farms_provider.dart';
 
@@ -20,7 +21,12 @@ class FarmDetailScreen extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.edit),
             onPressed: () {
-              // TODO: Navigate to edit screen
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Edit Farm details feature'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
             },
           ),
         ],
@@ -115,7 +121,7 @@ class FarmDetailScreen extends ConsumerWidget {
                           Expanded(
                             child: ElevatedButton.icon(
                               onPressed: () {
-                                // TODO: Navigate to risk assessment
+                                context.push('/risk-map');
                               },
                               icon: const Icon(Icons.assessment),
                               label: const Text('View Risk'),
@@ -125,7 +131,7 @@ class FarmDetailScreen extends ConsumerWidget {
                           Expanded(
                             child: OutlinedButton.icon(
                               onPressed: () {
-                                // TODO: Navigate to weather
+                                context.push('/dashboard');
                               },
                               icon: const Icon(Icons.wb_sunny),
                               label: const Text('Weather'),
@@ -140,14 +146,30 @@ class FarmDetailScreen extends ConsumerWidget {
             ),
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
+        loading: () => const Center(
+          child: CircularProgressIndicator(),
+        ),
+        error: (error, stackTrace) => Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error, size: 64, color: Colors.red),
+              const Icon(
+                Icons.error_outline,
+                size: 48,
+                color: Colors.red,
+              ),
               const SizedBox(height: 16),
-              Text('Error: $error'),
+              Text(
+                'Error loading farm: $error',
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () {
+                  ref.invalidate(farmProvider(farmId));
+                },
+                child: const Text('Retry'),
+              ),
             ],
           ),
         ),
@@ -171,22 +193,29 @@ class _DetailRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, color: Theme.of(context).primaryColor),
+        Icon(
+          icon,
+          size: 20,
+          color: Theme.of(context).primaryColor,
+        ),
         const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              Text(
-                value,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Colors.grey[600],
+                  ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              value,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+            ),
+          ],
         ),
       ],
     );

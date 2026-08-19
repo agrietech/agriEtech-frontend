@@ -29,6 +29,8 @@ class AgriEtechApp extends ConsumerWidget {
       supportedLocales: const [
         Locale('en', ''), // English
         Locale('am', ''), // Amharic
+        Locale('om', ''), // Afaan Oromoo
+        Locale('ti', ''), // Tigrinya
       ],
       builder: (context, child) {
         return MediaQuery(

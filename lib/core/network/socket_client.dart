@@ -5,15 +5,16 @@ import '../config/env.dart';
 import '../storage/secure_storage_service.dart';
 import '../utils/logger.dart';
 
-/// Socket.IO client for real-time communication
+/// Socket.IO client for real-time communication aligned with backend WebSocket server
 class SocketClient {
-  late IO.Socket _socket;
+  IO.Socket? _socket;
   final SecureStorageService _storage;
   bool _isConnected = false;
   bool _isConnecting = false;
   
+  final List<String> _subscribedWoredas = [];
   final List<String> _subscribedChannels = [];
-  final Map<String, Function(dynamic)> _eventHandlers = {};
+  final Map<String, List<Function(dynamic)>> _eventHandlers = {};
 
   SocketClient(this._storage);
 
@@ -34,12 +35,14 @@ class SocketClient {
             .enableReconnection()
             .setReconnectionAttempts(AppEnv.socketReconnectAttempts)
             .setReconnectionDelay(AppEnv.socketReconnectDelay)
+            .setReconnectionDelayMax(10000)
+            .setRandomizationFactor(0.5)
             .setAuth({'token': token})
             .build(),
       );
 
       _setupEventHandlers();
-      _socket.connect();
+      _socket?.connect();
       
       AppLogger.info('Socket connecting to ${AppEnv.socketBaseUrl}');
     } catch (e, stackTrace) {
@@ -50,37 +53,53 @@ class SocketClient {
 
   /// Setup socket event handlers
   void _setupEventHandlers() {
-    _socket.onConnect((_) {
+    final socket = _socket;
+    if (socket == null) return;
+
+    socket.onConnect((_) {
       _isConnected = true;
       _isConnecting = false;
       AppLogger.info('Socket connected');
       
-      // Re-subscribe to channels after reconnection
-      for (final channel in _subscribedChannels) {
-        _socket.emit('join', channel);
+      // Re-subscribe to woreda rooms
+      for (final woredaId in _subscribedWoredas) {
+        socket.emit('subscribe:woreda', woredaId);
+        socket.emit('join', 'woreda:$woredaId');
       }
+
+      // Re-subscribe to other channels
+      for (final channel in _subscribedChannels) {
+        socket.emit('join', channel);
+      }
+
+      // Re-attach registered handlers
+      _eventHandlers.forEach((event, handlers) {
+        for (final handler in handlers) {
+          socket.on(event, handler);
+        }
+      });
     });
 
-    _socket.onDisconnect((_) {
+    socket.onDisconnect((_) {
       _isConnected = false;
       AppLogger.warning('Socket disconnected');
     });
 
-    _socket.onConnectError((error) {
+    socket.onConnectError((error) {
       _isConnected = false;
       _isConnecting = false;
       AppLogger.error('Socket connection error', error);
     });
 
-    _socket.onReconnect((attemptNumber) {
+    socket.onReconnect((attemptNumber) {
       AppLogger.info('Socket reconnected after $attemptNumber attempts');
     });
 
-    _socket.onReconnectError((error) {
+    socket.onReconnectError((error) {
       AppLogger.error('Socket reconnection error', error);
     });
 
-    _socket.onReconnectFailed((_) {
+    socket.onReconnectFailed((_) {
       _isConnected = false;
       _isConnecting = false;
       AppLogger.error('Socket reconnection failed');
@@ -89,106 +108,88 @@ class SocketClient {
 
   /// Subscribe to woreda-specific alerts and updates
   void subscribeToWoreda(String woredaId) {
-    if (!_isConnected) {
-      AppLogger.warning('Cannot subscribe - socket not connected');
-      return;
+    if (!_subscribedWoredas.contains(woredaId)) {
+      _subscribedWoredas.add(woredaId);
     }
-
     final channel = 'woreda:$woredaId';
     if (!_subscribedChannels.contains(channel)) {
       _subscribedChannels.add(channel);
-      _socket.emit('join', channel);
-      AppLogger.info('Subscribed to $channel');
+    }
+    if (_isConnected && _socket != null) {
+      _socket!.emit('subscribe:woreda', woredaId);
+      _socket!.emit('join', channel);
+      AppLogger.info('Subscribed to woreda: $woredaId');
     }
   }
 
   /// Unsubscribe from woreda updates
   void unsubscribeFromWoreda(String woredaId) {
-    if (!_isConnected) return;
-
+    _subscribedWoredas.remove(woredaId);
     final channel = 'woreda:$woredaId';
     _subscribedChannels.remove(channel);
-    _socket.emit('leave', channel);
-    AppLogger.info('Unsubscribed from $channel');
+    if (_isConnected && _socket != null) {
+      _socket!.emit('leave', channel);
+      AppLogger.info('Unsubscribed from $channel');
+    }
   }
 
-  /// Listen for alerts
+  /// Listen for emergency and standard alerts
   void onAlert(Function(dynamic) callback) {
-    if (!_isConnected) {
-      _eventHandlers['alert'] = callback;
-      return;
-    }
-    
-    _socket.on('alert', callback);
-    _eventHandlers['alert'] = callback;
+    on('emergency:alert', callback);
+    on('alert', callback);
   }
 
-  /// Listen for risk updates
+  /// Listen for risk assessment updates
   void onRiskUpdate(Function(dynamic) callback) {
-    if (!_isConnected) {
-      _eventHandlers['risk_update'] = callback;
-      return;
-    }
-    
-    _socket.on('risk_update', callback);
-    _eventHandlers['risk_update'] = callback;
+    on('risk:update', callback);
+    on('risk_update', callback);
   }
 
   /// Listen for weather updates
   void onWeatherUpdate(Function(dynamic) callback) {
-    if (!_isConnected) {
-      _eventHandlers['weather_update'] = callback;
-      return;
-    }
-    
-    _socket.on('weather_update', callback);
-    _eventHandlers['weather_update'] = callback;
+    on('weather:update', callback);
+    on('weather_update', callback);
   }
 
-  /// Listen for sensor data
+  /// Listen for sensor telemetry
   void onSensorData(Function(dynamic) callback) {
-    if (!_isConnected) {
-      _eventHandlers['sensor_data'] = callback;
-      return;
-    }
-    
-    _socket.on('sensor_data', callback);
-    _eventHandlers['sensor_data'] = callback;
+    on('sensor:reading', callback);
+    on('sensor_data', callback);
   }
 
   /// Send acknowledgment for received alert
   void acknowledgeAlert(String alertId) {
-    if (_isConnected) {
-      _socket.emit('acknowledge_alert', {'alertId': alertId});
+    if (_isConnected && _socket != null) {
+      _socket!.emit('acknowledge_alert', {'alertId': alertId});
     }
   }
 
   /// Request real-time updates for specific farm
   void requestFarmUpdates(String farmId) {
-    if (_isConnected) {
-      _socket.emit('subscribe_farm', {'farmId': farmId});
+    if (_isConnected && _socket != null) {
+      _socket!.emit('subscribe_farm', {'farmId': farmId});
     }
   }
 
   /// Stop farm updates
   void stopFarmUpdates(String farmId) {
-    if (_isConnected) {
-      _socket.emit('unsubscribe_farm', {'farmId': farmId});
+    if (_isConnected && _socket != null) {
+      _socket!.emit('unsubscribe_farm', {'farmId': farmId});
     }
   }
 
   /// Listen for a generic event by name
   void on(String event, Function(dynamic) callback) {
-    _eventHandlers[event] = callback;
-    if (_isConnected) {
-      _socket.on(event, callback);
+    _eventHandlers.putIfAbsent(event, () => []).add(callback);
+    if (_isConnected && _socket != null) {
+      _socket!.on(event, callback);
     }
   }
 
   /// Remove a specific event listener by name
   void off(String event) {
-    if (_isConnected) {
-      _socket.off(event);
+    if (_isConnected && _socket != null) {
+      _socket!.off(event);
     }
     _eventHandlers.remove(event);
   }
@@ -200,11 +201,16 @@ class SocketClient {
 
   /// Disconnect socket
   void disconnect() {
-    if (_socket.connected) {
-      _socket.disconnect();
+    if (_socket != null) {
+      try {
+        if (_socket!.connected) {
+          _socket!.disconnect();
+        }
+      } catch (_) {}
     }
     _isConnected = false;
     _isConnecting = false;
+    _subscribedWoredas.clear();
     _subscribedChannels.clear();
     _eventHandlers.clear();
     AppLogger.info('Socket disconnected');

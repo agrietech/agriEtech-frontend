@@ -1,10 +1,4 @@
-///
-/// @file app_localizations.dart
-/// @description Localization helper contracts.
-/// @author Localization Developer
-///
+/// Localization helper contracts and export bridge
 library app_localizations;
 
-class AppLocalizations {
-  // TODO: Bind generated Arb localizations
-}
+export '../l10n/app_localizations.dart';
