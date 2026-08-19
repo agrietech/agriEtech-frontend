@@ -15,8 +15,8 @@ class AlertsInboxScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      appBar: AppBar(title: Text('ALERTS')),
-      body: Center(child: Text('alerts_inbox_screen - Pending Team Assignment')),
+      appBar: AppBar(title: const Text('ALERTS')),
+      body: const Center(child: Text('alerts_inbox_screen - Pending Team Assignment')),
     );
   }
 }
