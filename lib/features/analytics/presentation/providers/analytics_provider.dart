@@ -1,10 +1,4 @@
-///
-/// @file analytics_provider.dart
-/// @feature analytics
-/// @description Riverpod StateNotifier / AsyncNotifier provider for analytics.
-/// @author State Management Developer (analytics)
-///
+/// Feature-level analytics provider — re-exports core analytics providers
 library analytics_provider;
 
-
-// TODO: Define StateNotifierProvider or AsyncNotifierProvider for analytics
+export '../../../../core/repositories/analytics_repository.dart';
