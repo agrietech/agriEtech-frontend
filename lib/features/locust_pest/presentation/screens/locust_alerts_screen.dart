@@ -15,8 +15,8 @@ class LocustAlertsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      appBar: AppBar(title: Text('LOCUSTPEST')),
-      body: Center(child: Text('locust_alerts_screen - Pending Team Assignment')),
+      appBar: AppBar(title: const Text('LOCUSTPEST')),
+      body: const Center(child: Text('locust_alerts_screen - Pending Team Assignment')),
     );
   }
 }
