@@ -1,11 +1,20 @@
-///
-/// @file region_model.dart
-/// @feature boundaries
-/// @description Data model and JSON deserialization contracts for boundaries.
-/// @author Feature Developer (boundaries)
-///
+/// Region model matching backend /api/v1/boundaries/regions
 library region_model;
 
 class RegionModel {
-  // TODO: Define model fields and fromJson/toJson factory methods
+  final String id;
+  final String nameEn;
+  final String nameAm;
+  final String code;
+
+  RegionModel({required this.id, required this.nameEn, required this.nameAm, required this.code});
+
+  factory RegionModel.fromJson(Map<String, dynamic> json) => RegionModel(
+    id: json['id'] as String? ?? '',
+    nameEn: (json['nameEn'] ?? json['name'] ?? '') as String,
+    nameAm: (json['nameAm'] ?? json['nameEn'] ?? json['name'] ?? '') as String,
+    code: json['code'] as String? ?? '',
+  );
+
+  String localizedName(String lang) => lang == 'am' ? nameAm : nameEn;
 }
