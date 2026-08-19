@@ -1,11 +1,11 @@
 {
-    "name": "agrietech_ewa_app",
-    "short_name": "agrietech_ewa_app",
+    "name": "agriEtech",
+    "short_name": "agriEtech",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#2E7D32",
+    "theme_color": "#2E7D32",
+    "description": "AgriEtech Multi-Hazard Early Warning Platform",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
