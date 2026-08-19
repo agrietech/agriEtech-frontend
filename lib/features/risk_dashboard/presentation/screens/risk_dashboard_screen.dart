@@ -15,8 +15,8 @@ class RiskDashboardScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      appBar: AppBar(title: Text('RISKDASHBOARD')),
-      body: Center(child: Text('risk_dashboard_screen - Pending Team Assignment')),
+      appBar: AppBar(title: const Text('RISKDASHBOARD')),
+      body: const Center(child: Text('risk_dashboard_screen - Pending Team Assignment')),
     );
   }
 }
