@@ -15,8 +15,8 @@ class DroughtRiskScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      appBar: AppBar(title: Text('DROUGHT')),
-      body: Center(child: Text('drought_risk_screen - Pending Team Assignment')),
+      appBar: AppBar(title: const Text('DROUGHT')),
+      body: const Center(child: Text('drought_risk_screen - Pending Team Assignment')),
     );
   }
 }
