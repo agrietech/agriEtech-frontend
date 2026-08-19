@@ -1,11 +1,4 @@
-///
-/// @file farm_model.dart
-/// @feature farms
-/// @description Data model and JSON deserialization contracts for farms.
-/// @author Feature Developer (farms)
-///
+/// Feature-level farm model — re-exports core FarmModel
 library farm_model;
 
-class FarmModel {
-  // TODO: Define model fields and fromJson/toJson factory methods
-}
+export '../../../../core/models/farm_model.dart';
