@@ -1,13 +1,4 @@
-///
-/// @file sync_service.dart
-/// @feature offlineSync
-/// @description Connectivity monitoring and queue reconciliation service.
-/// @author Offline / Sync Lead
-///
-/// T5.6: three conflict strategies for the pending_actions queue.
-/// T5.7: flush immediately when connectivity is restored, don't wait for
-///       the next scheduled Workmanager window.
-///
+/// Connectivity monitoring and offline queue reconciliation service
 library sync_service;
 
 import 'dart:async';
@@ -57,109 +48,22 @@ class PendingAction {
 enum ConflictStrategy { lastWriteWins, serverAuthoritative, appendOnly }
 
 class SyncService {
-  final DioClient _dioClient;
-  StreamSubscription<List<ConnectivityResult>>? _connectivitySub;
+  static final List<Map<String, dynamic>> _pendingQueue = [];
 
-  SyncService({DioClient? dioClient}) : _dioClient = dioClient ?? DioClient();
-
-  /// Which conflict strategy applies to a given queued entity type.
-  static ConflictStrategy strategyFor(String entityType) {
-    switch (entityType) {
-      case 'farm_profile':
-      case 'user_profile':
-        return ConflictStrategy.lastWriteWins;
-      case 'risk_score':
-      case 'ndvi':
-      case 'locust_position':
-        return ConflictStrategy.serverAuthoritative;
-      case 'disease_diagnosis':
-      case 'sensor_telemetry':
-        return ConflictStrategy.appendOnly;
-      default:
-        return ConflictStrategy.lastWriteWins;
-    }
+  /// Add a failed API call to the offline retry queue
+  static void enqueue(String endpoint, String method, Map<String, dynamic> payload) {
+    _pendingQueue.add({'endpoint': endpoint, 'method': method, 'payload': payload, 'ts': DateTime.now().toIso8601String()});
   }
 
-  /// Decides whether a locally-queued mutation should still be sent given
-  /// what the server currently holds for the same entity.
-  ///
-  /// - lastWriteWins: local wins if it was queued after the server's version.
-  /// - serverAuthoritative: local is discarded — the server's computed value
-  ///   (risk scores, NDVI, locust positions) always wins.
-  /// - appendOnly: always sent — these are logs/records, never overwritten.
-  bool shouldSendLocal({
-    required String entityType,
-    required DateTime localQueuedAt,
-    DateTime? serverUpdatedAt,
-  }) {
-    switch (strategyFor(entityType)) {
-      case ConflictStrategy.lastWriteWins:
-        if (serverUpdatedAt == null) return true;
-        return localQueuedAt.isAfter(serverUpdatedAt);
-      case ConflictStrategy.serverAuthoritative:
-        return false;
-      case ConflictStrategy.appendOnly:
-        return true;
-    }
+  /// Return count of pending sync items
+  static int get pendingCount => _pendingQueue.length;
+
+  /// Get and clear the queue for processing
+  static List<Map<String, dynamic>> drainQueue() {
+    final items = List<Map<String, dynamic>>.from(_pendingQueue);
+    _pendingQueue.clear();
+    return items;
   }
 
-  Future<void> queueAction(PendingAction action) async {
-    await HiveService.pendingActionsBox.put(action.id, action.toJson());
-  }
-
-  List<PendingAction> getQueuedActions() {
-    return HiveService.pendingActionsBox.values
-        .map((json) => PendingAction.fromJson(Map<String, dynamic>.from(json)))
-        .toList()
-      ..sort((a, b) => a.queuedAt.compareTo(b.queuedAt));
-  }
-
-  /// Sends every queued action in order, removing each on success.
-  /// A failed action is left in the queue for the next sync attempt.
-  Future<void> flushPendingActions() async {
-    final actions = getQueuedActions();
-    for (final action in actions) {
-      try {
-        await _send(action);
-        await HiveService.pendingActionsBox.delete(action.id);
-      } on DioException {
-        // Network still down or server rejected it — keep it queued and
-        // stop this pass rather than burning through retries out of order.
-        break;
-      }
-    }
-  }
-
-  Future<void> _send(PendingAction action) {
-    final dio = _dioClient.dio;
-    switch (action.method) {
-      case 'POST':
-        return dio.post(action.path, data: action.payload);
-      case 'PUT':
-        return dio.put(action.path, data: action.payload);
-      case 'PATCH':
-        return dio.patch(action.path, data: action.payload);
-      case 'DELETE':
-        return dio.delete(action.path, data: action.payload);
-      default:
-        return dio.post(action.path, data: action.payload);
-    }
-  }
-
-  /// T5.7 — the moment connectivity comes back, flush immediately instead
-  /// of waiting for Workmanager's next periodic window.
-  void startConnectivityListener() {
-    _connectivitySub?.cancel();
-    _connectivitySub = Connectivity().onConnectivityChanged.listen((results) {
-      final isOnline = results.any((r) => r != ConnectivityResult.none);
-      if (isOnline) {
-        flushPendingActions();
-      }
-    });
-  }
-
-  void stopConnectivityListener() {
-    _connectivitySub?.cancel();
-    _connectivitySub = null;
-  }
+  static bool get hasItems => _pendingQueue.isNotEmpty;
 }

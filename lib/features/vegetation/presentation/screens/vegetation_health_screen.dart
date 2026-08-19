@@ -15,8 +15,8 @@ class VegetationHealthScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      appBar: AppBar(title: Text('VEGETATION')),
-      body: Center(child: Text('vegetation_health_screen - Pending Team Assignment')),
+      appBar: AppBar(title: const Text('VEGETATION')),
+      body: const Center(child: Text('vegetation_health_screen - Pending Team Assignment')),
     );
   }
 }

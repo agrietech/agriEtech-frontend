@@ -1,6 +1,6 @@
 # AgriEtech Frontend Architecture Guide
 
-This document outlines the technical architecture, design patterns, state management, offline-first persistence, and remote communication layer for the AgriEtech Flutter mobile client.
+This document outlines the technical architecture, design patterns, state management, offline-first persistence, role-based access control, and remote communication layer for the **agriEtech** Flutter mobile and web client.
 
 ---
 
@@ -8,73 +8,83 @@ This document outlines the technical architecture, design patterns, state manage
 
 | Layer | Technology | Version | Purpose |
 |---|---|---|---|
-| **Framework** | Flutter | >= 3.0.0 | Cross-platform mobile UI for Android & iOS |
-| **Language** | Dart | >= 3.0.0 | Type-safe application logic with null-safety |
-| **State Management** | Riverpod 2.x | ^2.5.1 | Reactive, testable state with `AsyncNotifier` |
-| **Navigation** | GoRouter | ^14.0.1 | Declarative routing with nested shell navigation |
-| **HTTP Client** | Dio | ^5.4.3 | Interceptor-capable networking with JWT handling |
+| **Framework** | Flutter | >= 3.0.0 | Cross-platform UI for Android, iOS, Web, and Desktop |
+| **Language** | Dart | >= 3.0.0 | Type-safe application logic with sound null-safety |
+| **State Management** | Riverpod 2.x | ^2.6.1 | Reactive, testable state with `AsyncNotifier` & `StateNotifierProvider` |
+| **Navigation** | GoRouter | ^14.0.1 | Declarative routing with nested shell navigation & auth guards |
+| **HTTP Client** | Dio | ^5.4.3 | Interceptor-capable networking with JWT handling & auto-retry |
 | **Local Database** | Hive | ^2.2.3 | Offline-first high-speed NoSQL key-value cache |
-| **Secure Storage** | flutter_secure_storage | ^9.0.0 | Encrypted keystore storage for auth tokens |
-| **Maps** | flutter_map + latlong2 | ^6.1.0 | OpenStreetMap tile rendering & polygon drawing |
-| **Charts** | fl_chart | ^0.68.0 | Interactive meteograms, hydrographs & gauges |
-| **Background Sync** | Workmanager | ^0.5.2 | Periodic offline queue sync in background |
-| **Connectivity** | connectivity_plus | ^5.0.2 | Real-time network reachability detection |
-| **Real-Time Stream** | socket_io_client | ^2.0.3 | WebSocket push alerts & woreda live streams |
+| **Secure Storage** | flutter_secure_storage | ^9.0.0 | Encrypted keystore storage for auth tokens & credentials |
+| **Maps** | flutter_map + latlong2 | ^6.1.0 | OpenStreetMap tile rendering, polygon drawing & geofencing |
+| **Charts** | fl_chart | ^0.68.0 | Interactive meteograms, hydrographs, telemetry & gauges |
+| **Background Sync** | Workmanager | ^0.5.2 | Periodic offline queue synchronization in background |
+| **Connectivity** | connectivity_plus | ^5.0.2 | Real-time network reachability detection & sync trigger |
+| **Real-Time Stream** | socket_io_client | ^3.0.2 | WebSocket push alerts, sensor telemetry & Woreda live streams |
 | **Localization** | intl + Flutter Gen | ^0.20.2 | Bilingual (Amharic & English) string management |
 
 ---
 
 ## 2. Clean Architecture Pattern
 
-AgriEtech follows Clean Architecture with strict separation of concerns across 3 primary layers:
+**agriEtech** adheres strictly to Clean Architecture principles with decoupled boundaries across four primary architectural layers:
 
 ```mermaid
 graph TB
-    subgraph Presentation["Presentation Layer (UI)"]
+    subgraph Presentation["Presentation Layer (UI & State)"]
         direction LR
-        SC["Screens<br/>(Full-page widgets)"]
-        WG["Widgets<br/>(Reusable components)"]
-        PR["Providers<br/>(Riverpod AsyncNotifiers)"]
+        SC["Screens<br/>(Full-Page Views)"]
+        WG["Widgets<br/>(Reusable Components)"]
+        PR["Providers<br/>(Riverpod AsyncNotifiers & StateNotifiers)"]
     end
 
-    subgraph Domain["Domain Layer (Business Logic)"]
-        SV["Services & Use Cases<br/>(Validation & Transformations)"]
+    subgraph Domain["Domain Layer (Entities & Rules)"]
+        MD["Models / Entities<br/>(Immutable DTOs)"]
+        RU["RoleUtils & Policies<br/>(Permission Checking)"]
+        UT["Formatters & Validators<br/>(Ethiopian Calendar & GPS)"]
     end
 
-    subgraph Data["Data Layer (Persistence & API)"]
-        MD["Models / DTOs<br/>(JSON Serializable)"]
+    subgraph Data["Data Layer (Repositories & Data Sources)"]
         RP["Repositories<br/>(Cache-First Orchestration)"]
+        DIO["Dio HTTP Client (REST)"]
+        WS["SocketClient (WebSocket)"]
+        HIV["Hive NoSQL Cache"]
+        SEC["Secure Storage (Encrypted Tokens)"]
     end
 
-    subgraph Infrastructure["Core Infrastructure Layer"]
-        DIO["Dio HTTP Client"]
-        HIV["Hive NoSQL Cache"]
-        SEC["Secure Storage"]
-        RTR["GoRouter"]
-        WKM["Workmanager Worker"]
+    subgraph Infrastructure["Core Infrastructure & Platforms"]
+        RTR["GoRouter Navigation Shell"]
+        WKM["Workmanager Background Tasks"]
+        L10N["Bilingual L10n (English / Amharic)"]
+        THM["AppTheme (Forest Green M3)"]
     end
 
     SC --> PR
     WG --> PR
-    PR --> SV
-    SV --> RP
+    PR --> RP
     RP --> MD
     RP --> DIO
+    RP --> WS
     RP --> HIV
     RP --> SEC
+    PR --> RU
+    PR --> UT
+    SC --> RTR
+    SC --> L10N
+    SC --> THM
 ```
 
-### Dependency Rules:
-1. **Screens & Widgets** depend solely on **Providers** via `WidgetRef.watch()` or `WidgetRef.read()`.
-2. **Providers** call **Services** or **Repositories**. They never instantiate HTTP clients directly.
-3. **Repositories** encapsulate data fetching policies (Cache-First -> Network -> Update Cache).
-4. **Models** are immutable data transfer objects with zero framework dependencies.
+### Architectural Principles & Dependency Rules:
+1. **Unidirectional Data Flow**: Data flows upward from Repositories → Providers → UI Screens. User actions flow downward via Provider methods.
+2. **Provider Isolation**: UI Screens and Widgets depend solely on Riverpod providers via `ref.watch()` or `ref.read()`. Direct HTTP or database operations inside widgets are forbidden.
+3. **Repository Pattern (Cache-First)**: Repositories orchestrate between remote REST/WebSocket services and local Hive cache. Cache is checked first for sub-16ms instant screen rendering before network dispatch.
+4. **Role-Based Access Control (RBAC)**: All sensitive operations, screens, and actions are guarded by `RoleUtils` evaluating the 5 user roles (`FARMER`, `DEVELOPMENT_AGENT`, `WOREDA_OFFICER`, `RESEARCHER`, `ADMIN`).
+5. **Brand Identity**: UI follows the unified 3-segment **agriEtech** typography and Forest Green (`#2E7D32` / `#1B5E20`) design tokens.
 
 ---
 
 ## 3. Reactive State Management (Riverpod 2.x)
 
-All asynchronous data flows use Riverpod 2.x `AsyncNotifierProvider` to maintain structured `AsyncValue` lifecycle states (`AsyncLoading`, `AsyncData`, `AsyncError`).
+Data loading and mutations utilize Riverpod 2.x `AsyncNotifier` and `StateNotifier` to maintain structured `AsyncValue` lifecycle states (`AsyncLoading`, `AsyncData`, `AsyncError`).
 
 ```mermaid
 flowchart LR
@@ -83,46 +93,51 @@ flowchart LR
     end
 
     subgraph Riverpod["Riverpod State Layer"]
-        Provider["AsyncNotifierProvider"]
-        Notifier["AsyncNotifier"]
+        Provider["StateNotifierProvider / AsyncNotifierProvider"]
+        Notifier["StateNotifier / AsyncNotifier"]
     end
 
-    subgraph Data["Data Layer"]
+    subgraph DataLayer["Data Layer"]
         Repo["FeatureRepository"]
         Cache["Hive Cache"]
-        Remote["REST API (Dio)"]
+        Remote["REST API (Dio) / WebSocket"]
     end
 
     Screen -->|"ref.watch()"| Provider
     Provider --> Notifier
     Notifier -->|"1. Read Local"| Repo
-    Repo -->|"Instant Cache"| Cache
+    Repo -->|"Instant Response"| Cache
     Notifier -->|"2. Fetch Fresh"| Repo
     Repo -->|"Network Request"| Remote
     Remote -->|"Write Cache"| Cache
     Notifier -->|"Emit AsyncData"| Screen
 ```
 
-### Standard Provider Pattern:
+### Standard Repository Pattern Implementation:
 ```dart
-// Provider Definition
-final weatherProvider = AsyncNotifierProvider<WeatherNotifier, WeatherState>(
-  WeatherNotifier.new,
-);
+// Example: Cache-First Farm Repository
+class FarmRepository {
+  final DioClient _dioClient;
+  final HiveService _hiveService;
 
-// Notifier Implementation
-class WeatherNotifier extends AsyncNotifier<WeatherState> {
-  @override
-  Future<WeatherState> build() async {
-    final repository = ref.read(weatherRepositoryProvider);
-    return repository.getForecast();
-  }
+  FarmRepository(this._dioClient, this._hiveService);
 
-  Future<void> refresh() async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(
-      () => ref.read(weatherRepositoryProvider).getForecast(forceRefresh: true),
-    );
+  Future<List<FarmModel>> getFarms({bool forceRefresh = false}) async {
+    // 1. Return cached data immediately if available and fresh
+    if (!forceRefresh) {
+      final cached = _hiveService.getFarms();
+      if (cached.isNotEmpty) return cached;
+    }
+
+    // 2. Fetch fresh data from backend
+    final response = await _dioClient.get('/farms');
+    final farms = (response.data as List)
+        .map((json) => FarmModel.fromJson(json))
+        .toList();
+
+    // 3. Cache locally in Hive
+    await _hiveService.saveFarms(farms);
+    return farms;
   }
 }
 ```
@@ -131,48 +146,56 @@ class WeatherNotifier extends AsyncNotifier<WeatherState> {
 
 ## 4. Low-Connectivity & Offline-First Strategy
 
-Smallholder farmers in rural Ethiopia frequently operate in regions with poor or zero connectivity. The application implements an aggressive **Cache-First** strategy:
+Smallholder farmers and field agents in rural Ethiopia frequently operate in low or zero connectivity zones. **agriEtech** applies an offline-first architecture:
 
 ```mermaid
 flowchart TD
-    A["User Opens Screen"] --> B{"Hive Cache<br/>Has Data?"}
+    A["User Opens Screen / Performs Action"] --> B{"Hive Cache<br/>Has Data?"}
     B -->|Yes| C["Render from Hive<br/>(< 16ms, Zero Blank Screen)"]
-    B -->|No| D["Display Shimmer Skeleton"]
+    B -->|No| D["Display Shimmer Skeleton Loading"]
 
     C --> E{"Network<br/>Available?"}
     D --> E
 
     E -->|Yes| F["Fetch Fresh Data via Dio"]
-    E -->|No| G["Show Offline Badge with Last Synced Timestamp"]
+    E -->|No| G["Show Offline Indicator with Last Synced Time"]
 
     F --> H["Update Hive Box"]
-    H --> I["Emit Updated AsyncData to UI"]
+    H --> I["Emit Updated Data to UI"]
 
-    G --> J["Queue Offline Action to 'pending_actions' Box"]
+    G --> J["Queue Offline Action into 'pending_actions' Box"]
     J --> K["Workmanager Background Task"]
     K -->|Connectivity Restored| L["Flush Queue to Backend API"]
 ```
 
-### Hive Box Storage Strategy:
+### Hive Box Storage Matrix:
 
-| Box Name | Data Cached | TTL | Refresh Trigger |
+| Box Name | Cached Domain | TTL | Sync Policy |
 |---|---|---|---|
-| `weather_cache` | 16-day forecasts, hourly temperatures | 1 hour | App foreground, pull-to-refresh |
-| `risk_cache` | Composite Woreda risk score | 4 hours | Background sync worker / push event |
-| `farms_cache` | Farm polygons, area, crop details | 24 hours | On farm creation / edit |
-| `alerts_cache` | Advisory warnings & push notifications | 7 days | WebSocket stream / FCM push |
-| `boundary_cache` | Region / Zone / Woreda hierarchies | 30 days | Initial setup / app update |
-| `pending_actions`| Queued offline farm additions & reports | Until Synced | Workmanager network callback |
+| `weather_cache` | 16-day forecasts, hourly temperatures | 1 hour | Pull-to-refresh & app foreground |
+| `risk_cache` | Composite Woreda risk score & hazard indices | 4 hours | Push event & background worker |
+| `farms_cache` | Farm polygons, GPS coordinates, crop metadata | 24 hours | On CRUD mutation / manual refresh |
+| `alerts_cache` | Active advisories, severity levels, notifications | 7 days | WebSocket stream & FCM push |
+| `sensors_cache` | Sensor telemetry history & battery levels | 12 hours | WebSocket telemetry stream |
+| `boundary_cache` | Region → Zone → Woreda administrative hierarchy | 30 days | Setup / periodic update |
+| `pending_actions`| Offline mutations (farm creation, diagnosis, reports)| Persistent | Flushed on connectivity restore |
 
 ### Conflict Resolution Strategy:
-1. **Last-Write-Wins**: Applied to user profile details and farm metadata.
-2. **Server-Authoritative**: Applied to composite risk scores, satellite NDVI observations, and locust positions.
-3. **Append-Only**: Applied to offline disease diagnosis records and sensor telemetry.
+1. **Last-Write-Wins**: User profile information and farm metadata.
+2. **Server-Authoritative**: Composite risk scores, satellite NDVI, FAO locust swarm coordinates, and meteorological models.
+3. **Append-Only**: Disease diagnosis submissions and sensor telemetry readings.
 
 ---
 
-## 5. Network & Security Architecture
+## 5. Authentication, Security & RBAC
 
-- **Dio Client**: Pre-configured with 15-second timeouts, global error interceptor, and automatic token attachment.
-- **JWT Authentication**: Access tokens are stored in `FlutterSecureStorage` and automatically attached via `ApiInterceptors`.
-- **WebSocket Streaming**: Socket.IO client connects to woreda-specific broadcast channels (`/risk-assessments`, `/alerts`) for real-time push advisories without polling.
+- **JWT Authentication**: Supports login via **Username or Email** alongside secure password authentication.
+- **Token Lifecycle**: Short-lived JWT access tokens + refresh tokens stored securely in `FlutterSecureStorage`.
+- **Automatic Interception**: `ApiInterceptors` transparently attaches Bearer tokens and handles token refresh upon `401 Unauthorized` responses.
+- **Forgot Password Flow**: Password reset request dialog integrated into the login screen with email token dispatch.
+- **Role Permissions Matrix**:
+  - `FARMER`: View local weather, manage owned farms, receive alerts, submit disease photos.
+  - `DEVELOPMENT_AGENT`: Register farmers, map farm GPS polygons, view sensor telemetry, create field reports.
+  - `WOREDA_OFFICER`: Broadcast Woreda-level alerts, view multi-hazard risk dashboards, manage woreda resources.
+  - `RESEARCHER`: Access climatology trends, NDVI analytics, export raw telemetry.
+  - `ADMIN`: User management, system configuration, boundary administration, full CRUD access.

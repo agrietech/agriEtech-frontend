@@ -1,11 +1,4 @@
-///
-/// @file farms_repository.dart
-/// @feature farms
-/// @description Repository layer fetching data via DioClient with Hive offline caching fallback.
-/// @author Feature Developer (farms)
-///
+/// Feature-level farms repository — re-exports core FarmRepository
 library farms_repository;
 
-class FarmsRepository {
-  // TODO: Implement remote API calls and local cache persistence
-}
+export '../../../../core/repositories/farm_repository.dart';
