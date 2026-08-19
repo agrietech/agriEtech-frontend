@@ -1,11 +1,4 @@
-///
-/// @file user_model.dart
-/// @feature auth
-/// @description Data model and JSON deserialization contracts for auth.
-/// @author Feature Developer (auth)
-///
+/// Re-exports core UserModel for feature-layer compatibility
 library user_model;
 
-class UserModel {
-  // TODO: Define model fields and fromJson/toJson factory methods
-}
+export '../../../../core/models/user_model.dart';

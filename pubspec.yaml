@@ -1,4 +1,4 @@
-name: agrietech_ewa_app
+name: agrietech
 description: "AgriEtech Multi-Hazard Early Warning Platform - Flutter Mobile Application"
 publish_to: 'none'
 version: 1.0.0+1
@@ -42,10 +42,12 @@ dependencies:
   # Media & Imaging
   image_picker: ^1.1.1
   cached_network_image: ^3.3.1
+  flutter_image_compress: ^2.3.0
 
   # Push Notifications
   firebase_core: ^2.30.1
   firebase_messaging: ^14.9.1
+  flutter_local_notifications: ^17.0.0
 
   # Permissions & System
   permission_handler: ^11.3.1
