@@ -1,11 +1,4 @@
-///
-/// @file analytics_repository.dart
-/// @feature analytics
-/// @description Repository layer fetching data via DioClient with Hive offline caching fallback.
-/// @author Feature Developer (analytics)
-///
+/// Feature-level analytics repository — re-exports core analytics
 library analytics_repository;
 
-class AnalyticsRepository {
-  // TODO: Implement remote API calls and local cache persistence
-}
+export '../../../../core/repositories/analytics_repository.dart';
