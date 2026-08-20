@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/models/farm_model.dart';
 import '../../farms/providers/farms_provider.dart';
 import '../models/diagnosis_models.dart';
@@ -39,106 +40,288 @@ class _CreateDiagnosisScreenState extends ConsumerState<CreateDiagnosisScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16.0),
           children: [
-            // Image Selection Card
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Plant Image',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 16),
-
-                    if (_selectedImage != null) ...[
-                      // Display selected image
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.file(
-                          _selectedImage!,
-                          width: double.infinity,
-                          height: 250,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Change image button
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton.icon(
-                          onPressed: () => _showImageSourceDialog(),
-                          icon: const Icon(Icons.image),
-                          label: const Text('Change Image'),
-                        ),
-                      ),
-                    ] else ...[
-                      // Image selection buttons
-                      Container(
-                        height: 200,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[100],
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.grey[300]!),
-                        ),
-                        child: Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.add_photo_alternate,
-                                size: 64,
-                                color: Colors.grey[400],
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                'Select an image to diagnose',
-                                style: TextStyle(
-                                  color: Colors.grey[600],
-                                  fontSize: 16,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-
+            // High-Tech AI Viewfinder Card
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.grey.shade200),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
                       Row(
                         children: [
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              onPressed: () => _pickImage(ImageSource.camera),
-                              icon: const Icon(Icons.camera_alt),
-                              label: const Text('Camera'),
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: AppTheme.secondaryColor.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8),
                             ),
+                            child: const Icon(Icons.biotech, color: AppTheme.secondaryColor, size: 18),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              onPressed: () => _pickImage(ImageSource.gallery),
-                              icon: const Icon(Icons.photo_library),
-                              label: const Text('Gallery'),
+                          const SizedBox(width: 8),
+                          Text(
+                            'AI Leaf Vision Input',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFF1E2E1E),
                             ),
                           ),
                         ],
                       ),
-
-                      if (_selectedImage == null) ...[
-                        const SizedBox(height: 8),
-                        Text(
-                          '* Image is required',
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Text(
+                          'MODEL v2.4 READY',
                           style: TextStyle(
-                            color: Colors.red[700],
-                            fontSize: 12,
+                            color: Color(0xFF10B981),
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  if (_selectedImage != null) ...[
+                    // Display selected image in a high-tech frame
+                    Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(14),
+                          child: Image.file(
+                            _selectedImage!,
+                            width: double.infinity,
+                            height: 250,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        // Scanner overlay grid
+                        Positioned.fill(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: AppTheme.secondaryColor.withValues(alpha: 0.8), width: 2),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          top: 10,
+                          left: 10,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.7),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.check_circle, color: Color(0xFF10B981), size: 12),
+                                SizedBox(width: 4),
+                                Text(
+                                  'IMAGE ACQUIRED',
+                                  style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ],
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Retake image button
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () => _showImageSourceDialog(),
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Retake or Choose Another Image'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppTheme.secondaryColor,
+                          side: const BorderSide(color: AppTheme.secondaryColor),
+                        ),
+                      ),
+                    ),
+                  ] else ...[
+                    // Futuristic Viewfinder Frame
+                    Container(
+                      height: 200,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [
+                            Color(0xFF0F172A),
+                            Color(0xFF1E293B),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: AppTheme.secondaryColor.withValues(alpha: 0.4)),
+                      ),
+                      child: Stack(
+                        children: [
+                          Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(14),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.secondaryColor.withValues(alpha: 0.2),
+                                    shape: BoxShape.circle,
+                                    border: Border.all(color: AppTheme.secondaryColor.withValues(alpha: 0.5)),
+                                  ),
+                                  child: const Icon(
+                                    Icons.camera_enhance_outlined,
+                                    size: 40,
+                                    color: Color(0xFF38BDF8),
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                const Text(
+                                  'Position Affected Plant Leaf',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'AI multi-spectrum pathology detection',
+                                  style: TextStyle(
+                                    color: Colors.grey.shade400,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          // Viewfinder corner marks
+                          Positioned(
+                            top: 12,
+                            left: 12,
+                            child: Container(
+                              width: 18,
+                              height: 18,
+                              decoration: const BoxDecoration(
+                                border: Border(
+                                  top: BorderSide(color: Color(0xFF38BDF8), width: 2.5),
+                                  left: BorderSide(color: Color(0xFF38BDF8), width: 2.5),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            top: 12,
+                            right: 12,
+                            child: Container(
+                              width: 18,
+                              height: 18,
+                              decoration: const BoxDecoration(
+                                border: Border(
+                                  top: BorderSide(color: Color(0xFF38BDF8), width: 2.5),
+                                  right: BorderSide(color: Color(0xFF38BDF8), width: 2.5),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: 12,
+                            left: 12,
+                            child: Container(
+                              width: 18,
+                              height: 18,
+                              decoration: const BoxDecoration(
+                                border: Border(
+                                  bottom: BorderSide(color: Color(0xFF38BDF8), width: 2.5),
+                                  left: BorderSide(color: Color(0xFF38BDF8), width: 2.5),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: 12,
+                            right: 12,
+                            child: Container(
+                              width: 18,
+                              height: 18,
+                              decoration: const BoxDecoration(
+                                border: Border(
+                                  bottom: BorderSide(color: Color(0xFF38BDF8), width: 2.5),
+                                  right: BorderSide(color: Color(0xFF38BDF8), width: 2.5),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () => _pickImage(ImageSource.camera),
+                            icon: const Icon(Icons.camera_alt),
+                            label: const Text('Live Camera'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.primaryColor,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () => _pickImage(ImageSource.gallery),
+                            icon: const Icon(Icons.photo_library),
+                            label: const Text('Upload Photo'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppTheme.primaryDark,
+                              side: BorderSide(color: Colors.grey.shade300),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    if (_selectedImage == null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        '* Leaf photo required for neural pathology scan',
+                        style: TextStyle(
+                          color: Colors.red.shade700,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
                     ],
                   ],
-                ),
+                ],
               ),
             ),
 

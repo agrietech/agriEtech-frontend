@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/role_utils.dart';
 import '../../../core/widgets/agrietech_logo.dart';
 import '../../auth/providers/auth_provider.dart';
@@ -11,8 +12,9 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
-    final userName = user?.fullName ?? 'User';
+    final userName = user?.fullName ?? 'Agricultural Leader';
     final userRole = RoleUtils.getRoleDisplayName(user?.role);
+    final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -21,26 +23,39 @@ class HomeScreen extends ConsumerWidget {
           showTagline: false,
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications_active_outlined),
+            tooltip: 'Alerts',
+            onPressed: () => context.push('/alerts'),
+          ),
           PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert),
+            icon: const Icon(Icons.account_circle_outlined),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             itemBuilder: (context) => <PopupMenuEntry<String>>[
-              const PopupMenuItem(
-                value: 'profile',
-                child: Row(
+              PopupMenuItem(
+                enabled: false,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.person),
-                    SizedBox(width: 8),
-                    Text('Profile'),
+                    Text(
+                      userName,
+                      style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
+                    ),
+                    Text(
+                      userRole,
+                      style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                    ),
+                    const Divider(),
                   ],
                 ),
               ),
               const PopupMenuItem(
-                value: 'settings',
+                value: 'profile',
                 child: Row(
                   children: [
-                    Icon(Icons.settings),
-                    SizedBox(width: 8),
-                    Text('Settings'),
+                    Icon(Icons.lock_outline, size: 20),
+                    SizedBox(width: 10),
+                    Text('Security & Password'),
                   ],
                 ),
               ),
@@ -49,9 +64,9 @@ class HomeScreen extends ConsumerWidget {
                 value: 'logout',
                 child: Row(
                   children: [
-                    Icon(Icons.logout, color: Colors.red),
-                    SizedBox(width: 8),
-                    Text('Logout', style: TextStyle(color: Colors.red)),
+                    Icon(Icons.logout, color: AppTheme.errorColor, size: 20),
+                    SizedBox(width: 10),
+                    Text('Logout', style: TextStyle(color: AppTheme.errorColor)),
                   ],
                 ),
               ),
@@ -73,135 +88,252 @@ class HomeScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Welcome Card
+            // High-Tech Hero Banner
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Theme.of(context).colorScheme.primary,
-                    Theme.of(context).colorScheme.primaryContainer,
-                  ],
-                ),
+              decoration: const BoxDecoration(
+                gradient: AppTheme.techHeaderGradient,
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Stack(
                 children: [
-                  Text(
-                    'Welcome back,',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: Colors.white,
-                        ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    userName,
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
+                  Positioned(
+                    right: -30,
+                    top: -20,
+                    child: Icon(
+                      Icons.satellite_alt,
+                      size: 160,
+                      color: Colors.white.withValues(alpha: 0.06),
                     ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Text(
-                      userRole,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Live Satellite Status Pill
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.3),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: AppTheme.telemetryNdvi.withValues(alpha: 0.5)),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    width: 7,
+                                    height: 7,
+                                    decoration: const BoxDecoration(
+                                      color: AppTheme.telemetryNdvi,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  const Text(
+                                    'SENTINEL-2 • LIVE TELEMETRY',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 0.8,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Spacer(),
+                            Text(
+                              userRole.toUpperCase(),
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.8),
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Welcome,',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.8),
+                            fontSize: 14,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                        Text(
+                          userName,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Agro-Intelligence Quick Telemetry Ribbon
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              _buildQuickTelemetryItem(
+                                icon: Icons.radar,
+                                label: 'Early Warning',
+                                status: 'Active',
+                                statusColor: AppTheme.telemetryNdvi,
+                              ),
+                              Container(height: 28, width: 1, color: Colors.white24),
+                              _buildQuickTelemetryItem(
+                                icon: Icons.sensors,
+                                label: 'IoT Sensors',
+                                status: 'Online',
+                                statusColor: const Color(0xFF38BDF8),
+                              ),
+                              Container(height: 28, width: 1, color: Colors.white24),
+                              _buildQuickTelemetryItem(
+                                icon: Icons.eco,
+                                label: 'Crop Health',
+                                status: 'Optimal',
+                                statusColor: AppTheme.telemetryNdvi,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
             ),
 
-            // Menu Grid
+            // Features Grid Section
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(18),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Features',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Agro-Intelligence Modules',
+                        style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
+                          color: const Color(0xFF1E2E1E),
                         ),
+                      ),
+                      TextButton.icon(
+                        onPressed: () => context.push('/dashboard'),
+                        icon: const Icon(Icons.speed, size: 16),
+                        label: const Text('Open Hub', style: TextStyle(fontSize: 12)),
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppTheme.primaryColor,
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   GridView.count(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     crossAxisCount: 2,
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 14,
+                    crossAxisSpacing: 14,
+                    childAspectRatio: 1.1,
                     children: [
-                      _buildMenuItem(
+                      _buildTechMenuCard(
                         context,
-                        'Dashboard',
-                        Icons.dashboard,
-                        '/dashboard',
-                        const Color(0xFF1B5E20),
+                        title: 'Operations Hub',
+                        subtitle: 'Live analytics & telemetry',
+                        badgeText: 'Live',
+                        badgeColor: AppTheme.primaryColor,
+                        icon: Icons.dashboard_outlined,
+                        route: '/dashboard',
+                        accentColor: AppTheme.primaryColor,
                       ),
                       if (RoleUtils.canManageFarms(user?.role))
-                        _buildMenuItem(
+                        _buildTechMenuCard(
                           context,
-                          'Farms',
-                          Icons.agriculture,
-                          '/farms',
-                          const Color(0xFF2E7D32),
+                          title: 'My Farms',
+                          subtitle: 'Geofencing & Parcels',
+                          badgeText: 'GIS',
+                          badgeColor: AppTheme.primaryDark,
+                          icon: Icons.agriculture_outlined,
+                          route: '/farms',
+                          accentColor: AppTheme.primaryDark,
                         ),
-                      _buildMenuItem(
+                      _buildTechMenuCard(
                         context,
-                        'Alerts',
-                        Icons.notifications_active,
-                        '/alerts',
-                        const Color(0xFFF57C00),
+                        title: 'Risk Command',
+                        subtitle: 'Multi-hazard spatial map',
+                        badgeText: 'Alerts',
+                        badgeColor: AppTheme.warningColor,
+                        icon: Icons.map_outlined,
+                        route: '/risk-map',
+                        accentColor: AppTheme.highRiskColor,
                       ),
-                      _buildMenuItem(
+                      _buildTechMenuCard(
                         context,
-                        'Risk Map',
-                        Icons.map,
-                        '/risk-map',
-                        const Color(0xFFD32F2F),
+                        title: 'AI Crop Vision',
+                        subtitle: 'Leaf disease scanner',
+                        badgeText: 'AI Model',
+                        badgeColor: AppTheme.secondaryColor,
+                        icon: Icons.biotech_outlined,
+                        route: '/diagnosis',
+                        accentColor: AppTheme.secondaryColor,
                       ),
-                      _buildMenuItem(
+                      _buildTechMenuCard(
                         context,
-                        'Diagnosis',
-                        Icons.biotech,
-                        '/diagnosis',
-                        const Color(0xFF00796B),
+                        title: 'Early Warnings',
+                        subtitle: 'Drought & locust alerts',
+                        badgeText: 'Realtime',
+                        badgeColor: AppTheme.tertiaryColor,
+                        icon: Icons.notifications_active_outlined,
+                        route: '/alerts',
+                        accentColor: AppTheme.tertiaryColor,
                       ),
-                      _buildMenuItem(
+                      _buildTechMenuCard(
                         context,
-                        'Sensors',
-                        Icons.sensors,
-                        '/sensors',
-                        const Color(0xFF388E3C),
+                        title: 'IoT Telemetry',
+                        subtitle: 'Soil NPK & moisture',
+                        badgeText: 'LoRaWAN',
+                        badgeColor: AppTheme.telemetrySensor,
+                        icon: Icons.sensors_outlined,
+                        route: '/sensors',
+                        accentColor: AppTheme.telemetrySensor,
                       ),
-                      _buildMenuItem(
+                      _buildTechMenuCard(
                         context,
-                        'Boundaries',
-                        Icons.public,
-                        '/boundaries',
-                        const Color(0xFF4CAF50),
+                        title: 'Boundaries & GIS',
+                        subtitle: 'Woreda parcel mapping',
+                        badgeText: 'Centroids',
+                        badgeColor: const Color(0xFF059669),
+                        icon: Icons.public_outlined,
+                        route: '/boundaries',
+                        accentColor: const Color(0xFF059669),
                       ),
                       if (RoleUtils.canViewAnalytics(user?.role))
-                        _buildMenuItem(
+                        _buildTechMenuCard(
                           context,
-                          'Analytics',
-                          Icons.analytics,
-                          '/analytics',
-                          const Color(0xFF43A047),
+                          title: 'Agro-Analytics',
+                          subtitle: 'Trends & harvest reports',
+                          badgeText: 'Insights',
+                          badgeColor: const Color(0xFF4338CA),
+                          icon: Icons.insights_outlined,
+                          route: '/analytics',
+                          accentColor: const Color(0xFF4338CA),
                         ),
                     ],
                   ),
@@ -214,44 +346,141 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildMenuItem(
-    BuildContext context,
-    String title,
-    IconData icon,
-    String route,
-    Color color,
-  ) {
-    return Card(
-      elevation: 2,
-      child: InkWell(
-        onTap: () => context.push(route),
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  icon,
-                  size: 40,
-                  color: color,
-                ),
+  Widget _buildQuickTelemetryItem({
+    required IconData icon,
+    required String label,
+    required String status,
+    required Color statusColor,
+  }) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 18, color: Colors.white.withValues(alpha: 0.9)),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.75),
+            fontSize: 10,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 5,
+              height: 5,
+              decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle),
+            ),
+            const SizedBox(width: 4),
+            Text(
+              status,
+              style: TextStyle(
+                color: statusColor,
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
               ),
-              const SizedBox(height: 12),
-              Text(
-                title,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTechMenuCard(
+    BuildContext context, {
+    required String title,
+    required String subtitle,
+    required String badgeText,
+    required Color badgeColor,
+    required IconData icon,
+    required String route,
+    required Color accentColor,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => context.push(route),
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: accentColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        icon,
+                        size: 24,
+                        color: accentColor,
+                      ),
                     ),
-                textAlign: TextAlign.center,
-              ),
-            ],
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: badgeColor.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        badgeText,
+                        style: TextStyle(
+                          color: badgeColor,
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1F2937),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey.shade600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),

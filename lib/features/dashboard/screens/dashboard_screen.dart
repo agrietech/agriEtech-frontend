@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/role_utils.dart';
 import '../models/dashboard_models.dart';
 import '../providers/dashboard_provider.dart';
 import '../widgets/risk_summary_card.dart';
@@ -120,9 +122,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Welcome header
+          // Welcome header with high-tech badge
           _buildWelcomeHeader(context, authState),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
+
+          // Agro-Intelligence Real-Time Telemetry Bar
+          _buildAgroTelemetryStrip(context, data),
+          const SizedBox(height: 16),
 
           // Last updated info
           if (state.lastUpdated != null)
@@ -130,15 +136,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               padding: const EdgeInsets.only(bottom: 12),
               child: Row(
                 children: [
-                  Icon(
-                    Icons.access_time,
+                  const Icon(
+                    Icons.sensors_outlined,
                     size: 14,
-                    color: theme.textTheme.bodySmall?.color,
+                    color: AppTheme.telemetrySensor,
                   ),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: 6),
                   Text(
-                    'Last updated: ${DateFormatter.formatRelativeTime(state.lastUpdated!)}',
-                    style: theme.textTheme.bodySmall,
+                    'Telemetry Sync: ${DateFormatter.formatRelativeTime(state.lastUpdated!)}',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: Colors.grey.shade700,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                   if (state.isRefreshing) ...[
                     const SizedBox(width: 8),
@@ -169,9 +178,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               children: [
                 WeatherSummaryCard(
                   weatherSummary: data.weatherSummary,
-                  onTap: () {
-                    // Navigate to weather details
-                  },
+                  onTap: () => context.push('/risk-map'),
                 ),
                 const SizedBox(height: 16),
               ],
@@ -191,7 +198,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             alerts: data.recentAlerts,
             onViewAll: () => context.push('/alerts'),
             onAlertTap: (alert) {
-              // Navigate to alert details
+              context.push('/alerts');
             },
           ),
           const SizedBox(height: 16),
@@ -208,25 +215,193 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
+  Widget _buildAgroTelemetryStrip(BuildContext context, DashboardData data) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [
+            Color(0xFF1E2E1E),
+            Color(0xFF0D2818),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: AppTheme.telemetryNdvi.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Icon(Icons.satellite_outlined, color: AppTheme.telemetryNdvi, size: 14),
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'SATELLITE & IOT TELEMETRY',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: AppTheme.telemetryNdvi.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppTheme.telemetryNdvi.withValues(alpha: 0.4)),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.circle, color: AppTheme.telemetryNdvi, size: 6),
+                    SizedBox(width: 4),
+                    Text(
+                      'HEALTHY',
+                      style: TextStyle(
+                        color: AppTheme.telemetryNdvi,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildTelemetryMetric(
+                label: 'NDVI Health',
+                value: '0.74',
+                unit: 'Index',
+                icon: Icons.eco,
+                color: AppTheme.telemetryNdvi,
+              ),
+              Container(height: 32, width: 1, color: Colors.white12),
+              _buildTelemetryMetric(
+                label: 'Soil Moisture',
+                value: '38.5',
+                unit: '% Vol',
+                icon: Icons.water_drop,
+                color: const Color(0xFF38BDF8),
+              ),
+              Container(height: 32, width: 1, color: Colors.white12),
+              _buildTelemetryMetric(
+                label: 'Drought Risk',
+                value: 'Low',
+                unit: 'Status',
+                icon: Icons.wb_sunny_outlined,
+                color: AppTheme.lowRiskColor,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTelemetryMetric({
+    required String label,
+    required String value,
+    required String unit,
+    required IconData icon,
+    required Color color,
+  }) {
+    return Column(
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: color),
+            const SizedBox(width: 4),
+            Text(
+              value,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 2),
+        Text(
+          '$label ($unit)',
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.65),
+            fontSize: 10,
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildWelcomeHeader(BuildContext context, AuthState authState) {
     final theme = Theme.of(context);
     final user = authState.user;
     final greeting = _getGreeting();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          '$greeting, ${user?.fullName ?? 'User'}',
-          style: theme.textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.bold,
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '$greeting, ${user?.fullName ?? 'User'}',
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF1E2E1E),
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                _getRoleDescription(authState),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: Colors.grey.shade600,
+                ),
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 4),
-        Text(
-          _getRoleDescription(authState),
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.textTheme.bodySmall?.color,
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            color: AppTheme.primaryColor.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.2)),
+          ),
+          child: Text(
+            RoleUtils.getRoleDisplayName(user?.role),
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.primaryDark,
+            ),
           ),
         ),
       ],

@@ -245,36 +245,90 @@ class _RiskMapScreenState extends ConsumerState<RiskMapScreen> {
 
     return Column(
       children: [
-        // Summary cards
+        // High-Tech Early Warning Radar Header
         Container(
-          padding: const EdgeInsets.all(16),
-          color: theme.primaryColor.withValues(alpha: 0.05),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+          ),
+          child: Column(
             children: [
-              _StatCard(
-                icon: Icons.assessment,
-                label: 'Total',
-                value: state.assessments.length.toString(),
-                color: theme.primaryColor,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(Icons.radar, size: 18, color: Color(0xFFD32F2F)),
+                      SizedBox(width: 6),
+                      Text(
+                        'MULTI-HAZARD EARLY WARNING',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.6,
+                          color: Color(0xFF1F2937),
+                        ),
+                      ),
+                    ],
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFEE2E2),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      '${state.riskLevelCounts['CRITICAL'] ?? 0} CRITICAL',
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFFDC2626),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              _StatCard(
-                icon: Icons.dangerous,
-                label: 'Critical',
-                value: state.riskLevelCounts['CRITICAL']?.toString() ?? '0',
-                color: Colors.red,
-              ),
-              _StatCard(
-                icon: Icons.error,
-                label: 'High',
-                value: state.riskLevelCounts['HIGH']?.toString() ?? '0',
-                color: Colors.deepOrange,
-              ),
-              _StatCard(
-                icon: Icons.warning,
-                label: 'Moderate',
-                value: state.riskLevelCounts['MODERATE']?.toString() ?? '0',
-                color: Colors.orange,
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: _StatCard(
+                      icon: Icons.assessment_outlined,
+                      label: 'Total Zones',
+                      value: state.assessments.length.toString(),
+                      color: const Color(0xFF1B5E20),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _StatCard(
+                      icon: Icons.dangerous_outlined,
+                      label: 'Critical',
+                      value: state.riskLevelCounts['CRITICAL']?.toString() ?? '0',
+                      color: Colors.red,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _StatCard(
+                      icon: Icons.error_outline,
+                      label: 'High Risk',
+                      value: state.riskLevelCounts['HIGH']?.toString() ?? '0',
+                      color: Colors.deepOrange,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _StatCard(
+                      icon: Icons.warning_amber_outlined,
+                      label: 'Moderate',
+                      value: state.riskLevelCounts['MODERATE']?.toString() ?? '0',
+                      color: Colors.orange,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -454,22 +508,38 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Icon(icon, color: color, size: 24),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: color,
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 18),
+          const SizedBox(height: 2),
+          Text(
+            value,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              color: color,
+            ),
           ),
-        ),
-        Text(
-          label,
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
-      ],
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10,
+              color: Colors.grey.shade700,
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
     );
   }
 }

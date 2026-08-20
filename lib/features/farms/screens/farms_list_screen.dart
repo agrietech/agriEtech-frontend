@@ -294,21 +294,30 @@ class _StatItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Column(
-      children: [
-        Icon(icon, size: 24, color: theme.primaryColor),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, size: 22, color: theme.primaryColor),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: const Color(0xFF1E2E1E),
+            ),
           ),
-        ),
-        Text(
-          label,
-          style: theme.textTheme.bodySmall,
-        ),
-      ],
+          Text(
+            label,
+            style: theme.textTheme.bodySmall?.copyWith(fontSize: 11),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -325,113 +334,193 @@ class _FarmCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final hasSensors = farm.sensors != null && farm.sensors.isNotEmpty;
 
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      elevation: 1,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: theme.primaryColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  Icons.agriculture,
-                  color: theme.primaryColor,
-                  size: 32,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      farm.farmName,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            theme.primaryColor.withValues(alpha: 0.15),
+                            theme.primaryColor.withValues(alpha: 0.05),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.agriculture,
+                        color: theme.primaryColor,
+                        size: 28,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.grass,
-                          size: 16,
-                          color: theme.textTheme.bodySmall?.color,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          farm.primaryCrop,
-                          style: theme.textTheme.bodyMedium,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 2),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.crop_square,
-                          size: 16,
-                          color: theme.textTheme.bodySmall?.color,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${farm.areaHectares.toStringAsFixed(2)} hectares',
-                          style: theme.textTheme.bodySmall,
-                        ),
-                        if (farm.createdAt != null) ...[
-                          const SizedBox(width: 12),
-                          Icon(
-                            Icons.calendar_today,
-                            size: 14,
-                            color: theme.textTheme.bodySmall?.color,
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  farm.farmName,
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: const Color(0xFF1F2937),
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.satellite_alt, size: 10, color: Color(0xFF10B981)),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      'NDVI 0.72',
+                                      style: TextStyle(
+                                        color: Color(0xFF10B981),
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 4),
-                          Text(
-                            DateFormatter.formatRelativeTime(farm.createdAt),
-                            style: theme.textTheme.bodySmall,
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.grass,
+                                size: 15,
+                                color: theme.primaryColor,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                farm.primaryCrop,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.grey.shade800,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Container(
+                                width: 4,
+                                height: 4,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade400,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Text(
+                                '${farm.areaHectares.toStringAsFixed(2)} ha',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                const Divider(height: 1),
+                const SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.sensors,
+                          size: 14,
+                          color: hasSensors ? const Color(0xFF0284C7) : Colors.grey.shade400,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          hasSensors
+                              ? '${farm.sensors.length} IoT Sensor(s) Active'
+                              : 'No Sensors Linked',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: hasSensors ? const Color(0xFF0284C7) : Colors.grey.shade500,
+                          ),
+                        ),
                       ],
                     ),
-                    if (farm.sensors != null && farm.sensors.isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.sensors,
-                            size: 14,
-                            color: Colors.green,
+                    Row(
+                      children: [
+                        if (farm.createdAt != null) ...[
+                          Icon(
+                            Icons.history,
+                            size: 13,
+                            color: Colors.grey.shade500,
                           ),
-                          const SizedBox(width: 4),
+                          const SizedBox(width: 3),
                           Text(
-                            '${farm.sensors.length} sensor(s) active',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: Colors.green,
+                            DateFormatter.formatRelativeTime(farm.createdAt),
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey.shade500,
                             ),
                           ),
                         ],
-                      ),
-                    ],
+                        const SizedBox(width: 6),
+                        Icon(
+                          Icons.chevron_right,
+                          size: 18,
+                          color: Colors.grey.shade400,
+                        ),
+                      ],
+                    ),
                   ],
                 ),
-              ),
-              Icon(
-                Icons.chevron_right,
-                color: theme.textTheme.bodySmall?.color,
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
