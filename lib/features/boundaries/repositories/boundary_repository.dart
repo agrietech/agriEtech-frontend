@@ -17,8 +17,11 @@ class BoundaryRepository {
 
       final response = await _dioClient.get('/boundaries/regions');
 
-      final regionsList = (response.data['data'] as List)
-          .map((json) => RegionModel.fromJson(json))
+      final raw = response.data is Map ? (response.data['data'] ?? response.data) : response.data;
+      final list = raw is List ? raw : [];
+
+      final regionsList = list
+          .map((json) => RegionModel.fromJson(json as Map<String, dynamic>))
           .toList();
 
       AppLogger.success('Fetched ${regionsList.length} regions');
@@ -44,8 +47,11 @@ class BoundaryRepository {
         queryParameters: {'regionId': regionId},
       );
 
-      final zonesList = (response.data['data'] as List)
-          .map((json) => ZoneModel.fromJson(json))
+      final raw = response.data is Map ? (response.data['data'] ?? response.data) : response.data;
+      final list = raw is List ? raw : [];
+
+      final zonesList = list
+          .map((json) => ZoneModel.fromJson(json as Map<String, dynamic>))
           .toList();
 
       AppLogger.success('Fetched ${zonesList.length} zones');
@@ -71,8 +77,11 @@ class BoundaryRepository {
         queryParameters: {'zoneId': zoneId},
       );
 
-      final woredasList = (response.data['data'] as List)
-          .map((json) => WoredaModel.fromJson(json))
+      final raw = response.data is Map ? (response.data['data'] ?? response.data) : response.data;
+      final list = raw is List ? raw : [];
+
+      final woredasList = list
+          .map((json) => WoredaModel.fromJson(json as Map<String, dynamic>))
           .toList();
 
       AppLogger.success('Fetched ${woredasList.length} woredas');
@@ -95,8 +104,11 @@ class BoundaryRepository {
 
       final response = await _dioClient.get('/boundaries/woredas');
 
-      final woredasList = (response.data['data'] as List)
-          .map((json) => WoredaModel.fromJson(json))
+      final raw = response.data is Map ? (response.data['data'] ?? response.data) : response.data;
+      final list = raw is List ? raw : [];
+
+      final woredasList = list
+          .map((json) => WoredaModel.fromJson(json as Map<String, dynamic>))
           .toList();
 
       AppLogger.success('Fetched ${woredasList.length} woredas');

@@ -24,7 +24,14 @@ class DiagnosisRepository {
         data: request.toJson(),
       );
 
-      final diagnosis = DiagnosisModel.fromJson(response.data['data']);
+      final raw = response.data is Map && response.data['data'] != null
+          ? response.data['data'] as Map<String, dynamic>
+          : response.data as Map<String, dynamic>;
+      final map = Map<String, dynamic>.from(raw);
+      map['imageUrl'] = map['imageUrl'] ?? map['image'] ?? '';
+      map['createdAt'] = map['createdAt'] ?? DateTime.now().toIso8601String();
+      map['farmId'] = map['farmId'] ?? request.farmId;
+      final diagnosis = DiagnosisModel.fromJson(map);
       AppLogger.success('Diagnosis created successfully', {'diagnosisId': diagnosis.id});
       return diagnosis;
     } on DioException catch (e) {
@@ -47,9 +54,16 @@ class DiagnosisRepository {
         ApiEndpoints.farmDiagnoses(farmId),
       );
 
-      final diagnosesList = (response.data['data'] as List)
-          .map((json) => DiagnosisModel.fromJson(json))
-          .toList();
+      final raw = response.data is Map ? (response.data['data'] ?? response.data) : response.data;
+      final list = raw is List ? raw : [];
+
+      final diagnosesList = list.map((json) {
+        final map = Map<String, dynamic>.from(json as Map);
+        map['imageUrl'] = map['imageUrl'] ?? map['image'] ?? '';
+        map['createdAt'] = map['createdAt'] ?? DateTime.now().toIso8601String();
+        map['farmId'] = map['farmId'] ?? farmId;
+        return DiagnosisModel.fromJson(map);
+      }).toList();
 
       AppLogger.success('Fetched ${diagnosesList.length} diagnoses');
       return diagnosesList;
@@ -71,9 +85,16 @@ class DiagnosisRepository {
 
       final response = await _dioClient.get(ApiEndpoints.diseaseDiagnosis);
 
-      final diagnosesList = (response.data['data'] as List)
-          .map((json) => DiagnosisModel.fromJson(json))
-          .toList();
+      final raw = response.data is Map ? (response.data['data'] ?? response.data) : response.data;
+      final list = raw is List ? raw : [];
+
+      final diagnosesList = list.map((json) {
+        final map = Map<String, dynamic>.from(json as Map);
+        map['imageUrl'] = map['imageUrl'] ?? map['image'] ?? '';
+        map['createdAt'] = map['createdAt'] ?? DateTime.now().toIso8601String();
+        map['farmId'] = map['farmId'] ?? '';
+        return DiagnosisModel.fromJson(map);
+      }).toList();
 
       AppLogger.success('Fetched ${diagnosesList.length} diagnoses');
       return diagnosesList;

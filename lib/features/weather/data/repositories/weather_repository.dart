@@ -16,7 +16,8 @@ class WeatherRepository {
       'woredaId': woredaId, 'source': 'CHIRPS', 'timeframe': timeframe,
     });
     final raw = r.data is Map && r.data['data'] != null ? r.data['data'] : r.data;
-    return (raw as List).map((j) => HistoricalWeatherModel.fromJson(j as Map<String, dynamic>)).toList();
+    final list = raw is List ? raw : (raw is Map ? (raw['observations'] ?? raw['data'] ?? []) : []);
+    return (list as List).map((j) => HistoricalWeatherModel.fromJson(j as Map<String, dynamic>)).toList();
   }
 
   Future<List<ForecastModel>> getForecast(String woredaId) async {

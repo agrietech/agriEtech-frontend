@@ -24,7 +24,16 @@ class SensorRepository {
         data: request.toJson(),
       );
 
-      final sensor = SensorModel.fromJson(response.data['data']);
+      final raw = response.data is Map && response.data['data'] != null
+          ? response.data['data'] as Map<String, dynamic>
+          : response.data as Map<String, dynamic>;
+      final map = Map<String, dynamic>.from(raw);
+      map['createdAt'] = map['createdAt'] ?? DateTime.now().toIso8601String();
+      map['updatedAt'] = map['updatedAt'] ?? map['createdAt'];
+      map['sensorType'] = map['sensorType'] ?? map['type'] ?? 'SOIL_MOISTURE';
+      map['hardwareId'] = map['hardwareId'] ?? map['nodeId'] ?? map['id'] ?? '';
+      map['farmId'] = map['farmId'] ?? '';
+      final sensor = SensorModel.fromJson(map);
       AppLogger.success('Sensor registered successfully', {'sensorId': sensor.id});
       return sensor;
     } on DioException catch (e) {
@@ -45,9 +54,18 @@ class SensorRepository {
 
       final response = await _dioClient.get('/sensors');
 
-      final sensorsList = (response.data['data'] as List)
-          .map((json) => SensorModel.fromJson(json))
-          .toList();
+      final raw = response.data is Map ? (response.data['data'] ?? response.data) : response.data;
+      final list = raw is List ? raw : [];
+
+      final sensorsList = list.map((json) {
+        final map = Map<String, dynamic>.from(json as Map);
+        map['createdAt'] = map['createdAt'] ?? DateTime.now().toIso8601String();
+        map['updatedAt'] = map['updatedAt'] ?? map['createdAt'];
+        map['sensorType'] = map['sensorType'] ?? map['type'] ?? 'SOIL_MOISTURE';
+        map['hardwareId'] = map['hardwareId'] ?? map['nodeId'] ?? map['id'] ?? '';
+        map['farmId'] = map['farmId'] ?? '';
+        return SensorModel.fromJson(map);
+      }).toList();
 
       AppLogger.success('Fetched ${sensorsList.length} sensors');
       return sensorsList;
@@ -69,9 +87,18 @@ class SensorRepository {
 
       final response = await _dioClient.get('/sensors/farm/$farmId');
 
-      final sensorsList = (response.data['data'] as List)
-          .map((json) => SensorModel.fromJson(json))
-          .toList();
+      final raw = response.data is Map ? (response.data['data'] ?? response.data) : response.data;
+      final list = raw is List ? raw : [];
+
+      final sensorsList = list.map((json) {
+        final map = Map<String, dynamic>.from(json as Map);
+        map['createdAt'] = map['createdAt'] ?? DateTime.now().toIso8601String();
+        map['updatedAt'] = map['updatedAt'] ?? map['createdAt'];
+        map['sensorType'] = map['sensorType'] ?? map['type'] ?? 'SOIL_MOISTURE';
+        map['hardwareId'] = map['hardwareId'] ?? map['nodeId'] ?? map['id'] ?? '';
+        map['farmId'] = map['farmId'] ?? '';
+        return SensorModel.fromJson(map);
+      }).toList();
 
       AppLogger.success('Fetched ${sensorsList.length} sensors');
       return sensorsList;
@@ -110,9 +137,17 @@ class SensorRepository {
         queryParameters: queryParams,
       );
 
-      final readings = (response.data['data'] as List)
-          .map((json) => SensorReading.fromJson(json))
-          .toList();
+      final raw = response.data is Map ? (response.data['data'] ?? response.data) : response.data;
+      final list = raw is List ? raw : [];
+
+      final readings = list.map((json) {
+        final map = Map<String, dynamic>.from(json as Map);
+        map['createdAt'] = map['createdAt'] ?? DateTime.now().toIso8601String();
+        map['recordedAt'] = map['recordedAt'] ?? map['timestamp'] ?? map['createdAt'];
+        map['sensorId'] = map['sensorId'] ?? sensorId;
+        map['id'] = map['id'] ?? '';
+        return SensorReading.fromJson(map);
+      }).toList();
 
       AppLogger.success('Fetched ${readings.length} readings');
       return readings;

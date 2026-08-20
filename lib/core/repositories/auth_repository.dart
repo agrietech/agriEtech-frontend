@@ -18,13 +18,15 @@ class AuthRepository {
   Future<LoginResponse> login(LoginRequest request) async {
     try {
       AppLogger.info('Attempting login for: ${request.email ?? request.phone}');
-      // Backend supports: { identifier, password } OR { email, password } OR { phone, password }
+      final phoneVal = request.phone ?? request.identifier;
       final loginData = <String, dynamic>{
         'password': request.password,
-        if (request.email != null && request.email!.isNotEmpty)
-          'email': request.email
-        else
-          'identifier': request.phone,
+        if (request.email != null && request.email!.isNotEmpty) 'email': request.email,
+        if (phoneVal != null && phoneVal.isNotEmpty) ...{
+          'phone': phoneVal,
+          'phoneNumber': phoneVal,
+          'identifier': phoneVal,
+        },
         if (request.deviceToken != null) 'deviceToken': request.deviceToken,
       };
       final response = await _dioClient.post(
@@ -35,14 +37,42 @@ class AuthRepository {
       final rawData = response.data is Map && response.data['data'] != null
           ? response.data['data'] as Map<String, dynamic>
           : response.data as Map<String, dynamic>;
-      final loginResponse = LoginResponse.fromJson(rawData);
+      
+      final accessToken = (rawData['accessToken'] ?? rawData['token'] ?? rawData['tokens']?['accessToken'] ?? '').toString();
+      final refreshToken = (rawData['refreshToken'] ?? rawData['tokens']?['refreshToken'] ?? '').toString();
+      final userData = rawData['user'] is Map ? rawData['user'] as Map<String, dynamic> : rawData;
+      
+      final normalizedUser = Map<String, dynamic>.from(userData);
+      if (!normalizedUser.containsKey('phone') && normalizedUser.containsKey('phoneNumber')) {
+        normalizedUser['phone'] = normalizedUser['phoneNumber'];
+      }
+      if (!normalizedUser.containsKey('role') || normalizedUser['role'] == null) {
+        normalizedUser['role'] = 'FARMER';
+      }
+      if (!normalizedUser.containsKey('fullName') || normalizedUser['fullName'] == null) {
+        normalizedUser['fullName'] = normalizedUser['name'] ?? 'User';
+      }
+      if (!normalizedUser.containsKey('id') || normalizedUser['id'] == null) {
+        normalizedUser['id'] = normalizedUser['_id'] ?? '';
+      }
+      
+      final user = UserModel.fromJson(normalizedUser);
+      final loginResponse = LoginResponse(
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+        user: user,
+      );
 
       // Save authentication tokens
-      await _storage.saveAccessToken(loginResponse.accessToken);
-      await _storage.saveRefreshToken(loginResponse.refreshToken);
-      await _storage.saveUserId(loginResponse.user.id);
+      if (accessToken.isNotEmpty) {
+        await _storage.saveAccessToken(accessToken);
+      }
+      if (refreshToken.isNotEmpty) {
+        await _storage.saveRefreshToken(refreshToken);
+      }
+      await _storage.saveUserId(user.id);
 
-      AppLogger.info('Login successful for user: ${loginResponse.user.id}');
+      AppLogger.info('Login successful for user: ${user.id}');
       
       return loginResponse;
     } on DioException catch (e) {
@@ -59,22 +89,62 @@ class AuthRepository {
     try {
       AppLogger.info('Attempting registration for phone: ${request.phone}');
       
+      final regData = <String, dynamic>{
+        'phone': request.phone,
+        'phoneNumber': request.phone,
+        'password': request.password,
+        'fullName': request.fullName,
+        'role': 'FARMER',
+        if (request.email != null && request.email!.isNotEmpty) 'email': request.email,
+        if (request.woredaId != null && request.woredaId!.isNotEmpty) 'woredaId': request.woredaId,
+        if (request.preferredLang != null && request.preferredLang!.isNotEmpty) 'preferredLang': request.preferredLang,
+        if (request.deviceToken != null && request.deviceToken!.isNotEmpty) 'deviceToken': request.deviceToken,
+      };
+
       final response = await _dioClient.post(
-        ApiConstants.register, data: request.toJson(),
+        ApiConstants.register, data: regData,
       );
 
       // Backend wraps response in { success, data: { accessToken, refreshToken, user } }
       final rawData = response.data is Map && response.data['data'] != null
           ? response.data['data'] as Map<String, dynamic>
           : response.data as Map<String, dynamic>;
-      final loginResponse = LoginResponse.fromJson(rawData);
+      
+      final accessToken = (rawData['accessToken'] ?? rawData['token'] ?? rawData['tokens']?['accessToken'] ?? '').toString();
+      final refreshToken = (rawData['refreshToken'] ?? rawData['tokens']?['refreshToken'] ?? '').toString();
+      final userData = rawData['user'] is Map ? rawData['user'] as Map<String, dynamic> : rawData;
+
+      final normalizedUser = Map<String, dynamic>.from(userData);
+      if (!normalizedUser.containsKey('phone') && normalizedUser.containsKey('phoneNumber')) {
+        normalizedUser['phone'] = normalizedUser['phoneNumber'];
+      }
+      if (!normalizedUser.containsKey('role') || normalizedUser['role'] == null) {
+        normalizedUser['role'] = 'FARMER';
+      }
+      if (!normalizedUser.containsKey('fullName') || normalizedUser['fullName'] == null) {
+        normalizedUser['fullName'] = normalizedUser['name'] ?? request.fullName;
+      }
+      if (!normalizedUser.containsKey('id') || normalizedUser['id'] == null) {
+        normalizedUser['id'] = normalizedUser['_id'] ?? '';
+      }
+
+      final user = UserModel.fromJson(normalizedUser);
+      final loginResponse = LoginResponse(
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+        user: user,
+      );
 
       // Save authentication tokens
-      await _storage.saveAccessToken(loginResponse.accessToken);
-      await _storage.saveRefreshToken(loginResponse.refreshToken);
-      await _storage.saveUserId(loginResponse.user.id);
+      if (accessToken.isNotEmpty) {
+        await _storage.saveAccessToken(accessToken);
+      }
+      if (refreshToken.isNotEmpty) {
+        await _storage.saveRefreshToken(refreshToken);
+      }
+      await _storage.saveUserId(user.id);
 
-      AppLogger.info('Registration successful for user: ${loginResponse.user.id}');
+      AppLogger.info('Registration successful for user: ${user.id}');
       
       return loginResponse;
     } on DioException catch (e) {
@@ -300,16 +370,28 @@ class AuthRepository {
     final statusCode = error.response?.statusCode;
     final responseData = error.response?.data;
 
+    String? backendMessage;
+    if (responseData is Map) {
+      backendMessage = responseData['message']?.toString() ??
+          responseData['error']?.toString() ??
+          responseData['detail']?.toString();
+    }
+
     if (statusCode == 401) {
-      // Check for account lockout
       if (responseData is Map && responseData['code'] == 'ACCOUNT_LOCKED') {
         return AuthError.accountLocked();
       }
-      return AuthError.invalidCredentials();
+      return AuthError(
+        message: backendMessage ?? 'Invalid phone/email or password.',
+        code: 'INVALID_CREDENTIALS',
+      );
     }
 
     if (statusCode == 403) {
-      return AuthError.unauthorized();
+      return AuthError(
+        message: backendMessage ?? 'Access denied. Please verify your email or contact support.',
+        code: 'FORBIDDEN',
+      );
     }
 
     if (statusCode == 422) {
@@ -320,8 +402,22 @@ class AuthRepository {
 
     if (statusCode == 409) {
       return AuthError(
-        message: responseData?['message'] ?? 'Account already exists',
+        message: backendMessage ?? 'An account with this phone number or email already exists.',
         code: 'CONFLICT',
+      );
+    }
+
+    if (statusCode == 400) {
+      return AuthError(
+        message: backendMessage ?? 'Invalid request data. Please check your inputs.',
+        code: 'BAD_REQUEST',
+      );
+    }
+
+    if (backendMessage != null && backendMessage.isNotEmpty) {
+      return AuthError(
+        message: backendMessage,
+        code: 'HTTP_$statusCode',
       );
     }
 

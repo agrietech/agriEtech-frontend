@@ -24,7 +24,18 @@ class AlertRepository {
         data: request.toJson(),
       );
 
-      final alert = AlertModel.fromJson(response.data['data']);
+      final raw = response.data is Map && response.data['data'] != null
+          ? response.data['data'] as Map<String, dynamic>
+          : response.data as Map<String, dynamic>;
+      final map = Map<String, dynamic>.from(raw);
+      map['title'] = map['title'] ?? map['titleEn'] ?? map['titleAm'] ?? 'Alert';
+      map['message'] = map['message'] ?? map['messageEn'] ?? map['messageAm'] ?? '';
+      map['createdAt'] = map['createdAt'] ?? map['sentAt'] ?? DateTime.now().toIso8601String();
+      map['updatedAt'] = map['updatedAt'] ?? map['createdAt'];
+      map['woredaId'] = map['woredaId'] ?? '';
+      map['hazardType'] = map['hazardType'] ?? 'GENERAL';
+      map['severity'] = map['severity'] ?? 'LOW';
+      final alert = AlertModel.fromJson(map);
       AppLogger.success('Alert created successfully', {'alertId': alert.id});
       return alert;
     } on DioException catch (e) {
@@ -61,9 +72,20 @@ class AlertRepository {
         queryParameters: queryParams,
       );
 
-      final alertsList = (response.data['data'] as List)
-          .map((json) => AlertModel.fromJson(json))
-          .toList();
+      final raw = response.data is Map ? (response.data['data'] ?? response.data) : response.data;
+      final list = raw is List ? raw : [];
+
+      final alertsList = list.map((json) {
+        final map = Map<String, dynamic>.from(json as Map);
+        map['title'] = map['title'] ?? map['titleEn'] ?? map['titleAm'] ?? 'Alert';
+        map['message'] = map['message'] ?? map['messageEn'] ?? map['messageAm'] ?? '';
+        map['createdAt'] = map['createdAt'] ?? map['sentAt'] ?? DateTime.now().toIso8601String();
+        map['updatedAt'] = map['updatedAt'] ?? map['createdAt'];
+        map['woredaId'] = map['woredaId'] ?? '';
+        map['hazardType'] = map['hazardType'] ?? 'GENERAL';
+        map['severity'] = map['severity'] ?? 'LOW';
+        return AlertModel.fromJson(map);
+      }).toList();
 
       AppLogger.success('Fetched ${alertsList.length} alerts');
       return alertsList;
