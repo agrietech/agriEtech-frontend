@@ -31,13 +31,25 @@ class AlertNotifier extends StateNotifier<AsyncValue<List<AlertModel>>> {
 
   /// Setup real-time WebSocket listener
   void _setupRealtimeListener() {
-    _socketClient.on('new_alert', (data) {
+    _socketClient.onAlert((data) {
       AppLogger.info('Received real-time alert', data);
-      // Add new alert to the beginning of the list
       state.whenData((alerts) {
         try {
-          final newAlert = AlertModel.fromJson(data);
-          state = AsyncValue.data([newAlert, ...alerts]);
+          final raw = data is Map ? data : <String, dynamic>{};
+          final map = Map<String, dynamic>.from(raw);
+          map['title'] = map['title'] ?? map['titleEn'] ?? map['titleAm'] ?? 'Emergency Alert';
+          map['message'] = map['message'] ?? map['messageEn'] ?? map['messageAm'] ?? '';
+          map['createdAt'] = map['createdAt'] ?? map['sentAt'] ?? DateTime.now().toIso8601String();
+          map['updatedAt'] = map['updatedAt'] ?? map['createdAt'];
+          map['woredaId'] = map['woredaId'] ?? '';
+          map['hazardType'] = map['hazardType'] ?? 'GENERAL';
+          map['severity'] = map['severity'] ?? 'HIGH';
+          final newAlert = AlertModel.fromJson(map);
+          // Avoid duplicate alerts in state
+          final exists = alerts.any((a) => a.id == newAlert.id);
+          if (!exists) {
+            state = AsyncValue.data([newAlert, ...alerts]);
+          }
         } catch (e) {
           AppLogger.error('Failed to parse real-time alert', e);
         }
@@ -46,10 +58,18 @@ class AlertNotifier extends StateNotifier<AsyncValue<List<AlertModel>>> {
 
     _socketClient.on('alert_updated', (data) {
       AppLogger.info('Alert updated', data);
-      // Update existing alert in the list
       state.whenData((alerts) {
         try {
-          final updatedAlert = AlertModel.fromJson(data);
+          final raw = data is Map ? data : <String, dynamic>{};
+          final map = Map<String, dynamic>.from(raw);
+          map['title'] = map['title'] ?? map['titleEn'] ?? map['titleAm'] ?? 'Alert';
+          map['message'] = map['message'] ?? map['messageEn'] ?? map['messageAm'] ?? '';
+          map['createdAt'] = map['createdAt'] ?? map['sentAt'] ?? DateTime.now().toIso8601String();
+          map['updatedAt'] = map['updatedAt'] ?? map['createdAt'];
+          map['woredaId'] = map['woredaId'] ?? '';
+          map['hazardType'] = map['hazardType'] ?? 'GENERAL';
+          map['severity'] = map['severity'] ?? 'LOW';
+          final updatedAlert = AlertModel.fromJson(map);
           final updatedList = alerts.map((alert) {
             return alert.id == updatedAlert.id ? updatedAlert : alert;
           }).toList();
@@ -113,7 +133,11 @@ class AlertNotifier extends StateNotifier<AsyncValue<List<AlertModel>>> {
 
   @override
   void dispose() {
+    _socketClient.off('emergency:alert');
+    _socketClient.off('alert');
     _socketClient.off('new_alert');
+    _socketClient.off('alert:new');
+    _socketClient.off('alert:broadcast');
     _socketClient.off('alert_updated');
     super.dispose();
   }

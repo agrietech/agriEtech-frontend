@@ -41,7 +41,7 @@ class AiVoiceRepository {
       final formData = FormData.fromMap({
         'audio': await MultipartFile.fromFile(
           audioFile.path,
-          filename: audioFile.path.split(Platform.pathSeparator).last,
+          filename: audioFile.path.split(RegExp(r'[/\\]')).last,
         ),
         'language': language,
       });

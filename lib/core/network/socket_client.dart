@@ -31,7 +31,7 @@ class SocketClient {
       _socket = IO.io(
         AppEnv.socketBaseUrl,
         IO.OptionBuilder()
-            .setTransports(['websocket'])
+            .setTransports(['websocket', 'polling'])
             .enableAutoConnect()
             .enableReconnection()
             .setReconnectionAttempts(AppEnv.socketReconnectAttempts)
@@ -138,6 +138,10 @@ class SocketClient {
   void onAlert(Function(dynamic) callback) {
     on('emergency:alert', callback);
     on('alert', callback);
+    on('new_alert', callback);
+    on('alert:new', callback);
+    on('alert:broadcast', callback);
+    on('notification:new', callback);
   }
 
   /// Listen for risk assessment updates
@@ -231,10 +235,15 @@ class SocketClient {
   }
 }
 
-/// Provider for SocketClient
+/// Provider for SocketClient with auto-connect & lifecycle disposal
 final socketClientProvider = Provider<SocketClient>((ref) {
   final storage = ref.watch(secureStorageServiceProvider);
-  return SocketClient(storage);
+  final client = SocketClient(storage);
+  client.connect();
+  ref.onDispose(() {
+    client.disconnect();
+  });
+  return client;
 });
 
 /// Provider for socket connection status

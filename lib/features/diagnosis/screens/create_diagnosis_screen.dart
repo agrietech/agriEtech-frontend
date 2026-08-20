@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -22,7 +22,7 @@ class _CreateDiagnosisScreenState extends ConsumerState<CreateDiagnosisScreen> {
   final _formKey = GlobalKey<FormState>();
   final ImagePicker _picker = ImagePicker();
 
-  File? _selectedImage;
+  Uint8List? _selectedImageBytes;
   String? _selectedFarmId;
   String? _selectedCropType;
   bool _isSubmitting = false;
@@ -101,14 +101,14 @@ class _CreateDiagnosisScreenState extends ConsumerState<CreateDiagnosisScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  if (_selectedImage != null) ...[
+                  if (_selectedImageBytes != null) ...[
                     // Display selected image in a high-tech frame
                     Stack(
                       children: [
                         ClipRRect(
                           borderRadius: BorderRadius.circular(14),
-                          child: Image.file(
-                            _selectedImage!,
+                          child: Image.memory(
+                            _selectedImageBytes!,
                             width: double.infinity,
                             height: 250,
                             fit: BoxFit.cover,
@@ -309,7 +309,7 @@ class _CreateDiagnosisScreenState extends ConsumerState<CreateDiagnosisScreen> {
                       ],
                     ),
 
-                    if (_selectedImage == null) ...[
+                    if (_selectedImageBytes == null) ...[
                       const SizedBox(height: 8),
                       Text(
                         '* Leaf photo required for neural pathology scan',
@@ -442,7 +442,7 @@ class _CreateDiagnosisScreenState extends ConsumerState<CreateDiagnosisScreen> {
             SizedBox(
               height: 50,
               child: ElevatedButton.icon(
-                onPressed: _isSubmitting || _selectedImage == null
+                onPressed: _isSubmitting || _selectedImageBytes == null
                     ? null
                     : _submitDiagnosis,
                 icon: _isSubmitting
@@ -564,8 +564,9 @@ class _CreateDiagnosisScreenState extends ConsumerState<CreateDiagnosisScreen> {
       );
 
       if (image != null) {
+        final bytes = await image.readAsBytes();
         setState(() {
-          _selectedImage = File(image.path);
+          _selectedImageBytes = bytes;
         });
       }
     } catch (e) {
@@ -585,7 +586,7 @@ class _CreateDiagnosisScreenState extends ConsumerState<CreateDiagnosisScreen> {
       return;
     }
 
-    if (_selectedImage == null) {
+    if (_selectedImageBytes == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please select an image to diagnose'),
@@ -598,20 +599,27 @@ class _CreateDiagnosisScreenState extends ConsumerState<CreateDiagnosisScreen> {
     setState(() => _isSubmitting = true);
 
     try {
-      // Compress image to reduce upload size
-      final compressedBytes = await FlutterImageCompress.compressWithFile(
-        _selectedImage!.path,
-        quality: 85,
-        minWidth: 1024,
-        minHeight: 1024,
-      );
+      Uint8List uploadBytes = _selectedImageBytes!;
 
-      if (compressedBytes == null) {
-        throw Exception('Failed to compress image');
+      // Compress image on native platforms if supported
+      if (!kIsWeb) {
+        try {
+          final compressed = await FlutterImageCompress.compressWithList(
+            _selectedImageBytes!,
+            quality: 85,
+            minWidth: 1024,
+            minHeight: 1024,
+          );
+          if (compressed.isNotEmpty) {
+            uploadBytes = compressed;
+          }
+        } catch (_) {
+          // Fall back to original bytes if compression fails
+        }
       }
 
-      // Convert compressed image to base64
-      final base64Image = base64Encode(compressedBytes);
+      // Convert image to base64
+      final base64Image = base64Encode(uploadBytes);
 
       // Create diagnosis request
       final request = CreateDiagnosisRequest(
