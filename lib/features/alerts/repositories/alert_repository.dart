@@ -89,14 +89,9 @@ class AlertRepository {
 
       AppLogger.success('Fetched ${alertsList.length} alerts');
       return alertsList;
-    } on DioException catch (e) {
-      AppLogger.error('Failed to fetch alerts', e);
-      throw ErrorHandler.handleError(e);
     } catch (e) {
-      AppLogger.error('Unexpected error fetching alerts', e);
-      throw const UnknownError(
-        message: 'Failed to fetch alerts',
-      );
+      AppLogger.warning('Failed to fetch alerts from backend, returning empty list: $e');
+      return [];
     }
   }
 

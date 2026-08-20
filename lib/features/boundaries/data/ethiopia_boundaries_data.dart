@@ -250,6 +250,60 @@ class EthiopiaBoundariesData {
       const WoredaModel(id: 'woreda_dubti', zoneId: 'zone_afar_1', name: 'Dubti', centerLat: 11.73, centerLng: 41.08, createdAt: _defaultDate, updatedAt: _defaultDate),
       const WoredaModel(id: 'woreda_afambo', zoneId: 'zone_afar_1', name: 'Afambo', centerLat: 11.45, centerLng: 41.70, createdAt: _defaultDate, updatedAt: _defaultDate),
     ],
+    'zone_metekel': [
+      const WoredaModel(id: 'woreda_mandura', zoneId: 'zone_metekel', name: 'Mandura', centerLat: 10.90, centerLng: 36.35, createdAt: _defaultDate, updatedAt: _defaultDate),
+      const WoredaModel(id: 'woreda_dangur', zoneId: 'zone_metekel', name: 'Dangur', centerLat: 11.20, centerLng: 36.00, createdAt: _defaultDate, updatedAt: _defaultDate),
+      const WoredaModel(id: 'woreda_pawe', zoneId: 'zone_metekel', name: 'Pawe', centerLat: 11.32, centerLng: 36.42, createdAt: _defaultDate, updatedAt: _defaultDate),
+      const WoredaModel(id: 'woreda_guba', zoneId: 'zone_metekel', name: 'Guba', centerLat: 11.25, centerLng: 35.25, createdAt: _defaultDate, updatedAt: _defaultDate),
+      const WoredaModel(id: 'woreda_bullen', zoneId: 'zone_metekel', name: 'Bullen', centerLat: 10.60, centerLng: 36.05, createdAt: _defaultDate, updatedAt: _defaultDate),
+    ],
+    'zone_asosa': [
+      const WoredaModel(id: 'woreda_asosa', zoneId: 'zone_asosa', name: 'Asosa Zuria', centerLat: 10.05, centerLng: 34.53, createdAt: _defaultDate, updatedAt: _defaultDate),
+      const WoredaModel(id: 'woreda_bambasi', zoneId: 'zone_asosa', name: 'Bambasi', centerLat: 9.75, centerLng: 34.72, createdAt: _defaultDate, updatedAt: _defaultDate),
+      const WoredaModel(id: 'woreda_homosha', zoneId: 'zone_asosa', name: 'Homosha', centerLat: 10.35, centerLng: 34.65, createdAt: _defaultDate, updatedAt: _defaultDate),
+      const WoredaModel(id: 'woreda_menge', zoneId: 'zone_asosa', name: 'Menge', centerLat: 10.40, centerLng: 34.85, createdAt: _defaultDate, updatedAt: _defaultDate),
+      const WoredaModel(id: 'woreda_kurmuk', zoneId: 'zone_asosa', name: 'Kurmuk', centerLat: 10.55, centerLng: 34.28, createdAt: _defaultDate, updatedAt: _defaultDate),
+    ],
+    'zone_kamashi': [
+      const WoredaModel(id: 'woreda_kamashi', zoneId: 'zone_kamashi', name: 'Kamashi', centerLat: 9.50, centerLng: 35.85, createdAt: _defaultDate, updatedAt: _defaultDate),
+      const WoredaModel(id: 'woreda_belo_jegonfoy', zoneId: 'zone_kamashi', name: 'Belo Jegonfoy', centerLat: 9.35, centerLng: 36.15, createdAt: _defaultDate, updatedAt: _defaultDate),
+      const WoredaModel(id: 'woreda_sirba_abbay', zoneId: 'zone_kamashi', name: 'Sirba Abbay', centerLat: 10.00, centerLng: 35.30, createdAt: _defaultDate, updatedAt: _defaultDate),
+    ],
+    'zone_anuak': [
+      const WoredaModel(id: 'woreda_gambela_zuria', zoneId: 'zone_anuak', name: 'Gambela Zuria', centerLat: 8.25, centerLng: 34.58, createdAt: _defaultDate, updatedAt: _defaultDate),
+      const WoredaModel(id: 'woreda_abobo', zoneId: 'zone_anuak', name: 'Abobo', centerLat: 7.85, centerLng: 34.55, createdAt: _defaultDate, updatedAt: _defaultDate),
+      const WoredaModel(id: 'woreda_gog', zoneId: 'zone_anuak', name: 'Gog', centerLat: 7.50, centerLng: 34.40, createdAt: _defaultDate, updatedAt: _defaultDate),
+      const WoredaModel(id: 'woreda_dimma', zoneId: 'zone_anuak', name: 'Dimma', centerLat: 6.80, centerLng: 35.10, createdAt: _defaultDate, updatedAt: _defaultDate),
+    ],
+    'zone_nuer': [
+      const WoredaModel(id: 'woreda_lare', zoneId: 'zone_nuer', name: 'Lare', centerLat: 8.35, centerLng: 33.95, createdAt: _defaultDate, updatedAt: _defaultDate),
+      const WoredaModel(id: 'woreda_itang', zoneId: 'zone_nuer', name: 'Itang Special', centerLat: 8.20, centerLng: 34.25, createdAt: _defaultDate, updatedAt: _defaultDate),
+      const WoredaModel(id: 'woreda_jikaw', zoneId: 'zone_nuer', name: 'Jikaw', centerLat: 8.40, centerLng: 33.75, createdAt: _defaultDate, updatedAt: _defaultDate),
+      const WoredaModel(id: 'woreda_akobo', zoneId: 'zone_nuer', name: 'Akobo', centerLat: 7.80, centerLng: 33.00, createdAt: _defaultDate, updatedAt: _defaultDate),
+    ],
+    'zone_majang': [
+      const WoredaModel(id: 'woreda_mengesh', zoneId: 'zone_majang', name: 'Mengesh', centerLat: 7.35, centerLng: 35.30, createdAt: _defaultDate, updatedAt: _defaultDate),
+      const WoredaModel(id: 'woreda_godere', zoneId: 'zone_majang', name: 'Godere', centerLat: 7.15, centerLng: 35.20, createdAt: _defaultDate, updatedAt: _defaultDate),
+    ],
+    'zone_harari': [
+      const WoredaModel(id: 'woreda_amir_nur', zoneId: 'zone_harari', name: 'Amir-Nur', centerLat: 9.31, centerLng: 42.13, createdAt: _defaultDate, updatedAt: _defaultDate),
+      const WoredaModel(id: 'woreda_sofi', zoneId: 'zone_harari', name: 'Sofi (Rural)', centerLat: 9.25, centerLng: 42.20, createdAt: _defaultDate, updatedAt: _defaultDate),
+      const WoredaModel(id: 'woreda_erer', zoneId: 'zone_harari', name: 'Erer (Rural)', centerLat: 9.35, centerLng: 42.25, createdAt: _defaultDate, updatedAt: _defaultDate),
+      const WoredaModel(id: 'woreda_dire_teyara', zoneId: 'zone_harari', name: 'Dire-Teyara', centerLat: 9.38, centerLng: 42.10, createdAt: _defaultDate, updatedAt: _defaultDate),
+    ],
+    'zone_aa_central': [
+      const WoredaModel(id: 'woreda_bole', zoneId: 'zone_aa_central', name: 'Bole Sub-City', centerLat: 8.98, centerLng: 38.78, createdAt: _defaultDate, updatedAt: _defaultDate),
+      const WoredaModel(id: 'woreda_yeka', zoneId: 'zone_aa_central', name: 'Yeka Sub-City', centerLat: 9.04, centerLng: 38.82, createdAt: _defaultDate, updatedAt: _defaultDate),
+      const WoredaModel(id: 'woreda_akaki_kality', zoneId: 'zone_aa_central', name: 'Akaki-Kality Sub-City', centerLat: 8.88, centerLng: 38.75, createdAt: _defaultDate, updatedAt: _defaultDate),
+      const WoredaModel(id: 'woreda_lemi_kura', zoneId: 'zone_aa_central', name: 'Lemi-Kura Sub-City', centerLat: 9.02, centerLng: 38.86, createdAt: _defaultDate, updatedAt: _defaultDate),
+      const WoredaModel(id: 'woreda_kolfe', zoneId: 'zone_aa_central', name: 'Kolfe-Keranio Sub-City', centerLat: 9.01, centerLng: 38.70, createdAt: _defaultDate, updatedAt: _defaultDate),
+    ],
+    'zone_dd_admin': [
+      const WoredaModel(id: 'woreda_dd_urban', zoneId: 'zone_dd_admin', name: 'Dire Dawa Urban', centerLat: 9.59, centerLng: 41.86, createdAt: _defaultDate, updatedAt: _defaultDate),
+      const WoredaModel(id: 'woreda_melka_jebdu', zoneId: 'zone_dd_admin', name: 'Melka Jebdu', centerLat: 9.62, centerLng: 41.80, createdAt: _defaultDate, updatedAt: _defaultDate),
+      const WoredaModel(id: 'woreda_wahil', zoneId: 'zone_dd_admin', name: 'Wahil (Rural)', centerLat: 9.65, centerLng: 41.95, createdAt: _defaultDate, updatedAt: _defaultDate),
+      const WoredaModel(id: 'woreda_biyawale', zoneId: 'zone_dd_admin', name: 'Biyawale', centerLat: 9.50, centerLng: 41.78, createdAt: _defaultDate, updatedAt: _defaultDate),
+    ],
   };
 
   /// Fallback woreda finder

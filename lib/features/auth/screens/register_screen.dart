@@ -30,6 +30,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   bool _obscureConfirmPassword = true;
   String _selectedLanguage = 'en';
   bool _acceptTerms = false;
+  bool _termsError = false;
 
   @override
   void initState() {
@@ -55,6 +56,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     final hierarchy = ref.read(boundaryHierarchyProvider);
     
     if (!_acceptTerms) {
+      setState(() => _termsError = true);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please accept the terms and conditions to proceed'),
@@ -62,6 +64,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         ),
       );
       return;
+    } else {
+      setState(() => _termsError = false);
     }
 
     if (_formKey.currentState!.validate()) {
@@ -428,6 +432,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                 child: Text(region.name, style: const TextStyle(fontWeight: FontWeight.w500)),
                               );
                             }).toList(),
+                            validator: (v) => v == null || v.isEmpty ? 'Please select your administrative region' : null,
                             onChanged: authState.isLoading
                                 ? null
                                 : (regionId) {
@@ -462,6 +467,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                 child: Text(zone.name, style: const TextStyle(fontWeight: FontWeight.w500)),
                               );
                             }).toList(),
+                            validator: (v) => v == null || v.isEmpty ? 'Please select your zone' : null,
                             onChanged: (authState.isLoading || hierarchy.selectedRegion == null)
                                 ? null
                                 : (zoneId) {
@@ -496,6 +502,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                 child: Text(woreda.name, style: const TextStyle(fontWeight: FontWeight.w500)),
                               );
                             }).toList(),
+                            validator: (v) => v == null || v.isEmpty ? 'Please select your woreda / district' : null,
                             onChanged: (authState.isLoading || hierarchy.selectedZone == null)
                                 ? null
                                 : (woredaId) {
@@ -617,25 +624,55 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                           ),
                           const SizedBox(height: 14),
 
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Checkbox(
-                                value: _acceptTerms,
-                                activeColor: AppTheme.primaryColor,
-                                onChanged: authState.isLoading ? null : (v) => setState(() => _acceptTerms = v ?? false),
-                              ),
-                              Expanded(
-                                child: Padding(
-                                  padding: const EdgeInsets.only(top: 10),
-                                  child: Text(
-                                    'I acknowledge and agree to the AgriEtech National Agricultural Terms of Service and Privacy Policy.',
-                                    style: TextStyle(fontSize: 12, color: Colors.grey.shade800, height: 1.3),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: _termsError ? Colors.red.shade50 : Colors.transparent,
+                              borderRadius: BorderRadius.circular(8),
+                              border: _termsError ? Border.all(color: Colors.red.shade300) : null,
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Checkbox(
+                                  value: _acceptTerms,
+                                  activeColor: AppTheme.primaryColor,
+                                  onChanged: authState.isLoading
+                                      ? null
+                                      : (v) {
+                                          setState(() {
+                                            _acceptTerms = v ?? false;
+                                            if (_acceptTerms) _termsError = false;
+                                          });
+                                        },
+                                ),
+                                Expanded(
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(top: 10),
+                                    child: Text(
+                                      'I acknowledge and agree to the AgriEtech National Agricultural Terms of Service and Privacy Policy.',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: _termsError ? Colors.red.shade900 : Colors.grey.shade800,
+                                        fontWeight: _termsError ? FontWeight.w600 : FontWeight.normal,
+                                        height: 1.3,
+                                      ),
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
+                          if (_termsError) ...[
+                            const SizedBox(height: 6),
+                            const Padding(
+                              padding: EdgeInsets.only(left: 12),
+                              child: Text(
+                                '• Terms and Conditions must be accepted',
+                                style: TextStyle(color: Colors.red, fontSize: 11, fontWeight: FontWeight.w500),
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),
