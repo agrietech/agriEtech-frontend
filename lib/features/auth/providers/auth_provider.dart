@@ -221,14 +221,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
       
       final response = await _authRepository.register(request);
+      final hasToken = response.accessToken.isNotEmpty;
       
       state = state.copyWith(
         user: response.user,
-        isAuthenticated: true,
+        isAuthenticated: hasToken,
         isLoading: false,
       );
       
-      AppLogger.info('Registration successful');
+      AppLogger.info('Registration successful (authenticated: $hasToken)');
     } on AppError catch (e) {
       AppLogger.error('Registration failed', e);
       

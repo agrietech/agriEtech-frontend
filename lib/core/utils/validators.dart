@@ -17,17 +17,18 @@ class Validators {
     return null;
   }
 
-  /// Validate phone number (Ethiopian format)
+  /// Validate phone number (Ethiopian format or international)
   static String? phone(String? value) {
-    if (value == null || value.isEmpty) {
+    if (value == null || value.trim().isEmpty) {
       return 'Phone number is required';
     }
     
-    // Ethiopian phone format: +251XXXXXXXXX or 0XXXXXXXXX
-    final phoneRegex = RegExp(r'^(\+251|0)?[79]\d{8}$');
+    final clean = value.replaceAll(RegExp(r'[\s\-\(\)]'), '');
+    final ethRegex = RegExp(r'^(\+?251|0)?[79]\d{8}$');
+    final generalRegex = RegExp(r'^\+?[0-9]{9,15}$');
     
-    if (!phoneRegex.hasMatch(value.replaceAll(' ', ''))) {
-      return 'Please enter a valid Ethiopian phone number';
+    if (!ethRegex.hasMatch(clean) && !generalRegex.hasMatch(clean)) {
+      return 'Please enter a valid phone number (e.g. 0911223344 or +251911223344)';
     }
     
     return null;
@@ -39,23 +40,8 @@ class Validators {
       return 'Password is required';
     }
     
-    if (value.length < 8) {
-      return 'Password must be at least 8 characters';
-    }
-    
-    // Check for uppercase
-    if (!value.contains(RegExp(r'[A-Z]'))) {
-      return 'Password must contain at least one uppercase letter';
-    }
-    
-    // Check for number
-    if (!value.contains(RegExp(r'[0-9]'))) {
-      return 'Password must contain at least one number';
-    }
-    
-    // Check for special character
-    if (!value.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) {
-      return 'Password must contain at least one special character';
+    if (value.length < 6) {
+      return 'Password must be at least 6 characters';
     }
     
     return null;

@@ -223,7 +223,50 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     color: Colors.grey.shade600,
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
+
+                // Error alert banner
+                if (authState.error != null) ...[
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.red.shade300),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.error_outline, color: Colors.red, size: 22),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Registration Issue',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.red,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                authState.error!.message,
+                                style: TextStyle(
+                                  color: Colors.red.shade900,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
 
                 // Full name
                 TextFormField(
@@ -242,11 +285,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Username
+                // Username (Optional)
                 TextFormField(
                   controller: _usernameController,
                   decoration: InputDecoration(
-                    labelText: l10n.translate('username'),
+                    labelText: '${l10n.translate('username')} (Optional)',
                     prefixIcon: const Icon(Icons.alternate_email),
                     hintText: 'e.g. username123',
                     border: OutlineInputBorder(
@@ -254,16 +297,15 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     ),
                   ),
                   textInputAction: TextInputAction.next,
-                  validator: (value) => Validators.required(value, 'Username'),
                   enabled: !authState.isLoading,
                 ),
                 const SizedBox(height: 16),
 
-                // Email Address
+                // Email Address (Optional)
                 TextFormField(
                   controller: _emailController,
                   decoration: InputDecoration(
-                    labelText: l10n.translate('email'),
+                    labelText: '${l10n.translate('email')} (Optional)',
                     prefixIcon: const Icon(Icons.email_outlined),
                     hintText: 'name@example.com',
                     border: OutlineInputBorder(
@@ -272,7 +314,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   ),
                   keyboardType: TextInputType.emailAddress,
                   textInputAction: TextInputAction.next,
-                  validator: Validators.email,
+                  validator: (value) => value != null && value.trim().isNotEmpty
+                      ? Validators.email(value.trim())
+                      : null,
                   enabled: !authState.isLoading,
                 ),
                 const SizedBox(height: 16),

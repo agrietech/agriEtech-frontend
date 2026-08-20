@@ -115,23 +115,41 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                   const SizedBox(height: 32),
 
-                  // Account lockout warning
-                  if (authState.accountLockoutMessage != null) ...[
+                  // Error or Lockout warning banner
+                  if (authState.error != null || authState.accountLockoutMessage != null) ...[
                     Container(
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: Colors.red.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+                        color: Colors.red.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.red.shade300),
                       ),
                       child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.warning, color: Colors.red),
+                          const Icon(Icons.error_outline, color: Colors.red, size: 22),
                           const SizedBox(width: 12),
                           Expanded(
-                            child: Text(
-                              authState.accountLockoutMessage!,
-                              style: const TextStyle(color: Colors.red),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  authState.accountLockoutMessage != null ? 'Account Locked' : 'Sign-In Failed',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.red,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  authState.accountLockoutMessage ?? authState.error!.message,
+                                  style: TextStyle(
+                                    color: Colors.red.shade900,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
