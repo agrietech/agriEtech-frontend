@@ -18,10 +18,10 @@ class AppEnv {
 
   // API Configuration
   static String get apiBaseUrl => 
-    _get('API_BASE_URL', 'http://10.0.2.2:5000/api/v1');
+    _get('API_BASE_URL', 'https://agrietech.onrender.com/api/v1');
   
   static String get socketBaseUrl => 
-    _get('SOCKET_BASE_URL', 'http://10.0.2.2:5000');
+    _get('SOCKET_BASE_URL', 'https://agrietech.onrender.com');
 
   // Map Configuration
   static String get mapTileUrl => 

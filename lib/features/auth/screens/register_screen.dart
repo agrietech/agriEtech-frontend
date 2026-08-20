@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/auth_provider.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/l10n/app_localizations.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/error/error_handler.dart';
 import '../../../core/error/app_error.dart';
 import '../../../core/widgets/agrietech_logo.dart';
+import '../../boundaries/providers/boundary_provider.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -43,6 +45,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   Future<void> _register() async {
     // Clear any previous errors
     ref.read(authProvider.notifier).clearError();
+    final hierarchy = ref.read(boundaryHierarchyProvider);
     
     if (!_acceptTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -62,6 +65,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           fullName: _fullNameController.text.trim(),
           email: _emailController.text.trim(),
           preferredLang: _selectedLanguage,
+          woredaId: hierarchy.selectedWoreda?.id,
         );
         
         if (mounted) {
@@ -113,6 +117,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
+    final hierarchy = ref.watch(boundaryHierarchyProvider);
+    final hierarchyNotifier = ref.read(boundaryHierarchyProvider.notifier);
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
 
@@ -222,6 +228,145 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   textInputAction: TextInputAction.next,
                   validator: Validators.phone,
                   enabled: !authState.isLoading,
+                ),
+                const SizedBox(height: 16),
+
+                // Geographic Location Hierarchy Card (Region -> Zone -> Woreda)
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.grey.shade300),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.02),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(Icons.location_on, color: AppTheme.primaryColor, size: 18),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Administrative Location',
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFF1E2E1E),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Select your agricultural jurisdiction for tailored early warnings',
+                        style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                      ),
+                      const SizedBox(height: 14),
+
+                      // 1. Region Dropdown
+                      DropdownButtonFormField<String>(
+                        decoration: InputDecoration(
+                          labelText: 'Region',
+                          prefixIcon: const Icon(Icons.public),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        ),
+                        initialValue: hierarchy.selectedRegion?.id,
+                        hint: const Text('Select Region (e.g. Oromia, Amhara)'),
+                        items: hierarchy.regions.map((region) {
+                          return DropdownMenuItem<String>(
+                            value: region.id,
+                            child: Text(region.name),
+                          );
+                        }).toList(),
+                        onChanged: authState.isLoading
+                            ? null
+                            : (regionId) {
+                                if (regionId != null) {
+                                  final region = hierarchy.regions.firstWhere((r) => r.id == regionId);
+                                  hierarchyNotifier.selectRegion(region);
+                                }
+                              },
+                      ),
+                      const SizedBox(height: 12),
+
+                      // 2. Zone Dropdown
+                      DropdownButtonFormField<String>(
+                        decoration: InputDecoration(
+                          labelText: 'Zone',
+                          prefixIcon: const Icon(Icons.map_outlined),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        ),
+                        initialValue: hierarchy.selectedZone?.id,
+                        hint: Text(hierarchy.selectedRegion == null
+                            ? 'Select Region first'
+                            : 'Select Zone'),
+                        items: hierarchy.zones.map((zone) {
+                          return DropdownMenuItem<String>(
+                            value: zone.id,
+                            child: Text(zone.name),
+                          );
+                        }).toList(),
+                        onChanged: (authState.isLoading || hierarchy.selectedRegion == null)
+                            ? null
+                            : (zoneId) {
+                                if (zoneId != null) {
+                                  final zone = hierarchy.zones.firstWhere((z) => z.id == zoneId);
+                                  hierarchyNotifier.selectZone(zone);
+                                }
+                              },
+                      ),
+                      const SizedBox(height: 12),
+
+                      // 3. Woreda Dropdown
+                      DropdownButtonFormField<String>(
+                        decoration: InputDecoration(
+                          labelText: 'Woreda / District',
+                          prefixIcon: const Icon(Icons.place_outlined),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        ),
+                        initialValue: hierarchy.selectedWoreda?.id,
+                        hint: Text(hierarchy.selectedZone == null
+                            ? 'Select Zone first'
+                            : 'Select Woreda (e.g. Haramaya)'),
+                        items: hierarchy.woredas.map((woreda) {
+                          return DropdownMenuItem<String>(
+                            value: woreda.id,
+                            child: Text(woreda.name),
+                          );
+                        }).toList(),
+                        onChanged: (authState.isLoading || hierarchy.selectedZone == null)
+                            ? null
+                            : (woredaId) {
+                                if (woredaId != null) {
+                                  final woreda = hierarchy.woredas.firstWhere((w) => w.id == woredaId);
+                                  hierarchyNotifier.selectWoreda(woreda);
+                                }
+                              },
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 16),
 
