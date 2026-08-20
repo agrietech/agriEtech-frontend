@@ -4,6 +4,7 @@ import '../providers/weather_provider.dart';
 import '../widgets/temperature_trend_chart.dart';
 import '../widgets/rainfall_chart.dart';
 import '../../../../core/l10n/app_localizations.dart';
+import '../../../auth/providers/auth_provider.dart';
 
 class WeatherScreen extends ConsumerStatefulWidget {
   final String? woredaId;
@@ -25,17 +26,17 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
   @override
   void initState() {
     super.initState();
-    _loadWeatherData();
+    Future.microtask(() => _loadWeatherData());
   }
 
   void _loadWeatherData() {
-    if (widget.woredaId != null) {
-      ref.read(weatherProvider.notifier).loadForecast(
-        woredaId: widget.woredaId,
-        latitude: widget.latitude,
-        longitude: widget.longitude,
-      );
-    }
+    final user = ref.read(currentUserProvider);
+    final targetWoredaId = widget.woredaId ?? user?.woredaId ?? 'woreda_demo_01';
+    ref.read(weatherProvider.notifier).loadForecast(
+      woredaId: targetWoredaId,
+      latitude: widget.latitude ?? 9.145,
+      longitude: widget.longitude ?? 40.489,
+    );
   }
 
   @override

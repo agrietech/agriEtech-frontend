@@ -69,30 +69,85 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         );
         
         if (mounted) {
-          // Show email verification notice
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Account created! Please check your email to verify your account.',
+          final isAuth = ref.read(authProvider).isAuthenticated;
+          if (isAuth) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Row(
+                  children: [
+                    Icon(Icons.check_circle_outline, color: Colors.white),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Account created successfully! Welcome to AgriEtech.',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ],
+                ),
+                backgroundColor: Color(0xFF2E7D32),
+                duration: Duration(seconds: 4),
               ),
-              backgroundColor: Color(0xFF2E7D32),
-              duration: Duration(seconds: 5),
-            ),
-          );
-          context.go('/home');
+            );
+            context.go('/home');
+          } else {
+            // Show verification dialog for accounts requiring confirmation
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (ctx) => AlertDialog(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                title: const Row(
+                  children: [
+                    Icon(Icons.mark_email_read_outlined, color: Color(0xFF2E7D32), size: 28),
+                    SizedBox(width: 10),
+                    Text('Account Created', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ],
+                ),
+                content: Text(
+                  _emailController.text.trim().isNotEmpty
+                      ? 'Your account has been created successfully! A verification email may have been sent to ${_emailController.text.trim()}. Please verify your email and sign in.'
+                      : 'Your account has been registered successfully! You can now sign in with your phone number and password.',
+                  style: const TextStyle(fontSize: 14, height: 1.4),
+                ),
+                actions: [
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.of(ctx).pop();
+                      context.go('/login');
+                    },
+                    icon: const Icon(Icons.login, size: 18),
+                    label: const Text('Proceed to Login'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2E7D32),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
         }
       } on ValidationError catch (e) {
         if (mounted) {
           if (e.fieldErrors != null) {
-            // Show field-specific errors
             final errorMessage = e.fieldErrors!.entries
-                .map((entry) => '${entry.key}: ${entry.value.join(", ")}')
+                .map((entry) => '• ${entry.key}: ${entry.value.join(", ")}')
                 .join('\n');
             
             showDialog(
               context: context,
               builder: (context) => AlertDialog(
-                title: const Text('Validation Error'),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                title: const Row(
+                  children: [
+                    Icon(Icons.error_outline, color: Colors.red),
+                    SizedBox(width: 8),
+                    Text('Validation Error'),
+                  ],
+                ),
                 content: Text(errorMessage),
                 actions: [
                   TextButton(
@@ -109,6 +164,15 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       } on AppError catch (e) {
         if (mounted) {
           ErrorHandler.showErrorSnackBar(context, e);
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Registration error: ${e.toString()}'),
+              backgroundColor: Colors.red,
+            ),
+          );
         }
       }
     }

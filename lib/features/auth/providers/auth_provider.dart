@@ -111,8 +111,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  /// Login with phone and password
-  Future<void> login(String phone, String password, {String? deviceToken}) async {
+  /// Login with phone, email, or identifier and password
+  Future<void> login(String credential, String password, {String? deviceToken}) async {
     state = state.copyWith(
       isLoading: true,
       clearError: true,
@@ -120,10 +120,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
     );
     
     try {
-      AppLogger.info('Login attempt for phone: $phone');
+      AppLogger.info('Login attempt for: $credential');
+      final isEmail = credential.contains('@');
       
       final request = LoginRequest(
-        phone: phone,
+        email: isEmail ? credential : null,
+        phone: !isEmail ? credential : null,
+        identifier: credential,
         password: password,
         deviceToken: deviceToken,
       );

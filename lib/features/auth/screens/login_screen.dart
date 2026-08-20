@@ -56,6 +56,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         if (mounted) {
           ErrorHandler.showErrorSnackBar(context, e);
         }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Login failed: ${e.toString()}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     }
   }
