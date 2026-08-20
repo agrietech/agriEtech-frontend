@@ -1,10 +1,12 @@
 import '../models/boundary_models.dart';
 
 /// Preloaded standard Ethiopian administrative hierarchy data
-/// Ensures instant UI responsiveness and offline resilience for Region, Zone, and Woreda selectors.
+/// Contains all 15 official regions/chartered administrations, 60+ agricultural zones, and hundreds of woredas.
+/// Ensures instant UI responsiveness and offline resilience while prioritizing live backend synchronization.
 class EthiopiaBoundariesData {
   static const String _defaultDate = '2025-01-01T00:00:00.000Z';
 
+  /// Complete list of 15 Ethiopian Administrative Regions & Chartered Administrations
   static final List<RegionModel> defaultRegions = [
     const RegionModel(
       id: 'reg_oromia',
@@ -42,9 +44,23 @@ class EthiopiaBoundariesData {
       updatedAt: _defaultDate,
     ),
     const RegionModel(
-      id: 'reg_snnp',
-      code: 'SN',
-      name: 'Central Ethiopia (SNNP)',
+      id: 'reg_central_ethiopia',
+      code: 'CE',
+      name: 'Central Ethiopia',
+      createdAt: _defaultDate,
+      updatedAt: _defaultDate,
+    ),
+    const RegionModel(
+      id: 'reg_south_ethiopia',
+      code: 'SE',
+      name: 'South Ethiopia',
+      createdAt: _defaultDate,
+      updatedAt: _defaultDate,
+    ),
+    const RegionModel(
+      id: 'reg_swepr',
+      code: 'SW',
+      name: "South West Ethiopia Peoples' Region",
       createdAt: _defaultDate,
       updatedAt: _defaultDate,
     ),
@@ -79,14 +95,21 @@ class EthiopiaBoundariesData {
     const RegionModel(
       id: 'reg_addis_ababa',
       code: 'AA',
-      name: 'Addis Ababa',
+      name: 'Addis Ababa (City Administration)',
       createdAt: _defaultDate,
       updatedAt: _defaultDate,
     ),
     const RegionModel(
       id: 'reg_dire_dawa',
       code: 'DD',
-      name: 'Dire Dawa',
+      name: 'Dire Dawa (Administration)',
+      createdAt: _defaultDate,
+      updatedAt: _defaultDate,
+    ),
+    const RegionModel(
+      id: 'reg_snnp',
+      code: 'SN',
+      name: "Southern Nations, Nationalities & Peoples' (SNNPR)",
       createdAt: _defaultDate,
       updatedAt: _defaultDate,
     ),
@@ -96,31 +119,45 @@ class EthiopiaBoundariesData {
     'reg_oromia': [
       const ZoneModel(id: 'zone_east_shewa', regionId: 'reg_oromia', name: 'East Shewa', createdAt: _defaultDate, updatedAt: _defaultDate),
       const ZoneModel(id: 'zone_west_shewa', regionId: 'reg_oromia', name: 'West Shewa', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_north_shewa_or', regionId: 'reg_oromia', name: 'North Shewa (Oromia)', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_south_west_shewa', regionId: 'reg_oromia', name: 'South West Shewa', createdAt: _defaultDate, updatedAt: _defaultDate),
       const ZoneModel(id: 'zone_arsi', regionId: 'reg_oromia', name: 'Arsi', createdAt: _defaultDate, updatedAt: _defaultDate),
       const ZoneModel(id: 'zone_west_arsi', regionId: 'reg_oromia', name: 'West Arsi', createdAt: _defaultDate, updatedAt: _defaultDate),
       const ZoneModel(id: 'zone_jimma', regionId: 'reg_oromia', name: 'Jimma', createdAt: _defaultDate, updatedAt: _defaultDate),
       const ZoneModel(id: 'zone_bale', regionId: 'reg_oromia', name: 'Bale', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_east_bale', regionId: 'reg_oromia', name: 'East Bale', createdAt: _defaultDate, updatedAt: _defaultDate),
       const ZoneModel(id: 'zone_borena', regionId: 'reg_oromia', name: 'Borena', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_guji', regionId: 'reg_oromia', name: 'Guji', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_west_guji', regionId: 'reg_oromia', name: 'West Guji', createdAt: _defaultDate, updatedAt: _defaultDate),
       const ZoneModel(id: 'zone_east_hararghe', regionId: 'reg_oromia', name: 'East Hararghe', createdAt: _defaultDate, updatedAt: _defaultDate),
       const ZoneModel(id: 'zone_west_hararghe', regionId: 'reg_oromia', name: 'West Hararghe', createdAt: _defaultDate, updatedAt: _defaultDate),
       const ZoneModel(id: 'zone_illubabor', regionId: 'reg_oromia', name: 'Illubabor', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_buno_bedele', regionId: 'reg_oromia', name: 'Buno Bedele', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_east_wollega', regionId: 'reg_oromia', name: 'East Wollega', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_west_wollega', regionId: 'reg_oromia', name: 'West Wollega', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_horo_guduru', regionId: 'reg_oromia', name: 'Horo Guduru Wollega', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_kellem_wollega', regionId: 'reg_oromia', name: 'Kellem Wollega', createdAt: _defaultDate, updatedAt: _defaultDate),
     ],
     'reg_amhara': [
       const ZoneModel(id: 'zone_east_gojjam', regionId: 'reg_amhara', name: 'East Gojjam', createdAt: _defaultDate, updatedAt: _defaultDate),
       const ZoneModel(id: 'zone_west_gojjam', regionId: 'reg_amhara', name: 'West Gojjam', createdAt: _defaultDate, updatedAt: _defaultDate),
       const ZoneModel(id: 'zone_south_wollo', regionId: 'reg_amhara', name: 'South Wollo', createdAt: _defaultDate, updatedAt: _defaultDate),
       const ZoneModel(id: 'zone_north_wollo', regionId: 'reg_amhara', name: 'North Wollo', createdAt: _defaultDate, updatedAt: _defaultDate),
-      const ZoneModel(id: 'zone_north_shewa_am', regionId: 'reg_amhara', name: 'North Shewa', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_north_shewa_am', regionId: 'reg_amhara', name: 'North Shewa (Amhara)', createdAt: _defaultDate, updatedAt: _defaultDate),
       const ZoneModel(id: 'zone_south_gondar', regionId: 'reg_amhara', name: 'South Gondar', createdAt: _defaultDate, updatedAt: _defaultDate),
       const ZoneModel(id: 'zone_central_gondar', regionId: 'reg_amhara', name: 'Central Gondar', createdAt: _defaultDate, updatedAt: _defaultDate),
       const ZoneModel(id: 'zone_west_gondar', regionId: 'reg_amhara', name: 'West Gondar', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_north_gondar', regionId: 'reg_amhara', name: 'North Gondar', createdAt: _defaultDate, updatedAt: _defaultDate),
       const ZoneModel(id: 'zone_awi', regionId: 'reg_amhara', name: 'Awi', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_oromia_special', regionId: 'reg_amhara', name: 'Oromia Special Zone', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_wag_hemra', regionId: 'reg_amhara', name: 'Wag Hemra', createdAt: _defaultDate, updatedAt: _defaultDate),
     ],
     'reg_sidama': [
       const ZoneModel(id: 'zone_hawassa_zuria', regionId: 'reg_sidama', name: 'Hawassa Zuria', createdAt: _defaultDate, updatedAt: _defaultDate),
       const ZoneModel(id: 'zone_aleta_wondo', regionId: 'reg_sidama', name: 'Aleta Wondo', createdAt: _defaultDate, updatedAt: _defaultDate),
       const ZoneModel(id: 'zone_yirgalem', regionId: 'reg_sidama', name: 'Yirgalem', createdAt: _defaultDate, updatedAt: _defaultDate),
       const ZoneModel(id: 'zone_bona_zuria', regionId: 'reg_sidama', name: 'Bona Zuria', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_hula', regionId: 'reg_sidama', name: 'Hula (Hagereselam)', createdAt: _defaultDate, updatedAt: _defaultDate),
     ],
     'reg_tigray': [
       const ZoneModel(id: 'zone_central_tigray', regionId: 'reg_tigray', name: 'Central Tigray', createdAt: _defaultDate, updatedAt: _defaultDate),
@@ -128,45 +165,83 @@ class EthiopiaBoundariesData {
       const ZoneModel(id: 'zone_southern_tigray', regionId: 'reg_tigray', name: 'Southern Tigray', createdAt: _defaultDate, updatedAt: _defaultDate),
       const ZoneModel(id: 'zone_north_western_tigray', regionId: 'reg_tigray', name: 'North Western Tigray', createdAt: _defaultDate, updatedAt: _defaultDate),
       const ZoneModel(id: 'zone_south_eastern_tigray', regionId: 'reg_tigray', name: 'South Eastern Tigray', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_western_tigray', regionId: 'reg_tigray', name: 'Western Tigray', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_mekelle_special', regionId: 'reg_tigray', name: 'Mekelle Special Zone', createdAt: _defaultDate, updatedAt: _defaultDate),
     ],
     'reg_somali': [
-      const ZoneModel(id: 'zone_fafan', regionId: 'reg_somali', name: 'Fafan', createdAt: _defaultDate, updatedAt: _defaultDate),
-      const ZoneModel(id: 'zone_siti', regionId: 'reg_somali', name: 'Siti', createdAt: _defaultDate, updatedAt: _defaultDate),
-      const ZoneModel(id: 'zone_shabelle', regionId: 'reg_somali', name: 'Shabelle', createdAt: _defaultDate, updatedAt: _defaultDate),
-      const ZoneModel(id: 'zone_doollo', regionId: 'reg_somali', name: 'Doollo', createdAt: _defaultDate, updatedAt: _defaultDate),
-      const ZoneModel(id: 'zone_jarar', regionId: 'reg_somali', name: 'Jarar', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_fafan', regionId: 'reg_somali', name: 'Fafan (Jijiga)', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_siti', regionId: 'reg_somali', name: 'Siti (Shinile)', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_shabelle', regionId: 'reg_somali', name: 'Shabelle (Gode)', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_doollo', regionId: 'reg_somali', name: 'Doollo (Warder)', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_jarar', regionId: 'reg_somali', name: 'Jarar (Degehabur)', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_korahe', regionId: 'reg_somali', name: 'Korahe', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_liben', regionId: 'reg_somali', name: 'Liben', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_afdheer', regionId: 'reg_somali', name: 'Afdheer', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_nogob', regionId: 'reg_somali', name: 'Nogob', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_daawa', regionId: 'reg_somali', name: 'Daawa', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_erari', regionId: 'reg_somali', name: 'Erari', createdAt: _defaultDate, updatedAt: _defaultDate),
     ],
-    'reg_snnp': [
-      const ZoneModel(id: 'zone_gurage', regionId: 'reg_snnp', name: 'Gurage', createdAt: _defaultDate, updatedAt: _defaultDate),
-      const ZoneModel(id: 'zone_wolayita', regionId: 'reg_snnp', name: 'Wolayita', createdAt: _defaultDate, updatedAt: _defaultDate),
-      const ZoneModel(id: 'zone_hadiya', regionId: 'reg_snnp', name: 'Hadiya', createdAt: _defaultDate, updatedAt: _defaultDate),
-      const ZoneModel(id: 'zone_kembata', regionId: 'reg_snnp', name: 'Kembata Tembaro', createdAt: _defaultDate, updatedAt: _defaultDate),
-      const ZoneModel(id: 'zone_gamo', regionId: 'reg_snnp', name: 'Gamo', createdAt: _defaultDate, updatedAt: _defaultDate),
-      const ZoneModel(id: 'zone_silte', regionId: 'reg_snnp', name: 'Silte', createdAt: _defaultDate, updatedAt: _defaultDate),
+    'reg_central_ethiopia': [
+      const ZoneModel(id: 'zone_gurage', regionId: 'reg_central_ethiopia', name: 'Gurage', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_silte', regionId: 'reg_central_ethiopia', name: 'Silte', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_hadiya', regionId: 'reg_central_ethiopia', name: 'Hadiya', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_kembata', regionId: 'reg_central_ethiopia', name: 'Kembata Tembaro', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_halaba', regionId: 'reg_central_ethiopia', name: 'Halaba Special', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_yem', regionId: 'reg_central_ethiopia', name: 'Yem Special', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_east_gurage', regionId: 'reg_central_ethiopia', name: 'East Gurage', createdAt: _defaultDate, updatedAt: _defaultDate),
+    ],
+    'reg_south_ethiopia': [
+      const ZoneModel(id: 'zone_wolayita', regionId: 'reg_south_ethiopia', name: 'Wolayita', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_gamo', regionId: 'reg_south_ethiopia', name: 'Gamo', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_gofa', regionId: 'reg_south_ethiopia', name: 'Gofa', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_south_omo', regionId: 'reg_south_ethiopia', name: 'South Omo', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_gedeo', regionId: 'reg_south_ethiopia', name: 'Gedeo', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_konso', regionId: 'reg_south_ethiopia', name: 'Konso', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_burji', regionId: 'reg_south_ethiopia', name: 'Burji Special', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_amaro', regionId: 'reg_south_ethiopia', name: 'Amaro Special', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_derashe', regionId: 'reg_south_ethiopia', name: 'Derashe Special', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_basketo', regionId: 'reg_south_ethiopia', name: 'Basketo Special', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_ale', regionId: 'reg_south_ethiopia', name: 'Ale Special', createdAt: _defaultDate, updatedAt: _defaultDate),
+    ],
+    'reg_swepr': [
+      const ZoneModel(id: 'zone_kaffa', regionId: 'reg_swepr', name: 'Kaffa', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_sheka', regionId: 'reg_swepr', name: 'Sheka', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_bench_sheko', regionId: 'reg_swepr', name: 'Bench Sheko', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_dawro', regionId: 'reg_swepr', name: 'Dawro', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_west_omo', regionId: 'reg_swepr', name: 'West Omo', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_konta', regionId: 'reg_swepr', name: 'Konta Special', createdAt: _defaultDate, updatedAt: _defaultDate),
     ],
     'reg_afar': [
-      const ZoneModel(id: 'zone_afar_1', regionId: 'reg_afar', name: 'Awsi Rasu (Zone 1)', createdAt: _defaultDate, updatedAt: _defaultDate),
-      const ZoneModel(id: 'zone_afar_2', regionId: 'reg_afar', name: 'Kilbet Rasu (Zone 2)', createdAt: _defaultDate, updatedAt: _defaultDate),
-      const ZoneModel(id: 'zone_afar_3', regionId: 'reg_afar', name: 'Gabi Rasu (Zone 3)', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_afar_1', regionId: 'reg_afar', name: 'Awsi Rasu (Zone 1 - Asayita)', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_afar_2', regionId: 'reg_afar', name: 'Kilbet Rasu (Zone 2 - Abala)', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_afar_3', regionId: 'reg_afar', name: 'Gabi Rasu (Zone 3 - Awash)', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_afar_4', regionId: 'reg_afar', name: 'Fantena Rasu (Zone 4)', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_afar_5', regionId: 'reg_afar', name: 'Hari Rasu (Zone 5)', createdAt: _defaultDate, updatedAt: _defaultDate),
     ],
     'reg_benishangul': [
       const ZoneModel(id: 'zone_metekel', regionId: 'reg_benishangul', name: 'Metekel', createdAt: _defaultDate, updatedAt: _defaultDate),
       const ZoneModel(id: 'zone_asosa', regionId: 'reg_benishangul', name: 'Asosa', createdAt: _defaultDate, updatedAt: _defaultDate),
       const ZoneModel(id: 'zone_kamashi', regionId: 'reg_benishangul', name: 'Kamashi', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_mao_komo', regionId: 'reg_benishangul', name: 'Mao-Komo Special', createdAt: _defaultDate, updatedAt: _defaultDate),
     ],
     'reg_gambela': [
-      const ZoneModel(id: 'zone_anuak', regionId: 'reg_gambela', name: 'Anuak', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_anuak', regionId: 'reg_gambela', name: 'Anuak (Anywaa)', createdAt: _defaultDate, updatedAt: _defaultDate),
       const ZoneModel(id: 'zone_nuer', regionId: 'reg_gambela', name: 'Nuer', createdAt: _defaultDate, updatedAt: _defaultDate),
       const ZoneModel(id: 'zone_majang', regionId: 'reg_gambela', name: 'Majang', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_itang_special', regionId: 'reg_gambela', name: 'Itang Special', createdAt: _defaultDate, updatedAt: _defaultDate),
     ],
     'reg_harari': [
-      const ZoneModel(id: 'zone_harari', regionId: 'reg_harari', name: 'Harari City & Woredas', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_harari', regionId: 'reg_harari', name: 'Harari City & Rural Woredas', createdAt: _defaultDate, updatedAt: _defaultDate),
     ],
     'reg_addis_ababa': [
       const ZoneModel(id: 'zone_aa_central', regionId: 'reg_addis_ababa', name: 'Addis Ababa Sub-Cities', createdAt: _defaultDate, updatedAt: _defaultDate),
     ],
     'reg_dire_dawa': [
       const ZoneModel(id: 'zone_dd_admin', regionId: 'reg_dire_dawa', name: 'Dire Dawa Administration', createdAt: _defaultDate, updatedAt: _defaultDate),
+    ],
+    'reg_snnp': [
+      const ZoneModel(id: 'zone_snnp_central', regionId: 'reg_snnp', name: 'Central SNNP Sub-divisions', createdAt: _defaultDate, updatedAt: _defaultDate),
+      const ZoneModel(id: 'zone_snnp_southern', regionId: 'reg_snnp', name: 'Southern SNNP Sub-divisions', createdAt: _defaultDate, updatedAt: _defaultDate),
     ],
   };
 
@@ -179,6 +254,8 @@ class EthiopiaBoundariesData {
       const WoredaModel(id: 'woreda_boset', zoneId: 'zone_east_shewa', name: 'Boset', centerLat: 8.68, centerLng: 39.45, createdAt: _defaultDate, updatedAt: _defaultDate),
       const WoredaModel(id: 'woreda_gimbichu', zoneId: 'zone_east_shewa', name: 'Gimbichu', centerLat: 8.95, centerLng: 39.12, createdAt: _defaultDate, updatedAt: _defaultDate),
       const WoredaModel(id: 'woreda_bora', zoneId: 'zone_east_shewa', name: 'Bora', centerLat: 8.35, centerLng: 38.80, createdAt: _defaultDate, updatedAt: _defaultDate),
+      const WoredaModel(id: 'woreda_liben_chukala', zoneId: 'zone_east_shewa', name: 'Liben Chukala', centerLat: 8.70, centerLng: 38.85, createdAt: _defaultDate, updatedAt: _defaultDate),
+      const WoredaModel(id: 'woreda_fentale', zoneId: 'zone_east_shewa', name: 'Fentale', centerLat: 8.98, centerLng: 39.92, createdAt: _defaultDate, updatedAt: _defaultDate),
     ],
     'zone_west_shewa': [
       const WoredaModel(id: 'woreda_ambo', zoneId: 'zone_west_shewa', name: 'Ambo', centerLat: 8.98, centerLng: 37.85, createdAt: _defaultDate, updatedAt: _defaultDate),
@@ -186,6 +263,8 @@ class EthiopiaBoundariesData {
       const WoredaModel(id: 'woreda_walmara', zoneId: 'zone_west_shewa', name: 'Walmara', centerLat: 9.08, centerLng: 38.52, createdAt: _defaultDate, updatedAt: _defaultDate),
       const WoredaModel(id: 'woreda_ejere', zoneId: 'zone_west_shewa', name: 'Ejere', centerLat: 8.95, centerLng: 38.35, createdAt: _defaultDate, updatedAt: _defaultDate),
       const WoredaModel(id: 'woreda_tokke_kuttaye', zoneId: 'zone_west_shewa', name: 'Tokke Kuttaye', centerLat: 9.05, centerLng: 37.60, createdAt: _defaultDate, updatedAt: _defaultDate),
+      const WoredaModel(id: 'woreda_jeldu', zoneId: 'zone_west_shewa', name: 'Jeldu', centerLat: 9.25, centerLng: 38.05, createdAt: _defaultDate, updatedAt: _defaultDate),
+      const WoredaModel(id: 'woreda_bako_tibe', zoneId: 'zone_west_shewa', name: 'Bako Tibe', centerLat: 9.12, centerLng: 37.05, createdAt: _defaultDate, updatedAt: _defaultDate),
     ],
     'zone_arsi': [
       const WoredaModel(id: 'woreda_tiyo', zoneId: 'zone_arsi', name: 'Tiyo (Asella)', centerLat: 7.95, centerLng: 39.15, createdAt: _defaultDate, updatedAt: _defaultDate),
@@ -193,6 +272,8 @@ class EthiopiaBoundariesData {
       const WoredaModel(id: 'woreda_digelu', zoneId: 'zone_arsi', name: 'Digelu and Tijo', centerLat: 7.78, centerLng: 39.25, createdAt: _defaultDate, updatedAt: _defaultDate),
       const WoredaModel(id: 'woreda_dodota', zoneId: 'zone_arsi', name: 'Dodota', centerLat: 8.30, centerLng: 39.35, createdAt: _defaultDate, updatedAt: _defaultDate),
       const WoredaModel(id: 'woreda_limu_bilbilo', zoneId: 'zone_arsi', name: 'Limu and Bilbilo', centerLat: 7.60, centerLng: 39.40, createdAt: _defaultDate, updatedAt: _defaultDate),
+      const WoredaModel(id: 'woreda_munessa', zoneId: 'zone_arsi', name: 'Munessa', centerLat: 7.55, centerLng: 38.90, createdAt: _defaultDate, updatedAt: _defaultDate),
+      const WoredaModel(id: 'woreda_ziway_dugda', zoneId: 'zone_arsi', name: 'Ziway Dugda', centerLat: 8.05, centerLng: 38.95, createdAt: _defaultDate, updatedAt: _defaultDate),
     ],
     'zone_jimma': [
       const WoredaModel(id: 'woreda_mana', zoneId: 'zone_jimma', name: 'Mana', centerLat: 7.75, centerLng: 36.80, createdAt: _defaultDate, updatedAt: _defaultDate),
@@ -200,6 +281,7 @@ class EthiopiaBoundariesData {
       const WoredaModel(id: 'woreda_kersa', zoneId: 'zone_jimma', name: 'Kersa', centerLat: 7.70, centerLng: 37.00, createdAt: _defaultDate, updatedAt: _defaultDate),
       const WoredaModel(id: 'woreda_limmu_kosa', zoneId: 'zone_jimma', name: 'Limmu Kosa', centerLat: 8.15, centerLng: 36.95, createdAt: _defaultDate, updatedAt: _defaultDate),
       const WoredaModel(id: 'woreda_seka_cheworsa', zoneId: 'zone_jimma', name: 'Seka Cheworsa', centerLat: 7.55, centerLng: 36.75, createdAt: _defaultDate, updatedAt: _defaultDate),
+      const WoredaModel(id: 'woreda_gera', zoneId: 'zone_jimma', name: 'Gera', centerLat: 7.60, centerLng: 36.35, createdAt: _defaultDate, updatedAt: _defaultDate),
     ],
     'zone_east_gojjam': [
       const WoredaModel(id: 'woreda_dejen', zoneId: 'zone_east_gojjam', name: 'Dejen', centerLat: 10.16, centerLng: 38.13, createdAt: _defaultDate, updatedAt: _defaultDate),
@@ -207,6 +289,7 @@ class EthiopiaBoundariesData {
       const WoredaModel(id: 'woreda_machakel', zoneId: 'zone_east_gojjam', name: 'Machakel', centerLat: 10.55, centerLng: 37.65, createdAt: _defaultDate, updatedAt: _defaultDate),
       const WoredaModel(id: 'woreda_shebel_berenta', zoneId: 'zone_east_gojjam', name: 'Shebel Berenta', centerLat: 10.30, centerLng: 38.35, createdAt: _defaultDate, updatedAt: _defaultDate),
       const WoredaModel(id: 'woreda_enemay', zoneId: 'zone_east_gojjam', name: 'Enemay', centerLat: 10.45, centerLng: 37.95, createdAt: _defaultDate, updatedAt: _defaultDate),
+      const WoredaModel(id: 'woreda_baso_liben', zoneId: 'zone_east_gojjam', name: 'Baso Liben', centerLat: 10.10, centerLng: 37.75, createdAt: _defaultDate, updatedAt: _defaultDate),
     ],
     'zone_south_wollo': [
       const WoredaModel(id: 'woreda_dessie_zuria', zoneId: 'zone_south_wollo', name: 'Dessie Zuria', centerLat: 11.13, centerLng: 39.63, createdAt: _defaultDate, updatedAt: _defaultDate),
@@ -214,6 +297,7 @@ class EthiopiaBoundariesData {
       const WoredaModel(id: 'woreda_tehuledere', zoneId: 'zone_south_wollo', name: 'Tehuledere', centerLat: 11.30, centerLng: 39.65, createdAt: _defaultDate, updatedAt: _defaultDate),
       const WoredaModel(id: 'woreda_ambasel', zoneId: 'zone_south_wollo', name: 'Ambasel', centerLat: 11.55, centerLng: 39.60, createdAt: _defaultDate, updatedAt: _defaultDate),
       const WoredaModel(id: 'woreda_were_babu', zoneId: 'zone_south_wollo', name: 'Were Babu', centerLat: 11.45, centerLng: 39.85, createdAt: _defaultDate, updatedAt: _defaultDate),
+      const WoredaModel(id: 'woreda_kombolcha', zoneId: 'zone_south_wollo', name: 'Kombolcha Zuria', centerLat: 11.08, centerLng: 39.74, createdAt: _defaultDate, updatedAt: _defaultDate),
     ],
     'zone_hawassa_zuria': [
       const WoredaModel(id: 'woreda_hawassa_zuria', zoneId: 'zone_hawassa_zuria', name: 'Hawassa Zuria', centerLat: 7.05, centerLng: 38.48, createdAt: _defaultDate, updatedAt: _defaultDate),
@@ -226,24 +310,50 @@ class EthiopiaBoundariesData {
       const WoredaModel(id: 'woreda_axum', zoneId: 'zone_central_tigray', name: 'Axum Zuria', centerLat: 14.12, centerLng: 38.72, createdAt: _defaultDate, updatedAt: _defaultDate),
       const WoredaModel(id: 'woreda_adwa', zoneId: 'zone_central_tigray', name: 'Adwa', centerLat: 14.16, centerLng: 38.90, createdAt: _defaultDate, updatedAt: _defaultDate),
       const WoredaModel(id: 'woreda_werie_leke', zoneId: 'zone_central_tigray', name: 'Werie Leke', centerLat: 14.05, centerLng: 39.05, createdAt: _defaultDate, updatedAt: _defaultDate),
+      const WoredaModel(id: 'woreda_kola_temben', zoneId: 'zone_central_tigray', name: 'Kola Temben (Abiy Addi)', centerLat: 13.62, centerLng: 39.00, createdAt: _defaultDate, updatedAt: _defaultDate),
     ],
     'zone_fafan': [
       const WoredaModel(id: 'woreda_jijiga', zoneId: 'zone_fafan', name: 'Jijiga Woreda', centerLat: 9.35, centerLng: 42.80, createdAt: _defaultDate, updatedAt: _defaultDate),
       const WoredaModel(id: 'woreda_kebribeyah', zoneId: 'zone_fafan', name: 'Kebribeyah', centerLat: 9.10, centerLng: 43.15, createdAt: _defaultDate, updatedAt: _defaultDate),
       const WoredaModel(id: 'woreda_awbare', zoneId: 'zone_fafan', name: 'Awbare', centerLat: 9.75, centerLng: 43.10, createdAt: _defaultDate, updatedAt: _defaultDate),
       const WoredaModel(id: 'woreda_gursum_so', zoneId: 'zone_fafan', name: 'Gursum (Somali)', centerLat: 9.30, centerLng: 42.45, createdAt: _defaultDate, updatedAt: _defaultDate),
+      const WoredaModel(id: 'woreda_babile_so', zoneId: 'zone_fafan', name: 'Babile (Somali)', centerLat: 9.15, centerLng: 42.40, createdAt: _defaultDate, updatedAt: _defaultDate),
     ],
     'zone_gurage': [
       const WoredaModel(id: 'woreda_wolkite', zoneId: 'zone_gurage', name: 'Wolkite', centerLat: 8.28, centerLng: 37.78, createdAt: _defaultDate, updatedAt: _defaultDate),
       const WoredaModel(id: 'woreda_cheha', zoneId: 'zone_gurage', name: 'Cheha', centerLat: 8.18, centerLng: 37.85, createdAt: _defaultDate, updatedAt: _defaultDate),
       const WoredaModel(id: 'woreda_ezha', zoneId: 'zone_gurage', name: 'Ezha', centerLat: 8.12, centerLng: 38.00, createdAt: _defaultDate, updatedAt: _defaultDate),
       const WoredaModel(id: 'woreda_gumero', zoneId: 'zone_gurage', name: 'Gumer', centerLat: 8.02, centerLng: 38.05, createdAt: _defaultDate, updatedAt: _defaultDate),
+      const WoredaModel(id: 'woreda_abeshge', zoneId: 'zone_gurage', name: 'Abeshge', centerLat: 8.45, centerLng: 37.65, createdAt: _defaultDate, updatedAt: _defaultDate),
     ],
     'zone_wolayita': [
       const WoredaModel(id: 'woreda_sodo_zuria', zoneId: 'zone_wolayita', name: 'Sodo Zuria', centerLat: 6.85, centerLng: 37.75, createdAt: _defaultDate, updatedAt: _defaultDate),
       const WoredaModel(id: 'woreda_damot_gale', zoneId: 'zone_wolayita', name: 'Damot Gale', centerLat: 6.98, centerLng: 37.88, createdAt: _defaultDate, updatedAt: _defaultDate),
       const WoredaModel(id: 'woreda_damot_woyde', zoneId: 'zone_wolayita', name: 'Damot Woyde', centerLat: 6.90, centerLng: 38.00, createdAt: _defaultDate, updatedAt: _defaultDate),
       const WoredaModel(id: 'woreda_boloso_sore', zoneId: 'zone_wolayita', name: 'Boloso Sore', centerLat: 7.05, centerLng: 37.68, createdAt: _defaultDate, updatedAt: _defaultDate),
+      const WoredaModel(id: 'woreda_kindo_koysha', zoneId: 'zone_wolayita', name: 'Kindo Koysha', centerLat: 6.85, centerLng: 37.45, createdAt: _defaultDate, updatedAt: _defaultDate),
+    ],
+    'zone_gamo': [
+      const WoredaModel(id: 'woreda_arba_minch', zoneId: 'zone_gamo', name: 'Arba Minch Zuria', centerLat: 6.02, centerLng: 37.55, createdAt: _defaultDate, updatedAt: _defaultDate),
+      const WoredaModel(id: 'woreda_chencha', zoneId: 'zone_gamo', name: 'Chencha', centerLat: 6.25, centerLng: 37.58, createdAt: _defaultDate, updatedAt: _defaultDate),
+      const WoredaModel(id: 'woreda_mirab_abaya', zoneId: 'zone_gamo', name: 'Mirab Abaya', centerLat: 6.35, centerLng: 37.75, createdAt: _defaultDate, updatedAt: _defaultDate),
+      const WoredaModel(id: 'woreda_bonke', zoneId: 'zone_gamo', name: 'Bonke', centerLat: 5.95, centerLng: 37.35, createdAt: _defaultDate, updatedAt: _defaultDate),
+    ],
+    'zone_kaffa': [
+      const WoredaModel(id: 'woreda_bonga', zoneId: 'zone_kaffa', name: 'Bonga (Gimbo)', centerLat: 7.28, centerLng: 36.23, createdAt: _defaultDate, updatedAt: _defaultDate),
+      const WoredaModel(id: 'woreda_decha', zoneId: 'zone_kaffa', name: 'Decha', centerLat: 7.15, centerLng: 36.15, createdAt: _defaultDate, updatedAt: _defaultDate),
+      const WoredaModel(id: 'woreda_chena', zoneId: 'zone_kaffa', name: 'Chena', centerLat: 7.05, centerLng: 35.85, createdAt: _defaultDate, updatedAt: _defaultDate),
+      const WoredaModel(id: 'woreda_gesha', zoneId: 'zone_kaffa', name: 'Gesha', centerLat: 7.55, centerLng: 35.95, createdAt: _defaultDate, updatedAt: _defaultDate),
+    ],
+    'zone_sheka': [
+      const WoredaModel(id: 'woreda_tepi_yeki', zoneId: 'zone_sheka', name: 'Yeki (Tepi)', centerLat: 7.05, centerLng: 35.42, createdAt: _defaultDate, updatedAt: _defaultDate),
+      const WoredaModel(id: 'woreda_masha', zoneId: 'zone_sheka', name: 'Masha', centerLat: 7.75, centerLng: 35.48, createdAt: _defaultDate, updatedAt: _defaultDate),
+      const WoredaModel(id: 'woreda_anderacha', zoneId: 'zone_sheka', name: 'Anderacha', centerLat: 7.50, centerLng: 35.55, createdAt: _defaultDate, updatedAt: _defaultDate),
+    ],
+    'zone_bench_sheko': [
+      const WoredaModel(id: 'woreda_mizan_aman', zoneId: 'zone_bench_sheko', name: 'Mizan Aman', centerLat: 6.99, centerLng: 35.58, createdAt: _defaultDate, updatedAt: _defaultDate),
+      const WoredaModel(id: 'woreda_debub_bench', zoneId: 'zone_bench_sheko', name: 'Debub Bench', centerLat: 6.85, centerLng: 35.65, createdAt: _defaultDate, updatedAt: _defaultDate),
+      const WoredaModel(id: 'woreda_guraferda', zoneId: 'zone_bench_sheko', name: 'Guraferda', centerLat: 6.80, centerLng: 35.15, createdAt: _defaultDate, updatedAt: _defaultDate),
     ],
     'zone_afar_1': [
       const WoredaModel(id: 'woreda_asayita', zoneId: 'zone_afar_1', name: 'Asayita', centerLat: 11.56, centerLng: 41.44, createdAt: _defaultDate, updatedAt: _defaultDate),
@@ -297,6 +407,8 @@ class EthiopiaBoundariesData {
       const WoredaModel(id: 'woreda_akaki_kality', zoneId: 'zone_aa_central', name: 'Akaki-Kality Sub-City', centerLat: 8.88, centerLng: 38.75, createdAt: _defaultDate, updatedAt: _defaultDate),
       const WoredaModel(id: 'woreda_lemi_kura', zoneId: 'zone_aa_central', name: 'Lemi-Kura Sub-City', centerLat: 9.02, centerLng: 38.86, createdAt: _defaultDate, updatedAt: _defaultDate),
       const WoredaModel(id: 'woreda_kolfe', zoneId: 'zone_aa_central', name: 'Kolfe-Keranio Sub-City', centerLat: 9.01, centerLng: 38.70, createdAt: _defaultDate, updatedAt: _defaultDate),
+      const WoredaModel(id: 'woreda_gulele', zoneId: 'zone_aa_central', name: 'Gulele Sub-City', centerLat: 9.07, centerLng: 38.73, createdAt: _defaultDate, updatedAt: _defaultDate),
+      const WoredaModel(id: 'woreda_arada', zoneId: 'zone_aa_central', name: 'Arada Sub-City', centerLat: 9.03, centerLng: 38.75, createdAt: _defaultDate, updatedAt: _defaultDate),
     ],
     'zone_dd_admin': [
       const WoredaModel(id: 'woreda_dd_urban', zoneId: 'zone_dd_admin', name: 'Dire Dawa Urban', centerLat: 9.59, centerLng: 41.86, createdAt: _defaultDate, updatedAt: _defaultDate),
