@@ -3,6 +3,7 @@ import '../../../core/error/app_error.dart';
 import '../../../core/error/error_handler.dart';
 import '../../../core/network/dio_client.dart';
 import '../../../core/utils/logger.dart';
+import '../data/ethiopia_boundaries_data.dart';
 import '../models/boundary_models.dart';
 
 class BoundaryRepository {
@@ -24,17 +25,14 @@ class BoundaryRepository {
           .map((json) => RegionModel.fromJson(json as Map<String, dynamic>))
           .toList();
 
-      AppLogger.success('Fetched ${regionsList.length} regions');
-      return regionsList;
-    } on DioException catch (e) {
-      AppLogger.error('Failed to fetch regions', e);
-      throw ErrorHandler.handleError(e);
+      if (regionsList.isNotEmpty) {
+        AppLogger.success('Fetched ${regionsList.length} regions');
+        return regionsList;
+      }
     } catch (e) {
-      AppLogger.error('Unexpected error fetching regions', e);
-      throw const UnknownError(
-        message: 'Failed to fetch regions',
-      );
+      AppLogger.warning('Failed to fetch regions from backend, using preloaded data: $e');
     }
+    return EthiopiaBoundariesData.defaultRegions;
   }
 
   /// Get zones by region
@@ -54,17 +52,14 @@ class BoundaryRepository {
           .map((json) => ZoneModel.fromJson(json as Map<String, dynamic>))
           .toList();
 
-      AppLogger.success('Fetched ${zonesList.length} zones');
-      return zonesList;
-    } on DioException catch (e) {
-      AppLogger.error('Failed to fetch zones', e);
-      throw ErrorHandler.handleError(e);
+      if (zonesList.isNotEmpty) {
+        AppLogger.success('Fetched ${zonesList.length} zones');
+        return zonesList;
+      }
     } catch (e) {
-      AppLogger.error('Unexpected error fetching zones', e);
-      throw const UnknownError(
-        message: 'Failed to fetch zones',
-      );
+      AppLogger.warning('Failed to fetch zones for $regionId, using preloaded data: $e');
     }
+    return EthiopiaBoundariesData.getFallbackZones(regionId);
   }
 
   /// Get woredas by zone
@@ -84,17 +79,14 @@ class BoundaryRepository {
           .map((json) => WoredaModel.fromJson(json as Map<String, dynamic>))
           .toList();
 
-      AppLogger.success('Fetched ${woredasList.length} woredas');
-      return woredasList;
-    } on DioException catch (e) {
-      AppLogger.error('Failed to fetch woredas', e);
-      throw ErrorHandler.handleError(e);
+      if (woredasList.isNotEmpty) {
+        AppLogger.success('Fetched ${woredasList.length} woredas');
+        return woredasList;
+      }
     } catch (e) {
-      AppLogger.error('Unexpected error fetching woredas', e);
-      throw const UnknownError(
-        message: 'Failed to fetch woredas',
-      );
+      AppLogger.warning('Failed to fetch woredas for $zoneId, using preloaded data: $e');
     }
+    return EthiopiaBoundariesData.getFallbackWoredas(zoneId);
   }
 
   /// Get all woredas
@@ -111,17 +103,18 @@ class BoundaryRepository {
           .map((json) => WoredaModel.fromJson(json as Map<String, dynamic>))
           .toList();
 
-      AppLogger.success('Fetched ${woredasList.length} woredas');
-      return woredasList;
-    } on DioException catch (e) {
-      AppLogger.error('Failed to fetch woredas', e);
-      throw ErrorHandler.handleError(e);
+      if (woredasList.isNotEmpty) {
+        AppLogger.success('Fetched ${woredasList.length} woredas');
+        return woredasList;
+      }
     } catch (e) {
-      AppLogger.error('Unexpected error fetching woredas', e);
-      throw const UnknownError(
-        message: 'Failed to fetch woredas',
-      );
+      AppLogger.warning('Failed to fetch all woredas, using preloaded data: $e');
     }
+    final all = <WoredaModel>[];
+    for (final list in EthiopiaBoundariesData.defaultWoredasByZone.values) {
+      all.addAll(list);
+    }
+    return all;
   }
 
   /// Get woreda by ID with full details

@@ -32,6 +32,14 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   bool _acceptTerms = false;
 
   @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      ref.read(boundaryHierarchyProvider.notifier).loadRegions();
+    });
+  }
+
+  @override
   void dispose() {
     _fullNameController.dispose();
     _usernameController.dispose();
@@ -43,14 +51,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   }
 
   Future<void> _register() async {
-    // Clear any previous errors
     ref.read(authProvider.notifier).clearError();
     final hierarchy = ref.read(boundaryHierarchyProvider);
     
     if (!_acceptTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please accept the terms and conditions'),
+          content: Text('Please accept the terms and conditions to proceed'),
           backgroundColor: Colors.orange,
         ),
       );
@@ -91,7 +98,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             );
             context.go('/home');
           } else {
-            // Show verification dialog for accounts requiring confirmation
             showDialog(
               context: context,
               barrierDismissible: false,
@@ -187,478 +193,562 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF7FAF7),
       appBar: AppBar(
-        title: Text(l10n.translate('register')),
+        title: const Text('Account Registration', style: TextStyle(fontWeight: FontWeight.w600)),
         elevation: 0,
+        backgroundColor: Colors.white,
+        foregroundColor: const Color(0xFF1E2E1E),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Bounded AgriEtech Brand Header
-                const Center(
-                  child: AgriEtechLogo.horizontal(
-                    size: 38,
-                    showTagline: true,
-                    customTagline: 'CREATE ACCOUNT',
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                // Welcome text
-                Text(
-                  'Create Your Account',
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'Join the early warning network to protect your crops and livestock',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: Colors.grey.shade600,
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                // Error alert banner
-                if (authState.error != null) ...[
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: Colors.red.shade50,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.red.shade300),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 640),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Brand Header
+                    const Center(
+                      child: AgriEtechLogo.horizontal(
+                        size: 36,
+                        showTagline: true,
+                        customTagline: 'NATIONAL AGRICULTURAL EARLY WARNING PLATFORM',
+                      ),
                     ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Icon(Icons.error_outline, color: Colors.red, size: 22),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                    const SizedBox(height: 20),
+
+                    // Header Introduction Card
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppTheme.primaryColor.withValues(alpha: 0.08),
+                            AppTheme.primaryLightColor.withValues(alpha: 0.04),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.15)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
                             children: [
-                              const Text(
-                                'Registration Issue',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.red,
-                                  fontSize: 14,
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.primaryColor,
+                                  borderRadius: BorderRadius.circular(10),
                                 ),
+                                child: const Icon(Icons.how_to_reg, color: Colors.white, size: 20),
                               ),
-                              const SizedBox(height: 4),
-                              Text(
-                                authState.error!.message,
-                                style: TextStyle(
-                                  color: Colors.red.shade900,
-                                  fontSize: 13,
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Create Farmer / Officer Account',
+                                      style: theme.textTheme.titleMedium?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        color: const Color(0xFF0F3010),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      'Access satellite crop telemetry, pest alerts, and weather advisories',
+                                      style: theme.textTheme.bodySmall?.copyWith(
+                                        color: Colors.grey.shade700,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                ],
-
-                // Full name
-                TextFormField(
-                  controller: _fullNameController,
-                  decoration: InputDecoration(
-                    labelText: l10n.translate('full_name'),
-                    prefixIcon: const Icon(Icons.person_outline),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  textInputAction: TextInputAction.next,
-                  textCapitalization: TextCapitalization.words,
-                  validator: (value) => Validators.required(value, 'Full name'),
-                  enabled: !authState.isLoading,
-                ),
-                const SizedBox(height: 16),
-
-                // Username (Optional)
-                TextFormField(
-                  controller: _usernameController,
-                  decoration: InputDecoration(
-                    labelText: '${l10n.translate('username')} (Optional)',
-                    prefixIcon: const Icon(Icons.alternate_email),
-                    hintText: 'e.g. username123',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  textInputAction: TextInputAction.next,
-                  enabled: !authState.isLoading,
-                ),
-                const SizedBox(height: 16),
-
-                // Email Address (Optional)
-                TextFormField(
-                  controller: _emailController,
-                  decoration: InputDecoration(
-                    labelText: '${l10n.translate('email')} (Optional)',
-                    prefixIcon: const Icon(Icons.email_outlined),
-                    hintText: 'name@example.com',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  keyboardType: TextInputType.emailAddress,
-                  textInputAction: TextInputAction.next,
-                  validator: (value) => value != null && value.trim().isNotEmpty
-                      ? Validators.email(value.trim())
-                      : null,
-                  enabled: !authState.isLoading,
-                ),
-                const SizedBox(height: 16),
-
-                // Phone number
-                TextFormField(
-                  controller: _phoneController,
-                  decoration: InputDecoration(
-                    labelText: l10n.translate('phone'),
-                    prefixIcon: const Icon(Icons.phone_outlined),
-                    hintText: '+251 9X XXX XXXX',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  keyboardType: TextInputType.phone,
-                  textInputAction: TextInputAction.next,
-                  validator: Validators.phone,
-                  enabled: !authState.isLoading,
-                ),
-                const SizedBox(height: 16),
-
-                // Geographic Location Hierarchy Card (Region -> Zone -> Woreda)
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.grey.shade300),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.02),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
+                        ],
                       ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Error Alert Banner
+                    if (authState.error != null) ...[
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: Colors.red.shade50,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.red.shade300),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(Icons.error_outline, color: Colors.red, size: 22),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Registration Issue',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.red,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    authState.error!.message,
+                                    style: TextStyle(
+                                      color: Colors.red.shade900,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
                     ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+
+                    // SECTION 1: Personal & Contact Information
+                    _buildSectionCard(
+                      title: '1. Personal & Contact Information',
+                      icon: Icons.person_pin_outlined,
+                      child: Column(
                         children: [
-                          Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                              color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(8),
+                          TextFormField(
+                            controller: _fullNameController,
+                            decoration: InputDecoration(
+                              labelText: 'Full Name *',
+                              hintText: 'e.g. Abebe Bikila',
+                              prefixIcon: const Icon(Icons.person_outline),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                              filled: true,
+                              fillColor: Colors.white,
                             ),
-                            child: const Icon(Icons.location_on, color: AppTheme.primaryColor, size: 18),
+                            textInputAction: TextInputAction.next,
+                            textCapitalization: TextCapitalization.words,
+                            validator: (value) => Validators.required(value, 'Full name'),
+                            enabled: !authState.isLoading,
                           ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Administrative Location',
-                            style: theme.textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: const Color(0xFF1E2E1E),
+                          const SizedBox(height: 14),
+
+                          TextFormField(
+                            controller: _phoneController,
+                            decoration: InputDecoration(
+                              labelText: 'Phone Number *',
+                              hintText: 'e.g. 0911 234 567 or +251 91 123 4567',
+                              prefixIcon: const Icon(Icons.phone_outlined),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                              filled: true,
+                              fillColor: Colors.white,
+                              helperText: 'Used for SMS early warnings and sign-in',
                             ),
+                            keyboardType: TextInputType.phone,
+                            textInputAction: TextInputAction.next,
+                            validator: Validators.phone,
+                            enabled: !authState.isLoading,
+                          ),
+                          const SizedBox(height: 14),
+
+                          TextFormField(
+                            controller: _emailController,
+                            decoration: InputDecoration(
+                              labelText: 'Email Address (Optional)',
+                              hintText: 'e.g. abebe.b@agri.et',
+                              prefixIcon: const Icon(Icons.email_outlined),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                              filled: true,
+                              fillColor: Colors.white,
+                            ),
+                            keyboardType: TextInputType.emailAddress,
+                            textInputAction: TextInputAction.next,
+                            validator: (value) => value != null && value.trim().isNotEmpty
+                                ? Validators.email(value.trim())
+                                : null,
+                            enabled: !authState.isLoading,
+                          ),
+                          const SizedBox(height: 14),
+
+                          TextFormField(
+                            controller: _usernameController,
+                            decoration: InputDecoration(
+                              labelText: 'Username (Optional)',
+                              hintText: 'e.g. abebe_farmer',
+                              prefixIcon: const Icon(Icons.alternate_email),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                              filled: true,
+                              fillColor: Colors.white,
+                            ),
+                            textInputAction: TextInputAction.next,
+                            enabled: !authState.isLoading,
                           ),
                         ],
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Select your agricultural jurisdiction for tailored early warnings',
-                        style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-                      ),
-                      const SizedBox(height: 14),
+                    ),
+                    const SizedBox(height: 16),
 
-                      // 1. Region Dropdown
-                      DropdownButtonFormField<String>(
-                        decoration: InputDecoration(
-                          labelText: 'Region',
-                          prefixIcon: const Icon(Icons.public),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
+                    // SECTION 2: Geographic Jurisdiction (Region -> Zone -> Woreda)
+                    _buildSectionCard(
+                      title: '2. Administrative Jurisdiction',
+                      icon: Icons.location_on_outlined,
+                      subtitle: 'Select your agricultural jurisdiction for tailored risk maps and weather forecasts',
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // 1. Region Dropdown
+                          DropdownButtonFormField<String>(
+                            key: ValueKey('reg_${hierarchy.regions.length}_${hierarchy.selectedRegion?.id}'),
+                            value: hierarchy.regions.any((r) => r.id == hierarchy.selectedRegion?.id)
+                                ? hierarchy.selectedRegion?.id
+                                : null,
+                            decoration: InputDecoration(
+                              labelText: 'Region *',
+                              prefixIcon: const Icon(Icons.public),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                              filled: true,
+                              fillColor: Colors.white,
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                            ),
+                            hint: const Text('Select Region (e.g. Oromia, Amhara)'),
+                            items: hierarchy.regions.map((region) {
+                              return DropdownMenuItem<String>(
+                                value: region.id,
+                                child: Text(region.name, style: const TextStyle(fontWeight: FontWeight.w500)),
+                              );
+                            }).toList(),
+                            onChanged: authState.isLoading
+                                ? null
+                                : (regionId) {
+                                    if (regionId != null) {
+                                      final region = hierarchy.regions.firstWhere((r) => r.id == regionId);
+                                      hierarchyNotifier.selectRegion(region);
+                                    }
+                                  },
                           ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                        ),
-                        initialValue: hierarchy.selectedRegion?.id,
-                        hint: const Text('Select Region (e.g. Oromia, Amhara)'),
-                        items: hierarchy.regions.map((region) {
-                          return DropdownMenuItem<String>(
-                            value: region.id,
-                            child: Text(region.name),
-                          );
-                        }).toList(),
-                        onChanged: authState.isLoading
-                            ? null
-                            : (regionId) {
-                                if (regionId != null) {
-                                  final region = hierarchy.regions.firstWhere((r) => r.id == regionId);
-                                  hierarchyNotifier.selectRegion(region);
-                                }
-                              },
-                      ),
-                      const SizedBox(height: 12),
+                          const SizedBox(height: 14),
 
-                      // 2. Zone Dropdown
-                      DropdownButtonFormField<String>(
-                        decoration: InputDecoration(
-                          labelText: 'Zone',
-                          prefixIcon: const Icon(Icons.map_outlined),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
+                          // 2. Zone Dropdown
+                          DropdownButtonFormField<String>(
+                            key: ValueKey('zone_${hierarchy.zones.length}_${hierarchy.selectedZone?.id}'),
+                            value: hierarchy.zones.any((z) => z.id == hierarchy.selectedZone?.id)
+                                ? hierarchy.selectedZone?.id
+                                : null,
+                            decoration: InputDecoration(
+                              labelText: 'Zone *',
+                              prefixIcon: const Icon(Icons.map_outlined),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                              filled: true,
+                              fillColor: Colors.white,
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                            ),
+                            hint: Text(hierarchy.selectedRegion == null
+                                ? 'Select Region first'
+                                : 'Select Zone (e.g. East Shewa)'),
+                            items: hierarchy.zones.map((zone) {
+                              return DropdownMenuItem<String>(
+                                value: zone.id,
+                                child: Text(zone.name, style: const TextStyle(fontWeight: FontWeight.w500)),
+                              );
+                            }).toList(),
+                            onChanged: (authState.isLoading || hierarchy.selectedRegion == null)
+                                ? null
+                                : (zoneId) {
+                                    if (zoneId != null) {
+                                      final zone = hierarchy.zones.firstWhere((z) => z.id == zoneId);
+                                      hierarchyNotifier.selectZone(zone);
+                                    }
+                                  },
                           ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                        ),
-                        initialValue: hierarchy.selectedZone?.id,
-                        hint: Text(hierarchy.selectedRegion == null
-                            ? 'Select Region first'
-                            : 'Select Zone'),
-                        items: hierarchy.zones.map((zone) {
-                          return DropdownMenuItem<String>(
-                            value: zone.id,
-                            child: Text(zone.name),
-                          );
-                        }).toList(),
-                        onChanged: (authState.isLoading || hierarchy.selectedRegion == null)
-                            ? null
-                            : (zoneId) {
-                                if (zoneId != null) {
-                                  final zone = hierarchy.zones.firstWhere((z) => z.id == zoneId);
-                                  hierarchyNotifier.selectZone(zone);
-                                }
-                              },
-                      ),
-                      const SizedBox(height: 12),
+                          const SizedBox(height: 14),
 
-                      // 3. Woreda Dropdown
-                      DropdownButtonFormField<String>(
-                        decoration: InputDecoration(
-                          labelText: 'Woreda / District',
-                          prefixIcon: const Icon(Icons.place_outlined),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
+                          // 3. Woreda Dropdown
+                          DropdownButtonFormField<String>(
+                            key: ValueKey('woreda_${hierarchy.woredas.length}_${hierarchy.selectedWoreda?.id}'),
+                            value: hierarchy.woredas.any((w) => w.id == hierarchy.selectedWoreda?.id)
+                                ? hierarchy.selectedWoreda?.id
+                                : null,
+                            decoration: InputDecoration(
+                              labelText: 'Woreda / District *',
+                              prefixIcon: const Icon(Icons.place_outlined),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                              filled: true,
+                              fillColor: Colors.white,
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                            ),
+                            hint: Text(hierarchy.selectedZone == null
+                                ? 'Select Zone first'
+                                : 'Select Woreda (e.g. Ada\'a, Ambo)'),
+                            items: hierarchy.woredas.map((woreda) {
+                              return DropdownMenuItem<String>(
+                                value: woreda.id,
+                                child: Text(woreda.name, style: const TextStyle(fontWeight: FontWeight.w500)),
+                              );
+                            }).toList(),
+                            onChanged: (authState.isLoading || hierarchy.selectedZone == null)
+                                ? null
+                                : (woredaId) {
+                                    if (woredaId != null) {
+                                      final woreda = hierarchy.woredas.firstWhere((w) => w.id == woredaId);
+                                      hierarchyNotifier.selectWoreda(woreda);
+                                    }
+                                  },
                           ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+
+                          // Selected Hierarchy Summary Badge
+                          if (hierarchy.selectedRegion != null) ...[
+                            const SizedBox(height: 10),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryColor.withValues(alpha: 0.06),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.15)),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.check_circle_outline, color: AppTheme.primaryColor, size: 16),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      'Selected: ${hierarchyNotifier.getHierarchyString()}',
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppTheme.primaryColor,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // SECTION 3: Security & Password Credentials
+                    _buildSectionCard(
+                      title: '3. Account Security',
+                      icon: Icons.security_outlined,
+                      child: Column(
+                        children: [
+                          TextFormField(
+                            controller: _passwordController,
+                            decoration: InputDecoration(
+                              labelText: 'Password *',
+                              hintText: 'Minimum 6 characters',
+                              prefixIcon: const Icon(Icons.lock_outline),
+                              suffixIcon: IconButton(
+                                icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
+                                onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                              ),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                              filled: true,
+                              fillColor: Colors.white,
+                            ),
+                            obscureText: _obscurePassword,
+                            textInputAction: TextInputAction.next,
+                            validator: Validators.password,
+                            enabled: !authState.isLoading,
+                          ),
+                          const SizedBox(height: 14),
+
+                          TextFormField(
+                            controller: _confirmPasswordController,
+                            decoration: InputDecoration(
+                              labelText: 'Confirm Password *',
+                              hintText: 'Re-enter your password',
+                              prefixIcon: const Icon(Icons.lock_outline),
+                              suffixIcon: IconButton(
+                                icon: Icon(_obscureConfirmPassword ? Icons.visibility_off : Icons.visibility),
+                                onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+                              ),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                              filled: true,
+                              fillColor: Colors.white,
+                            ),
+                            obscureText: _obscureConfirmPassword,
+                            textInputAction: TextInputAction.done,
+                            validator: (value) => Validators.confirmPassword(
+                              value,
+                              _passwordController.text,
+                            ),
+                            enabled: !authState.isLoading,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // SECTION 4: Preferences & Agreement
+                    _buildSectionCard(
+                      title: '4. System Preferences & Agreement',
+                      icon: Icons.tune_outlined,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          DropdownButtonFormField<String>(
+                            value: _selectedLanguage,
+                            decoration: InputDecoration(
+                              labelText: 'Preferred Advisory Language',
+                              prefixIcon: const Icon(Icons.language),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                              filled: true,
+                              fillColor: Colors.white,
+                            ),
+                            items: const [
+                              DropdownMenuItem(value: 'en', child: Text('English (Default)')),
+                              DropdownMenuItem(value: 'am', child: Text('አማርኛ (Amharic)')),
+                            ],
+                            onChanged: authState.isLoading ? null : (v) => setState(() => _selectedLanguage = v!),
+                          ),
+                          const SizedBox(height: 14),
+
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Checkbox(
+                                value: _acceptTerms,
+                                activeColor: AppTheme.primaryColor,
+                                onChanged: authState.isLoading ? null : (v) => setState(() => _acceptTerms = v ?? false),
+                              ),
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.only(top: 10),
+                                  child: Text(
+                                    'I acknowledge and agree to the AgriEtech National Agricultural Terms of Service and Privacy Policy.',
+                                    style: TextStyle(fontSize: 12, color: Colors.grey.shade800, height: 1.3),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Submit Button
+                    ElevatedButton.icon(
+                      onPressed: authState.isLoading ? null : _register,
+                      icon: authState.isLoading
+                          ? const SizedBox(
+                              height: 18,
+                              width: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            )
+                          : const Icon(Icons.check_circle, size: 20),
+                      label: Text(
+                        authState.isLoading ? 'Creating Account...' : 'Complete Registration',
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryColor,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        elevation: 2,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Sign In Footer Link
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Already registered with AgriEtech? ',
+                          style: TextStyle(color: Colors.grey.shade700, fontSize: 14),
                         ),
-                        initialValue: hierarchy.selectedWoreda?.id,
-                        hint: Text(hierarchy.selectedZone == null
-                            ? 'Select Zone first'
-                            : 'Select Woreda (e.g. Haramaya)'),
-                        items: hierarchy.woredas.map((woreda) {
-                          return DropdownMenuItem<String>(
-                            value: woreda.id,
-                            child: Text(woreda.name),
-                          );
-                        }).toList(),
-                        onChanged: (authState.isLoading || hierarchy.selectedZone == null)
-                            ? null
-                            : (woredaId) {
-                                if (woredaId != null) {
-                                  final woreda = hierarchy.woredas.firstWhere((w) => w.id == woredaId);
-                                  hierarchyNotifier.selectWoreda(woreda);
-                                }
-                              },
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Password
-                TextFormField(
-                  controller: _passwordController,
-                  decoration: InputDecoration(
-                    labelText: l10n.translate('password'),
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword
-                            ? Icons.visibility_off
-                            : Icons.visibility,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _obscurePassword = !_obscurePassword;
-                        });
-                      },
+                        TextButton(
+                          onPressed: authState.isLoading ? null : () => context.go('/login'),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: const Text(
+                            'Sign In',
+                            style: TextStyle(
+                              color: AppTheme.primaryColor,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  obscureText: _obscurePassword,
-                  textInputAction: TextInputAction.next,
-                  validator: Validators.password,
-                  enabled: !authState.isLoading,
-                ),
-                const SizedBox(height: 16),
-
-                // Confirm Password
-                TextFormField(
-                  controller: _confirmPasswordController,
-                  decoration: InputDecoration(
-                    labelText: 'Confirm Password',
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscureConfirmPassword
-                            ? Icons.visibility_off
-                            : Icons.visibility,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _obscureConfirmPassword = !_obscureConfirmPassword;
-                        });
-                      },
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  obscureText: _obscureConfirmPassword,
-                  textInputAction: TextInputAction.next,
-                  validator: (value) => Validators.confirmPassword(
-                    value,
-                    _passwordController.text,
-                  ),
-                  enabled: !authState.isLoading,
-                ),
-                const SizedBox(height: 16),
-
-                // Language selection
-                DropdownButtonFormField<String>(
-                  initialValue: _selectedLanguage,
-                  decoration: InputDecoration(
-                    labelText: 'Preferred Language',
-                    prefixIcon: const Icon(Icons.language),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  items: const [
-                    DropdownMenuItem(
-                      value: 'en',
-                      child: Text('English'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'am',
-                      child: Text('አማርኛ (Amharic)'),
-                    ),
+                    const SizedBox(height: 24),
                   ],
-                  onChanged: authState.isLoading
-                      ? null
-                      : (value) {
-                          setState(() {
-                            _selectedLanguage = value!;
-                          });
-                        },
                 ),
-                const SizedBox(height: 16),
-
-                // Terms and conditions
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Checkbox(
-                      value: _acceptTerms,
-                      onChanged: authState.isLoading
-                          ? null
-                          : (value) {
-                              setState(() {
-                                _acceptTerms = value ?? false;
-                              });
-                            },
-                    ),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 12),
-                        child: Text(
-                          'I agree to the Terms and Conditions and Privacy Policy',
-                          style: theme.textTheme.bodySmall,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-
-                // Register button
-                ElevatedButton(
-                  onPressed: authState.isLoading ? null : _register,
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: authState.isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : Text(
-                          l10n.translate('register'),
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                ),
-                const SizedBox(height: 24),
-
-                // Login link (Only "Login" is clickable)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      "Already have an account? ",
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: authState.isLoading
-                          ? null
-                          : () => context.go('/login'),
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                      child: Text(
-                        l10n.translate('login'),
-                        style: TextStyle(
-                          color: theme.primaryColor,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-              ],
+              ),
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildSectionCard({
+    required String title,
+    required IconData icon,
+    String? subtitle,
+    required Widget child,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: AppTheme.primaryColor, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1E2E1E),
+                ),
+              ),
+            ],
+          ),
+          if (subtitle != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+            ),
+          ],
+          const SizedBox(height: 14),
+          child,
+        ],
       ),
     );
   }

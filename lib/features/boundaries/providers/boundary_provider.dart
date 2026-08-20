@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/dio_client.dart';
+import '../data/ethiopia_boundaries_data.dart';
 import '../models/boundary_models.dart';
 import '../repositories/boundary_repository.dart';
 
@@ -12,7 +13,11 @@ final boundaryRepositoryProvider = Provider<BoundaryRepository>((ref) {
 /// Regions provider
 final regionsProvider = FutureProvider<List<RegionModel>>((ref) async {
   final repository = ref.watch(boundaryRepositoryProvider);
-  return await repository.getRegions();
+  try {
+    final regions = await repository.getRegions();
+    if (regions.isNotEmpty) return regions;
+  } catch (_) {}
+  return EthiopiaBoundariesData.defaultRegions;
 });
 
 /// Zones provider (filtered by region)
@@ -20,7 +25,11 @@ final zonesByRegionProvider =
     FutureProvider.family<List<ZoneModel>, String?>((ref, regionId) async {
   if (regionId == null) return [];
   final repository = ref.watch(boundaryRepositoryProvider);
-  return await repository.getZonesByRegion(regionId);
+  try {
+    final zones = await repository.getZonesByRegion(regionId);
+    if (zones.isNotEmpty) return zones;
+  } catch (_) {}
+  return EthiopiaBoundariesData.getFallbackZones(regionId);
 });
 
 /// Woredas provider (filtered by zone)
@@ -28,13 +37,25 @@ final woredasByZoneProvider =
     FutureProvider.family<List<WoredaModel>, String?>((ref, zoneId) async {
   if (zoneId == null) return [];
   final repository = ref.watch(boundaryRepositoryProvider);
-  return await repository.getWoredasByZone(zoneId);
+  try {
+    final woredas = await repository.getWoredasByZone(zoneId);
+    if (woredas.isNotEmpty) return woredas;
+  } catch (_) {}
+  return EthiopiaBoundariesData.getFallbackWoredas(zoneId);
 });
 
 /// All woredas provider
 final allWoredasProvider = FutureProvider<List<WoredaModel>>((ref) async {
   final repository = ref.watch(boundaryRepositoryProvider);
-  return await repository.getAllWoredas();
+  try {
+    final woredas = await repository.getAllWoredas();
+    if (woredas.isNotEmpty) return woredas;
+  } catch (_) {}
+  final all = <WoredaModel>[];
+  for (final list in EthiopiaBoundariesData.defaultWoredasByZone.values) {
+    all.addAll(list);
+  }
+  return all;
 });
 
 /// Woreda details provider
@@ -49,7 +70,7 @@ class BoundaryHierarchyNotifier extends StateNotifier<BoundaryHierarchy> {
   final BoundaryRepository _repository;
 
   BoundaryHierarchyNotifier(this._repository)
-      : super(const BoundaryHierarchy()) {
+      : super(BoundaryHierarchy(regions: EthiopiaBoundariesData.defaultRegions)) {
     loadRegions();
   }
 
@@ -57,10 +78,12 @@ class BoundaryHierarchyNotifier extends StateNotifier<BoundaryHierarchy> {
   Future<void> loadRegions() async {
     try {
       final regions = await _repository.getRegions();
-      state = state.copyWith(regions: regions);
-    } catch (e) {
-      // Error handled by UI
-    }
+      if (regions.isNotEmpty) {
+        state = state.copyWith(regions: regions);
+        return;
+      }
+    } catch (_) {}
+    state = state.copyWith(regions: EthiopiaBoundariesData.defaultRegions);
   }
 
   /// Select region and load its zones
@@ -76,10 +99,13 @@ class BoundaryHierarchyNotifier extends StateNotifier<BoundaryHierarchy> {
     if (region != null) {
       try {
         final zones = await _repository.getZonesByRegion(region.id);
-        state = state.copyWith(zones: zones);
-      } catch (e) {
-        // Error handled by UI
-      }
+        if (zones.isNotEmpty) {
+          state = state.copyWith(zones: zones);
+          return;
+        }
+      } catch (_) {}
+      final fallbackZones = EthiopiaBoundariesData.getFallbackZones(region.id);
+      state = state.copyWith(zones: fallbackZones);
     }
   }
 
@@ -94,10 +120,13 @@ class BoundaryHierarchyNotifier extends StateNotifier<BoundaryHierarchy> {
     if (zone != null) {
       try {
         final woredas = await _repository.getWoredasByZone(zone.id);
-        state = state.copyWith(woredas: woredas);
-      } catch (e) {
-        // Error handled by UI
-      }
+        if (woredas.isNotEmpty) {
+          state = state.copyWith(woredas: woredas);
+          return;
+        }
+      } catch (_) {}
+      final fallbackWoredas = EthiopiaBoundariesData.getFallbackWoredas(zone.id);
+      state = state.copyWith(woredas: fallbackWoredas);
     }
   }
 
