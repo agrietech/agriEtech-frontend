@@ -78,17 +78,17 @@ class AiVoiceResponse {
   });
 
   factory AiVoiceResponse.fromJson(Map<String, dynamic> json) {
-    // Backend may return flat strings or nested {en, am} objects
-    String extractStr(dynamic val, String fallback) {
-      if (val is String) return val;
-      if (val is Map) return (val['en'] ?? val['am'] ?? fallback) as String;
-      return fallback;
-    }
+    final responseObj = json['response'];
+    final enFromMap = responseObj is Map ? responseObj['en'] : null;
+    final amFromMap = responseObj is Map ? responseObj['am'] : null;
+
+    final enVal = json['responseEn'] ?? enFromMap ?? (responseObj is String ? responseObj : '');
+    final amVal = json['responseAm'] ?? json['responseAmharic'] ?? amFromMap ?? (responseObj is String ? responseObj : '');
 
     return AiVoiceResponse(
       transcript: json['transcript'] as String?,
-      responseEn: extractStr(json['responseEn'] ?? json['response'], ''),
-      responseAm: extractStr(json['responseAm'] ?? json['responseAmharic'], ''),
+      responseEn: enVal is String ? enVal : (enVal?.toString() ?? ''),
+      responseAm: amVal is String ? amVal : (amVal?.toString() ?? ''),
       audioUrlEn: json['audioUrlEn'] as String?,
       audioUrlAm: json['audioUrlAm'] as String?,
       metadata: json['metadata'] as Map<String, dynamic>?,
