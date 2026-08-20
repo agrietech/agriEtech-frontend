@@ -19,6 +19,7 @@ class NotificationService {
 
   /// Initialize notification service
   Future<void> initialize() async {
+    if (kIsWeb) return;
     try {
       // Request permission
       final settings = await _firebaseMessaging.requestPermission(
@@ -59,6 +60,7 @@ class NotificationService {
 
   /// Initialize local notifications for foreground display
   Future<void> _initializeLocalNotifications() async {
+    if (kIsWeb) return;
     const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosSettings = DarwinInitializationSettings(
       requestAlertPermission: true,
@@ -174,6 +176,7 @@ class NotificationService {
 
   /// Show local notification for foreground messages
   Future<void> _showLocalNotification(RemoteMessage message) async {
+    if (kIsWeb) return;
     final notification = message.notification;
     if (notification == null) return;
 

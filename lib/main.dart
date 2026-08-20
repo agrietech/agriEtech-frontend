@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,11 +13,13 @@ import 'app.dart';
 /// Background message handler (must be top-level)
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp();
-  AppLogger.info('Background message received', {
-    'title': message.notification?.title,
-    'data': message.data,
-  });
+  if (!kIsWeb) {
+    await Firebase.initializeApp();
+    AppLogger.info('Background message received', {
+      'title': message.notification?.title,
+      'data': message.data,
+    });
+  }
 }
 
 void main() async {
@@ -27,9 +30,9 @@ void main() async {
     await AppEnv.init();
     AppLogger.info('Environment initialized: ${AppEnv.appEnv}');
 
-    // Initialize Firebase
+    // Initialize Firebase (Mobile/Desktop push notifications)
     try {
-      if (AppEnv.firebaseApiKey.isNotEmpty) {
+      if (!kIsWeb && AppEnv.firebaseApiKey.isNotEmpty) {
         await Firebase.initializeApp();
         AppLogger.info('Firebase initialized');
         
@@ -39,6 +42,8 @@ void main() async {
         // Initialize notification service
         await NotificationService().initialize();
         AppLogger.info('Notification service initialized');
+      } else if (kIsWeb) {
+        AppLogger.info('Running on Web platform - Firebase push notifications bypassed');
       } else {
         AppLogger.warning('Firebase not configured - push notifications disabled');
       }
@@ -51,19 +56,20 @@ void main() async {
     await Hive.initFlutter();
     AppLogger.info('Hive initialized');
 
-    // Set preferred orientations
-    await SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-    ]);
+    // Set preferred orientations and system UI overlay (Mobile only)
+    if (!kIsWeb) {
+      await SystemChrome.setPreferredOrientations([
+        DeviceOrientation.portraitUp,
+        DeviceOrientation.portraitDown,
+      ]);
 
-    // Set system UI overlay style
-    SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
-      ),
-    );
+      SystemChrome.setSystemUIOverlayStyle(
+        const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.dark,
+        ),
+      );
+    }
 
     AppLogger.info('AgriEtech app starting...');
 
