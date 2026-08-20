@@ -53,7 +53,7 @@ void main() {
       expect(find.byIcon(Icons.eco), findsNothing);
     });
 
-    testWidgets('renders iconOnly variant badge', (tester) async {
+    testWidgets('renders iconOnly variant with custom vector Ethiopian emblem', (tester) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(
@@ -65,7 +65,8 @@ void main() {
       );
 
       expect(find.byType(AgriEtechLogo), findsOneWidget);
-      expect(find.byIcon(Icons.eco), findsOneWidget);
+      expect(find.byType(CustomPaint), findsWidgets);
+      expect(find.byIcon(Icons.eco), findsNothing);
     });
   });
 }

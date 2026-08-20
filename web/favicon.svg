@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0D2818"/>
+      <stop offset="50%" stop-color="#1B5E20"/>
+      <stop offset="100%" stop-color="#0F381E"/>
+    </linearGradient>
+
+    <!-- Golden Teff Gradient -->
+    <linearGradient id="teffGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFE082"/>
+      <stop offset="50%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#D97706"/>
+    </linearGradient>
+
+    <!-- Blue Nile Gradient -->
+    <linearGradient id="nileGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8"/>
+      <stop offset="50%" stop-color="#0284C7"/>
+      <stop offset="100%" stop-color="#0369A1"/>
+    </linearGradient>
+
+    <!-- Coffee Leaf Gradient -->
+    <linearGradient id="leafGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4ADE80"/>
+      <stop offset="50%" stop-color="#16A34A"/>
+      <stop offset="100%" stop-color="#15803D"/>
+    </linearGradient>
+
+    <!-- Hills Gradient -->
+    <linearGradient id="hillsGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0F381E"/>
+      <stop offset="100%" stop-color="#0B2912"/>
+    </linearGradient>
+
+    <!-- Beacon Radial -->
+    <radialGradient id="beaconGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FDE68A" stop-opacity="1"/>
+      <stop offset="50%" stop-color="#F59E0B" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#D97706" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Base Rounded Container with Gold Rim -->
+  <rect width="512" height="512" rx="130" fill="url(#bgGrad)" stroke="#F59E0B" stroke-width="8" stroke-opacity="0.5"/>
+
+  <!-- 1. Aksumite Solar Geometric Rays -->
+  <g stroke="#F59E0B" stroke-width="4" stroke-opacity="0.18" stroke-linecap="round">
+    <line x1="256" y1="170" x2="256" y2="40"/>
+    <line x1="256" y1="342" x2="256" y2="472"/>
+    <line x1="170" y1="256" x2="40" y2="256"/>
+    <line x1="342" y1="256" x2="472" y2="256"/>
+    <line x1="195" y1="195" x2="100" y2="100"/>
+    <line x1="317" y1="317" x2="412" y2="412"/>
+    <line x1="317" y1="195" x2="412" y2="100"/>
+    <line x1="195" y1="317" x2="100" y2="412"/>
+  </g>
+
+  <!-- 2. Terraced Highland Hills -->
+  <path d="M 0 512 L 0 358 Q 160 295 315 368 Q 420 410 512 348 L 512 512 Z" fill="url(#hillsGrad)"/>
+
+  <!-- 3. The Blue Nile (Abay River) -->
+  <path d="M 145 318 C 215 358 245 420 307 512 L 368 512 C 298 420 256 348 185 318 Z" fill="url(#nileGrad)"/>
+
+  <!-- 4. Golden Teff & Wheat Sheaf -->
+  <path d="M 225 450 Q 195 276 143 112" fill="none" stroke="#FBBF24" stroke-width="14" stroke-linecap="round"/>
+  
+  <!-- Teff Kernels -->
+  <ellipse cx="122" cy="133" rx="26" ry="12" transform="rotate(-30 122 133)" fill="url(#teffGrad)"/>
+  <ellipse cx="168" cy="158" rx="27" ry="13" transform="rotate(25 168 158)" fill="url(#teffGrad)"/>
+  <ellipse cx="112" cy="190" rx="28" ry="13" transform="rotate(-30 112 190)" fill="url(#teffGrad)"/>
+  <ellipse cx="184" cy="220" rx="29" ry="14" transform="rotate(25 184 220)" fill="url(#teffGrad)"/>
+  <ellipse cx="128" cy="250" rx="30" ry="14" transform="rotate(-30 128 250)" fill="url(#teffGrad)"/>
+  <ellipse cx="204" cy="281" rx="31" ry="15" transform="rotate(25 204 281)" fill="url(#teffGrad)"/>
+  <ellipse cx="153" cy="317" rx="32" ry="15" transform="rotate(-30 153 317)" fill="url(#teffGrad)"/>
+
+  <!-- 5. Selit (Sesame Pod & Seeds) -->
+  <path d="M 112 368 Q 72 307 102 245 Q 133 307 112 368 Z" fill="#CA8A04" stroke="#FEF08A" stroke-width="3"/>
+  <ellipse cx="98" cy="276" rx="9" ry="5" fill="#FFFBEB"/>
+  <ellipse cx="107" cy="317" rx="9" ry="5" fill="#FFFBEB"/>
+
+  <!-- 6. Emerald Coffee Leaf with Ruby Cherries (Buna) -->
+  <path d="M 256 368 C 297 296 420 245 410 174 C 348 194 276 266 256 368 Z" fill="url(#leafGrad)"/>
+  <path d="M 266 358 Q 338 256 400 184" fill="none" stroke="#FFFFFF" stroke-width="4" stroke-opacity="0.65" stroke-linecap="round"/>
+  
+  <!-- Coffee Cherries -->
+  <circle cx="266" cy="328" r="20" fill="#EF4444" stroke="#991B1B" stroke-width="3"/>
+  <circle cx="292" cy="348" r="17" fill="#DC2626" stroke="#7F1D1D" stroke-width="3"/>
+
+  <!-- 7. AgTech Telemetry & Satellite Orbital Waves -->
+  <path d="M 348 160 A 82 82 0 0 1 430 78" fill="none" stroke="#38BDF8" stroke-width="14" stroke-linecap="round"/>
+  <path d="M 368 140 A 46 46 0 0 1 414 94" fill="none" stroke="#38BDF8" stroke-width="8" stroke-linecap="round" stroke-opacity="0.6"/>
+
+  <!-- 8. Central Radiant Beacon Star -->
+  <circle cx="390" cy="112" r="42" fill="url(#beaconGlow)"/>
+  <circle cx="390" cy="112" r="20" fill="#FBBF24"/>
+  <circle cx="390" cy="112" r="10" fill="#FFFFFF"/>
+</svg>

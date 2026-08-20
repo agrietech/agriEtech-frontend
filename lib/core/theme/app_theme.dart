@@ -10,6 +10,39 @@ class AppTheme {
   static const Color tertiaryColor = Color(0xFFE65100);  // Warm Amber / Sunburst
   static const Color neutralBackground = Color(0xFFF8FBF8); // Fresh Soft Tinted Surface
 
+  // High-Tech Telemetry & Sensor Tokens
+  static const Color telemetryNdvi = Color(0xFF10B981); // Satellite NDVI Emerald
+  static const Color telemetrySensor = Color(0xFF0284C7); // IoT LoRa Cyan-Blue
+  static const Color telemetrySoil = Color(0xFF8D6E63); // Soil Sensor Earth
+  static const Color telemetryLocust = Color(0xFFDC2626); // Desert Locust Radar Red
+  static const Color telemetryDrought = Color(0xFFF59E0B); // Drought Hazard Amber
+  static const Color telemetryFlood = Color(0xFF3B82F6); // Hydro Flood Indigo
+
+  // AgTech Gradients
+  static const LinearGradient primaryGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF1B5E20), Color(0xFF2E7D32), Color(0xFF388E3C)],
+  );
+
+  static const LinearGradient techHeaderGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF0F2E14), Color(0xFF1B5E20), Color(0xFF004D40)],
+  );
+
+  static const LinearGradient riskCriticalGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFFB71C1C), Color(0xFFE53935)],
+  );
+
+  static const LinearGradient ndviGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF059669), Color(0xFF10B981), Color(0xFF34D399)],
+  );
+
   // System & Alert Colors
   static const Color errorColor = Color(0xFFD32F2F);
   static const Color warningColor = Color(0xFFF57C00);

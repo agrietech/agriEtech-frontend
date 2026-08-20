@@ -14,7 +14,7 @@ class AgriEtechApp extends ConsumerWidget {
     final router = ref.watch(appRouterProvider);
 
     return MaterialApp.router(
-      title: 'AgrieTech Early Warning',
+      title: 'agriEtech',
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.light,
