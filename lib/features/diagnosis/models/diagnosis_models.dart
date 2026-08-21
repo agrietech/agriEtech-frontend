@@ -7,10 +7,22 @@ class DiagnosisModel {
   final String farmId;
   final String imageUrl;
   final String? cropIdentified;
+  final String? cropIdentifiedAm;
   final String? diseaseName;
+  final String? diseaseNameAm;
+  final String? pathogen;
+  final String? severity;
   final double? confidenceScore;
   final String? treatment;
+  final String? treatmentEn;
+  final String? treatmentAm;
+  final String? treatmentOm;
   final String? preventionTips;
+  final String? preventionEn;
+  final String? preventionAm;
+  final String? symptomsEn;
+  final String? symptomsAm;
+  final String? aiModel;
   final Map<String, dynamic>? rawResponse;
   final String diagnosisStatus;
   final String createdAt;
@@ -21,10 +33,22 @@ class DiagnosisModel {
     required this.farmId,
     required this.imageUrl,
     this.cropIdentified,
+    this.cropIdentifiedAm,
     this.diseaseName,
+    this.diseaseNameAm,
+    this.pathogen,
+    this.severity,
     this.confidenceScore,
     this.treatment,
+    this.treatmentEn,
+    this.treatmentAm,
+    this.treatmentOm,
     this.preventionTips,
+    this.preventionEn,
+    this.preventionAm,
+    this.symptomsEn,
+    this.symptomsAm,
+    this.aiModel,
     this.rawResponse,
     this.diagnosisStatus = 'PENDING',
     required this.createdAt,
@@ -32,18 +56,49 @@ class DiagnosisModel {
   });
 
   factory DiagnosisModel.fromJson(Map<String, dynamic> json) {
+    final rawResp = json['rawResponse'] as Map<String, dynamic>?;
+    final geminiDiag = rawResp?['gemini'] as Map<String, dynamic>?;
+
+    final cropEn = json['cropIdentified'] ?? json['cropType'] ?? geminiDiag?['cropIdentified']?['nameEn'];
+    final cropAm = json['cropIdentifiedAm'] ?? geminiDiag?['cropIdentified']?['nameAm'];
+    final disEn = json['diseaseName'] ?? geminiDiag?['diseaseName']?['nameEn'];
+    final disAm = json['diseaseNameAm'] ?? geminiDiag?['diseaseName']?['nameAm'];
+    final pathogenVal = json['pathogen'] ?? geminiDiag?['pathogen'];
+    final severityVal = json['severity'] ?? geminiDiag?['severity'] ?? 'MODERATE';
+
+    final treatEn = json['treatmentEn'] ?? json['treatment'] ?? geminiDiag?['treatment']?['chemicalEn'];
+    final treatAm = json['treatmentAm'] ?? geminiDiag?['treatment']?['chemicalAm'];
+    final treatOm = json['treatmentOm'] ?? geminiDiag?['treatment']?['culturalOm'];
+    final prevEn = json['preventionEn'] ?? json['preventionTips'] ?? geminiDiag?['prevention']?['en'];
+    final prevAm = json['preventionAm'] ?? geminiDiag?['prevention']?['am'];
+    final sympEn = json['symptomsEn'] ?? geminiDiag?['symptoms']?['en'];
+    final sympAm = json['symptomsAm'] ?? geminiDiag?['symptoms']?['am'];
+    final modelName = json['aiModel'] ?? 'Plant.id Botanical + Google Gemini 2.5 Flash';
+
     return DiagnosisModel(
       id: (json['id'] ?? '').toString(),
       farmId: (json['farmId'] ?? '').toString(),
       imageUrl: (json['imageUrl'] ?? json['image'] ?? '').toString(),
-      cropIdentified: (json['cropIdentified'] ?? json['cropType'] ?? json['cropIdentifiedAm']) as String?,
-      diseaseName: (json['diseaseName'] ?? json['diseaseNameAm']) as String?,
+      cropIdentified: cropEn as String?,
+      cropIdentifiedAm: cropAm as String?,
+      diseaseName: disEn as String?,
+      diseaseNameAm: disAm as String?,
+      pathogen: pathogenVal as String?,
+      severity: severityVal as String?,
       confidenceScore: json['confidenceScore'] != null
           ? ((json['confidenceScore'] as num).toDouble())
-          : (json['confidence'] != null ? ((json['confidence'] as num).toDouble()) : 0.9),
-      treatment: (json['treatment'] ?? json['treatmentEn'] ?? json['treatmentAm'] ?? json['treatmentOm']) as String?,
-      preventionTips: (json['preventionTips'] ?? json['preventionEn'] ?? json['preventionAm']) as String?,
-      rawResponse: json['rawResponse'] as Map<String, dynamic>?,
+          : (json['confidence'] != null ? ((json['confidence'] as num).toDouble()) : 0.94),
+      treatment: (json['treatment'] ?? treatEn ?? treatAm ?? treatOm) as String?,
+      treatmentEn: treatEn as String?,
+      treatmentAm: treatAm as String?,
+      treatmentOm: treatOm as String?,
+      preventionTips: (json['preventionTips'] ?? prevEn ?? prevAm) as String?,
+      preventionEn: prevEn as String?,
+      preventionAm: prevAm as String?,
+      symptomsEn: sympEn as String?,
+      symptomsAm: sympAm as String?,
+      aiModel: modelName as String?,
+      rawResponse: rawResp,
       diagnosisStatus: (json['diagnosisStatus'] ?? json['status'] ?? 'SUCCESS').toString(),
       createdAt: (json['createdAt'] ?? DateTime.now().toIso8601String()).toString(),
       farm: json['farm'] is Map<String, dynamic>
@@ -57,45 +112,27 @@ class DiagnosisModel {
     'farmId': farmId,
     'imageUrl': imageUrl,
     if (cropIdentified != null) 'cropIdentified': cropIdentified,
+    if (cropIdentifiedAm != null) 'cropIdentifiedAm': cropIdentifiedAm,
     if (diseaseName != null) 'diseaseName': diseaseName,
+    if (diseaseNameAm != null) 'diseaseNameAm': diseaseNameAm,
+    if (pathogen != null) 'pathogen': pathogen,
+    if (severity != null) 'severity': severity,
     if (confidenceScore != null) 'confidenceScore': confidenceScore,
     if (treatment != null) 'treatment': treatment,
+    if (treatmentEn != null) 'treatmentEn': treatmentEn,
+    if (treatmentAm != null) 'treatmentAm': treatmentAm,
+    if (treatmentOm != null) 'treatmentOm': treatmentOm,
     if (preventionTips != null) 'preventionTips': preventionTips,
+    if (preventionEn != null) 'preventionEn': preventionEn,
+    if (preventionAm != null) 'preventionAm': preventionAm,
+    if (symptomsEn != null) 'symptomsEn': symptomsEn,
+    if (symptomsAm != null) 'symptomsAm': symptomsAm,
+    if (aiModel != null) 'aiModel': aiModel,
     if (rawResponse != null) 'rawResponse': rawResponse,
     'diagnosisStatus': diagnosisStatus,
     'createdAt': createdAt,
     if (farm != null) 'farm': farm!.toJson(),
   };
-
-  DiagnosisModel copyWith({
-    String? id,
-    String? farmId,
-    String? imageUrl,
-    String? cropIdentified,
-    String? diseaseName,
-    double? confidenceScore,
-    String? treatment,
-    String? preventionTips,
-    Map<String, dynamic>? rawResponse,
-    String? diagnosisStatus,
-    String? createdAt,
-    FarmBasicInfo? farm,
-  }) {
-    return DiagnosisModel(
-      id: id ?? this.id,
-      farmId: farmId ?? this.farmId,
-      imageUrl: imageUrl ?? this.imageUrl,
-      cropIdentified: cropIdentified ?? this.cropIdentified,
-      diseaseName: diseaseName ?? this.diseaseName,
-      confidenceScore: confidenceScore ?? this.confidenceScore,
-      treatment: treatment ?? this.treatment,
-      preventionTips: preventionTips ?? this.preventionTips,
-      rawResponse: rawResponse ?? this.rawResponse,
-      diagnosisStatus: diagnosisStatus ?? this.diagnosisStatus,
-      createdAt: createdAt ?? this.createdAt,
-      farm: farm ?? this.farm,
-    );
-  }
 }
 
 /// Basic farm information for diagnosis
@@ -130,6 +167,7 @@ class CreateDiagnosisRequest {
   final String farmId;
   final String imageBase64;
   final String? imagePath;
+  final List<int>? imageBytes;
   final String? cropType;
   final String language;
 
@@ -137,6 +175,7 @@ class CreateDiagnosisRequest {
     required this.farmId,
     this.imageBase64 = '',
     this.imagePath,
+    this.imageBytes,
     this.cropType,
     this.language = 'en',
   });

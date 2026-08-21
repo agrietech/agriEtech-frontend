@@ -103,11 +103,22 @@ class DiagnosisCard extends StatelessWidget {
                       diagnosis.diseaseName!,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
-                            color: Colors.red[700],
+                            color: const Color(0xFF1B5E20),
                           ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
+                    if (diagnosis.diseaseNameAm != null) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        diagnosis.diseaseNameAm!,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.green.shade800,
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 8),
                   ] else ...[
                     Text(
@@ -121,28 +132,56 @@ class DiagnosisCard extends StatelessWidget {
 
                   // Confidence Score
                   if (diagnosis.confidenceScore != null) ...[
-                    Row(
-                      children: [
-                        Expanded(
-                          child: LinearProgressIndicator(
-                            value: diagnosis.confidenceScore! / 100,
-                            backgroundColor: Colors.grey[200],
-                            color: _getConfidenceColor(
-                                diagnosis.confidenceScore!),
-                            minHeight: 6,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '${diagnosis.confidenceScore!.toStringAsFixed(1)}%',
-                          style:
-                              Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    fontWeight: FontWeight.w600,
+                    Builder(
+                      builder: (context) {
+                        final rawScore = diagnosis.confidenceScore!;
+                        final pct = rawScore > 1.0 ? rawScore : rawScore * 100.0;
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: LinearProgressIndicator(
+                                    value: (pct / 100.0).clamp(0.0, 1.0),
+                                    backgroundColor: Colors.grey[200],
+                                    color: _getConfidenceColor(pct),
+                                    minHeight: 6,
                                   ),
-                        ),
-                      ],
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  '${pct.toStringAsFixed(1)}%',
+                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                          ],
+                        );
+                      },
                     ),
-                    const SizedBox(height: 12),
+                  ],
+
+                  // Treatment preview
+                  if (diagnosis.treatment != null) ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF0FDF4),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFFDCFCE7)),
+                      ),
+                      child: Text(
+                        diagnosis.treatment!,
+                        style: const TextStyle(fontSize: 12, color: Color(0xFF166534)),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
                   ],
 
                   // Farm and Date
@@ -170,7 +209,7 @@ class DiagnosisCard extends StatelessWidget {
                       const SizedBox(width: 4),
                       Text(
                         DateFormatter.formatRelative(
-                            DateTime.parse(diagnosis.createdAt)),
+                            DateTime.tryParse(diagnosis.createdAt) ?? DateTime.now()),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               color: Colors.grey[600],
                             ),

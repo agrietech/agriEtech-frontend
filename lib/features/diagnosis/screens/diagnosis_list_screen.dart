@@ -215,101 +215,154 @@ class DiagnosisListScreen extends ConsumerWidget {
                 const SizedBox(height: 16),
                 Text(
                   'Identified Crop',
-                  style: Theme.of(context).textTheme.titleMedium,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 4),
                 Text(
-                  diagnosis.cropIdentified!,
-                  style: Theme.of(context).textTheme.bodyLarge,
+                  diagnosis.cropIdentifiedAm != null
+                      ? '${diagnosis.cropIdentified!} (${diagnosis.cropIdentifiedAm!})'
+                      : diagnosis.cropIdentified!,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600, color: const Color(0xFF15803D)),
                 ),
               ],
 
               if (diagnosis.diseaseName != null) ...[
                 const SizedBox(height: 16),
                 Text(
-                  'Disease',
-                  style: Theme.of(context).textTheme.titleMedium,
+                  'Disease / Pathogen',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 4),
                 Text(
                   diagnosis.diseaseName!,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: Colors.red[700],
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.bold,
                       ),
                 ),
+                if (diagnosis.diseaseNameAm != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    diagnosis.diseaseNameAm!,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.green.shade800,
+                    ),
+                  ),
+                ],
+                if (diagnosis.pathogen != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    'Pathogen: ${diagnosis.pathogen}',
+                    style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: Colors.grey.shade700),
+                  ),
+                ],
               ],
 
               if (diagnosis.confidenceScore != null) ...[
                 const SizedBox(height: 16),
                 Text(
-                  'Confidence',
-                  style: Theme.of(context).textTheme.titleMedium,
+                  'AI Confidence Score',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: LinearProgressIndicator(
-                        value: diagnosis.confidenceScore! / 100,
-                        backgroundColor: Colors.grey[200],
-                        minHeight: 8,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      '${diagnosis.confidenceScore!.toStringAsFixed(1)}%',
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            fontWeight: FontWeight.w600,
+                Builder(
+                  builder: (context) {
+                    final rawScore = diagnosis.confidenceScore ?? 0.94;
+                    final pct = rawScore > 1.0 ? rawScore : rawScore * 100.0;
+                    return Row(
+                      children: [
+                        Expanded(
+                          child: LinearProgressIndicator(
+                            value: (pct / 100.0).clamp(0.0, 1.0),
+                            backgroundColor: Colors.grey[200],
+                            color: pct >= 80 ? Colors.green : (pct >= 60 ? Colors.orange : Colors.red),
+                            minHeight: 8,
                           ),
-                    ),
-                  ],
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          '${pct.toStringAsFixed(1)}%',
+                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ],
 
-              if (diagnosis.treatment != null) ...[
-                const SizedBox(height: 24),
+              if (diagnosis.treatment != null || diagnosis.treatmentAm != null) ...[
+                const SizedBox(height: 20),
                 Text(
-                  'Treatment',
-                  style: Theme.of(context).textTheme.titleMedium,
+                  'Recommended Treatment (ህክምና)',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.green[50],
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.green[200]!),
+                    color: const Color(0xFFEFF6FF),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFFBFDBFE)),
                   ),
-                  child: Text(
-                    diagnosis.treatment!,
-                    style: Theme.of(context).textTheme.bodyMedium,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (diagnosis.treatmentEn != null || diagnosis.treatment != null)
+                        Text(
+                          diagnosis.treatmentEn ?? diagnosis.treatment!,
+                          style: const TextStyle(fontSize: 13, color: Color(0xFF1E3A8A), height: 1.4),
+                        ),
+                      if (diagnosis.treatmentAm != null) ...[
+                        const Divider(height: 16),
+                        Text(
+                          diagnosis.treatmentAm!,
+                          style: const TextStyle(fontSize: 13, color: Color(0xFF1E3A8A), fontWeight: FontWeight.w600, height: 1.4),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
               ],
 
-              if (diagnosis.preventionTips != null) ...[
+              if (diagnosis.preventionTips != null || diagnosis.preventionAm != null) ...[
                 const SizedBox(height: 16),
                 Text(
-                  'Prevention Tips',
-                  style: Theme.of(context).textTheme.titleMedium,
+                  'Prevention Guidelines (መከላከያ ዘዴዎች)',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.blue[50],
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.blue[200]!),
+                    color: const Color(0xFFFEFCE8),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFFFEF08A)),
                   ),
-                  child: Text(
-                    diagnosis.preventionTips!,
-                    style: Theme.of(context).textTheme.bodyMedium,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (diagnosis.preventionEn != null || diagnosis.preventionTips != null)
+                        Text(
+                          diagnosis.preventionEn ?? diagnosis.preventionTips!,
+                          style: const TextStyle(fontSize: 13, color: Color(0xFF713F12), height: 1.4),
+                        ),
+                      if (diagnosis.preventionAm != null) ...[
+                        const Divider(height: 16),
+                        Text(
+                          diagnosis.preventionAm!,
+                          style: const TextStyle(fontSize: 13, color: Color(0xFF713F12), fontWeight: FontWeight.w600, height: 1.4),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
               ],
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
 
               // Metadata
               if (diagnosis.farm != null)
@@ -323,9 +376,16 @@ class DiagnosisListScreen extends ConsumerWidget {
                 context,
                 'Date',
                 DateFormatter.formatDateTime(
-                    DateTime.parse(diagnosis.createdAt)),
+                    DateTime.tryParse(diagnosis.createdAt) ?? DateTime.now()),
                 null,
               ),
+              if (diagnosis.aiModel != null)
+                _buildDetailRow(
+                  context,
+                  'AI Engine',
+                  diagnosis.aiModel!,
+                  null,
+                ),
 
               const SizedBox(height: 24),
 

@@ -20,10 +20,23 @@ class DiagnosisRepository {
       });
 
       final Response response;
-      if (request.imagePath != null && request.imagePath!.isNotEmpty) {
+      if (request.imageBytes != null && request.imageBytes!.isNotEmpty) {
+        response = await _dioClient.uploadBytes(
+          ApiEndpoints.diagnose,
+          request.imageBytes!,
+          fileName: 'plantscan_${DateTime.now().millisecondsSinceEpoch}.jpg',
+          fieldName: 'image',
+          data: {
+            'farmId': request.farmId,
+            if (request.cropType != null) 'cropType': request.cropType,
+            'language': request.language,
+          },
+        );
+      } else if (request.imagePath != null && request.imagePath!.isNotEmpty) {
         response = await _dioClient.uploadFile(
           ApiEndpoints.diagnose,
           request.imagePath!,
+          fieldName: 'image',
           data: {
             'farmId': request.farmId,
             if (request.cropType != null) 'cropType': request.cropType,
