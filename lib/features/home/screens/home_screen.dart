@@ -362,6 +362,28 @@ class HomeScreen extends ConsumerWidget {
                           route: '/analytics',
                           accentColor: const Color(0xFF4338CA),
                         ),
+                      if (RoleUtils.isAdmin(user?.role) || RoleUtils.isOfficer(user?.role))
+                        _buildTechMenuCard(
+                          context,
+                          title: 'Personnel & Roles',
+                          subtitle: 'Approvals & Team RBAC',
+                          badgeText: 'Admin',
+                          badgeColor: const Color(0xFFDC2626),
+                          icon: Icons.manage_accounts_outlined,
+                          route: '/admin/users',
+                          accentColor: const Color(0xFFDC2626),
+                        )
+                      else
+                        _buildTechMenuCard(
+                          context,
+                          title: 'Role Verification',
+                          subtitle: 'Apply as DA / Officer',
+                          badgeText: 'Upgrade',
+                          badgeColor: const Color(0xFFD97706),
+                          icon: Icons.verified_user_outlined,
+                          route: '/apply-role',
+                          accentColor: const Color(0xFFD97706),
+                        ),
                     ],
                   ),
                 ],
