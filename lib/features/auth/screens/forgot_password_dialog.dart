@@ -5,7 +5,7 @@ import '../../../core/utils/validators.dart';
 import '../../../core/error/error_handler.dart';
 import '../../../core/error/app_error.dart';
 
-/// Professional dialog for requesting a password reset link / token via Email
+/// Professional dialog for requesting password reset via Phone/Email and entering new password
 class ForgotPasswordDialog extends ConsumerStatefulWidget {
   const ForgotPasswordDialog({super.key});
 
@@ -21,29 +21,38 @@ class ForgotPasswordDialog extends ConsumerStatefulWidget {
 }
 
 class _ForgotPasswordDialogState extends ConsumerState<ForgotPasswordDialog> {
-  final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
+  final _requestFormKey = GlobalKey<FormState>();
+  final _resetFormKey = GlobalKey<FormState>();
+  
+  final _identifierController = TextEditingController();
+  final _tokenController = TextEditingController();
+  final _newPasswordController = TextEditingController();
+  
   bool _isLoading = false;
-  bool _emailSent = false;
+  bool _codeSent = false;
+  bool _passwordResetSuccess = false;
+  bool _obscurePassword = true;
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _identifierController.dispose();
+    _tokenController.dispose();
+    _newPasswordController.dispose();
     super.dispose();
   }
 
-  Future<void> _submit() async {
-    if (_formKey.currentState!.validate()) {
+  Future<void> _sendResetCode() async {
+    if (_requestFormKey.currentState!.validate()) {
       setState(() => _isLoading = true);
       try {
-        final email = _emailController.text.trim();
+        final identifier = _identifierController.text.trim();
         final authRepo = ref.read(authRepositoryProvider);
-        await authRepo.requestPasswordReset(email);
+        await authRepo.requestPasswordReset(identifier);
 
         if (mounted) {
           setState(() {
             _isLoading = false;
-            _emailSent = true;
+            _codeSent = true;
           });
         }
       } on AppError catch (e) {
@@ -56,7 +65,41 @@ class _ForgotPasswordDialogState extends ConsumerState<ForgotPasswordDialog> {
           setState(() => _isLoading = false);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Failed to send reset link: ${e.toString()}'),
+              content: Text('Failed to send reset code: ${e.toString()}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  Future<void> _submitNewPassword() async {
+    if (_resetFormKey.currentState!.validate()) {
+      setState(() => _isLoading = true);
+      try {
+        final token = _tokenController.text.trim();
+        final newPassword = _newPasswordController.text;
+        final authRepo = ref.read(authRepositoryProvider);
+        await authRepo.resetPassword(token: token, newPassword: newPassword);
+
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+            _passwordResetSuccess = true;
+          });
+        }
+      } on AppError catch (e) {
+        if (mounted) {
+          setState(() => _isLoading = false);
+          ErrorHandler.showErrorSnackBar(context, e);
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() => _isLoading = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Password reset failed: ${e.toString()}'),
               backgroundColor: Colors.red,
             ),
           );
@@ -71,92 +114,149 @@ class _ForgotPasswordDialogState extends ConsumerState<ForgotPasswordDialog> {
 
     return AlertDialog(
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
       ),
       title: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: theme.primaryColor.withValues(alpha: 0.1),
+              color: const Color(0xFF1B5E20).withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
-            child: Icon(
+            child: const Icon(
               Icons.lock_reset,
-              color: theme.primaryColor,
+              color: Color(0xFF1B5E20),
               size: 24,
             ),
           ),
           const SizedBox(width: 12),
-          const Expanded(
-            child: Text(
-              'Reset Password',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+          Text(
+            _passwordResetSuccess
+                ? 'Password Reset'
+                : (_codeSent ? 'Set New Password' : 'Reset Password'),
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ],
       ),
-      content: _emailSent
-          ? Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.mark_email_read_outlined,
-                  color: Color(0xFF2E7D32),
-                  size: 48,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Reset instructions sent. Please check your email to reset your password.',
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodyMedium,
-                ),
-              ],
-            )
-          : Form(
-              key: _formKey,
-              child: Column(
+      content: SingleChildScrollView(
+        child: _passwordResetSuccess
+            ? Column(
                 mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Enter your email address to receive password reset instructions.',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: Colors.grey.shade700,
-                    ),
+                  const Icon(
+                    Icons.check_circle_outline,
+                    color: Color(0xFF2E7D32),
+                    size: 54,
                   ),
                   const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _emailController,
-                    decoration: const InputDecoration(
-                      labelText: 'Email Address',
-                      prefixIcon: Icon(Icons.email_outlined),
-                    ),
-                    keyboardType: TextInputType.emailAddress,
-                    textInputAction: TextInputAction.done,
-                    onFieldSubmitted: (_) => _submit(),
-                    validator: Validators.email,
-                    enabled: !_isLoading,
+                  Text(
+                    'Your password has been successfully updated!\nYou can now sign in with your new password.',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodyMedium,
                   ),
                 ],
-              ),
-            ),
+              )
+            : _codeSent
+                ? Form(
+                    key: _resetFormKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Enter the verification token or OTP sent to ${_identifierController.text}, and enter your new password.',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: Colors.grey.shade700,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _tokenController,
+                          decoration: const InputDecoration(
+                            labelText: 'Reset Token / OTP Code',
+                            prefixIcon: Icon(Icons.vpn_key_outlined),
+                          ),
+                          validator: (val) => (val == null || val.trim().isEmpty) ? 'Please enter reset token' : null,
+                          enabled: !_isLoading,
+                        ),
+                        const SizedBox(height: 14),
+                        TextFormField(
+                          controller: _newPasswordController,
+                          decoration: InputDecoration(
+                            labelText: 'New Password',
+                            prefixIcon: const Icon(Icons.lock_outline),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                              ),
+                              onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                            ),
+                          ),
+                          obscureText: _obscurePassword,
+                          validator: Validators.password,
+                          enabled: !_isLoading,
+                        ),
+                      ],
+                    ),
+                  )
+                : Form(
+                    key: _requestFormKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Enter your Phone Number or Email Address to receive password reset instructions.',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: Colors.grey.shade700,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _identifierController,
+                          decoration: const InputDecoration(
+                            labelText: 'Phone Number or Email',
+                            hintText: '0911... or user@example.com',
+                            prefixIcon: Icon(Icons.person_outline),
+                          ),
+                          keyboardType: TextInputType.emailAddress,
+                          textInputAction: TextInputAction.done,
+                          onFieldSubmitted: (_) => _sendResetCode(),
+                          validator: (val) => (val == null || val.trim().isEmpty) ? 'Please enter phone or email' : null,
+                          enabled: !_isLoading,
+                        ),
+                        const SizedBox(height: 12),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: () => setState(() => _codeSent = true),
+                            child: const Text(
+                              'I already have a reset token',
+                              style: TextStyle(fontSize: 12),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+      ),
       actions: [
-        if (_emailSent)
+        if (_passwordResetSuccess)
           FilledButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Done'),
+            child: const Text('Sign In Now'),
           )
-        else ...[
+        else if (_codeSent) ...[
           TextButton(
-            onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+            onPressed: _isLoading ? null : () => setState(() => _codeSent = false),
+            child: const Text('Back'),
           ),
           FilledButton(
-            onPressed: _isLoading ? null : _submit,
+            onPressed: _isLoading ? null : _submitNewPassword,
             child: _isLoading
                 ? const SizedBox(
                     width: 18,
@@ -166,10 +266,29 @@ class _ForgotPasswordDialogState extends ConsumerState<ForgotPasswordDialog> {
                       color: Colors.white,
                     ),
                   )
-                : const Text('Send Reset Link'),
+                : const Text('Update Password'),
+          ),
+        ] else ...[
+          TextButton(
+            onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: _isLoading ? null : _sendResetCode,
+            child: _isLoading
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Text('Send Reset Code'),
           ),
         ],
       ],
     );
   }
 }
+

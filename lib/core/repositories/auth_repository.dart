@@ -288,13 +288,21 @@ class AuthRepository {
     }
   }
 
-  /// Request password reset link / token sent to email
-  Future<void> requestPasswordReset(String email) async {
+  /// Request password reset link / token sent to email or phone
+  Future<void> requestPasswordReset(String identifier) async {
     try {
-      AppLogger.info('Requesting password reset for: $email');
+      final clean = identifier.trim();
+      final isEmail = clean.contains('@');
+      final formattedPhone = !isEmail ? _normalizePhone(clean) : null;
+      AppLogger.info('Requesting password reset for: ${isEmail ? clean : formattedPhone}');
       await _dioClient.post(
         ApiConstants.forgotPassword,
-        data: {'email': email},
+        data: {
+          if (isEmail) 'email': clean,
+          if (!isEmail) 'phoneNumber': formattedPhone,
+          if (!isEmail) 'phone': formattedPhone,
+          'identifier': clean,
+        },
       );
       AppLogger.info('Password reset request sent');
     } on DioException catch (e) {

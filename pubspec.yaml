@@ -92,3 +92,19 @@ flutter:
         - asset: assets/fonts/Roboto-Italic.ttf
           style: italic
 
+flutter_launcher_icons:
+  android: "ic_launcher"
+  ios: true
+  image_path: "assets/icons/app_icon.png"
+  min_sdk_android: 21
+  web:
+    generate: true
+    image_path: "assets/icons/app_icon.png"
+    background_color: "#1B5E20"
+    theme_color: "#1B5E20"
+  windows:
+    generate: true
+    image_path: "assets/icons/app_icon.png"
+    icon_size: 48
+
+
