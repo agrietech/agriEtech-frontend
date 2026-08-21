@@ -17,13 +17,16 @@ class AuthRepository {
   /// Login user with email or phone and password
   Future<LoginResponse> login(LoginRequest request) async {
     try {
-      AppLogger.info('Attempting login for: ${request.email ?? request.phone ?? request.identifier}');
       final identifier = (request.email ?? request.phone ?? request.identifier ?? '').trim();
       final isEmail = identifier.contains('@');
+      final formattedPhone = !isEmail ? _normalizePhone(identifier) : null;
+      AppLogger.info('Attempting login for: ${isEmail ? identifier : formattedPhone}');
       final loginData = <String, dynamic>{
         'password': request.password,
         if (isEmail) 'email': identifier,
-        if (!isEmail) 'phoneNumber': identifier,
+        if (!isEmail) 'phoneNumber': formattedPhone,
+        if (!isEmail) 'phone': formattedPhone,
+        'identifier': identifier,
         if (request.deviceToken != null) 'deviceToken': request.deviceToken,
       };
       final response = await _dioClient.post(

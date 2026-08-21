@@ -86,13 +86,18 @@ class DioClient {
               error.type == DioExceptionType.receiveTimeout ||
               error.type == DioExceptionType.connectionError;
 
-          if (isNetworkIssue && retryCount < 3) {
+          if (isNetworkIssue && retryCount < 2) {
             AppLogger.info('Connection delay detected (cold-start), retrying request ${requestOptions.path} (attempt ${retryCount + 1})...');
             await Future.delayed(Duration(seconds: retryCount + 1));
             requestOptions.extra['retryCount'] = retryCount + 1;
             try {
               final response = await _dio.fetch<dynamic>(requestOptions);
               return handler.resolve(response);
+            } on DioException catch (retryError) {
+              AppLogger.warning('Retry attempt ${retryCount + 1} received response: ${retryError.response?.statusCode}');
+              if (retryError.response != null) {
+                return handler.next(retryError);
+              }
             } catch (e) {
               AppLogger.warning('Retry attempt ${retryCount + 1} failed');
             }
