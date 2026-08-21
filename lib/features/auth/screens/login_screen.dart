@@ -196,6 +196,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                             fontSize: 13,
                                           ),
                                         ),
+                                      ],
+                                    ),
+                                  ),
                                   IconButton(
                                     icon: const Icon(Icons.close, size: 18),
                                     color: Colors.red.shade700,

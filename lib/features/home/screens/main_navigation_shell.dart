@@ -39,8 +39,10 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
   @override
   Widget build(BuildContext context) {
     final currentIndex = ref.watch(navigationIndexProvider);
-    final alertsState = ref.watch(alertsProvider);
-    final activeAlertsCount = alertsState.alerts.where((a) => a.isActive).length;
+    final activeAlertsCount = alertsState.maybeWhen(
+      data: (list) => list.where((a) => a.isActive).length,
+      orElse: () => 0,
+    );
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(

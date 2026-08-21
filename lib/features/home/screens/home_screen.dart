@@ -60,28 +60,6 @@ class HomeScreen extends ConsumerWidget {
                   ],
                 ),
               ),
-              if (RoleUtils.isAdmin(user?.role) || RoleUtils.isOfficer(user?.role))
-                const PopupMenuItem(
-                  value: 'admin_users',
-                  child: Row(
-                    children: [
-                      Icon(Icons.manage_accounts_outlined, color: Color(0xFF1B5E20), size: 20),
-                      SizedBox(width: 10),
-                      Text('Personnel & Roles'),
-                    ],
-                  ),
-                ),
-              if (!RoleUtils.isAdmin(user?.role))
-                const PopupMenuItem(
-                  value: 'apply_role',
-                  child: Row(
-                    children: [
-                      Icon(Icons.verified_user_outlined, color: Color(0xFFD97706), size: 20),
-                      SizedBox(width: 10),
-                      Text('Apply for Role'),
-                    ],
-                  ),
-                ),
               const PopupMenuDivider(),
               const PopupMenuItem(
                 value: 'logout',
@@ -102,10 +80,6 @@ class HomeScreen extends ConsumerWidget {
                 }
               } else if (value == 'profile') {
                 context.push('/change-password');
-              } else if (value == 'admin_users') {
-                context.push('/admin/users');
-              } else if (value == 'apply_role') {
-                context.push('/apply-role');
               }
             },
           ),
@@ -361,28 +335,6 @@ class HomeScreen extends ConsumerWidget {
                           icon: Icons.insights_outlined,
                           route: '/analytics',
                           accentColor: const Color(0xFF4338CA),
-                        ),
-                      if (RoleUtils.isAdmin(user?.role) || RoleUtils.isOfficer(user?.role))
-                        _buildTechMenuCard(
-                          context,
-                          title: 'Personnel & Roles',
-                          subtitle: 'Approvals & Team RBAC',
-                          badgeText: 'Admin',
-                          badgeColor: const Color(0xFFDC2626),
-                          icon: Icons.manage_accounts_outlined,
-                          route: '/admin/users',
-                          accentColor: const Color(0xFFDC2626),
-                        )
-                      else
-                        _buildTechMenuCard(
-                          context,
-                          title: 'Role Verification',
-                          subtitle: 'Apply as DA / Officer',
-                          badgeText: 'Upgrade',
-                          badgeColor: const Color(0xFFD97706),
-                          icon: Icons.verified_user_outlined,
-                          route: '/apply-role',
-                          accentColor: const Color(0xFFD97706),
                         ),
                     ],
                   ),
