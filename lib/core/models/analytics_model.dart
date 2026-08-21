@@ -391,6 +391,9 @@ class TemporalTrendModel {
   final List<TrendDataPoint> rainfallTrend;
   final List<TrendDataPoint> temperatureTrend;
   final List<TrendDataPoint> ndviTrend;
+  final Map<String, dynamic>? summary;
+  final String? aiInsights;
+  final Map<String, dynamic>? decadalShifts;
 
   const TemporalTrendModel({
     required this.period,
@@ -398,6 +401,9 @@ class TemporalTrendModel {
     required this.rainfallTrend,
     required this.temperatureTrend,
     required this.ndviTrend,
+    this.summary,
+    this.aiInsights,
+    this.decadalShifts,
   });
 
   factory TemporalTrendModel.fromJson(Map<String, dynamic> json) {
@@ -409,6 +415,10 @@ class TemporalTrendModel {
       }
       return const [];
     }
+
+    final summaryObj = json['summary'] is Map<String, dynamic> ? json['summary'] as Map<String, dynamic> : null;
+    final aiInsightsText = json['aiInsights'] is String ? json['aiInsights'] as String : null;
+    final decadal = json['decadalShifts'] is Map<String, dynamic> ? json['decadalShifts'] as Map<String, dynamic> : null;
 
     if (json['metrics'] is List) {
       final metrics = json['metrics'] as List;
@@ -442,6 +452,9 @@ class TemporalTrendModel {
         rainfallTrend: rainfallTrend,
         temperatureTrend: temperatureTrend,
         ndviTrend: ndviTrend,
+        summary: summaryObj,
+        aiInsights: aiInsightsText,
+        decadalShifts: decadal,
       );
     }
 
@@ -451,6 +464,9 @@ class TemporalTrendModel {
       rainfallTrend: parseTrend(json['rainfallTrend']),
       temperatureTrend: parseTrend(json['temperatureTrend']),
       ndviTrend: parseTrend(json['ndviTrend']),
+      summary: summaryObj,
+      aiInsights: aiInsightsText,
+      decadalShifts: decadal,
     );
   }
 
@@ -460,6 +476,9 @@ class TemporalTrendModel {
     'rainfallTrend': rainfallTrend.map((t) => t.toJson()).toList(),
     'temperatureTrend': temperatureTrend.map((t) => t.toJson()).toList(),
     'ndviTrend': ndviTrend.map((t) => t.toJson()).toList(),
+    if (summary != null) 'summary': summary,
+    if (aiInsights != null) 'aiInsights': aiInsights,
+    if (decadalShifts != null) 'decadalShifts': decadalShifts,
   };
 }
 
