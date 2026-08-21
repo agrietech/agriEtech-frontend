@@ -418,12 +418,21 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             initialValue: hierarchy.zones.any((z) => z.id == hierarchy.selectedZone?.id)
                                 ? hierarchy.selectedZone?.id
                                 : null,
+                            hint: Text(
+                              hierarchy.selectedRegion == null ? 'Select Region first' : 'Select Zone',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                              ),
+                            ),
                             decoration: InputDecoration(
                               labelText: 'Zone',
+                              helperText: hierarchy.selectedRegion == null ? 'Select a Region above to enable' : null,
+                              helperStyle: const TextStyle(fontSize: 11),
                               prefixIcon: const Icon(Icons.map_outlined),
                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                               filled: true,
-                              fillColor: isDark ? const Color(0xFF1B2E1E) : Colors.white,
+                              fillColor: isDark ? const Color(0xFF1B2E1E) : (hierarchy.selectedRegion == null ? Colors.grey.shade100 : Colors.white),
                             ),
                             items: hierarchy.zones.map((zone) {
                               return DropdownMenuItem<String>(
@@ -449,12 +458,21 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             initialValue: hierarchy.woredas.any((w) => w.id == hierarchy.selectedWoreda?.id)
                                 ? hierarchy.selectedWoreda?.id
                                 : null,
+                            hint: Text(
+                              hierarchy.selectedZone == null ? 'Select Zone first' : 'Select Woreda',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                              ),
+                            ),
                             decoration: InputDecoration(
                               labelText: 'Woreda',
+                              helperText: hierarchy.selectedZone == null ? 'Select a Zone above to enable' : null,
+                              helperStyle: const TextStyle(fontSize: 11),
                               prefixIcon: const Icon(Icons.holiday_village_outlined),
                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                               filled: true,
-                              fillColor: isDark ? const Color(0xFF1B2E1E) : Colors.white,
+                              fillColor: isDark ? const Color(0xFF1B2E1E) : (hierarchy.selectedZone == null ? Colors.grey.shade100 : Colors.white),
                             ),
                             items: hierarchy.woredas.map((woreda) {
                               return DropdownMenuItem<String>(

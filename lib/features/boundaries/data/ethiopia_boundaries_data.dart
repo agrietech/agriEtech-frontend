@@ -418,12 +418,47 @@ class EthiopiaBoundariesData {
     ],
   };
 
+  /// Region code alias mapping (ETxx ISO codes to fallback keys)
+  static final Map<String, String> regionCodeAliases = {
+    'ET01': 'reg_tigray',
+    'ET02': 'reg_afar',
+    'ET03': 'reg_amhara',
+    'ET04': 'reg_oromia',
+    'ET05': 'reg_somali',
+    'ET06': 'reg_benishangul',
+    'ET07': 'reg_central_ethiopia',
+    'ET08': 'reg_gambela',
+    'ET09': 'reg_harari',
+    'ET10': 'reg_sidama',
+    'ET11': 'reg_swepr',
+    'ET12': 'reg_gambela',
+    'ET13': 'reg_harari',
+    'ET14': 'reg_addis_ababa',
+    'ET15': 'reg_dire_dawa',
+  };
+
   /// Fallback woreda finder
   static List<WoredaModel> getFallbackWoredas(String? zoneId) {
     if (zoneId == null) return [];
+
+    // Direct match
     if (defaultWoredasByZone.containsKey(zoneId)) {
       return defaultWoredasByZone[zoneId]!;
     }
+
+    // Normalized zone ID without trailing numeric suffix (e.g. zone_east_shewa_01 -> zone_east_shewa)
+    final normalized = zoneId.replaceAll(RegExp(r'_\d+$'), '');
+    if (defaultWoredasByZone.containsKey(normalized)) {
+      return defaultWoredasByZone[normalized]!;
+    }
+
+    // Fuzzy match across known zones
+    for (final entry in defaultWoredasByZone.entries) {
+      if (zoneId.contains(entry.key) || entry.key.contains(zoneId)) {
+        return entry.value;
+      }
+    }
+
     // Generic fallback for any zone without explicit sub-list
     return [
       WoredaModel(
@@ -459,9 +494,26 @@ class EthiopiaBoundariesData {
   /// Fallback zone finder
   static List<ZoneModel> getFallbackZones(String? regionId) {
     if (regionId == null) return [];
+
+    // Direct match
     if (defaultZonesByRegion.containsKey(regionId)) {
       return defaultZonesByRegion[regionId]!;
     }
+
+    // Lookup via ISO Code alias (ET01..ET15)
+    final mappedKey = regionCodeAliases[regionId.toUpperCase()];
+    if (mappedKey != null && defaultZonesByRegion.containsKey(mappedKey)) {
+      return defaultZonesByRegion[mappedKey]!;
+    }
+
+    // Fuzzy match by region name or partial key
+    for (final entry in defaultZonesByRegion.entries) {
+      if (entry.key.toLowerCase().contains(regionId.toLowerCase()) ||
+          regionId.toLowerCase().contains(entry.key.toLowerCase())) {
+        return entry.value;
+      }
+    }
+
     return [
       ZoneModel(
         id: '${regionId}_zone_01',
