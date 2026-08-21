@@ -34,17 +34,7 @@ class DioClient {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
-          // Check connectivity
-          final connectivityResult = await _connectivity.checkConnectivity();
-          if (connectivityResult.contains(ConnectivityResult.none)) {
-            throw DioException(
-              requestOptions: options,
-              type: DioExceptionType.connectionError,
-              message: 'No internet connection',
-            );
-          }
-
-          // Add auth token
+          // Add auth token if available
           final token = await _storage.getAccessToken();
           if (token != null) {
             options.headers['Authorization'] = 'Bearer $token';

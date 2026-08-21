@@ -119,10 +119,10 @@ class DateFormatter {
     }
   }
 
-  /// Format Ethiopian date (Gregorian calendar for now)
+  /// Format Ethiopian date string with season context
   static String formatEthiopianDate(DateTime date) {
-    // TODO: Implement Ethiopian calendar conversion if needed
-    return formatDate(date);
+    final season = getSeason(date).split(' ').first;
+    return '${formatDate(date)} ($season)';
   }
 
   /// Get season based on date

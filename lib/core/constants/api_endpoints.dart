@@ -39,6 +39,7 @@ class ApiEndpoints {
   // ── Risk Assessments ────────────────────────────────────────────────────────
   static const String riskAssessments = '/risk-assessments';
   static const String evaluateRisk = '/risk-assessments/evaluate';
+  static const String riskStatistics = '/risk-assessments/statistics';
   static String riskByWoreda(String woredaId) => '/risk-assessments/woreda/$woredaId';
 
   // ── Alerts ──────────────────────────────────────────────────────────────────
@@ -59,8 +60,8 @@ class ApiEndpoints {
 
   // ── AI Voice / Speech (Amharic & English) ───────────────────────────────────
   static const String aiVoiceInquiry = '/ai/voice-inquiry';
-  static const String aiTextInquiry = '/ai/text-inquiry';
-  static const String aiSpeakResponse = '/ai/speak';
+  static const String aiTextInquiry = '/ai/voice-inquiry';
+  static const String aiSpeakResponse = '/ai/text-to-speech';
 
   // ── Data Ingestion ──────────────────────────────────────────────────────────
   static const String ingestion = '/ingestion';

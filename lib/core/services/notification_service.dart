@@ -17,6 +17,12 @@ class NotificationService {
   String? _fcmToken;
   String? get fcmToken => _fcmToken;
 
+  Future<void> Function(String token)? _onTokenUpdate;
+
+  void setTokenUpdateHandler(Future<void> Function(String token) handler) {
+    _onTokenUpdate = handler;
+  }
+
   /// Initialize notification service
   Future<void> initialize() async {
     if (kIsWeb) return;
@@ -50,7 +56,7 @@ class NotificationService {
         _firebaseMessaging.onTokenRefresh.listen((newToken) {
           _fcmToken = newToken;
           AppLogger.info('FCM Token refreshed', {'token': newToken});
-          // TODO: Send new token to backend
+          updateTokenOnBackend(newToken);
         });
       }
     } catch (e) {
@@ -332,9 +338,16 @@ class NotificationService {
 
   /// Update FCM token on backend
   Future<void> updateTokenOnBackend(String token) async {
-    // This will be called from auth provider after login
     AppLogger.info('Updating FCM token on backend', {'token': token});
-    // TODO: Implement API call to update device token
+    _fcmToken = token;
+    if (_onTokenUpdate != null) {
+      try {
+        await _onTokenUpdate!(token);
+        AppLogger.success('FCM token sent to backend via callback');
+      } catch (e) {
+        AppLogger.warning('Failed to sync refreshed FCM token via callback', e);
+      }
+    }
   }
 
   /// Clear all notifications

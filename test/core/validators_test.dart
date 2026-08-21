@@ -20,19 +20,22 @@ void main() {
 
   group('Validators - Ethiopian Phone Numbers', () {
     test('valid Ethiopian phone numbers return null', () {
+      // Ethio Telecom (09...)
       expect(Validators.phone('+251911234567'), isNull);
       expect(Validators.phone('0911234567'), isNull);
+      expect(Validators.phone('091 123 4567'), isNull);
+      // Safaricom Ethiopia (07...)
       expect(Validators.phone('0712345678'), isNull);
       expect(Validators.phone('+251712345678'), isNull);
-      expect(Validators.phone('091 123 4567'), isNull); // with spaces
+      expect(Validators.phone('077 890 1234'), isNull);
     });
 
     test('invalid phone numbers return error message', () {
       expect(Validators.phone(''), isNotNull);
       expect(Validators.phone(null), isNotNull);
       expect(Validators.phone('12345678'), isNotNull); // too short
-      expect(Validators.phone('0811234567'), isNotNull); // invalid prefix (08)
-      expect(Validators.phone('+1234567890'), isNotNull); // non-Ethiopian
+      expect(Validators.phone('0811234567'), contains('Ethio Telecom')); // invalid prefix (08)
+      expect(Validators.phone('+1234567890'), contains('Ethio Telecom')); // non-Ethiopian
     });
   });
 
@@ -86,6 +89,22 @@ void main() {
       expect(Validators.ethiopianLatitude('51.5'), contains('within Ethiopia')); // London
       expect(Validators.ethiopianLongitude('-0.12'), contains('within Ethiopia'));
       expect(Validators.ethiopianLatitude('1.0'), contains('within Ethiopia'));
+    });
+  });
+
+  group('Validators - Username', () {
+    test('valid usernames return null', () {
+      expect(Validators.username('abebe_bikila'), isNull);
+      expect(Validators.username('farmer.2026'), isNull);
+      expect(Validators.username('agri-officer'), isNull);
+    });
+
+    test('invalid or empty usernames return error message', () {
+      expect(Validators.username(''), isNotNull);
+      expect(Validators.username(null), isNotNull);
+      expect(Validators.username('ab'), contains('3 characters'));
+      expect(Validators.username('user with spaces'), contains('letters, numbers'));
+      expect(Validators.username('user@special!'), contains('letters, numbers'));
     });
   });
 }

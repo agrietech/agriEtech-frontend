@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/auth/providers/auth_provider.dart';
+import '../../features/auth/screens/splash_screen.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/register_screen.dart';
 import '../../features/auth/screens/change_password_screen.dart';
@@ -17,28 +18,51 @@ import '../../features/sensors/screens/sensors_list_screen.dart';
 import '../../features/boundaries/screens/boundaries_screen.dart';
 import '../../features/analytics/screens/analytics_screen.dart';
 
+/// Listenable that notifies GoRouter whenever AuthState changes
+class AuthChangeNotifier extends ChangeNotifier {
+  final Ref _ref;
+
+  AuthChangeNotifier(this._ref) {
+    _ref.listen<AuthState>(authProvider, (_, __) {
+      notifyListeners();
+    });
+  }
+}
+
+final authChangeNotifierProvider = Provider<AuthChangeNotifier>((ref) {
+  return AuthChangeNotifier(ref);
+});
+
 final appRouterProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authProvider);
+  final authNotifier = ref.watch(authChangeNotifierProvider);
 
   return GoRouter(
-    initialLocation: authState.isInitializing ? '/splash' : '/login',
+    initialLocation: '/splash',
+    refreshListenable: authNotifier,
     redirect: (context, state) {
+      final authState = ref.read(authProvider);
       final isAuthenticated = authState.isAuthenticated;
       final isInitializing = authState.isInitializing;
-      final isAuthRoute = state.matchedLocation.startsWith('/login') ||
-          state.matchedLocation.startsWith('/register');
+      final currentLoc = state.matchedLocation;
+      final isAuthRoute = currentLoc.startsWith('/login') ||
+          currentLoc.startsWith('/register');
 
-      // Wait for auth initialization
-      if (isInitializing && state.matchedLocation != '/splash') {
-        return '/splash';
+      // 1. If initializing, stay on splash screen
+      if (isInitializing) {
+        return currentLoc == '/splash' ? null : '/splash';
       }
 
-      // Redirect to login if not authenticated and not on auth route
-      if (!isAuthenticated && !isAuthRoute && state.matchedLocation != '/splash') {
+      // 2. If initialization finished and user is on splash, direct them appropriately
+      if (currentLoc == '/splash') {
+        return isAuthenticated ? '/home' : '/login';
+      }
+
+      // 3. If unauthenticated user tries to access protected route, redirect to login
+      if (!isAuthenticated && !isAuthRoute) {
         return '/login';
       }
 
-      // Redirect to home if authenticated and on auth route
+      // 4. If authenticated user tries to access login or register, redirect to home
       if (isAuthenticated && isAuthRoute) {
         return '/home';
       }
@@ -49,11 +73,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // Splash/Loading route
       GoRoute(
         path: '/splash',
-        builder: (context, state) => const Scaffold(
-          body: Center(
-            child: CircularProgressIndicator(),
-          ),
-        ),
+        builder: (context, state) => const SplashScreen(),
       ),
 
       // Auth routes
@@ -132,10 +152,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // Analytics route (Researchers, Officers, Admin only)
       GoRoute(
         path: '/analytics',
-        builder: (context, state) {
-          // Role check will be done in the screen
-          return const AnalyticsScreen();
-        },
+        builder: (context, state) => const AnalyticsScreen(),
       ),
     ],
   );

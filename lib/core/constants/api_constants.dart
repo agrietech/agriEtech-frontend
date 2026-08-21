@@ -29,7 +29,8 @@ class ApiConstants {
   static const String riskAssessments = '/risk-assessments';
   static const String evaluateRisk = '$riskAssessments/evaluate';
   static String riskByWoreda(String woredaId) => '$riskAssessments/woreda/$woredaId';
-  static String riskStats(String period) => '$riskAssessments/stats/$period';
+  static const String riskStatistics = '$riskAssessments/statistics';
+  static String riskStats([String? period]) => '$riskAssessments/statistics';
 
   // Alert Endpoints
   static const String alerts = '/alerts';

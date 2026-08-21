@@ -17,18 +17,17 @@ class Validators {
     return null;
   }
 
-  /// Validate phone number (Ethiopian format or international)
+  /// Validate phone number (Ethiopian format)
   static String? phone(String? value) {
     if (value == null || value.trim().isEmpty) {
       return 'Phone number is required';
     }
     
     final clean = value.replaceAll(RegExp(r'[\s\-\(\)]'), '');
-    final ethRegex = RegExp(r'^(\+?251|0)?[79]\d{8}$');
-    final generalRegex = RegExp(r'^\+?[0-9]{9,15}$');
+    final ethRegex = RegExp(r'^(\+?251|0)[79]\d{8}$');
     
-    if (!ethRegex.hasMatch(clean) && !generalRegex.hasMatch(clean)) {
-      return 'Please enter a valid phone number (e.g. 0911223344 or +251911223344)';
+    if (!ethRegex.hasMatch(clean)) {
+      return 'Enter a valid Ethio Telecom (09...) or Safaricom (07...) number';
     }
     
     return null;
@@ -40,8 +39,20 @@ class Validators {
       return 'Password is required';
     }
     
-    if (value.length < 6) {
-      return 'Password must be at least 6 characters';
+    if (value.length < 8) {
+      return 'Password must be at least 8 characters';
+    }
+    
+    if (!value.contains(RegExp(r'[A-Z]'))) {
+      return 'Password must contain at least one uppercase letter';
+    }
+    
+    if (!value.contains(RegExp(r'[0-9]'))) {
+      return 'Password must contain at least one number';
+    }
+    
+    if (!value.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) {
+      return 'Password must contain at least one special character';
     }
     
     return null;
@@ -195,7 +206,21 @@ class Validators {
     if (area > 10000) {
       return 'Farm area seems too large. Please verify.';
     }
-    
+    return null;
+  }
+
+  /// Validate username format
+  static String? username(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Username is required';
+    }
+    final clean = value.trim();
+    if (clean.length < 3) {
+      return 'Username must be at least 3 characters';
+    }
+    if (!RegExp(r'^[a-zA-Z0-9._-]+$').hasMatch(clean)) {
+      return 'Username can only contain letters, numbers, dots, and underscores';
+    }
     return null;
   }
 }

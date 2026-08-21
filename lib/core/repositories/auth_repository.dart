@@ -193,7 +193,7 @@ class AuthRepository {
     try {
       AppLogger.info('Attempting password update');
       
-      await _dioClient.put(
+      await _dioClient.patch(
         ApiConstants.updatePassword, data: request.toJson(),
       );
 

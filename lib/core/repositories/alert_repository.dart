@@ -45,7 +45,7 @@ class AlertRepository {
   /// Mark alert as read
   Future<void> markAsRead(String id) async {
     try {
-      await _dioClient.put('${ApiConstants.alerts}/$id/read');
+      await _dioClient.patch('${ApiConstants.alerts}/$id/read');
     } on DioException catch (e) {
       throw _handleError(e);
     }
