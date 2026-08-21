@@ -34,7 +34,7 @@ class NetworkError extends AppError {
 
   factory NetworkError.timeout() {
     return const NetworkError(
-      message: 'Request timed out. Please check your connection and try again.',
+      message: 'Server response timed out. Retrying connection...',
       code: 'TIMEOUT',
     );
   }
