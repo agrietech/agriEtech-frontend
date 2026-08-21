@@ -70,7 +70,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     _checkAuthStatus();
   }
 
-  /// Check authentication status on app start
+  /// Check authentication status on app start (supports full offline session persistence)
   Future<void> _checkAuthStatus() async {
     try {
       AppLogger.info('Checking authentication status');
@@ -78,7 +78,17 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final isLoggedIn = await _authRepository.isLoggedIn();
       
       if (isLoggedIn) {
-        AppLogger.info('User is logged in, fetching profile');
+        AppLogger.info('User is logged in, checking local cached profile');
+        final cachedUser = await _authRepository.getCachedUser();
+        
+        if (cachedUser != null) {
+          // Immediately authenticate user with cached credentials (zero offline latency)
+          state = state.copyWith(
+            user: cachedUser,
+            isAuthenticated: true,
+            isInitializing: false,
+          );
+        }
         
         try {
           final user = await _authRepository.getProfile();
@@ -87,16 +97,23 @@ class AuthNotifier extends StateNotifier<AuthState> {
             isAuthenticated: true,
             isInitializing: false,
           );
-          
-          AppLogger.info('Auth check complete - authenticated');
+          AppLogger.info('Auth check complete - profile refreshed from network');
         } catch (e) {
-          // Token might be expired
-          AppLogger.warning('Failed to fetch profile, user not authenticated', e);
-          
-          state = state.copyWith(
-            isAuthenticated: false,
-            isInitializing: false,
-          );
+          if (cachedUser != null) {
+            // Keep user authenticated in offline mode
+            AppLogger.info('Network unreachable, continuing in offline authenticated mode with cached profile');
+            state = state.copyWith(
+              user: cachedUser,
+              isAuthenticated: true,
+              isInitializing: false,
+            );
+          } else {
+            AppLogger.warning('Failed to fetch profile and no cached user found', e);
+            state = state.copyWith(
+              isAuthenticated: false,
+              isInitializing: false,
+            );
+          }
         }
       } else {
         AppLogger.info('Auth check complete - not authenticated');

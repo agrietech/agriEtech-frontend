@@ -33,10 +33,19 @@ class SecureStorageService {
     return await _storage.read(key: AppConstants.userIdKey);
   }
 
+  Future<void> saveUserData(String userJson) async {
+    await _storage.write(key: 'cached_user_data', value: userJson);
+  }
+
+  Future<String?> getUserData() async {
+    return await _storage.read(key: 'cached_user_data');
+  }
+
   Future<void> clearAuth() async {
     await _storage.delete(key: AppConstants.accessTokenKey);
     await _storage.delete(key: AppConstants.refreshTokenKey);
     await _storage.delete(key: AppConstants.userIdKey);
+    await _storage.delete(key: 'cached_user_data');
   }
 
   Future<void> clearAll() async {

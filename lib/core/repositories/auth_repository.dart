@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../constants/api_constants.dart';
@@ -63,7 +64,7 @@ class AuthRepository {
         user: user,
       );
 
-      // Save authentication tokens
+      // Save authentication tokens & user profile locally for offline persistence
       if (accessToken.isNotEmpty) {
         await _storage.saveAccessToken(accessToken);
       }
@@ -71,6 +72,7 @@ class AuthRepository {
         await _storage.saveRefreshToken(refreshToken);
       }
       await _storage.saveUserId(user.id);
+      await _storage.saveUserData(jsonEncode(user.toJson()));
 
       AppLogger.info('Login successful for user: ${user.id}');
       
@@ -147,7 +149,7 @@ class AuthRepository {
         user: user,
       );
 
-      // Save authentication tokens
+      // Save authentication tokens & user profile locally for offline persistence
       if (accessToken.isNotEmpty) {
         await _storage.saveAccessToken(accessToken);
       }
@@ -155,6 +157,7 @@ class AuthRepository {
         await _storage.saveRefreshToken(refreshToken);
       }
       await _storage.saveUserId(user.id);
+      await _storage.saveUserData(jsonEncode(user.toJson()));
 
       AppLogger.info('Registration successful for user: ${user.id}');
       
@@ -174,7 +177,7 @@ class AuthRepository {
     }
   }
 
-  /// Get current user profile
+  /// Get current user profile (with automatic local offline caching)
   Future<UserModel> getProfile() async {
     try {
       AppLogger.info('Fetching user profile');
@@ -186,7 +189,9 @@ class AuthRepository {
           : response.data as Map<String, dynamic>;
       final user = UserModel.fromJson(rawData);
       
-      AppLogger.info('Profile fetched successfully for user: ${user.id}');
+      // Cache latest profile locally
+      await _storage.saveUserData(jsonEncode(user.toJson()));
+      AppLogger.info('Profile fetched and cached successfully for user: ${user.id}');
       
       return user;
     } on DioException catch (e) {
@@ -201,6 +206,20 @@ class AuthRepository {
       AppLogger.error('Unexpected profile fetch error', e, stackTrace);
       throw UnknownError(message: 'Failed to fetch profile: ${e.toString()}');
     }
+  }
+
+  /// Get locally cached user profile for offline session continuity
+  Future<UserModel?> getCachedUser() async {
+    try {
+      final jsonStr = await _storage.getUserData();
+      if (jsonStr != null && jsonStr.isNotEmpty) {
+        final map = jsonDecode(jsonStr) as Map<String, dynamic>;
+        return UserModel.fromJson(map);
+      }
+    } catch (e) {
+      AppLogger.warning('Failed to parse cached user data: $e');
+    }
+    return null;
   }
 
   /// Update user password
