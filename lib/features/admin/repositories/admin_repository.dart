@@ -156,7 +156,7 @@ class AdminRepository {
     try {
       AppLogger.info('Submitting role upgrade request for ${application.userName}');
       await _dioClient.post(
-        '/auth/role-requests',
+        ApiConstants.roleRequests,
         data: application.toJson(),
       );
     } catch (_) {
@@ -170,7 +170,7 @@ class AdminRepository {
   Future<List<RoleApplicationModel>> getPendingRoleApplications({String? woredaId}) async {
     try {
       final response = await _dioClient.get(
-        '/admin/role-requests',
+        ApiConstants.adminRoleRequests,
         queryParameters: {
           'status': 'PENDING',
           if (woredaId != null) 'woredaId': woredaId,
@@ -196,7 +196,7 @@ class AdminRepository {
   Future<void> approveRoleApplication(String applicationId, {required String reviewerName}) async {
     try {
       await _dioClient.post(
-        '/admin/role-requests/$applicationId/approve',
+        ApiConstants.adminApproveRoleRequest(applicationId),
         data: {'reviewedBy': reviewerName},
       );
     } catch (_) {}
@@ -218,7 +218,7 @@ class AdminRepository {
   Future<void> rejectRoleApplication(String applicationId, {required String reason, required String reviewerName}) async {
     try {
       await _dioClient.post(
-        '/admin/role-requests/$applicationId/reject',
+        ApiConstants.adminRejectRoleRequest(applicationId),
         data: {
           'reason': reason,
           'reviewedBy': reviewerName,

@@ -22,6 +22,7 @@ class ApiConstants {
   static const String resetPassword = '$auth/reset-password';
   static const String verifyEmail = '$auth/verify-email';
   static const String resendVerification = '$auth/resend-verification';
+  static const String roleRequests = '$auth/role-requests';
 
   // 2. Administrative Boundary Endpoints (/boundaries)
   static const String boundaries = '/boundaries';
@@ -118,6 +119,9 @@ class ApiConstants {
   static const String adminSystemHealth = '/admin/system/health';
   static const String adminIngestionTrigger = '/admin/ingestion/trigger';
   static const String adminAuditLogs = '/admin/audit-logs';
+  static const String adminRoleRequests = '/admin/role-requests';
+  static String adminApproveRoleRequest(String id) => '/admin/role-requests/$id/approve';
+  static String adminRejectRoleRequest(String id) => '/admin/role-requests/$id/reject';
 
   // Request Timeouts
   static Duration get defaultTimeout => AppEnv.apiTimeout;
