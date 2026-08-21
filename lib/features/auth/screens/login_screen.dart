@@ -22,6 +22,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _rememberMe = false;
 
   @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      ref.read(authProvider.notifier).clearError();
+    });
+  }
+
+  @override
   void dispose() {
     _usernameController.dispose();
     _passwordController.dispose();
@@ -118,7 +126,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      'Sign In to Platform',
+                                      'Sign In',
                                       style: theme.textTheme.titleMedium?.copyWith(
                                         fontWeight: FontWeight.bold,
                                         color: isDark ? Colors.white : const Color(0xFF1E2E1E),
@@ -126,7 +134,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
-                                      'Enter your credentials below',
+                                      'Access your account',
                                       style: TextStyle(
                                         fontSize: 12,
                                         color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
@@ -185,31 +193,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             const SizedBox(height: 18),
                           ],
 
-                          // Username / Phone Credential Field
+                          // Phone / Email Field
                           TextFormField(
                             controller: _usernameController,
                             decoration: InputDecoration(
-                              labelText: 'Username or Phone Number',
-                              prefixIcon: const Icon(Icons.person_outline),
+                              labelText: 'Phone Number or Email',
+                              prefixIcon: const Icon(Icons.phone_android_outlined),
                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                               filled: true,
                               fillColor: isDark ? const Color(0xFF1E3321) : const Color(0xFFF9FAF9),
                             ),
-                            keyboardType: TextInputType.text,
+                            keyboardType: TextInputType.emailAddress,
                             textInputAction: TextInputAction.next,
-                            validator: (value) => Validators.required(value, 'Username or phone number'),
+                            validator: (value) => Validators.required(value, 'Phone number or email'),
                             enabled: !authState.isLoading,
-                          ),
-                          const SizedBox(height: 4),
-                          Padding(
-                            padding: const EdgeInsets.only(left: 4),
-                            child: Text(
-                              'Supports username handle, Ethio Telecom (09...), or Safaricom (07...)',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
-                              ),
-                            ),
                           ),
                           const SizedBox(height: 16),
 
@@ -234,17 +231,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             onFieldSubmitted: (_) => _login(),
                             validator: (value) => Validators.required(value, 'Password'),
                             enabled: !authState.isLoading,
-                          ),
-                          const SizedBox(height: 4),
-                          Padding(
-                            padding: const EdgeInsets.only(left: 4),
-                            child: Text(
-                              'Enter your account security password',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
-                              ),
-                            ),
                           ),
                           const SizedBox(height: 14),
 

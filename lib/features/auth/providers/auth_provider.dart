@@ -186,7 +186,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       AppLogger.error('Login failed - Unknown error', e, stackTrace);
       
       final error = UnknownError(
-        message: 'Login failed. Please try again.',
+        message: 'Login failed. Please verify your credentials and try again.',
         details: e,
       );
       
@@ -247,7 +247,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       AppLogger.error('Registration failed - Unknown error', e, stackTrace);
       
       final error = UnknownError(
-        message: 'Registration failed. Please try again.',
+        message: 'Registration failed. Please verify your information and try again.',
         details: e,
       );
       
@@ -293,7 +293,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       AppLogger.error('Password update failed - Unknown error', e, stackTrace);
       
       final error = UnknownError(
-        message: 'Failed to update password. Please try again.',
+        message: 'Failed to update password. Please verify your current password and try again.',
         details: e,
       );
       

@@ -19,7 +19,6 @@ class RegisterScreen extends ConsumerStatefulWidget {
 class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   final _fullNameController = TextEditingController();
-  final _usernameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -35,6 +34,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   void initState() {
     super.initState();
     Future.microtask(() {
+      ref.read(authProvider.notifier).clearError();
       ref.read(boundaryHierarchyProvider.notifier).loadRegions();
     });
   }
@@ -42,7 +42,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   @override
   void dispose() {
     _fullNameController.dispose();
-    _usernameController.dispose();
     _phoneController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
@@ -58,7 +57,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       setState(() => _termsError = true);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please accept the Terms of Service & Privacy Policy to proceed'),
+          content: Text('Please accept the Terms of Service'),
           backgroundColor: Color(0xFFD97706),
         ),
       );
@@ -89,7 +88,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'Account created successfully! Welcome to agriEtech.',
+                        'Account created successfully',
                         style: TextStyle(fontWeight: FontWeight.w600),
                       ),
                     ),
@@ -108,14 +107,14 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 title: const Row(
                   children: [
-                    Icon(Icons.mark_email_read_outlined, color: Color(0xFF2E7D32), size: 28),
+                    Icon(Icons.check_circle_outline, color: Color(0xFF2E7D32), size: 28),
                     SizedBox(width: 10),
                     Text('Account Created', style: TextStyle(fontWeight: FontWeight.bold)),
                   ],
                 ),
-                content: Text(
-                  'Your account has been registered successfully! A confirmation notice has been sent to ${_emailController.text.trim()}. You can now sign in.',
-                  style: const TextStyle(fontSize: 14, height: 1.4),
+                content: const Text(
+                  'Your account has been created successfully. You can now sign in.',
+                  style: TextStyle(fontSize: 14, height: 1.4),
                 ),
                 actions: [
                   ElevatedButton.icon(
@@ -124,7 +123,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       context.go('/login');
                     },
                     icon: const Icon(Icons.login, size: 18),
-                    label: const Text('Proceed to Sign In'),
+                    label: const Text('Sign In'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF1B5E20),
                       foregroundColor: Colors.white,
@@ -196,7 +195,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF121E14) : const Color(0xFFF7FAF7),
       appBar: AppBar(
-        title: const Text('Account Registration', style: TextStyle(fontWeight: FontWeight.w700)),
+        title: const Text('Register', style: TextStyle(fontWeight: FontWeight.w700)),
         elevation: 0,
         backgroundColor: isDark ? const Color(0xFF1B2E1E) : Colors.white,
         foregroundColor: isDark ? Colors.white : const Color(0xFF1E2E1E),
@@ -204,7 +203,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 680),
+            constraints: const BoxConstraints(maxWidth: 600),
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
               child: Form(
@@ -221,58 +220,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       ),
                     ),
                     const SizedBox(height: 20),
-
-                    // Header Info Card
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            AppTheme.primaryColor.withValues(alpha: 0.1),
-                            const Color(0xFFF59E0B).withValues(alpha: 0.06),
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.2)),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: AppTheme.primaryColor,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Icon(Icons.how_to_reg, color: Colors.white, size: 22),
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Register New Account',
-                                  style: theme.textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: isDark ? Colors.white : const Color(0xFF0F3010),
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  'Both phone and email credentials are required for verification and multi-hazard broadcasts.',
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: isDark ? Colors.grey.shade300 : Colors.grey.shade700,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
 
                     // Error Alert Banner
                     if (authState.error != null) ...[
@@ -317,11 +264,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       const SizedBox(height: 16),
                     ],
 
-                    // SECTION 1: Personal & Security Credentials
+                    // Section: Account Details
                     _buildSectionCard(
-                      title: '1. User Credentials',
-                      icon: Icons.badge_outlined,
-                      subtitle: 'Provide your name, username handle, and dual verification credentials.',
+                      title: 'Account Details',
+                      icon: Icons.person_outline,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -329,7 +275,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                           TextFormField(
                             controller: _fullNameController,
                             decoration: InputDecoration(
-                              labelText: 'Full Name *',
+                              labelText: 'Full Name',
                               prefixIcon: const Icon(Icons.person_outline),
                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                               filled: true,
@@ -340,32 +286,14 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             validator: (value) => Validators.required(value, 'Full name'),
                             enabled: !authState.isLoading,
                           ),
-                          _buildFieldHelper('Given name and paternal family name (e.g. Abebe Bikila)'),
-                          const SizedBox(height: 14),
-
-                          // Username
-                          TextFormField(
-                            controller: _usernameController,
-                            decoration: InputDecoration(
-                              labelText: 'Username *',
-                              prefixIcon: const Icon(Icons.alternate_email),
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                              filled: true,
-                              fillColor: isDark ? const Color(0xFF1B2E1E) : Colors.white,
-                            ),
-                            textInputAction: TextInputAction.next,
-                            validator: Validators.username,
-                            enabled: !authState.isLoading,
-                          ),
-                          _buildFieldHelper('Unique alphanumeric username handle for direct sign-in (e.g. abebe_bikila)'),
                           const SizedBox(height: 14),
 
                           // Phone Number
                           TextFormField(
                             controller: _phoneController,
                             decoration: InputDecoration(
-                              labelText: 'Phone Number (SMS & Calls) *',
-                              prefixIcon: const Icon(Icons.phone_android),
+                              labelText: 'Phone Number',
+                              prefixIcon: const Icon(Icons.phone_android_outlined),
                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                               filled: true,
                               fillColor: isDark ? const Color(0xFF1B2E1E) : Colors.white,
@@ -375,14 +303,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             validator: Validators.phone,
                             enabled: !authState.isLoading,
                           ),
-                          _buildFieldHelper('Supports Ethio Telecom (09...) and Safaricom (07...) prefixes'),
                           const SizedBox(height: 14),
 
                           // Email Address
                           TextFormField(
                             controller: _emailController,
                             decoration: InputDecoration(
-                              labelText: 'Email Address (Advisories & Reports) *',
+                              labelText: 'Email Address',
                               prefixIcon: const Icon(Icons.email_outlined),
                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                               filled: true,
@@ -393,14 +320,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             validator: Validators.email,
                             enabled: !authState.isLoading,
                           ),
-                          _buildFieldHelper('Required for analytical bulletins, harvest forecasts, and security recovery'),
                           const SizedBox(height: 14),
 
                           // Password
                           TextFormField(
                             controller: _passwordController,
                             decoration: InputDecoration(
-                              labelText: 'Password *',
+                              labelText: 'Password',
                               prefixIcon: const Icon(Icons.lock_outline),
                               suffixIcon: IconButton(
                                 icon: Icon(
@@ -417,14 +343,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             validator: Validators.password,
                             enabled: !authState.isLoading,
                           ),
-                          _buildFieldHelper('Must contain at least 8 characters, 1 uppercase, 1 number, and 1 symbol'),
                           const SizedBox(height: 14),
 
                           // Confirm Password
                           TextFormField(
                             controller: _confirmPasswordController,
                             decoration: InputDecoration(
-                              labelText: 'Confirm Password *',
+                              labelText: 'Confirm Password',
                               prefixIcon: const Icon(Icons.lock_reset),
                               suffixIcon: IconButton(
                                 icon: Icon(
@@ -444,28 +369,26 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             ),
                             enabled: !authState.isLoading,
                           ),
-                          _buildFieldHelper('Re-enter the exact password configured above'),
                         ],
                       ),
                     ),
                     const SizedBox(height: 16),
 
-                    // SECTION 2: Administrative Jurisdiction & Language
+                    // Section: Farm Location & Language
                     _buildSectionCard(
-                      title: '2. Administrative Jurisdiction & Language',
+                      title: 'Farm Location & Language',
                       icon: Icons.location_on_outlined,
-                      subtitle: 'Select your agricultural zone and preferred broadcast language for localized advisory.',
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // 1. Region Dropdown
+                          // Region Dropdown
                           DropdownButtonFormField<String>(
                             key: ValueKey('reg_${hierarchy.regions.length}_${hierarchy.selectedRegion?.id}'),
                             initialValue: hierarchy.regions.any((r) => r.id == hierarchy.selectedRegion?.id)
                                 ? hierarchy.selectedRegion?.id
                                 : null,
                             decoration: InputDecoration(
-                              labelText: 'Region *',
+                              labelText: 'Region',
                               prefixIcon: const Icon(Icons.public),
                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                               filled: true,
@@ -474,10 +397,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             items: hierarchy.regions.map((region) {
                               return DropdownMenuItem<String>(
                                 value: region.id,
-                                child: Text(region.name, style: const TextStyle(fontWeight: FontWeight.w500)),
+                                child: Text(region.name),
                               );
                             }).toList(),
-                            validator: (v) => v == null || v.isEmpty ? 'Please select your region' : null,
+                            validator: (v) => v == null || v.isEmpty ? 'Please select a region' : null,
                             onChanged: authState.isLoading
                                 ? null
                                 : (regionId) {
@@ -487,17 +410,16 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                     }
                                   },
                           ),
-                          _buildFieldHelper('Select your administrative region (e.g. Oromia, Amhara, Sidama)'),
                           const SizedBox(height: 14),
 
-                          // 2. Zone Dropdown
+                          // Zone Dropdown
                           DropdownButtonFormField<String>(
                             key: ValueKey('zone_${hierarchy.zones.length}_${hierarchy.selectedZone?.id}'),
                             initialValue: hierarchy.zones.any((z) => z.id == hierarchy.selectedZone?.id)
                                 ? hierarchy.selectedZone?.id
                                 : null,
                             decoration: InputDecoration(
-                              labelText: 'Zone *',
+                              labelText: 'Zone',
                               prefixIcon: const Icon(Icons.map_outlined),
                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                               filled: true,
@@ -506,10 +428,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             items: hierarchy.zones.map((zone) {
                               return DropdownMenuItem<String>(
                                 value: zone.id,
-                                child: Text(zone.name, style: const TextStyle(fontWeight: FontWeight.w500)),
+                                child: Text(zone.name),
                               );
                             }).toList(),
-                            validator: (v) => v == null || v.isEmpty ? 'Please select your zone' : null,
+                            validator: (v) => v == null || v.isEmpty ? 'Please select a zone' : null,
                             onChanged: (hierarchy.selectedRegion == null || authState.isLoading)
                                 ? null
                                 : (zoneId) {
@@ -519,17 +441,16 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                     }
                                   },
                           ),
-                          _buildFieldHelper('Select your administrative zone (e.g. East Shewa, Arsi)'),
                           const SizedBox(height: 14),
 
-                          // 3. Woreda Dropdown
+                          // Woreda Dropdown
                           DropdownButtonFormField<String>(
                             key: ValueKey('woreda_${hierarchy.woredas.length}_${hierarchy.selectedWoreda?.id}'),
                             initialValue: hierarchy.woredas.any((w) => w.id == hierarchy.selectedWoreda?.id)
                                 ? hierarchy.selectedWoreda?.id
                                 : null,
                             decoration: InputDecoration(
-                              labelText: 'Woreda *',
+                              labelText: 'Woreda',
                               prefixIcon: const Icon(Icons.holiday_village_outlined),
                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                               filled: true,
@@ -538,10 +459,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             items: hierarchy.woredas.map((woreda) {
                               return DropdownMenuItem<String>(
                                 value: woreda.id,
-                                child: Text(woreda.name, style: const TextStyle(fontWeight: FontWeight.w500)),
+                                child: Text(woreda.name),
                               );
                             }).toList(),
-                            validator: (v) => v == null || v.isEmpty ? 'Please select your woreda' : null,
+                            validator: (v) => v == null || v.isEmpty ? 'Please select a woreda' : null,
                             onChanged: (hierarchy.selectedZone == null || authState.isLoading)
                                 ? null
                                 : (woredaId) {
@@ -551,13 +472,19 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                     }
                                   },
                           ),
-                          _buildFieldHelper('Select your woreda jurisdiction (e.g. Bishoftu, Adama Zuria)'),
-                          const SizedBox(height: 18),
+                          
+                          const SizedBox(height: 20),
+                          const Divider(),
+                          const SizedBox(height: 14),
 
-                          // Language Preference
-                          const Text(
-                            'Preferred Advisory Language *',
-                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                          // Preferred Language Label
+                          Text(
+                            'Preferred Language',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? Colors.grey.shade300 : Colors.grey.shade700,
+                            ),
                           ),
                           const SizedBox(height: 8),
                           Wrap(
@@ -566,17 +493,14 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             children: [
                               _buildLangChip('en', 'English'),
                               _buildLangChip('am', 'አማርኛ (Amharic)'),
-                              _buildLangChip('om', 'Afaan Oromoo'),
-                              _buildLangChip('ti', 'ትግርኛ (Tigrinya)'),
                             ],
                           ),
-                          _buildFieldHelper('Language used for SMS, voice synthesized alerts, and telemetry alerts'),
                         ],
                       ),
                     ),
                     const SizedBox(height: 16),
 
-                    // SECTION 3: Terms and Conditions
+                    // Terms and Conditions Checkbox
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                       decoration: BoxDecoration(
@@ -606,8 +530,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                 if (_acceptTerms) _termsError = false;
                               }),
                               child: const Text(
-                                'I agree to the Terms of Service, Geospatial Data Policy, and Emergency Warning Broadcasts.',
-                                style: TextStyle(fontSize: 12, height: 1.3),
+                                'I agree to the Terms of Service & Privacy Policy',
+                                style: TextStyle(fontSize: 13, height: 1.3),
                               ),
                             ),
                           ),
@@ -624,7 +548,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF1B5E20),
                           foregroundColor: Colors.white,
-                          elevation: 3,
+                          elevation: 2,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
                           ),
@@ -647,13 +571,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                               )
                             : const Text(
                                 'Create Account',
-                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                               ),
                       ),
                     ),
                     const SizedBox(height: 16),
 
-                    // Already have an account?
+                    // Sign In Redirection
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -685,24 +609,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     );
   }
 
-  Widget _buildFieldHelper(String text) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Padding(
-      padding: const EdgeInsets.only(left: 4, top: 4),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 11,
-          color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
-        ),
-      ),
-    );
-  }
-
   Widget _buildSectionCard({
     required String title,
     required IconData icon,
-    required String subtitle,
     required Widget child,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -738,12 +647,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 4),
-          Text(
-            subtitle,
-            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-          ),
-          const Divider(height: 24),
+          const Divider(height: 20),
           child,
         ],
       ),

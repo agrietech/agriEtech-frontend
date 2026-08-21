@@ -110,7 +110,7 @@ class _ForgotPasswordDialogState extends ConsumerState<ForgotPasswordDialog> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Reset instructions sent to ${_emailController.text.trim()}. Please check your email inbox to reset your password.',
+                  'Reset instructions sent. Please check your email to reset your password.',
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodyMedium,
                 ),
@@ -123,7 +123,7 @@ class _ForgotPasswordDialogState extends ConsumerState<ForgotPasswordDialog> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Enter your registered email address to receive password reset instructions.',
+                    'Enter your email address to receive password reset instructions.',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: Colors.grey.shade700,
                     ),
@@ -140,17 +140,6 @@ class _ForgotPasswordDialogState extends ConsumerState<ForgotPasswordDialog> {
                     onFieldSubmitted: (_) => _submit(),
                     validator: Validators.email,
                     enabled: !_isLoading,
-                  ),
-                  const SizedBox(height: 4),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 4),
-                    child: Text(
-                      'Enter your registered email address (e.g. user@agrietech.et)',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
                   ),
                 ],
               ),
