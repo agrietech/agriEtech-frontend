@@ -7,6 +7,7 @@ import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/register_screen.dart';
 import '../../features/auth/screens/change_password_screen.dart';
 import '../../features/home/screens/home_screen.dart';
+import '../../features/home/screens/main_navigation_shell.dart';
 import '../../features/dashboard/screens/dashboard_screen.dart';
 import '../../features/farms/screens/farms_list_screen.dart';
 import '../../features/farms/screens/farm_detail_screen.dart';
@@ -91,7 +92,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // Main routes
       GoRoute(
         path: '/home',
-        builder: (context, state) => const HomeScreen(),
+        builder: (context, state) => const MainNavigationShell(),
       ),
       GoRoute(
         path: '/dashboard',
