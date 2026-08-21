@@ -49,10 +49,20 @@ class NetworkError extends AppError {
   factory NetworkError.fromDioException(DioException exception) {
     if (exception.response?.data is Map) {
       final data = exception.response!.data as Map;
-      final serverMsg = data['message']?.toString() ??
-          data['error']?.toString() ??
-          data['detail']?.toString() ??
-          data['msg']?.toString();
+      String? serverMsg;
+      if (data['message'] != null && data['message'].toString().isNotEmpty) {
+        serverMsg = data['message'].toString();
+      } else if (data['error'] is Map) {
+        final errMap = data['error'] as Map;
+        serverMsg = errMap['message']?.toString() ?? errMap['detail']?.toString();
+      } else if (data['error'] != null) {
+        serverMsg = data['error'].toString();
+      } else if (data['detail'] != null) {
+        serverMsg = data['detail'].toString();
+      } else if (data['msg'] != null) {
+        serverMsg = data['msg'].toString();
+      }
+
       if (serverMsg != null && serverMsg.isNotEmpty) {
         return NetworkError(
           message: serverMsg,

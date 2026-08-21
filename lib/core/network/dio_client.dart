@@ -81,20 +81,25 @@ class DioClient {
           // Handle network errors & automatic cold-start retry
           final requestOptions = error.requestOptions;
           final retryCount = (requestOptions.extra['retryCount'] ?? 0) as int;
-          final isNetworkIssue = error.type == DioExceptionType.connectionTimeout ||
-              error.type == DioExceptionType.sendTimeout ||
-              error.type == DioExceptionType.receiveTimeout ||
+          final method = requestOptions.method.toUpperCase();
+          final isIdempotent = method == 'GET' || method == 'HEAD' || method == 'OPTIONS';
+          
+          final isConnectionFailure = error.type == DioExceptionType.connectionTimeout ||
               error.type == DioExceptionType.connectionError;
+          final isReceiveTimeout = error.type == DioExceptionType.receiveTimeout;
 
-          if (isNetworkIssue && retryCount < 2) {
-            AppLogger.info('Connection delay detected (cold-start), retrying request ${requestOptions.path} (attempt ${retryCount + 1})...');
+          // Safe to retry if server never established connection, OR if the request is an idempotent GET
+          final canRetry = (isConnectionFailure || (isIdempotent && isReceiveTimeout)) && retryCount < 2;
+
+          if (canRetry) {
+            AppLogger.info('Connection delay detected (cold-start), retrying $method ${requestOptions.path} (attempt ${retryCount + 1})...');
             await Future.delayed(Duration(seconds: retryCount + 1));
             requestOptions.extra['retryCount'] = retryCount + 1;
             try {
               final response = await _dio.fetch<dynamic>(requestOptions);
               return handler.resolve(response);
             } on DioException catch (retryError) {
-              AppLogger.warning('Retry attempt ${retryCount + 1} received response: ${retryError.response?.statusCode}');
+              AppLogger.warning('Retry attempt ${retryCount + 1} response: ${retryError.response?.statusCode}');
               if (retryError.response != null) {
                 return handler.next(retryError);
               }

@@ -225,15 +225,65 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
       
       final response = await _authRepository.register(request);
-      final hasToken = response.accessToken.isNotEmpty;
+      var hasToken = response.accessToken.isNotEmpty;
+      UserModel user = response.user;
+
+      // If registration succeeded on server but didn't return an auth token directly, auto-login seamlessly
+      if (!hasToken) {
+        try {
+          final loginResponse = await _authRepository.login(
+            LoginRequest(
+              phone: phone,
+              email: email,
+              password: password,
+              deviceToken: deviceToken,
+            ),
+          );
+          user = loginResponse.user;
+          hasToken = loginResponse.accessToken.isNotEmpty;
+        } catch (loginErr) {
+          AppLogger.warning('Auto-login after register did not complete: $loginErr');
+        }
+      }
       
       state = state.copyWith(
-        user: response.user,
+        user: user,
         isAuthenticated: hasToken,
         isLoading: false,
       );
       
       AppLogger.info('Registration successful (authenticated: $hasToken)');
+    } on AuthError catch (e) {
+      // If user already exists (e.g. created during a timeout or earlier attempt), attempt auto-login with provided credentials
+      if (e.code == 'CONFLICT') {
+        try {
+          AppLogger.info('User already registered on backend, attempting auto-login...');
+          final loginResponse = await _authRepository.login(
+            LoginRequest(
+              phone: phone,
+              email: email,
+              password: password,
+              deviceToken: deviceToken,
+            ),
+          );
+          state = state.copyWith(
+            user: loginResponse.user,
+            isAuthenticated: true,
+            isLoading: false,
+          );
+          AppLogger.info('Auto-login succeeded after conflict recovery');
+          return;
+        } catch (loginErr) {
+          AppLogger.warning('Auto-login failed after conflict, showing error: $loginErr');
+        }
+      }
+
+      AppLogger.error('Registration failed', e);
+      state = state.copyWith(
+        isLoading: false,
+        error: e,
+      );
+      rethrow;
     } on AppError catch (e) {
       AppLogger.error('Registration failed', e);
       

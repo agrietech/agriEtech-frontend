@@ -27,10 +27,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     Future.microtask(() {
       ref.read(authProvider.notifier).clearError();
     });
+
+    _usernameController.addListener(_onFieldChanged);
+    _passwordController.addListener(_onFieldChanged);
+  }
+
+  void _onFieldChanged() {
+    if (ref.read(authProvider).error != null || ref.read(authProvider).accountLockoutMessage != null) {
+      ref.read(authProvider.notifier).clearError();
+      ref.read(authProvider.notifier).clearLockout();
+    }
   }
 
   @override
   void dispose() {
+    _usernameController.removeListener(_onFieldChanged);
+    _passwordController.removeListener(_onFieldChanged);
     _usernameController.dispose();
     _passwordController.dispose();
     super.dispose();

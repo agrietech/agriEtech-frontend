@@ -37,10 +37,25 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       ref.read(authProvider.notifier).clearError();
       ref.read(boundaryHierarchyProvider.notifier).loadRegions();
     });
+
+    _fullNameController.addListener(_onFieldChanged);
+    _phoneController.addListener(_onFieldChanged);
+    _emailController.addListener(_onFieldChanged);
+    _passwordController.addListener(_onFieldChanged);
+  }
+
+  void _onFieldChanged() {
+    if (ref.read(authProvider).error != null) {
+      ref.read(authProvider.notifier).clearError();
+    }
   }
 
   @override
   void dispose() {
+    _fullNameController.removeListener(_onFieldChanged);
+    _phoneController.removeListener(_onFieldChanged);
+    _emailController.removeListener(_onFieldChanged);
+    _passwordController.removeListener(_onFieldChanged);
     _fullNameController.dispose();
     _phoneController.dispose();
     _emailController.dispose();

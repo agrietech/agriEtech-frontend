@@ -384,10 +384,18 @@ class AuthRepository {
 
     String? backendMessage;
     if (responseData is Map) {
-      backendMessage = responseData['message']?.toString() ??
-          responseData['error']?.toString() ??
-          responseData['detail']?.toString() ??
-          responseData['msg']?.toString();
+      if (responseData['message'] != null && responseData['message'].toString().isNotEmpty) {
+        backendMessage = responseData['message'].toString();
+      } else if (responseData['error'] is Map) {
+        final errMap = responseData['error'] as Map;
+        backendMessage = errMap['message']?.toString() ?? errMap['detail']?.toString();
+      } else if (responseData['error'] != null) {
+        backendMessage = responseData['error'].toString();
+      } else if (responseData['detail'] != null) {
+        backendMessage = responseData['detail'].toString();
+      } else if (responseData['msg'] != null) {
+        backendMessage = responseData['msg'].toString();
+      }
 
       if (backendMessage == null && responseData['errors'] != null) {
         final errs = responseData['errors'];
