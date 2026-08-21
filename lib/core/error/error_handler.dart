@@ -30,18 +30,32 @@ class ErrorHandler {
     );
   }
 
-  /// Show error as snackbar
+  /// Show error as snackbar with modern design and auto-cleanup
   static void showErrorSnackBar(BuildContext context, AppError error) {
     final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
     
     messenger.showSnackBar(
       SnackBar(
-        content: Text(error.message),
-        backgroundColor: Colors.red,
+        content: Row(
+          children: [
+            const Icon(Icons.error_outline, color: Colors.white, size: 20),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                getUserMessage(error),
+                style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: const Color(0xFFC62828),
         behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         action: SnackBarAction(
           label: 'Dismiss',
-          textColor: Colors.white,
+          textColor: const Color(0xFFFFCDD2),
           onPressed: () => messenger.hideCurrentSnackBar(),
         ),
         duration: const Duration(seconds: 4),

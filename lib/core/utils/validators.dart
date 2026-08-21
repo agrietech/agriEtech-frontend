@@ -24,7 +24,7 @@ class Validators {
     }
     
     final clean = value.replaceAll(RegExp(r'[\s\-\(\)]'), '');
-    final ethRegex = RegExp(r'^(\+?251|0)[79]\d{8}$');
+    final ethRegex = RegExp(r'^(\+?251|0)?[79]\d{8}$');
     
     if (!ethRegex.hasMatch(clean)) {
       return 'Enter a valid Ethio Telecom (09...) or Safaricom (07...) number';

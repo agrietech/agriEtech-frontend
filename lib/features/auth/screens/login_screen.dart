@@ -196,8 +196,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                             fontSize: 13,
                                           ),
                                         ),
-                                      ],
-                                    ),
+                                  IconButton(
+                                    icon: const Icon(Icons.close, size: 18),
+                                    color: Colors.red.shade700,
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                    tooltip: 'Dismiss',
+                                    onPressed: () {
+                                      ref.read(authProvider.notifier).clearError();
+                                      ref.read(authProvider.notifier).clearLockout();
+                                    },
                                   ),
                                 ],
                               ),

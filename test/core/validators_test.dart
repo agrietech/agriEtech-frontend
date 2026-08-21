@@ -23,10 +23,12 @@ void main() {
       // Ethio Telecom (09...)
       expect(Validators.phone('+251911234567'), isNull);
       expect(Validators.phone('0911234567'), isNull);
+      expect(Validators.phone('911234567'), isNull);
       expect(Validators.phone('091 123 4567'), isNull);
       // Safaricom Ethiopia (07...)
       expect(Validators.phone('0712345678'), isNull);
       expect(Validators.phone('+251712345678'), isNull);
+      expect(Validators.phone('712345678'), isNull);
       expect(Validators.phone('077 890 1234'), isNull);
     });
 
