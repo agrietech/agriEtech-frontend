@@ -60,6 +60,28 @@ class HomeScreen extends ConsumerWidget {
                   ],
                 ),
               ),
+              if (RoleUtils.isAdmin(user?.role) || RoleUtils.isOfficer(user?.role))
+                const PopupMenuItem(
+                  value: 'admin_users',
+                  child: Row(
+                    children: [
+                      Icon(Icons.manage_accounts_outlined, color: Color(0xFF1B5E20), size: 20),
+                      SizedBox(width: 10),
+                      Text('Personnel & Roles'),
+                    ],
+                  ),
+                ),
+              if (!RoleUtils.isAdmin(user?.role))
+                const PopupMenuItem(
+                  value: 'apply_role',
+                  child: Row(
+                    children: [
+                      Icon(Icons.verified_user_outlined, color: Color(0xFFD97706), size: 20),
+                      SizedBox(width: 10),
+                      Text('Apply for Role'),
+                    ],
+                  ),
+                ),
               const PopupMenuDivider(),
               const PopupMenuItem(
                 value: 'logout',
@@ -80,6 +102,10 @@ class HomeScreen extends ConsumerWidget {
                 }
               } else if (value == 'profile') {
                 context.push('/change-password');
+              } else if (value == 'admin_users') {
+                context.push('/admin/users');
+              } else if (value == 'apply_role') {
+                context.push('/apply-role');
               }
             },
           ),
