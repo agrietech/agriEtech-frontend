@@ -327,6 +327,35 @@ class _AiAssistantSheetState extends ConsumerState<AiAssistantSheet> with Single
                               color: isDark ? Colors.white : const Color(0xFF1F2937),
                             ),
                           ),
+                          if (aiState.lastResponse!.recommendedAction != null &&
+                              aiState.lastResponse!.recommendedAction!.isNotEmpty) ...[
+                            const SizedBox(height: 12),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFEF3C7),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: const Color(0xFFFCD34D)),
+                              ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Icon(Icons.tips_and_updates, size: 16, color: Color(0xFFB45309)),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      'Action: ${aiState.lastResponse!.recommendedAction}',
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF92400E),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                           // Secondary Language Translation Card
                           const SizedBox(height: 14),
                           Container(
@@ -347,6 +376,12 @@ class _AiAssistantSheetState extends ConsumerState<AiAssistantSheet> with Single
                                       isAmharic ? 'English Translation' : 'የአማርኛ ትርጉም',
                                       style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey.shade700),
                                     ),
+                                    const Spacer(),
+                                    if (aiState.lastResponse!.aiModel != null)
+                                      Text(
+                                        aiState.lastResponse!.aiModel!,
+                                        style: TextStyle(fontSize: 10, color: Colors.grey.shade500),
+                                      ),
                                   ],
                                 ),
                                 const SizedBox(height: 6),

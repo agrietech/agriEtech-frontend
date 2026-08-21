@@ -128,6 +128,9 @@ class AiVoiceResponse {
   final String? transcript;
   final String responseEn;
   final String responseAm;
+  final String? recommendedAction;
+  final String? aiModel;
+  final String? detectedLanguage;
   final String? audioUrlEn;
   final String? audioUrlAm;
   final Map<String, dynamic>? metadata;
@@ -136,32 +139,39 @@ class AiVoiceResponse {
     this.transcript,
     required this.responseEn,
     required this.responseAm,
+    this.recommendedAction,
+    this.aiModel,
+    this.detectedLanguage,
     this.audioUrlEn,
     this.audioUrlAm,
     this.metadata,
   });
 
   factory AiVoiceResponse.fromJson(Map<String, dynamic> json) {
-    final responseObj = json['response'];
+    final rootData = json['data'] is Map<String, dynamic> ? json['data'] as Map<String, dynamic> : json;
+    final responseObj = rootData['response'];
     final enFromMap = responseObj is Map ? responseObj['en'] : null;
     final amFromMap = responseObj is Map ? responseObj['am'] : null;
 
-    final enVal = json['responseEn'] ?? enFromMap ?? (responseObj is String ? responseObj : '');
-    final amVal = json['responseAm'] ?? json['responseAmharic'] ?? amFromMap ?? (responseObj is String ? responseObj : '');
+    final enVal = rootData['responseEn'] ?? enFromMap ?? (responseObj is String ? responseObj : '');
+    final amVal = rootData['responseAm'] ?? rootData['responseAmharic'] ?? amFromMap ?? (responseObj is String ? responseObj : '');
 
     return AiVoiceResponse(
-      transcript: (json['transcript'] ?? json['transcription']) as String?,
+      transcript: (rootData['transcript'] ?? rootData['transcription'] ?? rootData['userQuestion']) as String?,
       responseEn: enVal is String ? enVal : (enVal?.toString() ?? ''),
       responseAm: amVal is String ? amVal : (amVal?.toString() ?? ''),
-      audioUrlEn: json['audioUrlEn'] as String?,
-      audioUrlAm: json['audioUrlAm'] as String?,
-      metadata: json['metadata'] as Map<String, dynamic>?,
+      recommendedAction: rootData['recommendedAction'] as String?,
+      aiModel: (rootData['aiModel'] ?? 'Google Gemini 2.5 Flash (OpenRouter)') as String?,
+      detectedLanguage: rootData['detectedLanguage'] as String?,
+      audioUrlEn: (rootData['audioUrlEn'] ?? rootData['audioSynthesis']?['audioUrlEn']) as String?,
+      audioUrlAm: (rootData['audioUrlAm'] ?? rootData['audioSynthesis']?['audioUrlAm']) as String?,
+      metadata: rootData['metadata'] as Map<String, dynamic>?,
     );
   }
 
   /// Returns the preferred language response
   String localizedResponse(String lang) =>
-      lang == 'am' ? responseAm : responseEn;
+      lang == 'am' ? (responseAm.isNotEmpty ? responseAm : responseEn) : (responseEn.isNotEmpty ? responseEn : responseAm);
 }
 
 /// Riverpod provider
