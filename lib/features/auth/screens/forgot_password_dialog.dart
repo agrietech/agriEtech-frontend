@@ -167,20 +167,56 @@ class _ForgotPasswordDialogState extends ConsumerState<ForgotPasswordDialog> {
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Enter the verification token or OTP sent to ${_identifierController.text}, and enter your new password.',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: Colors.grey.shade700,
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.mark_email_read_outlined, color: Color(0xFF059669), size: 20),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  'A 6-digit verification code has been sent to ${_identifierController.text.trim()}.',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF065F46),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         const SizedBox(height: 16),
                         TextFormField(
                           controller: _tokenController,
-                          decoration: const InputDecoration(
-                            labelText: 'Reset Token / OTP Code',
-                            prefixIcon: Icon(Icons.vpn_key_outlined),
+                          keyboardType: TextInputType.number,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 20,
+                            letterSpacing: 6,
+                            fontWeight: FontWeight.bold,
                           ),
-                          validator: (val) => (val == null || val.trim().isEmpty) ? 'Please enter reset token' : null,
+                          decoration: const InputDecoration(
+                            labelText: '6-Digit Reset Code (OTP)',
+                            hintText: '123456',
+                            prefixIcon: Icon(Icons.pin_outlined),
+                            helperText: 'Enter the 6-digit number received in your email',
+                          ),
+                          validator: (val) {
+                            if (val == null || val.trim().isEmpty) {
+                              return 'Please enter the 6-digit reset code';
+                            }
+                            final clean = val.trim();
+                            if (clean.length < 6) {
+                              return 'Code must be at least 6 characters';
+                            }
+                            return null;
+                          },
                           enabled: !_isLoading,
                         ),
                         const SizedBox(height: 14),
@@ -210,7 +246,7 @@ class _ForgotPasswordDialogState extends ConsumerState<ForgotPasswordDialog> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Enter your Phone Number or Email Address to receive password reset instructions.',
+                          'Enter your Email Address or Phone Number to receive a 6-digit password reset code.',
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: Colors.grey.shade700,
                           ),
@@ -219,14 +255,14 @@ class _ForgotPasswordDialogState extends ConsumerState<ForgotPasswordDialog> {
                         TextFormField(
                           controller: _identifierController,
                           decoration: const InputDecoration(
-                            labelText: 'Phone Number or Email',
-                            hintText: '0911... or user@example.com',
-                            prefixIcon: Icon(Icons.person_outline),
+                            labelText: 'Email Address or Phone',
+                            hintText: 'user@example.com or 0911...',
+                            prefixIcon: Icon(Icons.mail_outline),
                           ),
                           keyboardType: TextInputType.emailAddress,
                           textInputAction: TextInputAction.done,
                           onFieldSubmitted: (_) => _sendResetCode(),
-                          validator: (val) => (val == null || val.trim().isEmpty) ? 'Please enter phone or email' : null,
+                          validator: (val) => (val == null || val.trim().isEmpty) ? 'Please enter email or phone' : null,
                           enabled: !_isLoading,
                         ),
                         const SizedBox(height: 12),
@@ -235,7 +271,7 @@ class _ForgotPasswordDialogState extends ConsumerState<ForgotPasswordDialog> {
                           child: TextButton(
                             onPressed: () => setState(() => _codeSent = true),
                             child: const Text(
-                              'I already have a reset token',
+                              'I already have a 6-digit code',
                               style: TextStyle(fontSize: 12),
                             ),
                           ),

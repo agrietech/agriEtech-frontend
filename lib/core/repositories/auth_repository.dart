@@ -333,18 +333,21 @@ class AuthRepository {
     }
   }
 
-  /// Reset password using verification token
+  /// Reset password using 6-digit numeric OTP code or verification token
   Future<void> resetPassword({required String token, required String newPassword}) async {
     try {
-      AppLogger.info('Submitting password reset with token');
+      final cleanToken = token.trim();
+      AppLogger.info('Submitting password reset with 6-digit code/token');
       await _dioClient.post(
         ApiConstants.resetPassword,
         data: {
-          'token': token,
+          'token': cleanToken,
+          'code': cleanToken,
+          'resetCode': cleanToken,
           'newPassword': newPassword,
         },
       );
-      AppLogger.info('Password reset completed');
+      AppLogger.info('Password reset completed successfully');
     } on DioException catch (e) {
       AppLogger.error('Password reset failed', e);
       throw _handleAuthError(e);
