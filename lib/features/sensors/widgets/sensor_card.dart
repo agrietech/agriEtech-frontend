@@ -184,8 +184,7 @@ class SensorCard extends StatelessWidget {
                   Icon(Icons.access_time, size: 16, color: Colors.grey[600]),
                   const SizedBox(width: 4),
                   Text(
-                    DateFormatter.formatRelative(
-                        DateTime.parse(sensor.updatedAt)),
+                    DateFormatter.formatRelativeSafe(sensor.updatedAt),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Colors.grey[600],
                         ),

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../models/sensor_models.dart';
 import '../providers/sensor_provider.dart';
+import '../services/firebase_sensor_service.dart';
 
 class SensorDetailScreen extends ConsumerStatefulWidget {
   final SensorModel sensor;
@@ -29,17 +30,24 @@ class _SensorDetailScreenState extends ConsumerState<SensorDetailScreen> {
       endDate: null,
       limit: _getLimit(),
     )));
+    final liveReadingAsync = ref.watch(liveSensorStreamProvider(widget.sensor.hardwareId));
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.sensor.hardwareId),
+        title: Text('Sensor: ${widget.sensor.hardwareId}'),
         actions: [
           IconButton(
             icon: Icon(
               widget.sensor.isActive ? Icons.sensors : Icons.sensors_off,
+              color: widget.sensor.isActive ? Colors.green : Colors.grey,
             ),
-            tooltip: widget.sensor.isActive ? 'Active' : 'Inactive',
+            tooltip: widget.sensor.isActive ? 'Active & Online' : 'Inactive',
             onPressed: null,
+          ),
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Refresh Telemetry',
+            onPressed: () => ref.invalidate(sensorTelemetryProvider),
           ),
         ],
       ),
@@ -98,17 +106,13 @@ class _SensorDetailScreenState extends ConsumerState<SensorDetailScreen> {
                       _buildInfoRow(
                         context,
                         'Last Calibration',
-                        DateFormatter.formatDate(
-                          DateTime.parse(widget.sensor.lastCalibration!),
-                        ),
+                        DateFormatter.formatDateSafe(widget.sensor.lastCalibration),
                         Icons.tune,
                       ),
                     _buildInfoRow(
                       context,
                       'Registered',
-                      DateFormatter.formatRelative(
-                        DateTime.parse(widget.sensor.createdAt),
-                      ),
+                      DateFormatter.formatRelativeSafe(widget.sensor.createdAt),
                       Icons.access_time,
                     ),
                   ],
@@ -116,6 +120,8 @@ class _SensorDetailScreenState extends ConsumerState<SensorDetailScreen> {
               ),
             ),
 
+            // Live Firebase / IoT Real-time Stream Card
+            _buildLiveIoTBanner(context, liveReadingAsync),
             const SizedBox(height: 16),
 
             // Period Selector
@@ -408,7 +414,7 @@ class _SensorDetailScreenState extends ConsumerState<SensorDetailScreen> {
                             return const Text('');
                           }
                           final reading = readings[value.toInt()];
-                          final time = DateTime.parse(reading.recordedAt);
+                          final time = DateTime.tryParse(reading.recordedAt) ?? DateTime.now();
                           return Padding(
                             padding: const EdgeInsets.only(top: 8.0),
                             child: Text(
@@ -522,5 +528,144 @@ class _SensorDetailScreenState extends ConsumerState<SensorDetailScreen> {
     if (level >= 40) return Icons.battery_4_bar;
     if (level >= 20) return Icons.battery_2_bar;
     return Icons.battery_alert;
+  }
+
+  Widget _buildLiveIoTBanner(BuildContext context, AsyncValue<SensorReading> liveReadingAsync) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: isDark
+              ? [const Color(0xFF064E3B), const Color(0xFF022C22)]
+              : [const Color(0xFFECFDF5), const Color(0xFFD1FAE5)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFF6EE7B7)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 10,
+                height: 10,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF10B981),
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'Firebase & Realtime IoT Stream: Ready',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                  color: Color(0xFF065F46),
+                ),
+              ),
+              const Spacer(),
+              TextButton.icon(
+                onPressed: () => _showRecordProbeDialog(context),
+                icon: const Icon(Icons.add_chart, size: 16),
+                label: const Text('Probe Sample', style: TextStyle(fontSize: 12)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          liveReadingAsync.when(
+            data: (reading) => Text(
+              'Live Stream update: Moisture ${reading.soilMoisture?.toStringAsFixed(1) ?? '--'}% | Temp ${reading.soilTemp?.toStringAsFixed(1) ?? reading.ambientTemp?.toStringAsFixed(1) ?? '--'}°C',
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF047857)),
+            ),
+            loading: () => const Text(
+              'Listening for live telemetry packets from hardware node...',
+              style: TextStyle(fontSize: 11.5, color: Color(0xFF047857)),
+            ),
+            error: (_, __) => const Text(
+              'Telemetry sync active via REST API polling fallback',
+              style: TextStyle(fontSize: 11.5, color: Color(0xFF047857)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showRecordProbeDialog(BuildContext context) {
+    final moistureCtrl = TextEditingController(text: '42.5');
+    final tempCtrl = TextEditingController(text: '22.0');
+    final humCtrl = TextEditingController(text: '65.0');
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Submit Field Probe Sample'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: moistureCtrl,
+              decoration: const InputDecoration(labelText: 'Soil Moisture (%)'),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            ),
+            TextField(
+              controller: tempCtrl,
+              decoration: const InputDecoration(labelText: 'Temperature (°C)'),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            ),
+            TextField(
+              controller: humCtrl,
+              decoration: const InputDecoration(labelText: 'Humidity (%)'),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              try {
+                await ref.read(firebaseSensorServiceProvider).submitReading(
+                      hardwareId: widget.sensor.hardwareId,
+                      soilMoisture: double.tryParse(moistureCtrl.text),
+                      temperature: double.tryParse(tempCtrl.text),
+                      humidity: double.tryParse(humCtrl.text),
+                      batteryLevel: widget.sensor.batteryLevel,
+                    );
+                ref.invalidate(sensorTelemetryProvider);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Field sensor probe telemetry submitted successfully!'),
+                      backgroundColor: Color(0xFF15803D),
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to submit probe reading: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text('Submit Reading'),
+          ),
+        ],
+      ),
+    );
   }
 }

@@ -223,7 +223,8 @@ class SensorRepository {
         data: {'isActive': isActive},
       );
 
-      final sensor = SensorModel.fromJson(response.data['data']);
+      final raw = response.data is Map ? (response.data['data'] ?? response.data) : response.data;
+      final sensor = SensorModel.fromJson(raw as Map<String, dynamic>);
       AppLogger.success('Sensor status updated');
       return sensor;
     } on DioException catch (e) {
