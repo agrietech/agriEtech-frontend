@@ -3,10 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/auth_provider.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/l10n/app_localizations.dart';
 import '../../../core/utils/validators.dart';
-import '../../../core/error/error_handler.dart';
-import '../../../core/error/app_error.dart';
 import '../../../core/widgets/agrietech_logo.dart';
 import 'forgot_password_dialog.dart';
 
@@ -19,91 +16,54 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _credentialController = TextEditingController();
+  final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
-  bool _rememberMe = true;
+  bool _rememberMe = false;
 
   @override
   void dispose() {
-    _credentialController.dispose();
+    _usernameController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
   Future<void> _login() async {
     ref.read(authProvider.notifier).clearError();
-    
     if (_formKey.currentState!.validate()) {
       try {
         await ref.read(authProvider.notifier).login(
-          _credentialController.text.trim(),
-          _passwordController.text,
-        );
-        
+              _usernameController.text.trim(),
+              _passwordController.text,
+            );
         if (mounted) {
           context.go('/home');
         }
-      } on AuthError catch (e) {
-        if (mounted) {
-          if (e.code == 'ACCOUNT_LOCKED') {
-            _showAccountLockedDialog(e.message);
-          } else {
-            ErrorHandler.showErrorSnackBar(context, e);
-          }
-        }
-      } on AppError catch (e) {
-        if (mounted) {
-          ErrorHandler.showErrorSnackBar(context, e);
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Sign-in failed: ${e.toString()}'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
+      } catch (_) {
+        // Error state handled in authProvider
       }
     }
   }
 
-  void _showAccountLockedDialog(String message) {
+  void _showForgotPassword() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
-          children: [
-            Icon(Icons.lock, color: Colors.red),
-            SizedBox(width: 8),
-            Text('Account Security Lockout'),
-          ],
-        ),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
+      builder: (context) => const ForgotPasswordDialog(),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
-    final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7FAF7),
+      backgroundColor: isDark ? const Color(0xFF0F1E12) : const Color(0xFFF7FAF7),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 520),
+            constraints: const BoxConstraints(maxWidth: 480),
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
               child: Form(
@@ -111,35 +71,37 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Brand Logo & Title
+                    // Centered Hero Logo
                     const Center(
                       child: AgriEtechLogo.stacked(
-                        size: 84,
+                        size: 88,
                         showTagline: true,
                         customTagline: 'NATIONAL AGRICULTURAL EARLY WARNING PLATFORM',
                       ),
                     ),
                     const SizedBox(height: 28),
 
-                    // Main Sign-In Card Container
+                    // Main Card
                     Container(
-                      padding: const EdgeInsets.all(24),
+                      padding: const EdgeInsets.all(28),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: isDark ? const Color(0xFF18281B) : Colors.white,
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.grey.shade200),
+                        border: Border.all(
+                          color: isDark ? const Color(0xFF263E26) : Colors.grey.shade200,
+                        ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.04),
-                            blurRadius: 16,
-                            offset: const Offset(0, 4),
+                            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.04),
+                            blurRadius: 18,
+                            offset: const Offset(0, 5),
                           ),
                         ],
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          // Sign-in Header
+                          // Header title
                           Row(
                             children: [
                               Container(
@@ -159,13 +121,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                       'Sign In to Platform',
                                       style: theme.textTheme.titleMedium?.copyWith(
                                         fontWeight: FontWeight.bold,
-                                        color: const Color(0xFF1E2E1E),
+                                        color: isDark ? Colors.white : const Color(0xFF1E2E1E),
                                       ),
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
-                                      'Enter your registered credentials to access your dashboard',
-                                      style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                                      'Enter your credentials below',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -174,7 +139,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                           const SizedBox(height: 20),
 
-                          // Error or Lockout Alert Banner
+                          // Error Banner
                           if (authState.error != null || authState.accountLockoutMessage != null) ...[
                             Container(
                               padding: const EdgeInsets.all(14),
@@ -193,7 +158,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          authState.accountLockoutMessage != null ? 'Account Locked' : 'Sign-In Failed',
+                                          authState.accountLockoutMessage != null
+                                              ? 'Account Locked'
+                                              : 'Sign-In Failed',
                                           style: const TextStyle(
                                             fontWeight: FontWeight.bold,
                                             color: Colors.red,
@@ -202,7 +169,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                         ),
                                         const SizedBox(height: 4),
                                         Text(
-                                          authState.accountLockoutMessage ?? authState.error!.message,
+                                          authState.accountLockoutMessage ??
+                                              authState.error!.message,
                                           style: TextStyle(
                                             color: Colors.red.shade900,
                                             fontSize: 13,
@@ -217,21 +185,31 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             const SizedBox(height: 18),
                           ],
 
-                          // Credential Field (Phone / Email / Username)
+                          // Username / Phone Credential Field
                           TextFormField(
-                            controller: _credentialController,
+                            controller: _usernameController,
                             decoration: InputDecoration(
-                              labelText: 'Phone Number, Email, or Username *',
-                              hintText: 'e.g. 0911223344 or name@example.com',
-                              prefixIcon: const Icon(Icons.badge_outlined),
+                              labelText: 'Username or Phone Number',
+                              prefixIcon: const Icon(Icons.person_outline),
                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                               filled: true,
-                              fillColor: const Color(0xFFF9FAF9),
+                              fillColor: isDark ? const Color(0xFF1E3321) : const Color(0xFFF9FAF9),
                             ),
                             keyboardType: TextInputType.text,
                             textInputAction: TextInputAction.next,
-                            validator: (value) => Validators.required(value, 'Phone, email, or username'),
+                            validator: (value) => Validators.required(value, 'Username or phone number'),
                             enabled: !authState.isLoading,
+                          ),
+                          const SizedBox(height: 4),
+                          Padding(
+                            padding: const EdgeInsets.only(left: 4),
+                            child: Text(
+                              'Supports username handle, Ethio Telecom (09...), or Safaricom (07...)',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                              ),
+                            ),
                           ),
                           const SizedBox(height: 16),
 
@@ -239,8 +217,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           TextFormField(
                             controller: _passwordController,
                             decoration: InputDecoration(
-                              labelText: 'Password *',
-                              hintText: 'Enter your password',
+                              labelText: 'Password',
                               prefixIcon: const Icon(Icons.lock_outline),
                               suffixIcon: IconButton(
                                 icon: Icon(
@@ -250,7 +227,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               ),
                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                               filled: true,
-                              fillColor: const Color(0xFFF9FAF9),
+                              fillColor: isDark ? const Color(0xFF1E3321) : const Color(0xFFF9FAF9),
                             ),
                             obscureText: _obscurePassword,
                             textInputAction: TextInputAction.done,
@@ -258,70 +235,97 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             validator: (value) => Validators.required(value, 'Password'),
                             enabled: !authState.isLoading,
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 4),
+                          Padding(
+                            padding: const EdgeInsets.only(left: 4),
+                            child: Text(
+                              'Enter your account security password',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 14),
 
-                          // Remember Me & Forgot Password
+                          // Remember Me & Forgot Password Row
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Row(
-                                mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Checkbox(
-                                    value: _rememberMe,
-                                    activeColor: AppTheme.primaryColor,
-                                    onChanged: authState.isLoading
-                                        ? null
-                                        : (value) => setState(() => _rememberMe = value ?? true),
+                                  SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: Checkbox(
+                                      value: _rememberMe,
+                                      activeColor: AppTheme.primaryColor,
+                                      onChanged: authState.isLoading
+                                          ? null
+                                          : (val) => setState(() => _rememberMe = val ?? false),
+                                    ),
                                   ),
-                                  const Text(
-                                    'Remember this device',
-                                    style: TextStyle(fontSize: 13),
+                                  const SizedBox(width: 8),
+                                  GestureDetector(
+                                    onTap: () => setState(() => _rememberMe = !_rememberMe),
+                                    child: Text(
+                                      'Remember me',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: isDark ? Colors.grey.shade300 : Colors.grey.shade700,
+                                      ),
+                                    ),
                                   ),
                                 ],
                               ),
                               TextButton(
-                                onPressed: authState.isLoading
-                                    ? null
-                                    : () => ForgotPasswordDialog.show(context),
+                                onPressed: authState.isLoading ? null : _showForgotPassword,
                                 style: TextButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                                  minimumSize: Size.zero,
-                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  foregroundColor: const Color(0xFF1B5E20),
+                                  padding: EdgeInsets.zero,
                                 ),
                                 child: const Text(
                                   'Forgot Password?',
-                                  style: TextStyle(
-                                    color: AppTheme.primaryColor,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 13,
-                                  ),
+                                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
                                 ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 20),
 
-                          // Sign In Button
-                          ElevatedButton.icon(
-                            onPressed: authState.isLoading ? null : _login,
-                            icon: authState.isLoading
-                                ? const SizedBox(
-                                    height: 18,
-                                    width: 18,
-                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                                  )
-                                : const Icon(Icons.arrow_forward, size: 20),
-                            label: Text(
-                              authState.isLoading ? 'Authenticating...' : 'Sign In to Platform',
-                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.primaryColor,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              elevation: 2,
+                          // Submit Sign In Button
+                          SizedBox(
+                            height: 50,
+                            child: ElevatedButton(
+                              onPressed: authState.isLoading ? null : _login,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF1B5E20),
+                                foregroundColor: Colors.white,
+                                elevation: 3,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                              ),
+                              child: authState.isLoading
+                                  ? const Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2.2,
+                                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                          ),
+                                        ),
+                                        SizedBox(width: 12),
+                                        Text('Signing in...'),
+                                      ],
+                                    )
+                                  : const Text(
+                                      'Sign In',
+                                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 0.4),
+                                    ),
                             ),
                           ),
                         ],
@@ -329,28 +333,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Registration Link Footer
+                    // Register Account Action Link
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          "Don't have an agricultural account? ",
-                          style: TextStyle(color: Colors.grey.shade700, fontSize: 14),
+                          "Don't have an account? ",
+                          style: TextStyle(color: isDark ? Colors.grey.shade300 : Colors.grey.shade700),
                         ),
                         TextButton(
-                          onPressed: authState.isLoading ? null : () => context.go('/register'),
+                          onPressed: () => context.go('/register'),
                           style: TextButton.styleFrom(
+                            foregroundColor: const Color(0xFF1B5E20),
                             padding: const EdgeInsets.symmetric(horizontal: 4),
-                            minimumSize: Size.zero,
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           ),
                           child: const Text(
-                            'Register Now',
-                            style: TextStyle(
-                              color: AppTheme.primaryColor,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
+                            'Create Account',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                           ),
                         ),
                       ],

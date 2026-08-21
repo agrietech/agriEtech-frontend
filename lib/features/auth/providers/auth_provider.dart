@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/models/user_model.dart';
 import '../../../core/repositories/auth_repository.dart';
+import '../../../core/services/notification_service.dart';
 import '../../../core/error/app_error.dart';
 import '../../../core/utils/logger.dart';
 
@@ -63,6 +64,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
   final AuthRepository _authRepository;
 
   AuthNotifier(this._authRepository) : super(AuthState(isInitializing: true)) {
+    NotificationService().setTokenUpdateHandler(
+      (token) => _authRepository.updateDeviceToken(token),
+    );
     _checkAuthStatus();
   }
 

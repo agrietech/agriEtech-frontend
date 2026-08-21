@@ -133,7 +133,6 @@ class _ForgotPasswordDialogState extends ConsumerState<ForgotPasswordDialog> {
                     controller: _emailController,
                     decoration: const InputDecoration(
                       labelText: 'Email Address',
-                      hintText: 'name@example.com',
                       prefixIcon: Icon(Icons.email_outlined),
                     ),
                     keyboardType: TextInputType.emailAddress,
@@ -141,6 +140,17 @@ class _ForgotPasswordDialogState extends ConsumerState<ForgotPasswordDialog> {
                     onFieldSubmitted: (_) => _submit(),
                     validator: Validators.email,
                     enabled: !_isLoading,
+                  ),
+                  const SizedBox(height: 4),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 4),
+                    child: Text(
+                      'Enter your registered email address (e.g. user@agrietech.et)',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
                   ),
                 ],
               ),

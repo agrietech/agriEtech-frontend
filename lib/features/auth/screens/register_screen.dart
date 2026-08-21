@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/auth_provider.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/l10n/app_localizations.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/error/error_handler.dart';
 import '../../../core/error/app_error.dart';
@@ -21,11 +20,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   final _fullNameController = TextEditingController();
   final _usernameController = TextEditingController();
-  final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  
+
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   String _selectedLanguage = 'en';
@@ -44,8 +43,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   void dispose() {
     _fullNameController.dispose();
     _usernameController.dispose();
-    _emailController.dispose();
     _phoneController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -54,13 +53,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   Future<void> _register() async {
     ref.read(authProvider.notifier).clearError();
     final hierarchy = ref.read(boundaryHierarchyProvider);
-    
+
     if (!_acceptTerms) {
       setState(() => _termsError = true);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please accept the terms and conditions to proceed'),
-          backgroundColor: Colors.orange,
+          content: Text('Please accept the Terms of Service & Privacy Policy to proceed'),
+          backgroundColor: Color(0xFFD97706),
         ),
       );
       return;
@@ -71,14 +70,14 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     if (_formKey.currentState!.validate()) {
       try {
         await ref.read(authProvider.notifier).register(
-          phone: _phoneController.text.trim(),
-          password: _passwordController.text,
-          fullName: _fullNameController.text.trim(),
-          email: _emailController.text.trim(),
-          preferredLang: _selectedLanguage,
-          woredaId: hierarchy.selectedWoreda?.id,
-        );
-        
+              phone: _phoneController.text.trim(),
+              password: _passwordController.text,
+              fullName: _fullNameController.text.trim(),
+              email: _emailController.text.trim(),
+              preferredLang: _selectedLanguage,
+              woredaId: hierarchy.selectedWoreda?.id,
+            );
+
         if (mounted) {
           final isAuth = ref.read(authProvider).isAuthenticated;
           if (isAuth) {
@@ -90,7 +89,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'Account created successfully! Welcome to AgriEtech.',
+                        'Account created successfully! Welcome to agriEtech.',
                         style: TextStyle(fontWeight: FontWeight.w600),
                       ),
                     ),
@@ -115,9 +114,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   ],
                 ),
                 content: Text(
-                  _emailController.text.trim().isNotEmpty
-                      ? 'Your account has been created successfully! A verification email may have been sent to ${_emailController.text.trim()}. Please verify your email and sign in.'
-                      : 'Your account has been registered successfully! You can now sign in with your phone number and password.',
+                  'Your account has been registered successfully! A confirmation notice has been sent to ${_emailController.text.trim()}. You can now sign in.',
                   style: const TextStyle(fontSize: 14, height: 1.4),
                 ),
                 actions: [
@@ -127,9 +124,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       context.go('/login');
                     },
                     icon: const Icon(Icons.login, size: 18),
-                    label: const Text('Proceed to Login'),
+                    label: const Text('Proceed to Sign In'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2E7D32),
+                      backgroundColor: const Color(0xFF1B5E20),
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -146,7 +143,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             final errorMessage = e.fieldErrors!.entries
                 .map((entry) => '• ${entry.key}: ${entry.value.join(", ")}')
                 .join('\n');
-            
+
             showDialog(
               context: context,
               builder: (context) => AlertDialog(
@@ -193,21 +190,21 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     final authState = ref.watch(authProvider);
     final hierarchy = ref.watch(boundaryHierarchyProvider);
     final hierarchyNotifier = ref.read(boundaryHierarchyProvider.notifier);
-    final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7FAF7),
+      backgroundColor: isDark ? const Color(0xFF121E14) : const Color(0xFFF7FAF7),
       appBar: AppBar(
-        title: const Text('Account Registration', style: TextStyle(fontWeight: FontWeight.w600)),
+        title: const Text('Account Registration', style: TextStyle(fontWeight: FontWeight.w700)),
         elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF1E2E1E),
+        backgroundColor: isDark ? const Color(0xFF1B2E1E) : Colors.white,
+        foregroundColor: isDark ? Colors.white : const Color(0xFF1E2E1E),
       ),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 640),
+            constraints: const BoxConstraints(maxWidth: 680),
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
               child: Form(
@@ -218,64 +215,59 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     // Brand Header
                     const Center(
                       child: AgriEtechLogo.horizontal(
-                        size: 36,
+                        size: 38,
                         showTagline: true,
                         customTagline: 'NATIONAL AGRICULTURAL EARLY WARNING PLATFORM',
                       ),
                     ),
                     const SizedBox(height: 20),
 
-                    // Header Introduction Card
+                    // Header Info Card
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            AppTheme.primaryColor.withValues(alpha: 0.08),
-                            AppTheme.primaryLightColor.withValues(alpha: 0.04),
+                            AppTheme.primaryColor.withValues(alpha: 0.1),
+                            const Color(0xFFF59E0B).withValues(alpha: 0.06),
                           ],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.15)),
+                        border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.2)),
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      child: Row(
                         children: [
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: AppTheme.primaryColor,
-                                  borderRadius: BorderRadius.circular(10),
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryColor,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(Icons.how_to_reg, color: Colors.white, size: 22),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Register New Account',
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: isDark ? Colors.white : const Color(0xFF0F3010),
+                                  ),
                                 ),
-                                child: const Icon(Icons.how_to_reg, color: Colors.white, size: 20),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Create Farmer / Officer Account',
-                                      style: theme.textTheme.titleMedium?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                        color: const Color(0xFF0F3010),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      'Access satellite crop telemetry, pest alerts, and weather advisories',
-                                      style: theme.textTheme.bodySmall?.copyWith(
-                                        color: Colors.grey.shade700,
-                                      ),
-                                    ),
-                                  ],
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Both phone and email credentials are required for verification and multi-hazard broadcasts.',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: isDark ? Colors.grey.shade300 : Colors.grey.shade700,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ],
                       ),
@@ -301,7 +293,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   const Text(
-                                    'Registration Issue',
+                                    'Registration Failed',
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       color: Colors.red,
@@ -325,267 +317,124 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       const SizedBox(height: 16),
                     ],
 
-                    // SECTION 1: Personal & Contact Information
+                    // SECTION 1: Personal & Security Credentials
                     _buildSectionCard(
-                      title: '1. Personal & Contact Information',
-                      icon: Icons.person_pin_outlined,
+                      title: '1. User Credentials',
+                      icon: Icons.badge_outlined,
+                      subtitle: 'Provide your name, username handle, and dual verification credentials.',
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          // Full Name
                           TextFormField(
                             controller: _fullNameController,
                             decoration: InputDecoration(
                               labelText: 'Full Name *',
-                              hintText: 'e.g. Abebe Bikila',
                               prefixIcon: const Icon(Icons.person_outline),
                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                               filled: true,
-                              fillColor: Colors.white,
+                              fillColor: isDark ? const Color(0xFF1B2E1E) : Colors.white,
                             ),
                             textInputAction: TextInputAction.next,
                             textCapitalization: TextCapitalization.words,
                             validator: (value) => Validators.required(value, 'Full name'),
                             enabled: !authState.isLoading,
                           ),
+                          _buildFieldHelper('Given name and paternal family name (e.g. Abebe Bikila)'),
                           const SizedBox(height: 14),
 
+                          // Username
+                          TextFormField(
+                            controller: _usernameController,
+                            decoration: InputDecoration(
+                              labelText: 'Username *',
+                              prefixIcon: const Icon(Icons.alternate_email),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                              filled: true,
+                              fillColor: isDark ? const Color(0xFF1B2E1E) : Colors.white,
+                            ),
+                            textInputAction: TextInputAction.next,
+                            validator: Validators.username,
+                            enabled: !authState.isLoading,
+                          ),
+                          _buildFieldHelper('Unique alphanumeric username handle for direct sign-in (e.g. abebe_bikila)'),
+                          const SizedBox(height: 14),
+
+                          // Phone Number
                           TextFormField(
                             controller: _phoneController,
                             decoration: InputDecoration(
-                              labelText: 'Phone Number *',
-                              hintText: 'e.g. 0911 234 567 or +251 91 123 4567',
-                              prefixIcon: const Icon(Icons.phone_outlined),
+                              labelText: 'Phone Number (SMS & Calls) *',
+                              prefixIcon: const Icon(Icons.phone_android),
                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                               filled: true,
-                              fillColor: Colors.white,
-                              helperText: 'Used for SMS early warnings and sign-in',
+                              fillColor: isDark ? const Color(0xFF1B2E1E) : Colors.white,
                             ),
                             keyboardType: TextInputType.phone,
                             textInputAction: TextInputAction.next,
                             validator: Validators.phone,
                             enabled: !authState.isLoading,
                           ),
+                          _buildFieldHelper('Supports Ethio Telecom (09...) and Safaricom (07...) prefixes'),
                           const SizedBox(height: 14),
 
+                          // Email Address
                           TextFormField(
                             controller: _emailController,
                             decoration: InputDecoration(
-                              labelText: 'Email Address (Optional)',
-                              hintText: 'e.g. abebe.b@agri.et',
+                              labelText: 'Email Address (Advisories & Reports) *',
                               prefixIcon: const Icon(Icons.email_outlined),
                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                               filled: true,
-                              fillColor: Colors.white,
+                              fillColor: isDark ? const Color(0xFF1B2E1E) : Colors.white,
                             ),
                             keyboardType: TextInputType.emailAddress,
                             textInputAction: TextInputAction.next,
-                            validator: (value) => value != null && value.trim().isNotEmpty
-                                ? Validators.email(value.trim())
-                                : null,
+                            validator: Validators.email,
                             enabled: !authState.isLoading,
                           ),
+                          _buildFieldHelper('Required for analytical bulletins, harvest forecasts, and security recovery'),
                           const SizedBox(height: 14),
 
-                          TextFormField(
-                            controller: _usernameController,
-                            decoration: InputDecoration(
-                              labelText: 'Username (Optional)',
-                              hintText: 'e.g. abebe_farmer',
-                              prefixIcon: const Icon(Icons.alternate_email),
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                              filled: true,
-                              fillColor: Colors.white,
-                            ),
-                            textInputAction: TextInputAction.next,
-                            enabled: !authState.isLoading,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // SECTION 2: Geographic Jurisdiction (Region -> Zone -> Woreda)
-                    _buildSectionCard(
-                      title: '2. Administrative Jurisdiction',
-                      icon: Icons.location_on_outlined,
-                      subtitle: 'Select your agricultural jurisdiction for tailored risk maps and weather forecasts',
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // 1. Region Dropdown
-                          DropdownButtonFormField<String>(
-                            key: ValueKey('reg_${hierarchy.regions.length}_${hierarchy.selectedRegion?.id}'),
-                            value: hierarchy.regions.any((r) => r.id == hierarchy.selectedRegion?.id)
-                                ? hierarchy.selectedRegion?.id
-                                : null,
-                            decoration: InputDecoration(
-                              labelText: 'Region *',
-                              prefixIcon: const Icon(Icons.public),
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                              filled: true,
-                              fillColor: Colors.white,
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                            ),
-                            hint: const Text('Select Region (e.g. Oromia, Amhara)'),
-                            items: hierarchy.regions.map((region) {
-                              return DropdownMenuItem<String>(
-                                value: region.id,
-                                child: Text(region.name, style: const TextStyle(fontWeight: FontWeight.w500)),
-                              );
-                            }).toList(),
-                            validator: (v) => v == null || v.isEmpty ? 'Please select your administrative region' : null,
-                            onChanged: authState.isLoading
-                                ? null
-                                : (regionId) {
-                                    if (regionId != null) {
-                                      final region = hierarchy.regions.firstWhere((r) => r.id == regionId);
-                                      hierarchyNotifier.selectRegion(region);
-                                    }
-                                  },
-                          ),
-                          const SizedBox(height: 14),
-
-                          // 2. Zone Dropdown
-                          DropdownButtonFormField<String>(
-                            key: ValueKey('zone_${hierarchy.zones.length}_${hierarchy.selectedZone?.id}'),
-                            value: hierarchy.zones.any((z) => z.id == hierarchy.selectedZone?.id)
-                                ? hierarchy.selectedZone?.id
-                                : null,
-                            decoration: InputDecoration(
-                              labelText: 'Zone *',
-                              prefixIcon: const Icon(Icons.map_outlined),
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                              filled: true,
-                              fillColor: Colors.white,
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                            ),
-                            hint: Text(hierarchy.selectedRegion == null
-                                ? 'Select Region first'
-                                : 'Select Zone (e.g. East Shewa)'),
-                            items: hierarchy.zones.map((zone) {
-                              return DropdownMenuItem<String>(
-                                value: zone.id,
-                                child: Text(zone.name, style: const TextStyle(fontWeight: FontWeight.w500)),
-                              );
-                            }).toList(),
-                            validator: (v) => v == null || v.isEmpty ? 'Please select your zone' : null,
-                            onChanged: (authState.isLoading || hierarchy.selectedRegion == null)
-                                ? null
-                                : (zoneId) {
-                                    if (zoneId != null) {
-                                      final zone = hierarchy.zones.firstWhere((z) => z.id == zoneId);
-                                      hierarchyNotifier.selectZone(zone);
-                                    }
-                                  },
-                          ),
-                          const SizedBox(height: 14),
-
-                          // 3. Woreda Dropdown
-                          DropdownButtonFormField<String>(
-                            key: ValueKey('woreda_${hierarchy.woredas.length}_${hierarchy.selectedWoreda?.id}'),
-                            value: hierarchy.woredas.any((w) => w.id == hierarchy.selectedWoreda?.id)
-                                ? hierarchy.selectedWoreda?.id
-                                : null,
-                            decoration: InputDecoration(
-                              labelText: 'Woreda / District *',
-                              prefixIcon: const Icon(Icons.place_outlined),
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                              filled: true,
-                              fillColor: Colors.white,
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                            ),
-                            hint: Text(hierarchy.selectedZone == null
-                                ? 'Select Zone first'
-                                : 'Select Woreda (e.g. Ada\'a, Ambo)'),
-                            items: hierarchy.woredas.map((woreda) {
-                              return DropdownMenuItem<String>(
-                                value: woreda.id,
-                                child: Text(woreda.name, style: const TextStyle(fontWeight: FontWeight.w500)),
-                              );
-                            }).toList(),
-                            validator: (v) => v == null || v.isEmpty ? 'Please select your woreda / district' : null,
-                            onChanged: (authState.isLoading || hierarchy.selectedZone == null)
-                                ? null
-                                : (woredaId) {
-                                    if (woredaId != null) {
-                                      final woreda = hierarchy.woredas.firstWhere((w) => w.id == woredaId);
-                                      hierarchyNotifier.selectWoreda(woreda);
-                                    }
-                                  },
-                          ),
-
-                          // Selected Hierarchy Summary Badge
-                          if (hierarchy.selectedRegion != null) ...[
-                            const SizedBox(height: 10),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: AppTheme.primaryColor.withValues(alpha: 0.06),
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.15)),
-                              ),
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.check_circle_outline, color: AppTheme.primaryColor, size: 16),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      'Selected: ${hierarchyNotifier.getHierarchyString()}',
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                        color: AppTheme.primaryColor,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // SECTION 3: Security & Password Credentials
-                    _buildSectionCard(
-                      title: '3. Account Security',
-                      icon: Icons.security_outlined,
-                      child: Column(
-                        children: [
+                          // Password
                           TextFormField(
                             controller: _passwordController,
                             decoration: InputDecoration(
                               labelText: 'Password *',
-                              hintText: 'Minimum 6 characters',
                               prefixIcon: const Icon(Icons.lock_outline),
                               suffixIcon: IconButton(
-                                icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
+                                icon: Icon(
+                                  _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                                ),
                                 onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                               ),
                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                               filled: true,
-                              fillColor: Colors.white,
+                              fillColor: isDark ? const Color(0xFF1B2E1E) : Colors.white,
                             ),
                             obscureText: _obscurePassword,
                             textInputAction: TextInputAction.next,
                             validator: Validators.password,
                             enabled: !authState.isLoading,
                           ),
+                          _buildFieldHelper('Must contain at least 8 characters, 1 uppercase, 1 number, and 1 symbol'),
                           const SizedBox(height: 14),
 
+                          // Confirm Password
                           TextFormField(
                             controller: _confirmPasswordController,
                             decoration: InputDecoration(
                               labelText: 'Confirm Password *',
-                              hintText: 'Re-enter your password',
-                              prefixIcon: const Icon(Icons.lock_outline),
+                              prefixIcon: const Icon(Icons.lock_reset),
                               suffixIcon: IconButton(
-                                icon: Icon(_obscureConfirmPassword ? Icons.visibility_off : Icons.visibility),
+                                icon: Icon(
+                                  _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
+                                ),
                                 onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
                               ),
                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                               filled: true,
-                              fillColor: Colors.white,
+                              fillColor: isDark ? const Color(0xFF1B2E1E) : Colors.white,
                             ),
                             obscureText: _obscureConfirmPassword,
                             textInputAction: TextInputAction.done,
@@ -595,135 +444,232 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             ),
                             enabled: !authState.isLoading,
                           ),
+                          _buildFieldHelper('Re-enter the exact password configured above'),
                         ],
                       ),
                     ),
                     const SizedBox(height: 16),
 
-                    // SECTION 4: Preferences & Agreement
+                    // SECTION 2: Administrative Jurisdiction & Language
                     _buildSectionCard(
-                      title: '4. System Preferences & Agreement',
-                      icon: Icons.tune_outlined,
+                      title: '2. Administrative Jurisdiction & Language',
+                      icon: Icons.location_on_outlined,
+                      subtitle: 'Select your agricultural zone and preferred broadcast language for localized advisory.',
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          // 1. Region Dropdown
                           DropdownButtonFormField<String>(
-                            value: _selectedLanguage,
+                            key: ValueKey('reg_${hierarchy.regions.length}_${hierarchy.selectedRegion?.id}'),
+                            initialValue: hierarchy.regions.any((r) => r.id == hierarchy.selectedRegion?.id)
+                                ? hierarchy.selectedRegion?.id
+                                : null,
                             decoration: InputDecoration(
-                              labelText: 'Preferred Advisory Language',
-                              prefixIcon: const Icon(Icons.language),
+                              labelText: 'Region *',
+                              prefixIcon: const Icon(Icons.public),
                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                               filled: true,
-                              fillColor: Colors.white,
+                              fillColor: isDark ? const Color(0xFF1B2E1E) : Colors.white,
                             ),
-                            items: const [
-                              DropdownMenuItem(value: 'en', child: Text('English (Default)')),
-                              DropdownMenuItem(value: 'am', child: Text('አማርኛ (Amharic)')),
-                            ],
-                            onChanged: authState.isLoading ? null : (v) => setState(() => _selectedLanguage = v!),
+                            items: hierarchy.regions.map((region) {
+                              return DropdownMenuItem<String>(
+                                value: region.id,
+                                child: Text(region.name, style: const TextStyle(fontWeight: FontWeight.w500)),
+                              );
+                            }).toList(),
+                            validator: (v) => v == null || v.isEmpty ? 'Please select your region' : null,
+                            onChanged: authState.isLoading
+                                ? null
+                                : (regionId) {
+                                    if (regionId != null) {
+                                      final region = hierarchy.regions.firstWhere((r) => r.id == regionId);
+                                      hierarchyNotifier.selectRegion(region);
+                                    }
+                                  },
                           ),
+                          _buildFieldHelper('Select your administrative region (e.g. Oromia, Amhara, Sidama)'),
                           const SizedBox(height: 14),
 
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: _termsError ? Colors.red.shade50 : Colors.transparent,
-                              borderRadius: BorderRadius.circular(8),
-                              border: _termsError ? Border.all(color: Colors.red.shade300) : null,
+                          // 2. Zone Dropdown
+                          DropdownButtonFormField<String>(
+                            key: ValueKey('zone_${hierarchy.zones.length}_${hierarchy.selectedZone?.id}'),
+                            initialValue: hierarchy.zones.any((z) => z.id == hierarchy.selectedZone?.id)
+                                ? hierarchy.selectedZone?.id
+                                : null,
+                            decoration: InputDecoration(
+                              labelText: 'Zone *',
+                              prefixIcon: const Icon(Icons.map_outlined),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                              filled: true,
+                              fillColor: isDark ? const Color(0xFF1B2E1E) : Colors.white,
                             ),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Checkbox(
-                                  value: _acceptTerms,
-                                  activeColor: AppTheme.primaryColor,
-                                  onChanged: authState.isLoading
-                                      ? null
-                                      : (v) {
-                                          setState(() {
-                                            _acceptTerms = v ?? false;
-                                            if (_acceptTerms) _termsError = false;
-                                          });
-                                        },
-                                ),
-                                Expanded(
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(top: 10),
-                                    child: Text(
-                                      'I acknowledge and agree to the AgriEtech National Agricultural Terms of Service and Privacy Policy.',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: _termsError ? Colors.red.shade900 : Colors.grey.shade800,
-                                        fontWeight: _termsError ? FontWeight.w600 : FontWeight.normal,
-                                        height: 1.3,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
+                            items: hierarchy.zones.map((zone) {
+                              return DropdownMenuItem<String>(
+                                value: zone.id,
+                                child: Text(zone.name, style: const TextStyle(fontWeight: FontWeight.w500)),
+                              );
+                            }).toList(),
+                            validator: (v) => v == null || v.isEmpty ? 'Please select your zone' : null,
+                            onChanged: (hierarchy.selectedRegion == null || authState.isLoading)
+                                ? null
+                                : (zoneId) {
+                                    if (zoneId != null) {
+                                      final zone = hierarchy.zones.firstWhere((z) => z.id == zoneId);
+                                      hierarchyNotifier.selectZone(zone);
+                                    }
+                                  },
                           ),
-                          if (_termsError) ...[
-                            const SizedBox(height: 6),
-                            const Padding(
-                              padding: EdgeInsets.only(left: 12),
-                              child: Text(
-                                '• Terms and Conditions must be accepted',
-                                style: TextStyle(color: Colors.red, fontSize: 11, fontWeight: FontWeight.w500),
+                          _buildFieldHelper('Select your administrative zone (e.g. East Shewa, Arsi)'),
+                          const SizedBox(height: 14),
+
+                          // 3. Woreda Dropdown
+                          DropdownButtonFormField<String>(
+                            key: ValueKey('woreda_${hierarchy.woredas.length}_${hierarchy.selectedWoreda?.id}'),
+                            initialValue: hierarchy.woredas.any((w) => w.id == hierarchy.selectedWoreda?.id)
+                                ? hierarchy.selectedWoreda?.id
+                                : null,
+                            decoration: InputDecoration(
+                              labelText: 'Woreda *',
+                              prefixIcon: const Icon(Icons.holiday_village_outlined),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                              filled: true,
+                              fillColor: isDark ? const Color(0xFF1B2E1E) : Colors.white,
+                            ),
+                            items: hierarchy.woredas.map((woreda) {
+                              return DropdownMenuItem<String>(
+                                value: woreda.id,
+                                child: Text(woreda.name, style: const TextStyle(fontWeight: FontWeight.w500)),
+                              );
+                            }).toList(),
+                            validator: (v) => v == null || v.isEmpty ? 'Please select your woreda' : null,
+                            onChanged: (hierarchy.selectedZone == null || authState.isLoading)
+                                ? null
+                                : (woredaId) {
+                                    if (woredaId != null) {
+                                      final woreda = hierarchy.woredas.firstWhere((w) => w.id == woredaId);
+                                      hierarchyNotifier.selectWoreda(woreda);
+                                    }
+                                  },
+                          ),
+                          _buildFieldHelper('Select your woreda jurisdiction (e.g. Bishoftu, Adama Zuria)'),
+                          const SizedBox(height: 18),
+
+                          // Language Preference
+                          const Text(
+                            'Preferred Advisory Language *',
+                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                          ),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              _buildLangChip('en', 'English'),
+                              _buildLangChip('am', 'አማርኛ (Amharic)'),
+                              _buildLangChip('om', 'Afaan Oromoo'),
+                              _buildLangChip('ti', 'ትግርኛ (Tigrinya)'),
+                            ],
+                          ),
+                          _buildFieldHelper('Language used for SMS, voice synthesized alerts, and telemetry alerts'),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // SECTION 3: Terms and Conditions
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: _termsError ? Colors.red.shade50 : (isDark ? const Color(0xFF1B2E1E) : Colors.white),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: _termsError ? Colors.red : Colors.grey.shade300,
+                          width: _termsError ? 1.5 : 1.0,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Checkbox(
+                            value: _acceptTerms,
+                            activeColor: AppTheme.primaryColor,
+                            onChanged: authState.isLoading
+                                ? null
+                                : (val) => setState(() {
+                                      _acceptTerms = val ?? false;
+                                      if (_acceptTerms) _termsError = false;
+                                    }),
+                          ),
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () => setState(() {
+                                _acceptTerms = !_acceptTerms;
+                                if (_acceptTerms) _termsError = false;
+                              }),
+                              child: const Text(
+                                'I agree to the Terms of Service, Geospatial Data Policy, and Emergency Warning Broadcasts.',
+                                style: TextStyle(fontSize: 12, height: 1.3),
                               ),
                             ),
-                          ],
+                          ),
                         ],
                       ),
                     ),
                     const SizedBox(height: 24),
 
-                    // Submit Button
-                    ElevatedButton.icon(
-                      onPressed: authState.isLoading ? null : _register,
-                      icon: authState.isLoading
-                          ? const SizedBox(
-                              height: 18,
-                              width: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                            )
-                          : const Icon(Icons.check_circle, size: 20),
-                      label: Text(
-                        authState.isLoading ? 'Creating Account...' : 'Complete Registration',
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryColor,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        elevation: 2,
+                    // Submit Registration Button
+                    SizedBox(
+                      height: 52,
+                      child: ElevatedButton(
+                        onPressed: authState.isLoading ? null : _register,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF1B5E20),
+                          foregroundColor: Colors.white,
+                          elevation: 3,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        child: authState.isLoading
+                            ? const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                    ),
+                                  ),
+                                  SizedBox(width: 12),
+                                  Text('Creating Account...'),
+                                ],
+                              )
+                            : const Text(
+                                'Create Account',
+                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+                              ),
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
 
-                    // Sign In Footer Link
+                    // Already have an account?
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          'Already registered with AgriEtech? ',
-                          style: TextStyle(color: Colors.grey.shade700, fontSize: 14),
+                          'Already have an account? ',
+                          style: TextStyle(color: isDark ? Colors.grey.shade300 : Colors.grey.shade700),
                         ),
                         TextButton(
-                          onPressed: authState.isLoading ? null : () => context.go('/login'),
+                          onPressed: () => context.go('/login'),
                           style: TextButton.styleFrom(
+                            foregroundColor: const Color(0xFF1B5E20),
                             padding: const EdgeInsets.symmetric(horizontal: 4),
-                            minimumSize: Size.zero,
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           ),
                           child: const Text(
                             'Sign In',
-                            style: TextStyle(
-                              color: AppTheme.primaryColor,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                           ),
                         ),
                       ],
@@ -739,23 +685,39 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     );
   }
 
+  Widget _buildFieldHelper(String text) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, top: 4),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 11,
+          color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+        ),
+      ),
+    );
+  }
+
   Widget _buildSectionCard({
     required String title,
     required IconData icon,
-    String? subtitle,
+    required String subtitle,
     required Widget child,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF162518) : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: isDark ? const Color(0xFF263E26) : Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -769,24 +731,41 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               Text(
                 title,
                 style: const TextStyle(
-                  fontSize: 14,
+                  fontSize: 15,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF1E2E1E),
+                  letterSpacing: -0.2,
                 ),
               ),
             ],
           ),
-          if (subtitle != null) ...[
-            const SizedBox(height: 4),
-            Text(
-              subtitle,
-              style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-            ),
-          ],
-          const SizedBox(height: 14),
+          const SizedBox(height: 4),
+          Text(
+            subtitle,
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+          ),
+          const Divider(height: 24),
           child,
         ],
       ),
+    );
+  }
+
+  Widget _buildLangChip(String code, String label) {
+    final isSelected = _selectedLanguage == code;
+    return ChoiceChip(
+      label: Text(label),
+      selected: isSelected,
+      selectedColor: AppTheme.primaryColor,
+      labelStyle: TextStyle(
+        color: isSelected ? Colors.white : (Theme.of(context).brightness == Brightness.dark ? Colors.grey.shade300 : const Color(0xFF1E2E1E)),
+        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+        fontSize: 12,
+      ),
+      onSelected: (selected) {
+        if (selected) {
+          setState(() => _selectedLanguage = code);
+        }
+      },
     );
   }
 }
