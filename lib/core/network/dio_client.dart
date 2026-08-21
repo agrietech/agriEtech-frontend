@@ -290,11 +290,40 @@ class DioClient {
     String path,
     String filePath, {
     String? fileName,
+    String fieldName = 'image',
     Map<String, dynamic>? data,
     void Function(int, int)? onProgress,
   }) async {
+    final multipartFile = await MultipartFile.fromFile(filePath, filename: fileName);
     final formData = FormData.fromMap({
-      'file': await MultipartFile.fromFile(filePath, filename: fileName),
+      fieldName: multipartFile,
+      if (fieldName != 'file') 'file': await MultipartFile.fromFile(filePath, filename: fileName),
+      ...?data,
+    });
+
+    return await _dio.post(
+      path,
+      data: formData,
+      onSendProgress: onProgress,
+      options: Options(
+        headers: {'Content-Type': 'multipart/form-data'},
+      ),
+    );
+  }
+
+  /// Upload raw bytes directly (for Web or compressed in-memory images)
+  Future<Response> uploadBytes(
+    String path,
+    List<int> bytes, {
+    String fileName = 'upload.jpg',
+    String fieldName = 'image',
+    Map<String, dynamic>? data,
+    void Function(int, int)? onProgress,
+  }) async {
+    final multipartFile = MultipartFile.fromBytes(bytes, filename: fileName);
+    final formData = FormData.fromMap({
+      fieldName: multipartFile,
+      if (fieldName != 'file') 'file': MultipartFile.fromBytes(bytes, filename: fileName),
       ...?data,
     });
 

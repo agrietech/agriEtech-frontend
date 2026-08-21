@@ -12,9 +12,13 @@ import '../../features/farms/screens/farms_list_screen.dart';
 import '../../features/farms/screens/farm_detail_screen.dart';
 import '../../features/farms/screens/add_farm_screen.dart';
 import '../../features/alerts/screens/alerts_list_screen.dart';
+import '../../features/alerts/screens/create_alert_screen.dart';
 import '../../features/risk/screens/risk_map_screen.dart';
 import '../../features/diagnosis/screens/diagnosis_list_screen.dart';
+import '../../features/diagnosis/screens/create_diagnosis_screen.dart';
 import '../../features/sensors/screens/sensors_list_screen.dart';
+import '../../features/sensors/screens/register_sensor_screen.dart';
+import '../../features/weather/presentation/screens/weather_screen.dart';
 import '../../features/boundaries/screens/boundaries_screen.dart';
 import '../../features/analytics/screens/analytics_screen.dart';
 
@@ -119,10 +123,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // Alerts route
+      // Alerts routes
       GoRoute(
         path: '/alerts',
         builder: (context, state) => const AlertsListScreen(),
+      ),
+      GoRoute(
+        path: '/alerts/create',
+        builder: (context, state) => const CreateAlertScreen(),
       ),
 
       // Risk map route
@@ -136,11 +144,25 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/diagnosis',
         builder: (context, state) => const DiagnosisListScreen(),
       ),
+      GoRoute(
+        path: '/diagnosis/create',
+        builder: (context, state) => const CreateDiagnosisScreen(),
+      ),
 
       // Sensor routes
       GoRoute(
         path: '/sensors',
         builder: (context, state) => const SensorsListScreen(),
+      ),
+      GoRoute(
+        path: '/sensors/register',
+        builder: (context, state) => const RegisterSensorScreen(),
+      ),
+
+      // Weather route
+      GoRoute(
+        path: '/weather',
+        builder: (context, state) => const WeatherScreen(),
       ),
 
       // Boundaries route

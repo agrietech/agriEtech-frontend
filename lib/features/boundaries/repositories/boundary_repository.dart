@@ -124,7 +124,8 @@ class BoundaryRepository {
 
       final response = await _dioClient.get('/boundaries/woredas/$woredaId');
 
-      final woreda = WoredaModel.fromJson(response.data['data']);
+      final raw = response.data is Map ? (response.data['data'] ?? response.data) : response.data;
+      final woreda = WoredaModel.fromJson(raw as Map<String, dynamic>);
       AppLogger.success('Fetched woreda details');
       return woreda;
     } on DioException catch (e) {

@@ -29,16 +29,18 @@ class _FarmsListScreenState extends ConsumerState<FarmsListScreen> {
 
   List<dynamic> _getFilteredAndSortedFarms(List farms) {
     var filtered = farms.where((farm) {
-      return farm.farmName.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          farm.primaryCrop.toLowerCase().contains(_searchQuery.toLowerCase());
+      final name = (farm.farmName ?? '').toString().toLowerCase();
+      final crop = (farm.primaryCrop ?? '').toString().toLowerCase();
+      final q = _searchQuery.toLowerCase();
+      return name.contains(q) || crop.contains(q);
     }).toList();
 
     switch (_sortBy) {
       case 'name':
-        filtered.sort((a, b) => a.farmName.compareTo(b.farmName));
+        filtered.sort((a, b) => (a.farmName ?? '').toString().compareTo((b.farmName ?? '').toString()));
         break;
       case 'size':
-        filtered.sort((a, b) => b.areaHectares.compareTo(a.areaHectares));
+        filtered.sort((a, b) => ((b.areaHectares ?? 0) as num).compareTo((a.areaHectares ?? 0) as num));
         break;
       case 'date':
         filtered.sort((a, b) {

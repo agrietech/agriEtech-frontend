@@ -317,14 +317,13 @@ class _AlertsListScreenState extends ConsumerState<AlertsListScreen> {
                 _buildDetailRow(
                   context,
                   'Valid Until',
-                  DateFormatter.formatDateTime(
-                      DateTime.parse(alert.validUntil!)),
+                  DateFormatter.formatDateTimeSafe(alert.validUntil),
                   null,
                 ),
               _buildDetailRow(
                 context,
                 'Created',
-                DateFormatter.formatRelative(DateTime.parse(alert.createdAt)),
+                DateFormatter.formatRelativeSafe(alert.createdAt),
                 null,
               ),
 

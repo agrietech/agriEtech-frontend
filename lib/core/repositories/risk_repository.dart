@@ -18,8 +18,9 @@ class RiskRepository {
         ApiConstants.riskAssessments,
         queryParameters: limit != null ? {'limit': limit} : null,
       );
-      final List<dynamic> data = response.data;
-      return data.map((json) => RiskAssessmentModel.fromJson(json)).toList();
+      final rawData = response.data is Map ? (response.data['data'] ?? response.data) : response.data;
+      final List<dynamic> data = rawData is List ? rawData : [];
+      return data.map((json) => RiskAssessmentModel.fromJson(json as Map<String, dynamic>)).toList();
     } on DioException catch (e) {
       throw _handleError(e);
     }
@@ -31,8 +32,9 @@ class RiskRepository {
       final response = await _dioClient.get(
         ApiConstants.riskByWoreda(woredaId),
       );
-      final List<dynamic> data = response.data;
-      return data.map((json) => RiskAssessmentModel.fromJson(json)).toList();
+      final rawData = response.data is Map ? (response.data['data'] ?? response.data) : response.data;
+      final List<dynamic> data = rawData is List ? rawData : [];
+      return data.map((json) => RiskAssessmentModel.fromJson(json as Map<String, dynamic>)).toList();
     } on DioException catch (e) {
       throw _handleError(e);
     }
@@ -45,7 +47,9 @@ class RiskRepository {
         ApiConstants.riskStats(period),
       );
       if (response.data == null) return null;
-      return RiskStatisticsModel.fromJson(response.data);
+      final rawData = response.data is Map && response.data['data'] != null ? response.data['data'] : response.data;
+      if (rawData is! Map<String, dynamic>) return null;
+      return RiskStatisticsModel.fromJson(rawData);
     } on DioException catch (e) {
       throw _handleError(e);
     }
@@ -64,7 +68,8 @@ class RiskRepository {
           if (hazardScores != null) 'hazardScores': hazardScores,
         },
       );
-      return RiskAssessmentModel.fromJson(response.data);
+      final rawData = response.data is Map && response.data['data'] != null ? response.data['data'] : response.data;
+      return RiskAssessmentModel.fromJson(rawData as Map<String, dynamic>);
     } on DioException catch (e) {
       throw _handleError(e);
     }

@@ -150,8 +150,8 @@ class AlertRepository {
       if (alert.isActive) {
         active++;
         if (alert.validUntil != null) {
-          final validUntil = DateTime.parse(alert.validUntil!);
-          if (validUntil.isBefore(DateTime.now())) {
+          final validUntil = DateTime.tryParse(alert.validUntil!);
+          if (validUntil != null && validUntil.isBefore(DateTime.now())) {
             expired++;
             active--;
           }

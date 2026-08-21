@@ -16,7 +16,7 @@ class WeatherRepository {
       'woredaId': woredaId, 'source': 'CHIRPS', 'timeframe': timeframe,
     });
     final raw = r.data is Map && r.data['data'] != null ? r.data['data'] : r.data;
-    final list = raw is List ? raw : (raw is Map ? (raw['observations'] ?? raw['data'] ?? []) : []);
+    final list = raw is List ? raw : (raw is Map ? (raw['observations'] ?? raw['data'] ?? raw['metrics'] ?? []) : []);
     return (list as List).map((j) => HistoricalWeatherModel.fromJson(j as Map<String, dynamic>)).toList();
   }
 
@@ -26,7 +26,7 @@ class WeatherRepository {
       'woredaId': woredaId, 'timeframe': 'DAILY',
     });
     final raw = r.data is Map && r.data['data'] != null ? r.data['data'] : r.data;
-    final list = raw is List ? raw : (raw is Map ? (raw['series'] ?? raw['observations'] ?? []) : []);
+    final list = raw is List ? raw : (raw is Map ? (raw['metrics'] ?? raw['series'] ?? raw['observations'] ?? raw['data'] ?? []) : []);
     return (list as List).map((j) => ForecastModel.fromJson(j as Map<String, dynamic>)).toList();
   }
 }

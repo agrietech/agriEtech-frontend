@@ -57,6 +57,42 @@ class DateFormatter {
   /// Alias for formatRelativeTime
   static String formatRelative(DateTime date) => formatRelativeTime(date);
 
+  /// Safe relative format accepting DateTime, String, or null without throwing
+  static String formatRelativeSafe(dynamic date) {
+    if (date == null) return 'Recently';
+    if (date is DateTime) return formatRelativeTime(date);
+    if (date is String) {
+      final parsed = DateTime.tryParse(date);
+      if (parsed != null) return formatRelativeTime(parsed);
+      return date;
+    }
+    return 'Recently';
+  }
+
+  /// Safe date format accepting DateTime, String, or null
+  static String formatDateSafe(dynamic date) {
+    if (date == null) return '--';
+    if (date is DateTime) return formatDate(date);
+    if (date is String) {
+      final parsed = DateTime.tryParse(date);
+      if (parsed != null) return formatDate(parsed);
+      return date;
+    }
+    return '--';
+  }
+
+  /// Safe date time format accepting DateTime, String, or null
+  static String formatDateTimeSafe(dynamic date) {
+    if (date == null) return '--';
+    if (date is DateTime) return formatDateTime(date);
+    if (date is String) {
+      final parsed = DateTime.tryParse(date);
+      if (parsed != null) return formatDateTime(parsed);
+      return date;
+    }
+    return '--';
+  }
+
   /// Format duration (e.g., "2h 30m")
   static String formatDuration(Duration duration) {
     if (duration.inDays > 0) {

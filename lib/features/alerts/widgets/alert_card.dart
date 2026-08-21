@@ -130,8 +130,7 @@ class AlertCard extends StatelessWidget {
                   Icon(Icons.access_time, size: 16, color: Colors.grey[600]),
                   const SizedBox(width: 4),
                   Text(
-                    DateFormatter.formatRelative(
-                        DateTime.parse(alert.createdAt)),
+                    DateFormatter.formatRelativeSafe(alert.createdAt),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Colors.grey[600],
                         ),
