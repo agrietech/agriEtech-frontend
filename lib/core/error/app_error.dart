@@ -34,19 +34,34 @@ class NetworkError extends AppError {
 
   factory NetworkError.timeout() {
     return const NetworkError(
-      message: 'Request timeout. Please try again.',
+      message: 'Request timed out. Please check your connection and try again.',
       code: 'TIMEOUT',
     );
   }
 
   factory NetworkError.serverError([String? message]) {
     return NetworkError(
-      message: message ?? 'Server error. Please try again later.',
+      message: message ?? 'Server error occurred. Please try again later.',
       code: 'SERVER_ERROR',
     );
   }
 
   factory NetworkError.fromDioException(DioException exception) {
+    if (exception.response?.data is Map) {
+      final data = exception.response!.data as Map;
+      final serverMsg = data['message']?.toString() ??
+          data['error']?.toString() ??
+          data['detail']?.toString() ??
+          data['msg']?.toString();
+      if (serverMsg != null && serverMsg.isNotEmpty) {
+        return NetworkError(
+          message: serverMsg,
+          code: 'HTTP_${exception.response?.statusCode ?? 400}',
+          details: data,
+        );
+      }
+    }
+
     switch (exception.type) {
       case DioExceptionType.connectionTimeout:
       case DioExceptionType.sendTimeout:
@@ -54,7 +69,10 @@ class NetworkError extends AppError {
         return NetworkError.timeout();
       
       case DioExceptionType.connectionError:
-        return NetworkError.noConnection();
+        return const NetworkError(
+          message: 'Unable to reach backend server. Please verify your connection or try again.',
+          code: 'CONNECTION_ERROR',
+        );
       
       case DioExceptionType.badResponse:
         final statusCode = exception.response?.statusCode;
@@ -66,34 +84,38 @@ class NetworkError extends AppError {
         );
       
       default:
-        return NetworkError.serverError(exception.message);
+        final rawMsg = exception.message ?? exception.error?.toString();
+        return NetworkError(
+          message: (rawMsg != null && rawMsg.isNotEmpty) ? rawMsg : 'Network request failed. Please try again.',
+          code: 'NETWORK_ERROR',
+        );
     }
   }
 
   static String _getHttpErrorMessage(int? statusCode) {
     switch (statusCode) {
       case 400:
-        return 'Invalid request. Please check your input.';
+        return 'Invalid request. Please verify your input.';
       case 401:
-        return 'Authentication failed. Please login again.';
+        return 'Authentication required. Please sign in again.';
       case 403:
-        return 'Access denied. You don\'t have permission for this action.';
+        return 'Access denied. Insufficient permissions for this action.';
       case 404:
-        return 'Resource not found.';
+        return 'Requested resource not found.';
       case 409:
-        return 'Conflict. The resource already exists.';
+        return 'Resource conflict. The item already exists.';
       case 422:
-        return 'Validation failed. Please check your input.';
+        return 'Validation failed. Please verify your input.';
       case 429:
-        return 'Too many requests. Please try again later.';
+        return 'Rate limit exceeded. Please wait before trying again.';
       case 500:
-        return 'Internal server error. Please try again later.';
+        return 'Internal server error occurred. Please try again later.';
       case 502:
       case 503:
       case 504:
-        return 'Service unavailable. Please try again later.';
+        return 'Service temporarily unavailable. Please try again later.';
       default:
-        return 'An unexpected error occurred.';
+        return 'An unexpected error occurred. Please contact support if the issue persists.';
     }
   }
 }
@@ -108,28 +130,28 @@ class AuthError extends AppError {
 
   factory AuthError.invalidCredentials() {
     return const AuthError(
-      message: 'Invalid email or password.',
+      message: 'Invalid username or password.',
       code: 'INVALID_CREDENTIALS',
     );
   }
 
   factory AuthError.accountLocked() {
     return const AuthError(
-      message: 'Account locked due to too many failed attempts. Please try again later.',
+      message: 'Account temporarily locked due to multiple failed login attempts. Please try again later.',
       code: 'ACCOUNT_LOCKED',
     );
   }
 
   factory AuthError.tokenExpired() {
     return const AuthError(
-      message: 'Session expired. Please login again.',
+      message: 'Your session has expired. Please sign in again.',
       code: 'TOKEN_EXPIRED',
     );
   }
 
   factory AuthError.unauthorized() {
     return const AuthError(
-      message: 'You are not authorized to perform this action.',
+      message: 'Unauthorized access. You do not have permission for this action.',
       code: 'UNAUTHORIZED',
     );
   }
@@ -218,7 +240,7 @@ class LocationError extends AppError {
 
   factory LocationError.timeout() {
     return const LocationError(
-      message: 'Failed to get location. Please try again.',
+      message: 'Unable to retrieve location. Please check your GPS signal and try again.',
       code: 'LOCATION_TIMEOUT',
     );
   }
@@ -255,7 +277,7 @@ class FileError extends AppError {
 
   factory FileError.uploadFailed() {
     return const FileError(
-      message: 'Failed to upload file. Please try again.',
+      message: 'File upload failed. Please check your connection and try again.',
       code: 'UPLOAD_FAILED',
     );
   }
@@ -264,7 +286,7 @@ class FileError extends AppError {
 /// Unknown or unexpected errors
 class UnknownError extends AppError {
   const UnknownError({
-    super.message = 'An unexpected error occurred.',
+    super.message = 'An unexpected error occurred. Please try again or contact support if the issue persists.',
     super.code = 'UNKNOWN_ERROR',
     super.details,
   });

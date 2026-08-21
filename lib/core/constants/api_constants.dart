@@ -74,6 +74,32 @@ class ApiConstants {
   // AI Graph Analytics
   static const String analyticsAiInsights = '/analytics/ai-insights';
 
+  // Admin Management Endpoints
+  static const String adminOverview = '/admin/overview';
+  static const String adminUsers = '/admin/users';
+  static String adminUserById(String id) => '/admin/users/$id';
+  static String adminUserRole(String id) => '/admin/users/$id/role';
+  static String adminUserStatus(String id) => '/admin/users/$id/status';
+  static const String adminFarms = '/admin/farms';
+  static String adminFarmById(String id) => '/admin/farms/$id';
+  static const String adminSensors = '/admin/sensors';
+  static String adminSensorById(String id) => '/admin/sensors/$id';
+  static const String adminAlerts = '/admin/alerts';
+  static String adminAlertById(String id) => '/admin/alerts/$id';
+  static const String adminBroadcastAlert = '/admin/broadcast-alert';
+  static const String adminDiagnoses = '/admin/diagnoses';
+  static String adminDiagnosisById(String id) => '/admin/diagnoses/$id';
+  static const String adminSystemHealth = '/admin/system/health';
+  static const String adminIngestionTrigger = '/admin/ingestion/trigger';
+  static const String adminAuditLogs = '/admin/audit-logs';
+
+  // Sensor extended
+  static String sensorLatest(String hardwareId) => '/sensors/$hardwareId/latest';
+  static String sensorTelemetryHistory(String hardwareId) => '/sensors/$hardwareId/telemetry';
+
+  // Ingestion extended
+  static const String ingestionHealth = '$ingestion/health';
+
   // Email verification
   static const String verifyEmail = '/auth/verify-email';
 

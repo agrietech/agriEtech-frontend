@@ -78,16 +78,35 @@ class DioClient {
             }
           }
 
-          // Handle network errors
+          // Handle network errors & automatic cold-start retry
+          final requestOptions = error.requestOptions;
+          final retryCount = (requestOptions.extra['retryCount'] ?? 0) as int;
+          final isNetworkIssue = error.type == DioExceptionType.connectionTimeout ||
+              error.type == DioExceptionType.sendTimeout ||
+              error.type == DioExceptionType.receiveTimeout ||
+              error.type == DioExceptionType.connectionError;
+
+          if (isNetworkIssue && retryCount < 2) {
+            AppLogger.info('Connection delay detected (cold-start), retrying request ${requestOptions.path} (attempt ${retryCount + 1})...');
+            await Future.delayed(Duration(seconds: 2 * (retryCount + 1)));
+            requestOptions.extra['retryCount'] = retryCount + 1;
+            try {
+              final response = await _dio.fetch<dynamic>(requestOptions);
+              return handler.resolve(response);
+            } catch (e) {
+              AppLogger.warning('Retry attempt ${retryCount + 1} failed');
+            }
+          }
+
           if (error.type == DioExceptionType.connectionTimeout ||
               error.type == DioExceptionType.sendTimeout ||
               error.type == DioExceptionType.receiveTimeout) {
             error = error.copyWith(
-              message: 'Connection timeout. Please check your internet connection.',
+              message: 'Server connection timeout. Please check your internet connection and try again.',
             );
           } else if (error.type == DioExceptionType.connectionError) {
             error = error.copyWith(
-              message: 'Connection failed. Please check your internet connection.',
+              message: 'Unable to reach backend server. Please check your internet connection.',
             );
           }
 

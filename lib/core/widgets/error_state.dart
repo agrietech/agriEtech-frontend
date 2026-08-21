@@ -8,7 +8,7 @@ class ErrorState extends StatelessWidget {
 
   const ErrorState({
     super.key,
-    this.title = 'Something went wrong',
+    this.title = 'Unable to Load Data',
     required this.message,
     this.onRetry,
   });

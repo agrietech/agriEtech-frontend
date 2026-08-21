@@ -81,14 +81,26 @@ class AuthRepository {
     }
   }
 
+  String _normalizePhone(String phone) {
+    final clean = phone.trim().replaceAll(RegExp(r'[\s\-]'), '');
+    if ((clean.startsWith('09') || clean.startsWith('07')) && clean.length == 10) {
+      return '+251${clean.substring(1)}';
+    }
+    if (clean.startsWith('251') && clean.length == 12) {
+      return '+$clean';
+    }
+    return clean;
+  }
+
   /// Register new user
   Future<LoginResponse> register(RegisterRequest request) async {
     try {
-      AppLogger.info('Attempting registration for phone: ${request.phone}');
+      final formattedPhone = _normalizePhone(request.phone);
+      AppLogger.info('Attempting registration for phone: $formattedPhone');
       
       final regData = <String, dynamic>{
-        'phone': request.phone,
-        'phoneNumber': request.phone,
+        'phone': formattedPhone,
+        'phoneNumber': formattedPhone,
         'password': request.password,
         'fullName': request.fullName,
         'role': 'FARMER',
@@ -371,7 +383,17 @@ class AuthRepository {
     if (responseData is Map) {
       backendMessage = responseData['message']?.toString() ??
           responseData['error']?.toString() ??
-          responseData['detail']?.toString();
+          responseData['detail']?.toString() ??
+          responseData['msg']?.toString();
+
+      if (backendMessage == null && responseData['errors'] != null) {
+        final errs = responseData['errors'];
+        if (errs is Map) {
+          backendMessage = errs.entries.map((e) => '${e.key}: ${(e.value is List ? (e.value as List).join(", ") : e.value)}').join('\n');
+        } else if (errs is List) {
+          backendMessage = errs.join(', ');
+        }
+      }
     }
 
     if (statusCode == 401) {

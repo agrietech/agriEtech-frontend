@@ -10,7 +10,16 @@ class NotificationService {
   factory NotificationService() => _instance;
   NotificationService._internal();
 
-  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
+  FirebaseMessaging? get _firebaseMessaging {
+    if (kIsWeb) return null;
+    try {
+      return FirebaseMessaging.instance;
+    } catch (e) {
+      AppLogger.warning('FirebaseMessaging instance unavailable: $e');
+      return null;
+    }
+  }
+
   final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
 
@@ -25,10 +34,20 @@ class NotificationService {
 
   /// Initialize notification service
   Future<void> initialize() async {
-    if (kIsWeb) return;
+    if (kIsWeb) {
+      AppLogger.info('Web platform detected - push notification service bypassed');
+      return;
+    }
+    
+    final messaging = _firebaseMessaging;
+    if (messaging == null) {
+      AppLogger.warning('FirebaseMessaging unavailable - skipping push notification initialization');
+      return;
+    }
+
     try {
       // Request permission
-      final settings = await _firebaseMessaging.requestPermission(
+      final settings = await messaging.requestPermission(
         alert: true,
         announcement: false,
         badge: true,
@@ -43,7 +62,7 @@ class NotificationService {
       if (settings.authorizationStatus == AuthorizationStatus.authorized ||
           settings.authorizationStatus == AuthorizationStatus.provisional) {
         // Get FCM token
-        _fcmToken = await _firebaseMessaging.getToken();
+        _fcmToken = await messaging.getToken();
         AppLogger.success('FCM Token obtained', {'token': _fcmToken});
 
         // Initialize local notifications
@@ -53,7 +72,7 @@ class NotificationService {
         _setupMessageHandlers();
 
         // Listen to token refresh
-        _firebaseMessaging.onTokenRefresh.listen((newToken) {
+        messaging.onTokenRefresh.listen((newToken) {
           _fcmToken = newToken;
           AppLogger.info('FCM Token refreshed', {'token': newToken});
           updateTokenOnBackend(newToken);
@@ -67,83 +86,97 @@ class NotificationService {
   /// Initialize local notifications for foreground display
   Future<void> _initializeLocalNotifications() async {
     if (kIsWeb) return;
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
-    const iosSettings = DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
-    );
+    try {
+      const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+      const iosSettings = DarwinInitializationSettings(
+        requestAlertPermission: true,
+        requestBadgePermission: true,
+        requestSoundPermission: true,
+      );
 
-    const initSettings = InitializationSettings(
-      android: androidSettings,
-      iOS: iosSettings,
-    );
+      const initSettings = InitializationSettings(
+        android: androidSettings,
+        iOS: iosSettings,
+      );
 
-    await _localNotifications.initialize(
-      initSettings,
-      onDidReceiveNotificationResponse: _onNotificationTap,
-    );
+      await _localNotifications.initialize(
+        initSettings,
+        onDidReceiveNotificationResponse: _onNotificationTap,
+      );
 
-    // Create notification channels for Android
-    if (defaultTargetPlatform == TargetPlatform.android) {
-      await _createNotificationChannels();
+      // Create notification channels for Android
+      if (defaultTargetPlatform == TargetPlatform.android) {
+        await _createNotificationChannels();
+      }
+    } catch (e) {
+      AppLogger.warning('Local notifications initialization skipped: $e');
     }
   }
 
   /// Create Android notification channels
   Future<void> _createNotificationChannels() async {
-    // Critical alerts channel
-    const criticalChannel = AndroidNotificationChannel(
-      'critical_alerts',
-      'Critical Alerts',
-      description: 'Critical weather and hazard alerts',
-      importance: Importance.max,
-      playSound: true,
-      enableVibration: true,
-      enableLights: true,
-    );
+    if (kIsWeb) return;
+    try {
+      const criticalChannel = AndroidNotificationChannel(
+        'critical_alerts',
+        'Critical Alerts',
+        description: 'Critical weather and hazard alerts',
+        importance: Importance.max,
+        playSound: true,
+        enableVibration: true,
+        enableLights: true,
+      );
 
-    // High priority alerts
-    const highChannel = AndroidNotificationChannel(
-      'high_alerts',
-      'High Priority Alerts',
-      description: 'High priority warnings and updates',
-      importance: Importance.high,
-      playSound: true,
-      enableVibration: true,
-    );
+      const highChannel = AndroidNotificationChannel(
+        'high_alerts',
+        'High Priority Alerts',
+        description: 'High priority warnings and updates',
+        importance: Importance.high,
+        playSound: true,
+        enableVibration: true,
+      );
 
-    // General notifications
-    const generalChannel = AndroidNotificationChannel(
-      'general',
-      'General Notifications',
-      description: 'General updates and information',
-      importance: Importance.defaultImportance,
-      playSound: true,
-    );
+      const generalChannel = AndroidNotificationChannel(
+        'general',
+        'General Notifications',
+        description: 'General updates and information',
+        importance: Importance.defaultImportance,
+        playSound: true,
+      );
 
-    final plugin = _localNotifications.resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>();
+      final plugin = _localNotifications.resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>();
 
-    await plugin?.createNotificationChannel(criticalChannel);
-    await plugin?.createNotificationChannel(highChannel);
-    await plugin?.createNotificationChannel(generalChannel);
+      await plugin?.createNotificationChannel(criticalChannel);
+      await plugin?.createNotificationChannel(highChannel);
+      await plugin?.createNotificationChannel(generalChannel);
+    } catch (e) {
+      AppLogger.warning('Android notification channels creation failed: $e');
+    }
   }
 
   /// Setup message handlers for different app states
   void _setupMessageHandlers() {
-    // Foreground messages
-    FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
+    if (kIsWeb) return;
+    final messaging = _firebaseMessaging;
+    if (messaging == null) return;
 
-    // Background messages (when app is in background but not terminated)
-    FirebaseMessaging.onMessageOpenedApp.listen(_handleBackgroundMessage);
+    try {
+      // Foreground messages
+      FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
 
-    // Terminated state (when app was killed)
-    _firebaseMessaging.getInitialMessage().then((message) {
-      if (message != null) {
-        _handleTerminatedMessage(message);
-      }
-    });
+      // Background messages (when app is in background but not terminated)
+      FirebaseMessaging.onMessageOpenedApp.listen(_handleBackgroundMessage);
+
+      // Terminated state (when app was killed)
+      messaging.getInitialMessage().then((message) {
+        if (message != null) {
+          _handleTerminatedMessage(message);
+        }
+      });
+    } catch (e) {
+      AppLogger.warning('Error setting up Firebase message handlers: $e');
+    }
   }
 
   /// Handle foreground messages (app is open)
@@ -154,7 +187,6 @@ class NotificationService {
       'data': message.data,
     });
 
-    // Show local notification
     await _showLocalNotification(message);
   }
 
@@ -165,7 +197,6 @@ class NotificationService {
       'data': message.data,
     });
 
-    // Navigate to appropriate screen based on data
     _navigateFromNotification(message.data);
   }
 
@@ -176,7 +207,6 @@ class NotificationService {
       'data': message.data,
     });
 
-    // Navigate to appropriate screen
     _navigateFromNotification(message.data);
   }
 
@@ -189,43 +219,47 @@ class NotificationService {
     final channelId = _getChannelId(message.data);
     final priority = _getPriority(message.data);
 
-    await _localNotifications.show(
-      notification.hashCode,
-      notification.title,
-      notification.body,
-      NotificationDetails(
-        android: AndroidNotificationDetails(
-          channelId,
-          channelId == 'critical_alerts'
-              ? 'Critical Alerts'
-              : channelId == 'high_alerts'
-                  ? 'High Priority Alerts'
-                  : 'General Notifications',
-          importance: priority == 'critical'
-              ? Importance.max
-              : priority == 'high'
-                  ? Importance.high
-                  : Importance.defaultImportance,
-          priority: priority == 'critical'
-              ? Priority.max
-              : priority == 'high'
-                  ? Priority.high
-                  : Priority.defaultPriority,
-          icon: '@mipmap/ic_launcher',
-          color: priority == 'critical'
-              ? const Color(0xFFD32F2F)
-              : priority == 'high'
-                  ? const Color(0xFFF57C00)
-                  : const Color(0xFF1976D2),
+    try {
+      await _localNotifications.show(
+        notification.hashCode,
+        notification.title,
+        notification.body,
+        NotificationDetails(
+          android: AndroidNotificationDetails(
+            channelId,
+            channelId == 'critical_alerts'
+                ? 'Critical Alerts'
+                : channelId == 'high_alerts'
+                    ? 'High Priority Alerts'
+                    : 'General Notifications',
+            importance: priority == 'critical'
+                ? Importance.max
+                : priority == 'high'
+                    ? Importance.high
+                    : Importance.defaultImportance,
+            priority: priority == 'critical'
+                ? Priority.max
+                : priority == 'high'
+                    ? Priority.high
+                    : Priority.defaultPriority,
+            icon: '@mipmap/ic_launcher',
+            color: priority == 'critical'
+                ? const Color(0xFFD32F2F)
+                : priority == 'high'
+                    ? const Color(0xFFF57C00)
+                    : const Color(0xFF1976D2),
+          ),
+          iOS: const DarwinNotificationDetails(
+            presentAlert: true,
+            presentBadge: true,
+            presentSound: true,
+          ),
         ),
-        iOS: const DarwinNotificationDetails(
-          presentAlert: true,
-          presentBadge: true,
-          presentSound: true,
-        ),
-      ),
-      payload: message.data.toString(),
-    );
+        payload: message.data.toString(),
+      );
+    } catch (e) {
+      AppLogger.warning('Failed to show local notification: $e');
+    }
   }
 
   /// Handle notification tap
@@ -233,24 +267,17 @@ class NotificationService {
     AppLogger.info('Notification tapped', {'payload': response.payload});
 
     if (response.payload != null) {
-      // Parse payload and navigate
       try {
-        // Payload is stored as string representation of map
-        // Extract type and id from the string
         final payload = response.payload!;
-        
-        // Simple parsing - in production, use proper JSON parsing
         if (payload.contains('type')) {
           String? type;
           String? id;
           
-          // Extract type - simple pattern matching
           final typeMatch = RegExp(r'type.*?[:=]\s*(\w+)').firstMatch(payload);
           if (typeMatch != null) {
             type = typeMatch.group(1);
           }
           
-          // Extract id - simple pattern matching
           final idMatch = RegExp(r'id.*?[:=]\s*([a-zA-Z0-9-]+)').firstMatch(payload);
           if (idMatch != null) {
             id = idMatch.group(1);
@@ -273,30 +300,21 @@ class NotificationService {
 
     AppLogger.info('Navigating from notification', {'type': type, 'id': id});
 
-    // Navigation is handled through notification callback
-    // App can listen to this and navigate using GoRouter
-    // For now, just log the navigation intent
-    
     switch (type) {
       case 'alert':
         AppLogger.info('Should navigate to alert', {'alertId': id});
-        // Router will handle: context.go('/alerts/$id')
         break;
       case 'risk':
         AppLogger.info('Should navigate to risk map');
-        // Router will handle: context.go('/risk-map')
         break;
       case 'diagnosis':
         AppLogger.info('Should navigate to diagnosis', {'diagnosisId': id});
-        // Router will handle: context.go('/diagnosis/$id')
         break;
       case 'sensor':
         AppLogger.info('Should navigate to sensor', {'sensorId': id});
-        // Router will handle: context.go('/sensors/$id')
         break;
       case 'farm':
         AppLogger.info('Should navigate to farm', {'farmId': id});
-        // Router will handle: context.go('/farms/$id')
         break;
       default:
         AppLogger.warning('Unknown notification type', {'type': type});
@@ -318,8 +336,9 @@ class NotificationService {
 
   /// Subscribe to topic
   Future<void> subscribeToTopic(String topic) async {
+    if (kIsWeb) return;
     try {
-      await _firebaseMessaging.subscribeToTopic(topic);
+      await _firebaseMessaging?.subscribeToTopic(topic);
       AppLogger.success('Subscribed to topic', {'topic': topic});
     } catch (e) {
       AppLogger.error('Failed to subscribe to topic', e);
@@ -328,8 +347,9 @@ class NotificationService {
 
   /// Unsubscribe from topic
   Future<void> unsubscribeFromTopic(String topic) async {
+    if (kIsWeb) return;
     try {
-      await _firebaseMessaging.unsubscribeFromTopic(topic);
+      await _firebaseMessaging?.unsubscribeFromTopic(topic);
       AppLogger.success('Unsubscribed from topic', {'topic': topic});
     } catch (e) {
       AppLogger.error('Failed to unsubscribe from topic', e);
@@ -352,18 +372,23 @@ class NotificationService {
 
   /// Clear all notifications
   Future<void> clearAllNotifications() async {
-    await _localNotifications.cancelAll();
-    AppLogger.info('All notifications cleared');
+    if (kIsWeb) return;
+    try {
+      await _localNotifications.cancelAll();
+      AppLogger.info('All notifications cleared');
+    } catch (e) {
+      AppLogger.warning('Failed to clear local notifications: $e');
+    }
   }
 }
 
 /// Background message handler (must be top-level function)
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  AppLogger.info('Background message received', {
-    'title': message.notification?.title,
-    'data': message.data,
-  });
+  if (!kIsWeb) {
+    AppLogger.info('Background message received', {
+      'title': message.notification?.title,
+      'data': message.data,
+    });
+  }
 }
-
-

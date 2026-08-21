@@ -35,7 +35,7 @@ class AppEnv {
 
   // API Timeouts
   static Duration get apiTimeout => Duration(
-    milliseconds: int.tryParse(_get('API_TIMEOUT', '30000')) ?? 30000,
+    milliseconds: int.tryParse(_get('API_TIMEOUT', '60000')) ?? 60000,
   );
   
   static Duration get longApiTimeout => Duration(

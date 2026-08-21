@@ -21,7 +21,7 @@ void main() {
     test('AuthError codes and messages', () {
       final tokenExpired = AuthError.tokenExpired();
       expect(tokenExpired.code, equals('TOKEN_EXPIRED'));
-      expect(tokenExpired.message, contains('Session expired'));
+      expect(tokenExpired.message, contains('session has expired'));
 
       final invalidCreds = AuthError.invalidCredentials();
       expect(invalidCreds.code, equals('INVALID_CREDENTIALS'));
