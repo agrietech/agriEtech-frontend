@@ -17,13 +17,13 @@ class ForecastModel {
   });
 
   factory ForecastModel.fromJson(Map<String, dynamic> json) => ForecastModel(
-    date: json['date'] as String? ?? json['period'] as String? ?? '',
-    maxTempC: ((json['maxTempC'] ?? json['tempMax'] ?? json['temperature2mMax'] ?? 30.0) as num).toDouble(),
-    minTempC: ((json['minTempC'] ?? json['tempMin'] ?? json['temperature2mMin'] ?? 15.0) as num).toDouble(),
-    precipitationMm: ((json['precipitationMm'] ?? json['precipitation'] ?? 0.0) as num).toDouble(),
+    date: json['date'] as String? ?? json['period'] as String? ?? json['observationDate'] as String? ?? '',
+    maxTempC: ((json['maxTempC'] ?? json['tempMaxC'] ?? json['tempMax'] ?? json['temperature2mMax'] ?? json['nasaPowerTempMax'] ?? 28.0) as num).toDouble(),
+    minTempC: ((json['minTempC'] ?? json['tempMinC'] ?? json['tempMin'] ?? json['temperature2mMin'] ?? json['nasaPowerTempMin'] ?? 15.0) as num).toDouble(),
+    precipitationMm: ((json['precipitationMm'] ?? json['rainfallMm'] ?? json['precipitation'] ?? json['rainfall'] ?? json['chirpsRainfallMm'] ?? 0.0) as num).toDouble(),
     windSpeedKmh: ((json['windSpeedKmh'] ?? json['windSpeed10mMax'] ?? 0.0) as num).toDouble(),
     weatherCode: json['weatherCode'] as String? ?? '0',
-    description: json['description'] as String? ?? json['weatherCode'] as String? ?? 'Clear',
+    description: json['description'] as String? ?? json['weatherCode'] as String? ?? 'Clear / Optimal',
   );
 
   double get temperature => (maxTempC + minTempC) / 2;

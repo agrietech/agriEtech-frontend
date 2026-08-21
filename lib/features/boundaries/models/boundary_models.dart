@@ -1,119 +1,426 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
-
-part 'boundary_models.freezed.dart';
-part 'boundary_models.g.dart';
+/// Boundary hierarchical models (pure Dart without Freezed)
+library boundary_models;
 
 /// Region model (highest level - e.g., Oromia, Amhara)
-@freezed
-class RegionModel with _$RegionModel {
-  const factory RegionModel({
-    required String id,
-    required String code,
-    required String name,
-    Map<String, dynamic>? geojson,
-    required String createdAt,
-    required String updatedAt,
-    @Default([]) List<ZoneModel> zones,
-  }) = _RegionModel;
+class RegionModel {
+  final String id;
+  final String code;
+  final String name;
+  final Map<String, dynamic>? geojson;
+  final String createdAt;
+  final String updatedAt;
+  final List<ZoneModel> zones;
 
-  factory RegionModel.fromJson(Map<String, dynamic> json) =>
-      _$RegionModelFromJson(json);
+  const RegionModel({
+    required this.id,
+    this.code = '',
+    required this.name,
+    this.geojson,
+    this.createdAt = '',
+    this.updatedAt = '',
+    this.zones = const [],
+  });
+
+  factory RegionModel.fromJson(Map<String, dynamic> json) {
+    final zonesList = json['zones'] is List
+        ? (json['zones'] as List)
+            .map((z) => ZoneModel.fromJson(z as Map<String, dynamic>))
+            .toList()
+        : <ZoneModel>[];
+
+    return RegionModel(
+      id: (json['id'] ?? '').toString(),
+      code: (json['code'] ?? json['id'] ?? '').toString(),
+      name: (json['name'] ?? json['nameEn'] ?? json['nameAm'] ?? '').toString(),
+      geojson: json['geojson'] as Map<String, dynamic>?,
+      createdAt: (json['createdAt'] ?? DateTime.now().toIso8601String()).toString(),
+      updatedAt: (json['updatedAt'] ?? json['createdAt'] ?? DateTime.now().toIso8601String()).toString(),
+      zones: zonesList,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'code': code,
+    'name': name,
+    if (geojson != null) 'geojson': geojson,
+    'createdAt': createdAt,
+    'updatedAt': updatedAt,
+    'zones': zones.map((z) => z.toJson()).toList(),
+  };
+
+  RegionModel copyWith({
+    String? id,
+    String? code,
+    String? name,
+    Map<String, dynamic>? geojson,
+    String? createdAt,
+    String? updatedAt,
+    List<ZoneModel>? zones,
+  }) {
+    return RegionModel(
+      id: id ?? this.id,
+      code: code ?? this.code,
+      name: name ?? this.name,
+      geojson: geojson ?? this.geojson,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      zones: zones ?? this.zones,
+    );
+  }
 }
 
 /// Zone model (middle level)
-@freezed
-class ZoneModel with _$ZoneModel {
-  const factory ZoneModel({
-    required String id,
-    required String regionId,
-    required String name,
-    Map<String, dynamic>? geojson,
-    required String createdAt,
-    required String updatedAt,
-    @Default([]) List<WoredaModel> woredas,
-    // Nested region details
-    RegionBasicInfo? region,
-  }) = _ZoneModel;
+class ZoneModel {
+  final String id;
+  final String regionId;
+  final String name;
+  final Map<String, dynamic>? geojson;
+  final String createdAt;
+  final String updatedAt;
+  final List<WoredaModel> woredas;
+  final RegionBasicInfo? region;
 
-  factory ZoneModel.fromJson(Map<String, dynamic> json) =>
-      _$ZoneModelFromJson(json);
+  const ZoneModel({
+    required this.id,
+    this.regionId = '',
+    required this.name,
+    this.geojson,
+    this.createdAt = '',
+    this.updatedAt = '',
+    this.woredas = const [],
+    this.region,
+  });
+
+  factory ZoneModel.fromJson(Map<String, dynamic> json) {
+    final woredasList = json['woredas'] is List
+        ? (json['woredas'] as List)
+            .map((w) => WoredaModel.fromJson(w as Map<String, dynamic>))
+            .toList()
+        : <WoredaModel>[];
+
+    return ZoneModel(
+      id: (json['id'] ?? '').toString(),
+      regionId: (json['regionId'] ?? json['region']?['id'] ?? '').toString(),
+      name: (json['name'] ?? json['nameEn'] ?? json['nameAm'] ?? '').toString(),
+      geojson: json['geojson'] as Map<String, dynamic>?,
+      createdAt: (json['createdAt'] ?? DateTime.now().toIso8601String()).toString(),
+      updatedAt: (json['updatedAt'] ?? json['createdAt'] ?? DateTime.now().toIso8601String()).toString(),
+      woredas: woredasList,
+      region: json['region'] is Map<String, dynamic>
+          ? RegionBasicInfo.fromJson(json['region'] as Map<String, dynamic>)
+          : null,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'regionId': regionId,
+    'name': name,
+    if (geojson != null) 'geojson': geojson,
+    'createdAt': createdAt,
+    'updatedAt': updatedAt,
+    'woredas': woredas.map((w) => w.toJson()).toList(),
+    if (region != null) 'region': region!.toJson(),
+  };
+
+  ZoneModel copyWith({
+    String? id,
+    String? regionId,
+    String? name,
+    Map<String, dynamic>? geojson,
+    String? createdAt,
+    String? updatedAt,
+    List<WoredaModel>? woredas,
+    RegionBasicInfo? region,
+  }) {
+    return ZoneModel(
+      id: id ?? this.id,
+      regionId: regionId ?? this.regionId,
+      name: name ?? this.name,
+      geojson: geojson ?? this.geojson,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      woredas: woredas ?? this.woredas,
+      region: region ?? this.region,
+    );
+  }
 }
 
 /// Woreda model (lowest level - district)
-@freezed
-class WoredaModel with _$WoredaModel {
-  const factory WoredaModel({
-    required String id,
-    required String zoneId,
-    required String name,
-    Map<String, dynamic>? geojson,
-    required double centerLat,
-    required double centerLng,
-    int? population,
-    required String createdAt,
-    required String updatedAt,
-    // Nested zone details
-    ZoneBasicInfo? zone,
-  }) = _WoredaModel;
+class WoredaModel {
+  final String id;
+  final String zoneId;
+  final String name;
+  final Map<String, dynamic>? geojson;
+  final double centerLat;
+  final double centerLng;
+  final int? population;
+  final String createdAt;
+  final String updatedAt;
+  final ZoneBasicInfo? zone;
 
-  factory WoredaModel.fromJson(Map<String, dynamic> json) =>
-      _$WoredaModelFromJson(json);
+  const WoredaModel({
+    required this.id,
+    this.zoneId = '',
+    required this.name,
+    this.geojson,
+    this.centerLat = 8.54,
+    this.centerLng = 39.27,
+    this.population,
+    this.createdAt = '',
+    this.updatedAt = '',
+    this.zone,
+  });
+
+  factory WoredaModel.fromJson(Map<String, dynamic> json) {
+    return WoredaModel(
+      id: (json['id'] ?? '').toString(),
+      zoneId: (json['zoneId'] ?? json['zone']?['id'] ?? '').toString(),
+      name: (json['name'] ?? json['nameEn'] ?? json['nameAm'] ?? '').toString(),
+      geojson: json['geojson'] as Map<String, dynamic>?,
+      centerLat: ((json['centerLat'] ?? json['latitude'] ?? 8.54) as num).toDouble(),
+      centerLng: ((json['centerLng'] ?? json['longitude'] ?? 39.27) as num).toDouble(),
+      population: json['population'] as int?,
+      createdAt: (json['createdAt'] ?? DateTime.now().toIso8601String()).toString(),
+      updatedAt: (json['updatedAt'] ?? json['createdAt'] ?? DateTime.now().toIso8601String()).toString(),
+      zone: json['zone'] is Map<String, dynamic>
+          ? ZoneBasicInfo.fromJson(json['zone'] as Map<String, dynamic>)
+          : null,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'zoneId': zoneId,
+    'name': name,
+    if (geojson != null) 'geojson': geojson,
+    'centerLat': centerLat,
+    'centerLng': centerLng,
+    if (population != null) 'population': population,
+    'createdAt': createdAt,
+    'updatedAt': updatedAt,
+    if (zone != null) 'zone': zone!.toJson(),
+  };
+
+  WoredaModel copyWith({
+    String? id,
+    String? zoneId,
+    String? name,
+    Map<String, dynamic>? geojson,
+    double? centerLat,
+    double? centerLng,
+    int? population,
+    String? createdAt,
+    String? updatedAt,
+    ZoneBasicInfo? zone,
+  }) {
+    return WoredaModel(
+      id: id ?? this.id,
+      zoneId: zoneId ?? this.zoneId,
+      name: name ?? this.name,
+      geojson: geojson ?? this.geojson,
+      centerLat: centerLat ?? this.centerLat,
+      centerLng: centerLng ?? this.centerLng,
+      population: population ?? this.population,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      zone: zone ?? this.zone,
+    );
+  }
 }
 
 /// Basic region information
-@freezed
-class RegionBasicInfo with _$RegionBasicInfo {
-  const factory RegionBasicInfo({
-    required String id,
-    required String code,
-    required String name,
-  }) = _RegionBasicInfo;
+class RegionBasicInfo {
+  final String id;
+  final String code;
+  final String name;
 
-  factory RegionBasicInfo.fromJson(Map<String, dynamic> json) =>
-      _$RegionBasicInfoFromJson(json);
+  const RegionBasicInfo({
+    required this.id,
+    this.code = '',
+    required this.name,
+  });
+
+  factory RegionBasicInfo.fromJson(Map<String, dynamic> json) {
+    return RegionBasicInfo(
+      id: (json['id'] ?? '').toString(),
+      code: (json['code'] ?? json['id'] ?? '').toString(),
+      name: (json['name'] ?? json['nameEn'] ?? json['nameAm'] ?? '').toString(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'code': code,
+    'name': name,
+  };
 }
 
 /// Basic zone information
-@freezed
-class ZoneBasicInfo with _$ZoneBasicInfo {
-  const factory ZoneBasicInfo({
-    required String id,
-    required String name,
-    RegionBasicInfo? region,
-  }) = _ZoneBasicInfo;
+class ZoneBasicInfo {
+  final String id;
+  final String name;
+  final RegionBasicInfo? region;
 
-  factory ZoneBasicInfo.fromJson(Map<String, dynamic> json) =>
-      _$ZoneBasicInfoFromJson(json);
+  const ZoneBasicInfo({
+    required this.id,
+    required this.name,
+    this.region,
+  });
+
+  factory ZoneBasicInfo.fromJson(Map<String, dynamic> json) {
+    return ZoneBasicInfo(
+      id: (json['id'] ?? '').toString(),
+      name: (json['name'] ?? json['nameEn'] ?? json['nameAm'] ?? '').toString(),
+      region: json['region'] is Map<String, dynamic>
+          ? RegionBasicInfo.fromJson(json['region'] as Map<String, dynamic>)
+          : null,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    if (region != null) 'region': region!.toJson(),
+  };
 }
 
 /// Boundary hierarchy for display
-@freezed
-class BoundaryHierarchy with _$BoundaryHierarchy {
-  const factory BoundaryHierarchy({
+class BoundaryHierarchy {
+  final RegionModel? selectedRegion;
+  final ZoneModel? selectedZone;
+  final WoredaModel? selectedWoreda;
+  final List<RegionModel> regions;
+  final List<ZoneModel> zones;
+  final List<WoredaModel> woredas;
+
+  const BoundaryHierarchy({
+    this.selectedRegion,
+    this.selectedZone,
+    this.selectedWoreda,
+    this.regions = const [],
+    this.zones = const [],
+    this.woredas = const [],
+  });
+
+  factory BoundaryHierarchy.fromJson(Map<String, dynamic> json) {
+    return BoundaryHierarchy(
+      selectedRegion: json['selectedRegion'] is Map<String, dynamic>
+          ? RegionModel.fromJson(json['selectedRegion'] as Map<String, dynamic>)
+          : null,
+      selectedZone: json['selectedZone'] is Map<String, dynamic>
+          ? ZoneModel.fromJson(json['selectedZone'] as Map<String, dynamic>)
+          : null,
+      selectedWoreda: json['selectedWoreda'] is Map<String, dynamic>
+          ? WoredaModel.fromJson(json['selectedWoreda'] as Map<String, dynamic>)
+          : null,
+      regions: json['regions'] is List
+          ? (json['regions'] as List)
+              .map((r) => RegionModel.fromJson(r as Map<String, dynamic>))
+              .toList()
+          : const [],
+      zones: json['zones'] is List
+          ? (json['zones'] as List)
+              .map((z) => ZoneModel.fromJson(z as Map<String, dynamic>))
+              .toList()
+          : const [],
+      woredas: json['woredas'] is List
+          ? (json['woredas'] as List)
+              .map((w) => WoredaModel.fromJson(w as Map<String, dynamic>))
+              .toList()
+          : const [],
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    if (selectedRegion != null) 'selectedRegion': selectedRegion!.toJson(),
+    if (selectedZone != null) 'selectedZone': selectedZone!.toJson(),
+    if (selectedWoreda != null) 'selectedWoreda': selectedWoreda!.toJson(),
+    'regions': regions.map((r) => r.toJson()).toList(),
+    'zones': zones.map((z) => z.toJson()).toList(),
+    'woredas': woredas.map((w) => w.toJson()).toList(),
+  };
+
+  BoundaryHierarchy copyWith({
     RegionModel? selectedRegion,
     ZoneModel? selectedZone,
     WoredaModel? selectedWoreda,
-    @Default([]) List<RegionModel> regions,
-    @Default([]) List<ZoneModel> zones,
-    @Default([]) List<WoredaModel> woredas,
-  }) = _BoundaryHierarchy;
-
-  factory BoundaryHierarchy.fromJson(Map<String, dynamic> json) =>
-      _$BoundaryHierarchyFromJson(json);
+    List<RegionModel>? regions,
+    List<ZoneModel>? zones,
+    List<WoredaModel>? woredas,
+  }) {
+    return BoundaryHierarchy(
+      selectedRegion: selectedRegion ?? this.selectedRegion,
+      selectedZone: selectedZone ?? this.selectedZone,
+      selectedWoreda: selectedWoreda ?? this.selectedWoreda,
+      regions: regions ?? this.regions,
+      zones: zones ?? this.zones,
+      woredas: woredas ?? this.woredas,
+    );
+  }
 }
 
 /// Boundary statistics
-@freezed
-class BoundaryStatistics with _$BoundaryStatistics {
-  const factory BoundaryStatistics({
-    @Default(0) int totalRegions,
-    @Default(0) int totalZones,
-    @Default(0) int totalWoredas,
-    @Default(0) int totalPopulation,
+class BoundaryStatistics {
+  final int totalRegions;
+  final int totalZones;
+  final int totalWoredas;
+  final int totalPopulation;
+  final Map<String, int>? woredasByZone;
+  final Map<String, int>? zonesByRegion;
+
+  const BoundaryStatistics({
+    this.totalRegions = 0,
+    this.totalZones = 0,
+    this.totalWoredas = 0,
+    this.totalPopulation = 0,
+    this.woredasByZone,
+    this.zonesByRegion,
+  });
+
+  factory BoundaryStatistics.fromJson(Map<String, dynamic> json) {
+    Map<String, int>? parseMap(dynamic raw) {
+      if (raw is Map) {
+        return raw.map((k, v) => MapEntry(k.toString(), (v as num).toInt()));
+      }
+      return null;
+    }
+
+    return BoundaryStatistics(
+      totalRegions: (json['totalRegions'] ?? 0) as int,
+      totalZones: (json['totalZones'] ?? 0) as int,
+      totalWoredas: (json['totalWoredas'] ?? 0) as int,
+      totalPopulation: (json['totalPopulation'] ?? 0) as int,
+      woredasByZone: parseMap(json['woredasByZone']),
+      zonesByRegion: parseMap(json['zonesByRegion']),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'totalRegions': totalRegions,
+    'totalZones': totalZones,
+    'totalWoredas': totalWoredas,
+    'totalPopulation': totalPopulation,
+    if (woredasByZone != null) 'woredasByZone': woredasByZone,
+    if (zonesByRegion != null) 'zonesByRegion': zonesByRegion,
+  };
+
+  BoundaryStatistics copyWith({
+    int? totalRegions,
+    int? totalZones,
+    int? totalWoredas,
+    int? totalPopulation,
     Map<String, int>? woredasByZone,
     Map<String, int>? zonesByRegion,
-  }) = _BoundaryStatistics;
-
-  factory BoundaryStatistics.fromJson(Map<String, dynamic> json) =>
-      _$BoundaryStatisticsFromJson(json);
+  }) {
+    return BoundaryStatistics(
+      totalRegions: totalRegions ?? this.totalRegions,
+      totalZones: totalZones ?? this.totalZones,
+      totalWoredas: totalWoredas ?? this.totalWoredas,
+      totalPopulation: totalPopulation ?? this.totalPopulation,
+      woredasByZone: woredasByZone ?? this.woredasByZone,
+      zonesByRegion: zonesByRegion ?? this.zonesByRegion,
+    );
+  }
 }

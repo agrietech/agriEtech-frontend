@@ -19,8 +19,8 @@ class AiVoiceRepository {
     try {
       AppLogger.info('AI text inquiry: $question');
       final response = await _dioClient.post(
-        ApiEndpoints.aiTextInquiry,
-        data: {'question': question, 'language': language},
+        ApiEndpoints.aiVoiceInquiry,
+        data: {'userQuestion': question, 'question': question, 'language': language},
       );
       final raw = response.data is Map && response.data['data'] != null
           ? response.data['data'] as Map<String, dynamic>
@@ -86,7 +86,7 @@ class AiVoiceResponse {
     final amVal = json['responseAm'] ?? json['responseAmharic'] ?? amFromMap ?? (responseObj is String ? responseObj : '');
 
     return AiVoiceResponse(
-      transcript: json['transcript'] as String?,
+      transcript: (json['transcript'] ?? json['transcription']) as String?,
       responseEn: enVal is String ? enVal : (enVal?.toString() ?? ''),
       responseAm: amVal is String ? amVal : (amVal?.toString() ?? ''),
       audioUrlEn: json['audioUrlEn'] as String?,

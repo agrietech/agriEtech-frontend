@@ -14,12 +14,17 @@ class HistoricalWeatherModel {
     required this.maxTempC, required this.minTempC, required this.source,
   });
 
-  factory HistoricalWeatherModel.fromJson(Map<String, dynamic> json) => HistoricalWeatherModel(
-    period: json['period'] as String? ?? json['date'] as String? ?? '',
-    rainfallMm: ((json['rainfallMm'] ?? json['rainfall'] ?? json['precipitation'] ?? 0.0) as num).toDouble(),
-    avgTempC: ((json['avgTempC'] ?? json['tempMean'] ?? json['temperature'] ?? 0.0) as num).toDouble(),
-    maxTempC: ((json['maxTempC'] ?? json['tempMax'] ?? 0.0) as num).toDouble(),
-    minTempC: ((json['minTempC'] ?? json['tempMin'] ?? 0.0) as num).toDouble(),
-    source: json['source'] as String? ?? 'CHIRPS',
-  );
+  factory HistoricalWeatherModel.fromJson(Map<String, dynamic> json) {
+    final maxT = ((json['maxTempC'] ?? json['tempMax'] ?? json['tempMaxC'] ?? json['nasaPowerTempMax'] ?? 0.0) as num).toDouble();
+    final minT = ((json['minTempC'] ?? json['tempMin'] ?? json['tempMinC'] ?? json['nasaPowerTempMin'] ?? 0.0) as num).toDouble();
+    final avgT = ((json['avgTempC'] ?? json['tempMean'] ?? json['temperature'] ?? (maxT > 0 && minT > 0 ? (maxT + minT) / 2 : 0.0)) as num).toDouble();
+    return HistoricalWeatherModel(
+      period: json['period'] as String? ?? json['date'] as String? ?? json['observationDate'] as String? ?? json['month'] as String? ?? '',
+      rainfallMm: ((json['rainfallMm'] ?? json['chirpsRainfallMm'] ?? json['rainfall'] ?? json['precipitation'] ?? json['annualRainfallMm'] ?? 0.0) as num).toDouble(),
+      avgTempC: avgT,
+      maxTempC: maxT,
+      minTempC: minT,
+      source: json['source'] as String? ?? 'CHIRPS',
+    );
+  }
 }

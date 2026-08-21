@@ -18,8 +18,8 @@ class DashboardRepository {
       AppLogger.info('Fetching dashboard data');
       
       final response = await _dioClient.get(ApiConstants.dashboard);
-      
-      final data = DashboardData.fromJson(response.data);
+      final raw = response.data is Map ? (response.data['data'] ?? response.data) : response.data;
+      final data = DashboardData.fromJson(raw as Map<String, dynamic>);
       
       AppLogger.info('Dashboard data fetched successfully');
       
@@ -39,8 +39,8 @@ class DashboardRepository {
       AppLogger.info('Fetching regional breakdown');
       
       final response = await _dioClient.get(ApiConstants.regionalBreakdown);
-      
-      final List<dynamic> data = response.data as List<dynamic>;
+      final raw = response.data is Map ? (response.data['data'] ?? response.data) : response.data;
+      final List<dynamic> data = raw is List ? raw : [];
       final breakdown = data
           .map((json) => RegionalBreakdown.fromJson(json as Map<String, dynamic>))
           .toList();
@@ -78,7 +78,8 @@ class DashboardRepository {
         queryParameters: queryParams,
       );
       
-      final List<dynamic> data = response.data as List<dynamic>;
+      final raw = response.data is Map ? (response.data['data'] ?? response.data) : response.data;
+      final List<dynamic> data = raw is List ? raw : (raw is Map ? (raw['metrics'] ?? raw['series'] ?? []) : []);
       final trends = data
           .map((json) => TrendDataPoint.fromJson(json as Map<String, dynamic>))
           .toList();
@@ -116,7 +117,8 @@ class DashboardRepository {
         queryParameters: queryParams,
       );
       
-      final List<dynamic> data = response.data as List<dynamic>;
+      final raw = response.data is Map ? (response.data['data'] ?? response.data) : response.data;
+      final List<dynamic> data = raw is List ? raw : (raw is Map ? (raw['advisories'] ?? []) : []);
       final advisories = data
           .map((json) => AgronomicAdvisory.fromJson(json as Map<String, dynamic>))
           .toList();
@@ -144,7 +146,8 @@ class DashboardRepository {
       
       AppLogger.info('Risk statistics fetched successfully');
       
-      return response.data as Map<String, dynamic>;
+      final raw = response.data is Map ? (response.data['data'] ?? response.data) : response.data;
+      return raw as Map<String, dynamic>;
     } on DioException catch (e) {
       AppLogger.error('Failed to fetch risk statistics', e);
       throw NetworkError.fromDioException(e);

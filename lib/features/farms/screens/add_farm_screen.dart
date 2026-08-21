@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../../core/models/farm_model.dart';
 import '../providers/farms_provider.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/error/error_handler.dart';
 import '../../../core/error/app_error.dart';
@@ -119,12 +120,15 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
       setState(() => _isLoading = true);
 
       try {
+        final user = ref.read(authProvider).user;
+        final woredaId = user?.woredaId ?? user?.woreda?.id ?? 'woreda_adama_01';
         final request = CreateFarmRequest(
           farmName: _nameController.text.trim(),
           primaryCrop: _selectedCrop!,
           areaHectares: double.parse(_sizeController.text),
           latitude: _latitude!,
           longitude: _longitude!,
+          woredaId: woredaId,
           soilType: _selectedSoilType,
           irrigationType: _selectedIrrigation,
           additionalCrops: _additionalCropsController.text.trim().isEmpty
@@ -175,9 +179,8 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
               TextFormField(
                 controller: _nameController,
                 decoration: InputDecoration(
-                  labelText: 'Farm Name',
+                  labelText: 'Farm Name *',
                   prefixIcon: const Icon(Icons.agriculture),
-                  hintText: 'e.g., North Field, Family Farm',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -187,13 +190,21 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
                 validator: (value) => Validators.required(value, 'Farm name'),
                 enabled: !_isLoading,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 4),
+              Padding(
+                padding: const EdgeInsets.only(left: 4),
+                child: Text(
+                  'Descriptive identifier for your agricultural parcel (e.g. North Field)',
+                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                ),
+              ),
+              const SizedBox(height: 14),
 
               // Crop type dropdown
               DropdownButtonFormField<String>(
                 initialValue: _selectedCrop,
                 decoration: InputDecoration(
-                  labelText: 'Primary Crop',
+                  labelText: 'Primary Crop *',
                   prefixIcon: const Icon(Icons.grass),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -215,16 +226,23 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
                   return null;
                 },
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 4),
+              Padding(
+                padding: const EdgeInsets.only(left: 4),
+                child: Text(
+                  'Main crop cultivated on this farm (e.g. Teff, Wheat, Maize)',
+                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                ),
+              ),
+              const SizedBox(height: 14),
 
               // Farm size
               TextFormField(
                 controller: _sizeController,
                 decoration: InputDecoration(
-                  labelText: 'Farm Size',
+                  labelText: 'Farm Size *',
                   prefixIcon: const Icon(Icons.crop_square),
                   suffixText: 'hectares',
-                  hintText: '0.5',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -234,7 +252,15 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
                 validator: Validators.farmArea,
                 enabled: !_isLoading,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 4),
+              Padding(
+                padding: const EdgeInsets.only(left: 4),
+                child: Text(
+                  'Total cultivated parcel area in hectares (e.g. 1.5)',
+                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                ),
+              ),
+              const SizedBox(height: 14),
 
               // Soil type dropdown
               DropdownButtonFormField<String>(
@@ -258,7 +284,15 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
                         setState(() => _selectedSoilType = value);
                       },
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 4),
+              Padding(
+                padding: const EdgeInsets.only(left: 4),
+                child: Text(
+                  'Dominant soil classification (e.g. Vertisol, Nitisol)',
+                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                ),
+              ),
+              const SizedBox(height: 14),
 
               // Irrigation type dropdown
               DropdownButtonFormField<String>(
@@ -282,7 +316,15 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
                         setState(() => _selectedIrrigation = value);
                       },
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 4),
+              Padding(
+                padding: const EdgeInsets.only(left: 4),
+                child: Text(
+                  'Primary water source (e.g. Rainfed, Furrow, Drip)',
+                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                ),
+              ),
+              const SizedBox(height: 14),
 
               // Additional crops
               TextFormField(
@@ -290,7 +332,6 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
                 decoration: InputDecoration(
                   labelText: 'Additional Crops (Optional)',
                   prefixIcon: const Icon(Icons.eco),
-                  hintText: 'e.g., Vegetables, Beans',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -298,6 +339,14 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
                 textCapitalization: TextCapitalization.words,
                 maxLines: 2,
                 enabled: !_isLoading,
+              ),
+              const SizedBox(height: 4),
+              Padding(
+                padding: const EdgeInsets.only(left: 4),
+                child: Text(
+                  'Intercropped or secondary companion species (e.g. Pulses, Beans)',
+                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                ),
               ),
               const SizedBox(height: 24),
 

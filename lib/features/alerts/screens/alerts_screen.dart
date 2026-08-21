@@ -96,7 +96,7 @@ class AlertsScreen extends ConsumerWidget {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              _formatTime(alert.sentAt),
+                              _formatTime(alert.sentDate),
                               style: Theme.of(context).textTheme.bodySmall,
                             ),
                           ],
@@ -104,7 +104,7 @@ class AlertsScreen extends ConsumerWidget {
                       ],
                     ),
                     isThreeLine: true,
-                    trailing: !alert.isRead!
+                    trailing: !alert.isRead
                         ? Container(
                             width: 10,
                             height: 10,
@@ -265,7 +265,7 @@ class AlertsScreen extends ConsumerWidget {
                       const Icon(Icons.schedule, size: 16),
                       const SizedBox(width: 8),
                       Text(
-                        '${alert.sentAt.day}/${alert.sentAt.month}/${alert.sentAt.year} ${alert.sentAt.hour}:${alert.sentAt.minute.toString().padLeft(2, '0')}',
+                        '${alert.sentDate.day}/${alert.sentDate.month}/${alert.sentDate.year} ${alert.sentDate.hour}:${alert.sentDate.minute.toString().padLeft(2, '0')}',
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],

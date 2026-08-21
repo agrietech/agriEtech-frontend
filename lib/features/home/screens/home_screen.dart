@@ -5,6 +5,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/role_utils.dart';
 import '../../../core/widgets/agrietech_logo.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../ai_voice/presentation/widgets/ai_assistant_sheet.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -341,6 +342,17 @@ class HomeScreen extends ConsumerWidget {
               ),
             ),
           ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => AiAssistantSheet.show(context),
+        backgroundColor: const Color(0xFF1B5E20),
+        foregroundColor: Colors.white,
+        elevation: 4,
+        icon: const Icon(Icons.psychology, color: Color(0xFFF59E0B)),
+        label: const Text(
+          'Agri-AI Assistant',
+          style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 0.3),
         ),
       ),
     );

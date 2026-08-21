@@ -10,6 +10,7 @@ import '../widgets/weather_summary_card.dart';
 import '../widgets/recent_alerts_card.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../ai_voice/presentation/widgets/ai_assistant_sheet.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -53,6 +54,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       body: RefreshIndicator(
         onRefresh: _refreshDashboard,
         child: _buildBody(context, dashboardState, authState),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => AiAssistantSheet.show(context),
+        backgroundColor: const Color(0xFF1B5E20),
+        foregroundColor: Colors.white,
+        tooltip: 'Agri-AI Assistant',
+        child: const Icon(Icons.psychology, color: Color(0xFFF59E0B)),
       ),
     );
   }
