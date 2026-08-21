@@ -129,26 +129,34 @@ class FarmBasicInfo {
 class CreateDiagnosisRequest {
   final String farmId;
   final String imageBase64;
+  final String? imagePath;
   final String? cropType;
+  final String language;
 
   const CreateDiagnosisRequest({
     required this.farmId,
-    required this.imageBase64,
+    this.imageBase64 = '',
+    this.imagePath,
     this.cropType,
+    this.language = 'en',
   });
 
   factory CreateDiagnosisRequest.fromJson(Map<String, dynamic> json) {
     return CreateDiagnosisRequest(
       farmId: (json['farmId'] ?? '').toString(),
       imageBase64: (json['imageBase64'] ?? '').toString(),
+      imagePath: json['imagePath'] as String?,
       cropType: json['cropType'] as String?,
+      language: (json['language'] ?? 'en').toString(),
     );
   }
 
   Map<String, dynamic> toJson() => {
     'farmId': farmId,
-    'imageBase64': imageBase64,
+    if (imageBase64.isNotEmpty) 'imageBase64': imageBase64,
+    if (imagePath != null) 'imagePath': imagePath,
     if (cropType != null) 'cropType': cropType,
+    'language': language,
   };
 }
 

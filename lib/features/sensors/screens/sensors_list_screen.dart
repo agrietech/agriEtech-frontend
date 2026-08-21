@@ -133,7 +133,7 @@ class SensorsListScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Check your connection and try again.',
+                        'Please check your network connection and try again.',
                         style: Theme.of(context).textTheme.bodyMedium,
                         textAlign: TextAlign.center,
                       ),

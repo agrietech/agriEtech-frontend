@@ -42,13 +42,11 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
     setState(() => _isGettingLocation = true);
 
     try {
-      // Check if location services are enabled
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
         throw LocationError.serviceDisabled();
       }
 
-      // Check permissions
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
@@ -61,7 +59,6 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
         throw LocationError.permissionDenied();
       }
 
-      // Get position
       final position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
@@ -162,53 +159,46 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Add Farm'),
+        title: const Text('Add Farm', style: TextStyle(fontWeight: FontWeight.bold)),
         elevation: 0,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Farm name
+              // Farm Name
               TextFormField(
                 controller: _nameController,
                 decoration: InputDecoration(
                   labelText: 'Farm Name *',
                   prefixIcon: const Icon(Icons.agriculture),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  filled: true,
+                  fillColor: isDark ? const Color(0xFF1B2E1E) : const Color(0xFFF9FAF9),
                 ),
                 textCapitalization: TextCapitalization.words,
                 textInputAction: TextInputAction.next,
                 validator: (value) => Validators.required(value, 'Farm name'),
                 enabled: !_isLoading,
               ),
-              const SizedBox(height: 4),
-              Padding(
-                padding: const EdgeInsets.only(left: 4),
-                child: Text(
-                  'Descriptive identifier for your agricultural parcel (e.g. North Field)',
-                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-                ),
-              ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 16),
 
-              // Crop type dropdown
+              // Primary Crop Dropdown
               DropdownButtonFormField<String>(
                 initialValue: _selectedCrop,
                 decoration: InputDecoration(
                   labelText: 'Primary Crop *',
                   prefixIcon: const Icon(Icons.grass),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  filled: true,
+                  fillColor: isDark ? const Color(0xFF1B2E1E) : const Color(0xFFF9FAF9),
                 ),
                 items: CropTypes.common.map((crop) {
                   return DropdownMenuItem(
@@ -226,51 +216,35 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
                   return null;
                 },
               ),
-              const SizedBox(height: 4),
-              Padding(
-                padding: const EdgeInsets.only(left: 4),
-                child: Text(
-                  'Main crop cultivated on this farm (e.g. Teff, Wheat, Maize)',
-                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-                ),
-              ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 16),
 
-              // Farm size
+              // Farm Size
               TextFormField(
                 controller: _sizeController,
                 decoration: InputDecoration(
                   labelText: 'Farm Size *',
                   prefixIcon: const Icon(Icons.crop_square),
                   suffixText: 'hectares',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  filled: true,
+                  fillColor: isDark ? const Color(0xFF1B2E1E) : const Color(0xFFF9FAF9),
                 ),
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 textInputAction: TextInputAction.next,
                 validator: Validators.farmArea,
                 enabled: !_isLoading,
               ),
-              const SizedBox(height: 4),
-              Padding(
-                padding: const EdgeInsets.only(left: 4),
-                child: Text(
-                  'Total cultivated parcel area in hectares (e.g. 1.5)',
-                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-                ),
-              ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 16),
 
-              // Soil type dropdown
+              // Soil Type Dropdown
               DropdownButtonFormField<String>(
                 initialValue: _selectedSoilType,
                 decoration: InputDecoration(
                   labelText: 'Soil Type (Optional)',
                   prefixIcon: const Icon(Icons.landscape),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  filled: true,
+                  fillColor: isDark ? const Color(0xFF1B2E1E) : const Color(0xFFF9FAF9),
                 ),
                 items: SoilTypes.displayNames.entries.map((entry) {
                   return DropdownMenuItem(
@@ -284,25 +258,17 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
                         setState(() => _selectedSoilType = value);
                       },
               ),
-              const SizedBox(height: 4),
-              Padding(
-                padding: const EdgeInsets.only(left: 4),
-                child: Text(
-                  'Dominant soil classification (e.g. Vertisol, Nitisol)',
-                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-                ),
-              ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 16),
 
-              // Irrigation type dropdown
+              // Irrigation Type Dropdown
               DropdownButtonFormField<String>(
                 initialValue: _selectedIrrigation,
                 decoration: InputDecoration(
                   labelText: 'Irrigation Type (Optional)',
                   prefixIcon: const Icon(Icons.water_drop),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  filled: true,
+                  fillColor: isDark ? const Color(0xFF1B2E1E) : const Color(0xFFF9FAF9),
                 ),
                 items: IrrigationTypes.displayNames.entries.map((entry) {
                   return DropdownMenuItem(
@@ -316,45 +282,30 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
                         setState(() => _selectedIrrigation = value);
                       },
               ),
-              const SizedBox(height: 4),
-              Padding(
-                padding: const EdgeInsets.only(left: 4),
-                child: Text(
-                  'Primary water source (e.g. Rainfed, Furrow, Drip)',
-                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-                ),
-              ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 16),
 
-              // Additional crops
+              // Additional Crops
               TextFormField(
                 controller: _additionalCropsController,
                 decoration: InputDecoration(
                   labelText: 'Additional Crops (Optional)',
                   prefixIcon: const Icon(Icons.eco),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  filled: true,
+                  fillColor: isDark ? const Color(0xFF1B2E1E) : const Color(0xFFF9FAF9),
                 ),
                 textCapitalization: TextCapitalization.words,
-                maxLines: 2,
+                maxLines: 1,
                 enabled: !_isLoading,
               ),
-              const SizedBox(height: 4),
-              Padding(
-                padding: const EdgeInsets.only(left: 4),
-                child: Text(
-                  'Intercropped or secondary companion species (e.g. Pulses, Beans)',
-                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-                ),
-              ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
 
-              // Location card
+              // Location Card
               Card(
-                elevation: 2,
+                elevation: 0,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(14),
+                  side: BorderSide(color: isDark ? const Color(0xFF263E26) : Colors.grey.shade300),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(16),
@@ -363,10 +314,7 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
                     children: [
                       Row(
                         children: [
-                          Icon(
-                            Icons.location_on,
-                            color: theme.primaryColor,
-                          ),
+                          Icon(Icons.location_on, color: theme.primaryColor, size: 22),
                           const SizedBox(width: 8),
                           Text(
                             'Farm Location',
@@ -382,34 +330,27 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
                             color: Colors.green.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: Colors.green.withValues(alpha: 0.3),
-                            ),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
                           ),
                           child: Row(
                             children: [
-                              const Icon(
-                                Icons.check_circle,
-                                color: Colors.green,
-                                size: 20,
-                              ),
-                              const SizedBox(width: 8),
+                              const Icon(Icons.check_circle, color: Colors.green, size: 20),
+                              const SizedBox(width: 10),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      'Location Captured',
+                                      'GPS Coordinates Captured',
                                       style: theme.textTheme.bodyMedium?.copyWith(
                                         fontWeight: FontWeight.bold,
-                                        color: Colors.green[900],
+                                        color: Colors.green[800],
                                       ),
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
-                                      'Lat: ${_latitude!.toStringAsFixed(6)}, '
-                                      'Lng: ${_longitude!.toStringAsFixed(6)}',
+                                      'Lat: ${_latitude!.toStringAsFixed(5)}, Lng: ${_longitude!.toStringAsFixed(5)}',
                                       style: theme.textTheme.bodySmall,
                                     ),
                                   ],
@@ -419,57 +360,25 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
                           ),
                         ),
                         const SizedBox(height: 12),
-                      ] else ...[
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.orange.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: Colors.orange.withValues(alpha: 0.3),
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.info,
-                                color: Colors.orange,
-                                size: 20,
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  'Please capture the farm location using GPS',
-                                  style: theme.textTheme.bodySmall,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 12),
                       ],
                       ElevatedButton.icon(
-                        onPressed: _isGettingLocation || _isLoading
-                            ? null
-                            : _getCurrentLocation,
+                        onPressed: (_isLoading || _isGettingLocation) ? null : _getCurrentLocation,
                         icon: _isGettingLocation
                             ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(strokeWidth: 2),
                               )
-                            : const Icon(Icons.my_location),
+                            : const Icon(Icons.my_location, size: 18),
                         label: Text(
-                          _latitude == null ? 'Capture Location' : 'Update Location',
+                          _latitude != null ? 'Recapture Location' : 'Capture Current Location',
                         ),
                         style: ElevatedButton.styleFrom(
-                          minimumSize: const Size(double.infinity, 48),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
+                          backgroundColor: theme.primaryColor.withValues(alpha: 0.15),
+                          foregroundColor: theme.primaryColor,
+                          elevation: 0,
+                          minimumSize: const Size(double.infinity, 44),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
                       ),
                     ],
@@ -478,31 +387,28 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
               ),
               const SizedBox(height: 24),
 
-              // Save button
-              ElevatedButton(
-                onPressed: _isLoading ? null : _saveFarm,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+              // Save Farm Button
+              SizedBox(
+                height: 50,
+                child: ElevatedButton.icon(
+                  onPressed: _isLoading ? null : _saveFarm,
+                  icon: const Icon(Icons.save, size: 20),
+                  label: _isLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : const Text('Save Farm', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1B5E20),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
-                child: _isLoading
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Text(
-                        'Save Farm',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
               ),
             ],
           ),

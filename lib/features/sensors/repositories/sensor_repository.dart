@@ -162,6 +162,54 @@ class SensorRepository {
     }
   }
 
+  /// Get latest sensor reading for a hardware device
+  Future<SensorReading?> getLatestSensorReading(String hardwareId) async {
+    try {
+      AppLogger.info('Fetching latest sensor reading', {'hardwareId': hardwareId});
+
+      final response = await _dioClient.get('/sensors/$hardwareId/latest');
+
+      final raw = response.data is Map && response.data['data'] != null
+          ? response.data['data'] as Map<String, dynamic>
+          : response.data as Map<String, dynamic>;
+      
+      final map = Map<String, dynamic>.from(raw);
+      map['createdAt'] = map['createdAt'] ?? DateTime.now().toIso8601String();
+      map['recordedAt'] = map['recordedAt'] ?? map['timestamp'] ?? map['createdAt'];
+      map['sensorId'] = map['sensorId'] ?? hardwareId;
+      map['id'] = map['id'] ?? '';
+      return SensorReading.fromJson(map);
+    } on DioException catch (e) {
+      AppLogger.warning('Failed to fetch latest sensor reading', e);
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// Submit sensor telemetry reading
+  Future<Map<String, dynamic>> submitTelemetry(Map<String, dynamic> telemetryData) async {
+    try {
+      AppLogger.info('Submitting sensor telemetry');
+
+      final response = await _dioClient.post(
+        '/sensors/telemetry',
+        data: telemetryData,
+      );
+
+      final raw = response.data is Map && response.data['data'] != null
+          ? response.data['data'] as Map<String, dynamic>
+          : response.data as Map<String, dynamic>;
+
+      return raw;
+    } on DioException catch (e) {
+      AppLogger.error('Failed to submit telemetry', e);
+      throw ErrorHandler.handleError(e);
+    } catch (e) {
+      throw const UnknownError(message: 'Failed to submit telemetry');
+    }
+  }
+
   /// Update sensor status
   Future<SensorModel> updateSensorStatus(String sensorId, bool isActive) async {
     try {

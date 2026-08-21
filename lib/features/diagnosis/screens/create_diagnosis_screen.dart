@@ -573,7 +573,7 @@ class _CreateDiagnosisScreenState extends ConsumerState<CreateDiagnosisScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Failed to select image. Please try again.'),
+            content: Text('Unable to select image. Please check permissions and try again.'),
             backgroundColor: Color(0xFFD32F2F),
           ),
         );
@@ -648,7 +648,7 @@ class _CreateDiagnosisScreenState extends ConsumerState<CreateDiagnosisScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Failed to submit diagnosis. Please try again.'),
+            content: Text('Unable to submit diagnosis. Please check your connection and try again.'),
             backgroundColor: Color(0xFFD32F2F),
           ),
         );

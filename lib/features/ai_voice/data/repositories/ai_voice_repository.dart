@@ -57,6 +57,27 @@ class AiVoiceRepository {
       throw Exception('Voice inquiry failed: $e');
     }
   }
+
+  /// Synthesize text to speech audio URL
+  Future<String?> synthesizeTextToSpeech({
+    required String text,
+    String language = 'am',
+  }) async {
+    try {
+      AppLogger.info('Synthesizing text to speech: $text');
+      final response = await _dioClient.post(
+        ApiEndpoints.aiSpeakResponse,
+        data: {'text': text, 'language': language},
+      );
+      final raw = response.data is Map && response.data['data'] != null
+          ? response.data['data'] as Map<String, dynamic>
+          : response.data as Map<String, dynamic>;
+      return raw['audioUrl'] as String?;
+    } catch (e) {
+      AppLogger.warning('Text to speech synthesis failed: $e');
+      return null;
+    }
+  }
 }
 
 /// Response model matching backend /api/v1/ai/* response payload

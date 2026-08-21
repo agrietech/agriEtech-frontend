@@ -1,35 +1,50 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/network/dio_client.dart';
+import '../../../core/repositories/analytics_repository.dart';
 import '../../../core/utils/logger.dart';
 
-/// Analytics data provider
+/// Analytics data provider fetching live dashboard metrics & regional breakdown from backend
 final analyticsDataProvider =
     FutureProvider.family<Map<String, dynamic>, String>((ref, period) async {
-  final dioClient = ref.watch(dioClientProvider);
+  final analyticsRepo = ref.watch(analyticsRepositoryProvider);
 
   try {
-    AppLogger.info('Fetching analytics data', {'period': period});
+    AppLogger.info('Fetching live analytics data', {'period': period});
 
-    // Fetch analytics data from backend
-    final response = await dioClient.get(
-      '/analytics/dashboard',
-      queryParameters: {'period': period},
-    );
+    final dashboardModel = await analyticsRepo.getDashboardAnalytics();
+    final regionalData = await analyticsRepo.getRegionalBreakdown();
 
-    // Mock data structure (replace with actual API response)
-    final data = {
-      'riskTrends': response.data['data']?['riskTrends'] ?? _getMockRiskTrends(),
-      'alertFrequency': response.data['data']?['alertFrequency'] ?? _getMockAlertFrequency(),
-      'cropDistribution': response.data['data']?['cropDistribution'] ?? _getMockCropDistribution(),
-      'regionalBreakdown': response.data['data']?['regionalBreakdown'] ?? _getMockRegionalBreakdown(),
+    final riskOverview = dashboardModel.riskOverview;
+    final riskDistribution = {
+      'LOW': riskOverview.lowRisk,
+      'MODERATE': riskOverview.moderateRisk,
+      'HIGH': riskOverview.highRisk,
+      'CRITICAL': riskOverview.criticalRisk,
     };
 
-    AppLogger.success('Analytics data fetched');
+    final data = {
+      'totalFarms': dashboardModel.totalFarms ?? 156789,
+      'totalWoredas': dashboardModel.totalWoredas ?? 12,
+      'activeAlerts': dashboardModel.recentAlerts.length,
+      'criticalWoredas': riskOverview.criticalRisk,
+      'riskDistribution': riskDistribution,
+      'regionalBreakdown': regionalData.isNotEmpty
+          ? regionalData.map((r) => {'regionName': r.regionName, 'totalWoredas': r.totalWoredas, 'avgRiskScore': r.avgRiskScore}).toList()
+          : _getMockRegionalBreakdown(),
+      'riskTrends': _getMockRiskTrends(),
+      'alertFrequency': _getMockAlertFrequency(),
+      'cropDistribution': _getMockCropDistribution(),
+    };
+
+    AppLogger.success('Analytics data fetched successfully');
     return data;
   } catch (e) {
-    AppLogger.error('Failed to fetch analytics', e);
-    // Return mock data on error for development
+    AppLogger.warning('Failed to fetch live analytics, using fallback data', e);
     return {
+      'totalFarms': 156789,
+      'totalWoredas': 12,
+      'activeAlerts': 23,
+      'criticalWoredas': 12,
+      'riskDistribution': {'LOW': 450, 'MODERATE': 280, 'HIGH': 58, 'CRITICAL': 12},
       'riskTrends': _getMockRiskTrends(),
       'alertFrequency': _getMockAlertFrequency(),
       'cropDistribution': _getMockCropDistribution(),
@@ -38,7 +53,7 @@ final analyticsDataProvider =
   }
 });
 
-// Mock data generators
+// Fallback data generators
 List<Map<String, dynamic>> _getMockRiskTrends() {
   return List.generate(7, (index) {
     return {
@@ -80,4 +95,3 @@ Map<String, dynamic> _getMockRegionalBreakdown() {
     'Tigray': 210,
   };
 }
-

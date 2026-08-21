@@ -19,10 +19,23 @@ class DiagnosisRepository {
         'cropType': request.cropType,
       });
 
-      final response = await _dioClient.post(
-        ApiEndpoints.diagnose,
-        data: request.toJson(),
-      );
+      final Response response;
+      if (request.imagePath != null && request.imagePath!.isNotEmpty) {
+        response = await _dioClient.uploadFile(
+          ApiEndpoints.diagnose,
+          request.imagePath!,
+          data: {
+            'farmId': request.farmId,
+            if (request.cropType != null) 'cropType': request.cropType,
+            'language': request.language,
+          },
+        );
+      } else {
+        response = await _dioClient.post(
+          ApiEndpoints.diagnose,
+          data: request.toJson(),
+        );
+      }
 
       final raw = response.data is Map && response.data['data'] != null
           ? response.data['data'] as Map<String, dynamic>
