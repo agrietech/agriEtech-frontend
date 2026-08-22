@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/validators.dart';
 import '../providers/farms_provider.dart';
 
@@ -340,7 +339,7 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
 
             // Primary Crop Dropdown
             DropdownButtonFormField<String>(
-              value: _selectedCrop,
+              initialValue: _selectedCrop,
               decoration: InputDecoration(
                 labelText: 'Primary Crop',
                 prefixIcon: const Icon(Icons.grass),
@@ -378,7 +377,7 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
 
             // Soil Classification
             DropdownButtonFormField<String>(
-              value: _selectedSoil,
+              initialValue: _selectedSoil,
               decoration: InputDecoration(
                 labelText: 'Soil Classification',
                 prefixIcon: const Icon(Icons.terrain),
@@ -414,7 +413,7 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
 
             // Irrigation Type
             DropdownButtonFormField<String>(
-              value: _selectedIrrigation,
+              initialValue: _selectedIrrigation,
               decoration: InputDecoration(
                 labelText: 'Water / Irrigation Type',
                 prefixIcon: const Icon(Icons.water_drop),
@@ -525,7 +524,7 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
                   if (_locationMode == 0) ...[
                     // Region Dropdown
                     DropdownButtonFormField<String>(
-                      value: _selectedRegion,
+                      initialValue: _selectedRegion,
                       decoration: InputDecoration(
                         labelText: '1. Select Ethiopian Administrative Region',
                         prefixIcon: const Icon(Icons.public),
@@ -547,7 +546,7 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
 
                     // Woreda Dropdown
                     DropdownButtonFormField<String>(
-                      value: _selectedWoredaName,
+                      initialValue: _selectedWoredaName,
                       decoration: InputDecoration(
                         labelText: '2. Select Woreda Hub / Zone',
                         prefixIcon: const Icon(Icons.location_city),

@@ -304,9 +304,9 @@ class HomeScreen extends ConsumerWidget {
                                   ),
                                 ],
                               ),
-                              Column(
+                              const Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
-                                children: const [
+                                children: [
                                   Text(
                                     'AI Agronomic Assistant',
                                     style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),

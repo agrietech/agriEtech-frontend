@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/models/farm_model.dart';
+
 import '../../farms/providers/farms_provider.dart';
 import '../models/diagnosis_models.dart';
 import '../providers/diagnosis_provider.dart';
@@ -406,7 +406,7 @@ class _CreateDiagnosisScreenState extends ConsumerState<CreateDiagnosisScreen> {
             ),
             const SizedBox(height: 20),
             DropdownButtonFormField<String>(
-              value: _selectedCropType,
+              initialValue: _selectedCropType,
               decoration: InputDecoration(
                 labelText: 'Select Crop Type',
                 prefixIcon: const Icon(Icons.grass),
@@ -420,7 +420,7 @@ class _CreateDiagnosisScreenState extends ConsumerState<CreateDiagnosisScreen> {
             const SizedBox(height: 16),
             if (farmsAsync.farms.isNotEmpty)
               DropdownButtonFormField<String>(
-                value: _selectedFarmId,
+                initialValue: _selectedFarmId,
                 decoration: InputDecoration(
                   labelText: 'Link to Farm Plot (Optional)',
                   prefixIcon: const Icon(Icons.agriculture),

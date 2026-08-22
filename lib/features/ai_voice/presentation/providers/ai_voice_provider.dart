@@ -82,13 +82,13 @@ class AiVoiceNotifier extends StateNotifier<AiVoiceState> {
     } catch (e) {
       final fallbackRes = AiVoiceResponse(
         transcript: question,
-        responseEn: 'Regarding your inquiry on "' + question + '": Inspect crop condition, monitor soil moisture, and consult extension officers.',
-        responseAm: 'ስለ ጥያቄዎ "' + question + '"፡ የሰብልዎን ሁኔታ በየጊዜው ይከታተሉ፣ የአፈር እርጥበትን ይጠብቁ እና ከልማት ጣቢያ ጋር ይማከሩ።',
+        responseEn: 'Regarding your inquiry on "$question": Inspect crop condition, monitor soil moisture, and consult extension officers.',
+        responseAm: 'የድምፅ ጥያቄዎ ተቀብለናል፡ የሰብልዎን ሁኔታ ይከታተሉ፤ እርጥበትን ይቆጣጠሩ።',
         recommendedAction: 'Inspect crop condition and follow local extension advisory.',
         aiModel: 'AgriEtech Local Agronomic Engine',
         detectedLanguage: state.language,
-        audioUrlAm: 'https://translate.google.com/translate_tts?ie=UTF-8&q=' + Uri.encodeComponent('ስለ ጥያቄዎ የሰብልዎን ሁኔታ በየጊዜው ይከታተሉ') + '&tl=am&client=tw-ob',
-        audioUrlEn: 'https://translate.google.com/translate_tts?ie=UTF-8&q=' + Uri.encodeComponent('Regarding your inquiry maintain regular crop inspection') + '&tl=en&client=tw-ob',
+        audioUrlAm: 'https://translate.google.com/translate_tts?ie=UTF-8&q=${Uri.encodeComponent('የሰብልዎን ሁኔታ ይከታተሉ')}&tl=am&client=tw-ob',
+        audioUrlEn: 'https://translate.google.com/translate_tts?ie=UTF-8&q=${Uri.encodeComponent('Regarding your inquiry maintain regular crop inspection')}&tl=en&client=tw-ob',
       );
       
       final aiMsg = ChatMessage(
@@ -131,8 +131,8 @@ class AiVoiceNotifier extends StateNotifier<AiVoiceState> {
         recommendedAction: 'Inspect farm condition.',
         aiModel: 'AgriEtech Local Agronomic Engine',
         detectedLanguage: state.language,
-        audioUrlAm: 'https://translate.google.com/translate_tts?ie=UTF-8&q=' + Uri.encodeComponent('የድምፅ ጥያቄዎ ተስተናግዷል') + '&tl=am&client=tw-ob',
-        audioUrlEn: 'https://translate.google.com/translate_tts?ie=UTF-8&q=' + Uri.encodeComponent('Voice inquiry processed') + '&tl=en&client=tw-ob',
+        audioUrlAm: 'https://translate.google.com/translate_tts?ie=UTF-8&q=${Uri.encodeComponent('የሰብልዎን ሁኔታ ይከታተሉ')}&tl=am&client=tw-ob',
+        audioUrlEn: 'https://translate.google.com/translate_tts?ie=UTF-8&q=${Uri.encodeComponent('Voice inquiry processed')}&tl=en&client=tw-ob',
       );
       
       final aiMsg = ChatMessage(

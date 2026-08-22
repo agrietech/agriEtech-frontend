@@ -153,7 +153,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
                       const Icon(Icons.error_outline, size: 48, color: Colors.red),
                       const SizedBox(height: 16),
                       Text(
-                        'Failed to load analytics: ' + error.toString(),
+                        'Failed to load analytics: $error',
                         textAlign: TextAlign.center,
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
@@ -276,7 +276,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Ethiopian Season: ' + calendar.currentSeason,
+                    'Ethiopian Season: ${calendar.currentSeason}',
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                   ),
                 ),
@@ -288,7 +288,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
-                      calendar.daysRemaining.toString() + ' days left',
+                      '${calendar.daysRemaining} days left',
                       style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF0369A1)),
                     ),
                   ),
@@ -306,7 +306,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
                   const Icon(Icons.grass, color: Color(0xFF15803D), size: 18),
                   const SizedBox(width: 8),
                   Text(
-                    'Vegetative Stage: ' + calendar.cropStage,
+                    'Vegetative Stage: ${calendar.cropStage}',
                     style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
                   ),
                 ],
@@ -807,7 +807,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
                     children: [
                       Text(entry.key, style: const TextStyle(fontWeight: FontWeight.w500)),
                       Chip(
-                        label: Text(entry.value.toString() + ' woredas/farms', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                        label: Text('${entry.value} woredas/farms', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                         backgroundColor: const Color(0xFFE0F2FE),
                         side: BorderSide.none,
                       ),
@@ -845,9 +845,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
       builder: (context) => AlertDialog(
         title: const Text('Export Analytics Report'),
         content: const Text(
-          'Choose report export format:\n\n' +
-          '• Executive PDF - Comprehensive charts and AI advisories\n' +
-          '• CSV Spreadsheet - Raw sensor & satellite telemetry dataset',
+          'Choose report export format:\n\n• Executive PDF - Comprehensive charts and AI advisories\n• CSV Spreadsheet - Raw sensor & satellite telemetry dataset',
         ),
         actions: [
           TextButton(
