@@ -623,7 +623,7 @@ class _CreateDiagnosisScreenState extends ConsumerState<CreateDiagnosisScreen> {
 
       // Create diagnosis request with live bytes
       final request = CreateDiagnosisRequest(
-        farmId: _selectedFarmId!,
+        farmId: _selectedFarmId ?? '',
         imageBase64: base64Image,
         imageBytes: uploadBytes,
         cropType: _selectedCropType,

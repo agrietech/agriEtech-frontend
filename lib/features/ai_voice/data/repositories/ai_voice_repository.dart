@@ -128,8 +128,8 @@ class AiVoiceResponse {
       recommendedAction: rootData['recommendedAction'] as String?,
       aiModel: (rootData['aiModel'] ?? 'Google Gemini 2.5 Flash (OpenRouter)') as String?,
       detectedLanguage: rootData['detectedLanguage'] as String?,
-      audioUrlEn: (rootData['audioUrlEn'] ?? rootData['audioSynthesis']?['audioUrlEn']) as String?,
-      audioUrlAm: (rootData['audioUrlAm'] ?? rootData['audioSynthesis']?['audioUrlAm']) as String?,
+      audioUrlEn: (rootData['audioUrlEn'] ?? rootData['audioSynthesis']?['audioUrl'] ?? rootData['audioUrl']) as String?,
+      audioUrlAm: (rootData['audioUrlAm'] ?? rootData['audioSynthesis']?['audioUrl'] ?? rootData['audioUrl']) as String?,
       metadata: rootData['metadata'] as Map<String, dynamic>?,
     );
   }

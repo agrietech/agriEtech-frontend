@@ -25,8 +25,18 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
   String? _selectedCrop;
   String? _selectedSoilType;
   String? _selectedIrrigation;
-  double? _latitude;
-  double? _longitude;
+  double? _latitude = 8.54;
+  double? _longitude = 39.27;
+
+  @override
+  void initState() {
+    super.initState();
+    _latitude = 8.54;
+    _longitude = 39.27;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _getCurrentLocation();
+    });
+  }
   bool _isLoading = false;
   bool _isGettingLocation = false;
 
