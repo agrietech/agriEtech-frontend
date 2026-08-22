@@ -1,3 +1,4 @@
+import 'package:url_launcher/url_launcher.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -104,10 +105,29 @@ class _AiAssistantSheetState extends ConsumerState<AiAssistantSheet> with Single
     FocusScope.of(context).unfocus();
   }
 
-  void _toggleAudioPlayback() {
-    setState(() => _isPlayingAudio = !_isPlayingAudio);
-    if (_isPlayingAudio) {
-      Future.delayed(const Duration(seconds: 6), () {
+  Future<void> _toggleAudioPlayback() async {
+    final aiState = ref.read(aiVoiceProvider);
+    final resp = aiState.lastResponse;
+    final url = aiState.language == 'am' 
+        ? (resp?.audioUrlAm ?? resp?.audioUrlEn) 
+        : (resp?.audioUrlEn ?? resp?.audioUrlAm);
+
+    if (url != null && url.isNotEmpty) {
+      setState(() => _isPlayingAudio = true);
+      try {
+        final uri = Uri.parse(url);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+        }
+      } catch (_) {
+      } finally {
+        Future.delayed(const Duration(seconds: 5), () {
+          if (mounted) setState(() => _isPlayingAudio = false);
+        });
+      }
+    } else {
+      setState(() => _isPlayingAudio = true);
+      Future.delayed(const Duration(seconds: 3), () {
         if (mounted) setState(() => _isPlayingAudio = false);
       });
     }
