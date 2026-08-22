@@ -35,8 +35,8 @@ class AiVoiceRepository {
         recommendedAction: 'Inspect crop condition and follow local extension advisory.',
         aiModel: 'AgriEtech Local Agronomic Engine',
         detectedLanguage: language,
-        audioUrlAm: 'https://translate.google.com/translate_tts?ie=UTF-8&q=' + encodeURIComponent('ስለ ጥያቄዎ የሰብልዎን ሁኔታ በየጊዜው ይከታተሉ') + '&tl=am&client=tw-ob',
-        audioUrlEn: 'https://translate.google.com/translate_tts?ie=UTF-8&q=' + encodeURIComponent('Regarding your inquiry maintain regular crop inspection') + '&tl=en&client=tw-ob',
+        audioUrlAm: 'https://translate.google.com/translate_tts?ie=UTF-8&q=' + Uri.encodeComponent('ስለ ጥያቄዎ የሰብልዎን ሁኔታ በየጊዜው ይከታተሉ') + '&tl=am&client=tw-ob',
+        audioUrlEn: 'https://translate.google.com/translate_tts?ie=UTF-8&q=' + Uri.encodeComponent('Regarding your inquiry maintain regular crop inspection') + '&tl=en&client=tw-ob',
       );
     }
   }
