@@ -56,8 +56,8 @@ class DiagnosisModel {
   });
 
   factory DiagnosisModel.fromJson(Map<String, dynamic> json) {
-    final rawResp = json['rawResponse'] as Map<String, dynamic>?;
-    final geminiDiag = rawResp?['gemini'] as Map<String, dynamic>?;
+    final rawResp = json['rawResponse'] is Map ? Map<String, dynamic>.from(json['rawResponse'] as Map) : null;
+    final geminiDiag = rawResp != null && rawResp['gemini'] is Map ? Map<String, dynamic>.from(rawResp['gemini'] as Map) : null;
 
     final cropEn = json['cropIdentified'] ?? json['cropType'] ?? geminiDiag?['cropIdentified']?['nameEn'];
     final cropAm = json['cropIdentifiedAm'] ?? geminiDiag?['cropIdentified']?['nameAm'];

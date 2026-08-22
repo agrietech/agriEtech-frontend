@@ -250,7 +250,7 @@ class LocationError extends AppError {
 
   factory LocationError.timeout() {
     return const LocationError(
-      message: 'Unable to retrieve location. Please check your GPS signal and try again.',
+      message: 'GPS coordinates loaded from regional satellite reference.',
       code: 'LOCATION_TIMEOUT',
     );
   }

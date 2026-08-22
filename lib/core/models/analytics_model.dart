@@ -29,7 +29,7 @@ class DashboardAnalyticsModel {
     if (map['riskOverview'] is Map<String, dynamic>) {
       riskOverview = RiskOverviewModel.fromJson(map['riskOverview'] as Map<String, dynamic>);
     } else {
-      final compRisk = map['compositeRiskDistribution'] as Map<String, dynamic>? ?? {};
+      final compRisk = map['compositeRiskDistribution'] is Map ? Map<String, dynamic>.from(map['compositeRiskDistribution'] as Map) : <String, dynamic>{};
       final low = (compRisk['greenCount'] as num?)?.toInt() ?? 12;
       final mod = (compRisk['yellowCount'] as num?)?.toInt() ?? 8;
       final high = (compRisk['orangeCount'] as num?)?.toInt() ?? 4;
@@ -47,7 +47,7 @@ class DashboardAnalyticsModel {
 
     final regional = map['regionalBreakdown'] is List
         ? (map['regionalBreakdown'] as List)
-            .map((r) => RegionalRiskModel.fromJson(r as Map<String, dynamic>))
+            .map((r) => RegionalRiskModel.fromJson(r is Map ? Map<String, dynamic>.from(r) : <String, dynamic>{}))
             .toList()
         : <RegionalRiskModel>[];
 
@@ -68,7 +68,7 @@ class DashboardAnalyticsModel {
 
     final alerts = map['recentAlerts'] is List
         ? (map['recentAlerts'] as List)
-            .map((a) => AlertSummaryModel.fromJson(a as Map<String, dynamic>))
+            .map((a) => AlertSummaryModel.fromJson(a is Map ? Map<String, dynamic>.from(a) : <String, dynamic>{}))
             .toList()
         : <AlertSummaryModel>[];
 
