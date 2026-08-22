@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../ai_voice/presentation/widgets/ai_assistant_sheet.dart';
-import '../../alerts/providers/alerts_provider.dart';
+import '../../alerts/providers/alert_provider.dart';
 import '../../alerts/screens/alerts_list_screen.dart';
 import '../../dashboard/screens/dashboard_screen.dart';
 import '../../farms/screens/farms_list_screen.dart';
@@ -39,9 +39,9 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
   @override
   Widget build(BuildContext context) {
     final currentIndex = ref.watch(navigationIndexProvider);
-    final alertsState = ref.watch(alertsProvider);
+    final alertsState = ref.watch(alertListProvider);
     final activeAlertsCount = alertsState.maybeWhen(
-      data: (list) => list.where((a) => a.isActive).length,
+      data: (list) => list.where((a) => a.isActive && !a.isRead).length,
       orElse: () => 0,
     );
     final isDark = Theme.of(context).brightness == Brightness.dark;

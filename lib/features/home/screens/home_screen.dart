@@ -1,3 +1,4 @@
+import '../../alerts/providers/alert_provider.dart';
 import 'main_navigation_shell.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -25,10 +26,24 @@ class HomeScreen extends ConsumerWidget {
           showTagline: false,
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_active_outlined),
-            tooltip: 'Alerts',
-            onPressed: () => context.push('/alerts'),
+          Consumer(
+            builder: (context, ref, _) {
+              final alertsAsync = ref.watch(alertListProvider);
+              final unreadCount = alertsAsync.maybeWhen(
+                data: (list) => list.where((a) => a.isActive && !a.isRead).length,
+                orElse: () => 0,
+              );
+              return IconButton(
+                icon: Badge(
+                  isLabelVisible: unreadCount > 0,
+                  label: Text('$unreadCount', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                  backgroundColor: AppTheme.errorColor,
+                  child: const Icon(Icons.notifications_outlined),
+                ),
+                tooltip: 'Alerts',
+                onPressed: () => context.push('/alerts'),
+              );
+            },
           ),
           PopupMenuButton<String>(
             icon: const Icon(Icons.account_circle_outlined),

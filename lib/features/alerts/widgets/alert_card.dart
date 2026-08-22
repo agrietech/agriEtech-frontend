@@ -5,11 +5,13 @@ import '../models/alert_models.dart';
 class AlertCard extends StatelessWidget {
   final AlertModel alert;
   final VoidCallback? onTap;
+  final VoidCallback? onToggleRead;
 
   const AlertCard({
     super.key,
     required this.alert,
     this.onTap,
+    this.onToggleRead,
   });
 
   @override

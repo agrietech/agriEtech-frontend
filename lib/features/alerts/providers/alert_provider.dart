@@ -82,6 +82,42 @@ class AlertNotifier extends StateNotifier<AsyncValue<List<AlertModel>>> {
   }
 
   /// Fetch alerts with current filters
+  Future<void> toggleReadStatus(String alertId) async {
+    state.whenData((alerts) {
+      final updated = alerts.map((a) {
+        if (a.id == alertId) {
+          final newIsRead = !a.isRead;
+          return AlertModel(
+            id: a.id,
+            woredaId: a.woredaId,
+            userId: a.userId,
+            hazardType: a.hazardType,
+            severity: a.severity,
+            title: a.title,
+            message: a.message,
+            actionItems: a.actionItems,
+            priority: a.priority,
+            validUntil: a.validUntil,
+            isActive: a.isActive,
+            isRead: newIsRead,
+            readAt: newIsRead ? DateTime.now() : null,
+            sentAt: a.sentAt,
+            deliveryLogs: a.deliveryLogs,
+            createdAt: a.createdAt,
+            updatedAt: DateTime.now().toIso8601String(),
+            woreda: a.woreda,
+          );
+        }
+        return a;
+      }).toList();
+      state = AsyncValue.data(updated);
+    });
+
+    try {
+      await _repository.markAsRead(alertId);
+    } catch (_) {}
+  }
+
   Future<void> fetchAlerts() async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
