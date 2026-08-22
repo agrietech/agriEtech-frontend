@@ -47,14 +47,14 @@ class AddFarmScreen extends ConsumerStatefulWidget {
 class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  final _sizeController = TextEditingController();
+  final _sizeController = TextEditingController(text: '1.5');
   final _latController = TextEditingController(text: '8.54000');
   final _lngController = TextEditingController(text: '39.27000');
   final _additionalCropsController = TextEditingController();
 
   String? _selectedCrop = 'Teff';
-  String? _selectedSoil = 'Vertisol (Black Cotton)';
-  String? _selectedIrrigation = 'Rainfed';
+  String? _selectedSoil = 'Vertisol (Black Cotton - ጥቁር አፈር)';
+  String? _selectedIrrigation = 'Rainfed (የዝናብ እርሻ)';
   String _selectedWoredaId = 'ET040101';
   String _selectedWoredaName = 'Adama Zuria (Oromia)';
 
@@ -106,7 +106,7 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
   void _applyWoredaPreset(String woredaName) {
     final preset = _woredaPresets.firstWhere(
       (p) => p.name == woredaName,
-      orElse: () => _woredaPresets.first,
+      orElse: () => _woredaPresets[0],
     );
     setState(() {
       _selectedWoredaName = preset.name;
@@ -127,7 +127,7 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
         if (permission == LocationPermission.denied) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Location permissions are denied. Using manual/preset coordinates.')),
+              const SnackBar(content: Text('Location permissions denied. Using selected Woreda coordinates.')),
             );
           }
           return;
@@ -137,7 +137,7 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
       if (permission == LocationPermission.deniedForever) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Location permissions are permanently denied. Using manual/preset coordinates.')),
+            const SnackBar(content: Text('Location permissions permanently denied. Using selected Woreda coordinates.')),
           );
         }
         return;
@@ -145,7 +145,7 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
 
       final position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.medium,
-        timeLimit: const Duration(seconds: 5),
+        timeLimit: const Duration(seconds: 4),
       );
 
       if (position.latitude >= 3.0 && position.latitude <= 15.0 &&
@@ -159,7 +159,7 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('GPS coordinates captured: ${_latitude.toStringAsFixed(4)}, ${_longitude.toStringAsFixed(4)}'),
+              content: Text('GPS coordinates captured: ' + _latitude.toStringAsFixed(4) + ', ' + _longitude.toStringAsFixed(4)),
               backgroundColor: const Color(0xFF2E7D32),
             ),
           );
@@ -178,7 +178,7 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('GPS hardware unavailable. You can enter exact coordinates or pick a Woreda preset below.'),
+            content: Text('GPS unavailable. Preset coordinates are automatically selected.'),
             backgroundColor: Color(0xFF2E7D32),
           ),
         );
@@ -205,8 +205,8 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
               farmName: _nameController.text.trim(),
               areaHectares: size,
               primaryCrop: _selectedCrop ?? 'Teff',
-              soilType: _selectedSoil ?? 'Vertisol (Black Cotton)',
-              irrigationType: _selectedIrrigation ?? 'Rainfed',
+              soilType: _selectedSoil ?? 'Vertisol (Black Cotton - ጥቁር አፈር)',
+              irrigationType: _selectedIrrigation ?? 'Rainfed (የዝናብ እርሻ)',
               latitude: parsedLat,
               longitude: parsedLng,
               woredaId: _selectedWoredaId,
@@ -226,7 +226,7 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Notice: Farm registered with local synchronization (${e.toString()})'),
+            content: Text('Notice: Farm registered with local synchronization (' + e.toString() + ')'),
             backgroundColor: const Color(0xFF2E7D32),
           ),
         );
@@ -269,11 +269,11 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
             ),
             const SizedBox(height: 16),
 
-            // Woreda Location Preset
+            // 1. Woreda Location Preset (Options for all 14 Ethiopian agricultural hubs)
             DropdownButtonFormField<String>(
-              initialValue: _selectedWoredaName,
+              value: _selectedWoredaName,
               decoration: InputDecoration(
-                labelText: 'Administrative Woreda / Location',
+                labelText: 'Administrative Woreda / Location Preset',
                 prefixIcon: const Icon(Icons.location_city),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 filled: true,
@@ -291,9 +291,9 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
             ),
             const SizedBox(height: 16),
 
-            // Crop Dropdown
+            // 2. Primary Crop Dropdown
             DropdownButtonFormField<String>(
-              initialValue: _selectedCrop,
+              value: _selectedCrop,
               decoration: InputDecoration(
                 labelText: 'Primary Crop',
                 prefixIcon: const Icon(Icons.grass),
@@ -304,14 +304,14 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
               items: EthiopianCrops.allCrops.map((crop) {
                 return DropdownMenuItem(
                   value: crop.nameEn,
-                  child: Text('${crop.nameEn} (${crop.nameAm})'),
+                  child: Text(crop.nameEn + ' (' + crop.nameAm + ')'),
                 );
               }).toList(),
               onChanged: _isLoading ? null : (v) => setState(() => _selectedCrop = v),
             ),
             const SizedBox(height: 16),
 
-            // Farm Size
+            // 3. Farm Size Area
             TextFormField(
               controller: _sizeController,
               decoration: InputDecoration(
@@ -329,9 +329,9 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
             ),
             const SizedBox(height: 16),
 
-            // Soil Type
+            // 4. Soil Classification
             DropdownButtonFormField<String>(
-              initialValue: _selectedSoil,
+              value: _selectedSoil,
               decoration: InputDecoration(
                 labelText: 'Soil Classification',
                 prefixIcon: const Icon(Icons.terrain),
@@ -340,19 +340,19 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
                 fillColor: isDark ? const Color(0xFF1B2E1E) : const Color(0xFFF9FAF9),
               ),
               items: const [
-                DropdownMenuItem(value: 'Vertisol (Black Cotton)', child: Text('Vertisol (Black Cotton - ወላካ)')),
-                DropdownMenuItem(value: 'Nitisol (Red Basaltic)', child: Text('Nitisol (Red Basaltic - ቀይ አፈር)')),
-                DropdownMenuItem(value: 'Cambisol (Brown Loam)', child: Text('Cambisol (Brown Loam - ቦራ አፈር)')),
-                DropdownMenuItem(value: 'Fluvisol (Alluvial Riverbed)', child: Text('Fluvisol (Alluvial - ደለል አፈር)')),
-                DropdownMenuItem(value: 'Arenosol (Sandy Loam)', child: Text('Arenosol (Sandy - አሸዋማ አፈር)')),
+                DropdownMenuItem(value: 'Vertisol (Black Cotton - ጥቁር አፈር)', child: Text('Vertisol (Black Cotton - ጥቁር አፈር)')),
+                DropdownMenuItem(value: 'Nitisol (Red Basaltic - ቀይ አፈር)', child: Text('Nitisol (Red Basaltic - ቀይ አፈር)')),
+                DropdownMenuItem(value: 'Cambisol (Brown Loam - ቡናማ አፈር)', child: Text('Cambisol (Brown Loam - ቡናማ አፈር)')),
+                DropdownMenuItem(value: 'Fluvisol (Alluvial - ወንዝ ዳርቻ አፈር)', child: Text('Fluvisol (Alluvial - ወንዝ ዳርቻ አፈር)')),
+                DropdownMenuItem(value: 'Arenosol (Sandy - አሸዋማ አፈር)', child: Text('Arenosol (Sandy - አሸዋማ አፈር)')),
               ],
               onChanged: _isLoading ? null : (v) => setState(() => _selectedSoil = v),
             ),
             const SizedBox(height: 16),
 
-            // Irrigation Type
+            // 5. Water / Irrigation Type
             DropdownButtonFormField<String>(
-              initialValue: _selectedIrrigation,
+              value: _selectedIrrigation,
               decoration: InputDecoration(
                 labelText: 'Water / Irrigation Type',
                 prefixIcon: const Icon(Icons.water_drop),
@@ -361,17 +361,17 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
                 fillColor: isDark ? const Color(0xFF1B2E1E) : const Color(0xFFF9FAF9),
               ),
               items: const [
-                DropdownMenuItem(value: 'Rainfed', child: Text('Rainfed (በዝናብ የሚለማ)')),
-                DropdownMenuItem(value: 'Furrow Irrigation', child: Text('Furrow Irrigation (የቦይ መስኖ)')),
-                DropdownMenuItem(value: 'Drip Irrigation', child: Text('Drip Irrigation (የጠብታ መስኖ)')),
-                DropdownMenuItem(value: 'River Diversion', child: Text('River Diversion (የወንዝ ጠለፋ)')),
-                DropdownMenuItem(value: 'Groundwater Borehole', child: Text('Groundwater Borehole (የከርሰ-ምድር ውሃ)')),
+                DropdownMenuItem(value: 'Rainfed (የዝናብ እርሻ)', child: Text('Rainfed (የዝናብ እርሻ)')),
+                DropdownMenuItem(value: 'Furrow Irrigation (የቦይ መስኖ)', child: Text('Furrow Irrigation (የቦይ መስኖ)')),
+                DropdownMenuItem(value: 'Drip Irrigation (የጠብታ መስኖ)', child: Text('Drip Irrigation (የጠብታ መስኖ)')),
+                DropdownMenuItem(value: 'River Diversion (የወንዝ ጠለፋ)', child: Text('River Diversion (የወንዝ ጠለፋ)')),
+                DropdownMenuItem(value: 'Groundwater Borehole (የከርሰ ምድር ውሃ)', child: Text('Groundwater Borehole (የከርሰ ምድር ውሃ)')),
               ],
               onChanged: _isLoading ? null : (v) => setState(() => _selectedIrrigation = v),
             ),
             const SizedBox(height: 20),
 
-            // Geographic Location Section (Manual & Preset First)
+            // 6. Geographic Location Card (Manual + Preset + Auto-GPS Option)
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
@@ -407,7 +407,7 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 12),
                   Row(
                     children: [
                       Expanded(
@@ -419,10 +419,10 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
                             helperText: 'Range: 3.0° to 15.0°',
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                             filled: true,
-                            fillColor: isDark ? const Color(0xFF142416) : Colors.white,
+                            fillColor: isDark ? const Color(0xFF1B2E1E) : Colors.white,
                           ),
                           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                          validator: Validators.ethiopianLatitude,
+                          validator: Validators.latitude,
                           enabled: !_isLoading,
                         ),
                       ),
@@ -436,10 +436,10 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
                             helperText: 'Range: 33.0° to 48.0°',
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                             filled: true,
-                            fillColor: isDark ? const Color(0xFF142416) : Colors.white,
+                            fillColor: isDark ? const Color(0xFF1B2E1E) : Colors.white,
                           ),
                           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                          validator: Validators.ethiopianLongitude,
+                          validator: Validators.longitude,
                           enabled: !_isLoading,
                         ),
                       ),
@@ -450,20 +450,27 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
             ),
             const SizedBox(height: 24),
 
-            // Submit Button
-            ElevatedButton.icon(
-              onPressed: _isLoading ? null : _saveFarm,
-              icon: _isLoading
-                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                  : const Icon(Icons.add_location_alt),
-              label: Text(_isLoading ? 'Registering Farm...' : 'Save & Register Farm'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF2E7D32),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            // 7. Submit Button
+            SizedBox(
+              height: 52,
+              child: ElevatedButton.icon(
+                onPressed: _isLoading ? null : _saveFarm,
+                icon: _isLoading
+                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    : const Icon(Icons.check_circle_outline, size: 22),
+                label: Text(
+                  _isLoading ? 'Registering Farm Parcel...' : 'Save & Register Farm',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1B5E20),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  elevation: 2,
+                ),
               ),
             ),
+            const SizedBox(height: 24),
           ],
         ),
       ),
