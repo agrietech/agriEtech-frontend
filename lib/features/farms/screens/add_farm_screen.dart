@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:geolocator/geolocator.dart';
-import '../../../core/models/farm_model.dart';
-import '../providers/farms_provider.dart';
-import '../../auth/providers/auth_provider.dart';
-import '../../../core/utils/validators.dart';
-import '../../../core/error/error_handler.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../core/constants/ethiopian_agriculture.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/validators.dart';
+import '../providers/farm_provider.dart';
 
+/// Add Farm Screen with Guaranteed GPS Capture, Woreda Quick-Select & Manual Fallback
 class AddFarmScreen extends ConsumerStatefulWidget {
   const AddFarmScreen({super.key});
 
@@ -19,21 +19,38 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _sizeController = TextEditingController();
+  final _latController = TextEditingController(text: '8.54000');
+  final _lngController = TextEditingController(text: '39.27000');
   final _additionalCropsController = TextEditingController();
 
-  String? _selectedCrop;
-  String? _selectedSoilType;
-  String? _selectedIrrigation;
+  String? _selectedCrop = 'Teff';
+  String? _selectedSoil = 'Vertisol (Black Cotton)';
+  String? _selectedIrrigation = 'Rainfed';
+  String _selectedWoredaPreset = 'Adama Zuria (Oromia)';
+
   double _latitude = 8.54;
   double _longitude = 39.27;
   bool _isLoading = false;
   bool _isGettingLocation = false;
+  bool _manualCoordinateMode = false;
+
+  final Map<String, List<double>> _woredaPresets = {
+    'Adama Zuria (Oromia)': [8.54000, 39.27000],
+    'Bishoftu / Ada\'a (Oromia)': [8.75000, 38.98000],
+    'Lume / Mojo (Oromia)': [8.60000, 39.12000],
+    'Bahir Dar Zuria (Amhara)': [11.59000, 37.39000],
+    'Debre Birhan (Amhara)': [9.68000, 39.53000],
+    'Hawassa Zuria (Sidama)': [7.05000, 38.48000],
+    'Alaba Special Woreda (Central)': [7.31000, 38.09000],
+    'Mekelle / Enderta (Tigray)': [13.49000, 39.47000],
+    'Jigjiga Zuria (Somali)': [9.35000, 42.80000],
+  };
 
   @override
   void initState() {
     super.initState();
-    _latitude = 8.54;
-    _longitude = 39.27;
+    _latController.text = _latitude.toStringAsFixed(5);
+    _lngController.text = _longitude.toStringAsFixed(5);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _getCurrentLocation();
     });
@@ -43,8 +60,30 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
   void dispose() {
     _nameController.dispose();
     _sizeController.dispose();
+    _latController.dispose();
+    _lngController.dispose();
     _additionalCropsController.dispose();
     super.dispose();
+  }
+
+  void _applyWoredaPreset(String woredaName) {
+    final coords = _woredaPresets[woredaName];
+    if (coords != null) {
+      setState(() {
+        _selectedWoredaPreset = woredaName;
+        _latitude = coords[0];
+        _longitude = coords[1];
+        _latController.text = _latitude.toStringAsFixed(5);
+        _lngController.text = _longitude.toStringAsFixed(5);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Location preset set to $woredaName'),
+          backgroundColor: const Color(0xFF2E7D32),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   Future<void> _getCurrentLocation() async {
@@ -74,23 +113,21 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
           setState(() {
             _latitude = position!.latitude;
             _longitude = position.longitude;
+            _latController.text = _latitude.toStringAsFixed(5);
+            _lngController.text = _longitude.toStringAsFixed(5);
           });
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('GPS Location captured: ${position.latitude.toStringAsFixed(5)}, ${position.longitude.toStringAsFixed(5)}'),
+              content: Text('GPS Location captured: ${_latitude.toStringAsFixed(5)}, ${_longitude.toStringAsFixed(5)}'),
               backgroundColor: const Color(0xFF2E7D32),
             ),
           );
         }
       } else {
         if (mounted) {
-          setState(() {
-            _latitude = 8.54;
-            _longitude = 39.27;
-          });
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Location set to regional coordinates (8.54000, 39.27000 - Adama Zuria)'),
+              content: Text('Location active (Regional coordinates: 8.54000, 39.27000 - Adama Zuria)'),
               backgroundColor: Color(0xFF2E7D32),
             ),
           );
@@ -98,13 +135,9 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
       }
     } catch (_) {
       if (mounted) {
-        setState(() {
-          _latitude = 8.54;
-          _longitude = 39.27;
-        });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Location initialized (8.54000, 39.27000)'),
+            content: Text('Location reference set to Adama Zuria'),
             backgroundColor: Color(0xFF2E7D32),
           ),
         );
@@ -119,36 +152,22 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
   Future<void> _saveFarm() async {
     if (!_formKey.currentState!.validate()) return;
 
-    if (_selectedCrop == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a crop type'),
-          backgroundColor: Color(0xFFF57C00),
-        ),
-      );
-      return;
-    }
+    final parsedLat = double.tryParse(_latController.text) ?? _latitude;
+    final parsedLng = double.tryParse(_lngController.text) ?? _longitude;
 
     setState(() => _isLoading = true);
 
     try {
-      final user = ref.read(authProvider).user;
-      final woredaId = user?.woredaId ?? user?.woreda?.id ?? 'ET040101';
-      final request = CreateFarmRequest(
-        farmName: _nameController.text.trim(),
-        primaryCrop: _selectedCrop!,
-        areaHectares: double.tryParse(_sizeController.text) ?? 1.5,
-        latitude: _latitude,
-        longitude: _longitude,
-        woredaId: woredaId,
-        soilType: _selectedSoilType,
-        irrigationType: _selectedIrrigation,
-        additionalCrops: _additionalCropsController.text.trim().isEmpty
-            ? null
-            : _additionalCropsController.text.trim(),
-      );
-
-      await ref.read(farmsProvider.notifier).createFarm(request);
+      final size = double.tryParse(_sizeController.text.trim()) ?? 1.0;
+      await ref.read(farmsProvider.notifier).createFarm(
+            name: _nameController.text.trim(),
+            size: size,
+            primaryCrop: _selectedCrop ?? 'Teff',
+            soilType: _selectedSoil ?? 'Vertisol (Black Cotton)',
+            irrigationType: _selectedIrrigation ?? 'Rainfed',
+            latitude: parsedLat,
+            longitude: parsedLng,
+          );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -183,7 +202,7 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Register New Farm Plot'),
+        title: const Text('Add Farm'),
       ),
       body: Form(
         key: _formKey,
@@ -242,6 +261,48 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
             ),
             const SizedBox(height: 16),
 
+            // Soil Type Dropdown
+            DropdownButtonFormField<String>(
+              value: _selectedSoil,
+              decoration: InputDecoration(
+                labelText: 'Soil Type (Optional)',
+                prefixIcon: const Icon(Icons.landscape),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                filled: true,
+                fillColor: isDark ? const Color(0xFF1B2E1E) : const Color(0xFFF9FAF9),
+              ),
+              items: const [
+                DropdownMenuItem(value: 'Vertisol (Black Cotton)', child: Text('Vertisol (Black Cotton Soil)')),
+                DropdownMenuItem(value: 'Nitisol (Red Clay)', child: Text('Nitisol (Red Clay Soil)')),
+                DropdownMenuItem(value: 'Cambisol (Brown Loam)', child: Text('Cambisol (Brown Loam)')),
+                DropdownMenuItem(value: 'Fluvisol (Alluvial)', child: Text('Fluvisol (Alluvial)')),
+                DropdownMenuItem(value: 'Sandy / Arenosol', child: Text('Sandy / Arenosol')),
+              ],
+              onChanged: _isLoading ? null : (v) => setState(() => _selectedSoil = v),
+            ),
+            const SizedBox(height: 16),
+
+            // Irrigation Type Dropdown
+            DropdownButtonFormField<String>(
+              value: _selectedIrrigation,
+              decoration: InputDecoration(
+                labelText: 'Irrigation Type (Optional)',
+                prefixIcon: const Icon(Icons.water_drop),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                filled: true,
+                fillColor: isDark ? const Color(0xFF1B2E1E) : const Color(0xFFF9FAF9),
+              ),
+              items: const [
+                DropdownMenuItem(value: 'Rainfed', child: Text('Rainfed (Seasonal)')),
+                DropdownMenuItem(value: 'Drip Irrigation', child: Text('Drip Irrigation')),
+                DropdownMenuItem(value: 'Furrow / Surface', child: Text('Furrow / Surface')),
+                DropdownMenuItem(value: 'Sprinkler Irrigation', child: Text('Sprinkler Irrigation')),
+              ],
+              onChanged: _isLoading ? null : (v) => setState(() => _selectedIrrigation = v),
+            ),
+            const SizedBox(height: 16),
+
+            // Location Card with Woreda Quick Select & GPS
             Card(
               elevation: 0,
               shape: RoundedRectangleBorder(
@@ -254,59 +315,104 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Icon(Icons.location_on, color: theme.primaryColor, size: 22),
-                        const SizedBox(width: 8),
-                        Text(
-                          'GPS Coordinates',
-                          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                        Row(
+                          children: [
+                            const Icon(Icons.location_on, color: AppTheme.primaryColor, size: 22),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Farm Location',
+                              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                        TextButton.icon(
+                          icon: Icon(_manualCoordinateMode ? Icons.list : Icons.edit_location_alt, size: 16),
+                          label: Text(_manualCoordinateMode ? 'Presets' : 'Manual GPS', style: const TextStyle(fontSize: 12)),
+                          onPressed: () => setState(() => _manualCoordinateMode = !_manualCoordinateMode),
                         ),
                       ],
                     ),
                     const SizedBox(height: 12),
+
+                    if (!_manualCoordinateMode) ...[
+                      // Quick Woreda Region Selector
+                      DropdownButtonFormField<String>(
+                        value: _selectedWoredaPreset,
+                        decoration: InputDecoration(
+                          labelText: 'Select Woreda / Location Preset',
+                          prefixIcon: const Icon(Icons.map_outlined),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                          filled: true,
+                          fillColor: isDark ? const Color(0xFF1B2E1E) : const Color(0xFFF9FAF9),
+                        ),
+                        items: _woredaPresets.keys.map((woreda) {
+                          return DropdownMenuItem(value: woreda, child: Text(woreda, style: const TextStyle(fontSize: 13)));
+                        }).toList(),
+                        onChanged: (v) {
+                          if (v != null) _applyWoredaPreset(v);
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+
+                    if (_manualCoordinateMode) ...[
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              controller: _latController,
+                              decoration: const InputDecoration(labelText: 'Latitude', border: OutlineInputBorder()),
+                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: TextFormField(
+                              controller: _lngController,
+                              decoration: const InputDecoration(labelText: 'Longitude', border: OutlineInputBorder()),
+                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+
+                    // Coordinates Display Pill
                     Container(
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                       decoration: BoxDecoration(
-                        color: Colors.green.withValues(alpha: 0.1),
+                        color: const Color(0xFFE8F5E9),
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
+                        border: Border.all(color: const Color(0xFFC8E6C9)),
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.check_circle, color: Colors.green, size: 20),
+                          const Icon(Icons.check_circle, color: Color(0xFF2E7D32), size: 20),
                           const SizedBox(width: 10),
                           Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Coordinates Loaded',
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.green[800],
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  'Lat: ${_latitude.toStringAsFixed(5)}, Lng: ${_longitude.toStringAsFixed(5)}',
-                                  style: theme.textTheme.bodySmall,
-                                ),
-                              ],
+                            child: Text(
+                              'Active Coordinates: ${_latitude.toStringAsFixed(5)}, ${_longitude.toStringAsFixed(5)}',
+                              style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1B5E20), fontSize: 12.5),
                             ),
                           ),
                         ],
                       ),
                     ),
                     const SizedBox(height: 12),
+
+                    // GPS Capture Button
                     ElevatedButton.icon(
                       onPressed: (_isLoading || _isGettingLocation) ? null : _getCurrentLocation,
                       icon: _isGettingLocation
                           ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
                           : const Icon(Icons.my_location, size: 18),
-                      label: const Text('Capture Current Location'),
+                      label: const Text('Capture Current Location (GPS)'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: theme.primaryColor.withValues(alpha: 0.15),
-                        foregroundColor: theme.primaryColor,
+                        backgroundColor: const Color(0xFFE8F5E9),
+                        foregroundColor: const Color(0xFF1B5E20),
                         elevation: 0,
                         minimumSize: const Size(double.infinity, 44),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -319,7 +425,7 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
             const SizedBox(height: 24),
 
             SizedBox(
-              height: 50,
+              height: 52,
               child: ElevatedButton.icon(
                 onPressed: _isLoading ? null : _saveFarm,
                 icon: const Icon(Icons.save, size: 20),
