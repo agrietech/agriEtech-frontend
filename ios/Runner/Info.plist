@@ -70,5 +70,11 @@
 		<true/>
 		<key>UIViewControllerBasedStatusBarAppearance</key>
 		<false/>
+		<key>NSCameraUsageDescription</key>
+		<string>AgriEtech requires camera access to capture plant leaf photos for AI crop disease diagnosis.</string>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>AgriEtech requires gallery access to upload crop photos for disease diagnosis.</string>
+		<key>NSMicrophoneUsageDescription</key>
+		<string>AgriEtech requires microphone access for AI voice inquiries.</string>
 	</dict>
 </plist>
