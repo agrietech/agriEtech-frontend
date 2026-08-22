@@ -6,6 +6,7 @@ class FarmModel {
   final String id;
   final String userId;
   final String farmName;
+  String get name => farmName;
   final String primaryCrop;
   final double areaHectares;
   final double latitude;

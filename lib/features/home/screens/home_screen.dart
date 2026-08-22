@@ -1,3 +1,4 @@
+import 'main_navigation_shell.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -235,7 +236,7 @@ class HomeScreen extends ConsumerWidget {
                         ),
                       ),
                       TextButton.icon(
-                        onPressed: () => context.push('/dashboard'),
+                        onPressed: () => ref.read(navigationIndexProvider.notifier).state = 3,
                         icon: const Icon(Icons.speed, size: 16),
                         label: const Text('Open Hub', style: TextStyle(fontSize: 12)),
                         style: TextButton.styleFrom(
@@ -307,12 +308,12 @@ class HomeScreen extends ConsumerWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: const [
                                   Text(
-                                    'AI Voice Assistant',
+                                    'AI Agronomic Assistant',
                                     style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
                                   ),
                                   SizedBox(height: 2),
                                   Text(
-                                    'አማርኛ & English Voice Q&A',
+                                    'አማርኛ & English Voice & Chat',
                                     style: TextStyle(color: Colors.white70, fontSize: 11),
                                   ),
                                 ],
@@ -323,6 +324,7 @@ class HomeScreen extends ConsumerWidget {
                       ),
                       _buildTechMenuCard(
                         context,
+                        ref,
                         title: 'Operations Hub',
                         subtitle: 'Live analytics & telemetry',
                         badgeText: 'Live',
@@ -333,8 +335,9 @@ class HomeScreen extends ConsumerWidget {
                       ),
                       if (RoleUtils.canManageFarms(user?.role))
                         _buildTechMenuCard(
-                          context,
-                          title: 'My Farms',
+                        context,
+                        ref,
+                        title: 'My Farms',
                           subtitle: 'Geofencing & Parcels',
                           badgeText: 'GIS',
                           badgeColor: AppTheme.primaryDark,
@@ -344,6 +347,7 @@ class HomeScreen extends ConsumerWidget {
                         ),
                       _buildTechMenuCard(
                         context,
+                        ref,
                         title: 'Risk Command',
                         subtitle: 'Multi-hazard spatial map',
                         badgeText: 'Alerts',
@@ -354,6 +358,7 @@ class HomeScreen extends ConsumerWidget {
                       ),
                       _buildTechMenuCard(
                         context,
+                        ref,
                         title: 'AI Crop Vision',
                         subtitle: 'Leaf disease scanner',
                         badgeText: 'AI Model',
@@ -364,6 +369,7 @@ class HomeScreen extends ConsumerWidget {
                       ),
                       _buildTechMenuCard(
                         context,
+                        ref,
                         title: 'Early Warnings',
                         subtitle: 'Drought & locust alerts',
                         badgeText: 'Realtime',
@@ -374,6 +380,7 @@ class HomeScreen extends ConsumerWidget {
                       ),
                       _buildTechMenuCard(
                         context,
+                        ref,
                         title: 'IoT Telemetry',
                         subtitle: 'Soil NPK & moisture',
                         badgeText: 'LoRaWAN',
@@ -384,6 +391,7 @@ class HomeScreen extends ConsumerWidget {
                       ),
                       _buildTechMenuCard(
                         context,
+                        ref,
                         title: 'Boundaries & GIS',
                         subtitle: 'Woreda parcel mapping',
                         badgeText: 'Centroids',
@@ -394,8 +402,9 @@ class HomeScreen extends ConsumerWidget {
                       ),
                       if (RoleUtils.canViewAnalytics(user?.role))
                         _buildTechMenuCard(
-                          context,
-                          title: 'Agro-Analytics',
+                        context,
+                        ref,
+                        title: 'Agro-Analytics',
                           subtitle: 'Trends & harvest reports',
                           badgeText: 'Insights',
                           badgeColor: const Color(0xFF4338CA),
@@ -468,7 +477,9 @@ class HomeScreen extends ConsumerWidget {
   }
 
   Widget _buildTechMenuCard(
-    BuildContext context, {
+    BuildContext context,
+    WidgetRef ref, {
+
     required String title,
     required String subtitle,
     required String badgeText,
@@ -493,7 +504,17 @@ class HomeScreen extends ConsumerWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () => context.push(route),
+          onTap: () {
+            if (route == '/farms') {
+              ref.read(navigationIndexProvider.notifier).state = 1;
+            } else if (route == '/alerts') {
+              ref.read(navigationIndexProvider.notifier).state = 2;
+            } else if (route == '/dashboard') {
+              ref.read(navigationIndexProvider.notifier).state = 3;
+            } else {
+              context.push(route);
+            }
+          },
           borderRadius: BorderRadius.circular(16),
           child: Padding(
             padding: const EdgeInsets.all(12),

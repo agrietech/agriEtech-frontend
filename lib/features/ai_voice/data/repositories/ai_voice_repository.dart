@@ -27,16 +27,16 @@ class AiVoiceRepository {
           : response.data as Map<String, dynamic>;
       return AiVoiceResponse.fromJson(raw);
     } catch (e) {
-      AppLogger.warning('AI inquiry fallback to local synthesis: ' + e.toString());
+      AppLogger.warning('AI inquiry fallback to local synthesis: $e');
       return AiVoiceResponse(
         transcript: question,
-        responseEn: 'Regarding your inquiry on "' + question + '": Maintain regular crop inspection, monitor soil moisture levels, and follow local agricultural extension advisories.',
-        responseAm: 'ስለ ጥያቄዎ "' + question + '"፡ የሰብልዎን ሁኔታ በየጊዜው ይከታተሉ፣ የአፈር እርጥበትን ይጠብቁ እና ከአካባቢዎ የግብርና ልማት ጣቢያ ጋር ይማከሩ።',
+        responseEn: 'Regarding your inquiry on "$question": Maintain regular crop inspection, apply balanced fertilizer at active tillering, and monitor soil moisture levels.',
+        responseAm: 'ስለ ጥያቄዎ "$question"፡ የሰብልዎን ሁኔታ በየጊዜው ይፈትሹ፤ በአበባና በብቅለት ወቅት የተመጣጠነ ማዳበሪያና የአፈር እርጥበትን ይጠብቁ።',
         recommendedAction: 'Inspect crop condition and follow local extension advisory.',
         aiModel: 'AgriEtech Local Agronomic Engine',
         detectedLanguage: language,
-        audioUrlAm: 'https://translate.google.com/translate_tts?ie=UTF-8&q=' + Uri.encodeComponent('ስለ ጥያቄዎ የሰብልዎን ሁኔታ በየጊዜው ይከታተሉ') + '&tl=am&client=tw-ob',
-        audioUrlEn: 'https://translate.google.com/translate_tts?ie=UTF-8&q=' + Uri.encodeComponent('Regarding your inquiry maintain regular crop inspection') + '&tl=en&client=tw-ob',
+        audioUrlAm: 'https://translate.google.com/translate_tts?ie=UTF-8&q=${Uri.encodeComponent("ስለ ጥያቄዎ የሰብልዎን ሁኔታ በየጊዜው ይፈትሹ")}&tl=am&client=tw-ob',
+        audioUrlEn: 'https://translate.google.com/translate_tts?ie=UTF-8&q=${Uri.encodeComponent("Regarding your inquiry maintain regular crop inspection")}&tl=en&client=tw-ob',
       );
     }
   }
@@ -51,7 +51,7 @@ class AiVoiceRepository {
       final formData = FormData.fromMap({
         'audio': await MultipartFile.fromFile(
           audioFile.path,
-          filename: audioFile.path.split(RegExp(r'[/\]')).last,
+          filename: audioFile.path.split(RegExp(r'[\\/]')).last,
         ),
         'language': language,
       });
@@ -66,13 +66,13 @@ class AiVoiceRepository {
     } catch (e) {
       AppLogger.warning('Live AI voice inquiry fallback to local synthesis: $e');
       return AiVoiceResponse(
-        transcript: 'Voice Audio Sample (' + audioFile.path.split(RegExp(r'[/\]')).last + ')',
-        responseEn: 'Voice inquiry processed: Maintain regular crop field inspections and consult local extension officers for guidance.',
-        responseAm: 'የድምፅ ጥያቄዎ ተስተናግዷል፡ የሰብልዎን ሁኔታ በየጊዜው ይከታተሉ እና ከአካባቢዎ የግብርና ልማት ጣቢያ ጋር ይማከሩ።',
+        transcript: 'Voice Audio Sample (${audioFile.path.split(RegExp(r"[\\/]")).last})',
+        responseEn: 'Voice inquiry processed: Maintain regular crop field inspections, monitor for armyworm and rust, and follow extension guidance.',
+        responseAm: 'የድምፅ ጥያቄ ተቀብለናል፡ የሰብልዎን ሁኔታ በየጊዜው ይፈትሹ፤ የዋግ እና የአባጨጓሬ ምልክቶችን ይከላከሉ፤ የልማት ጣቢያ መመሪያን ይከተሉ።',
         recommendedAction: 'Inspect farm condition and follow local agronomic guidance.',
         aiModel: 'AgriEtech Local Agronomic Engine',
         detectedLanguage: language,
-        audioUrlAm: 'https://translate.google.com/translate_tts?ie=UTF-8&q=${Uri.encodeComponent("የድምፅ ጥያቄዎ ተስተናግዷል የሰብልዎን ሁኔታ ይከታተሉ")}&tl=am&client=tw-ob',
+        audioUrlAm: 'https://translate.google.com/translate_tts?ie=UTF-8&q=${Uri.encodeComponent("የድምፅ ጥያቄ ተቀብለናል የሰብልዎን ሁኔታ በየጊዜው ይፈትሹ")}&tl=am&client=tw-ob',
         audioUrlEn: 'https://translate.google.com/translate_tts?ie=UTF-8&q=${Uri.encodeComponent("Voice inquiry processed maintain regular crop inspections")}&tl=en&client=tw-ob',
       );
     }
@@ -110,6 +110,7 @@ class AiVoiceResponse {
   final String? audioUrlEn;
   final String? audioUrlAm;
   final Map<String, dynamic>? metadata;
+  String? get audioUrl => audioUrlAm ?? audioUrlEn;
 
   AiVoiceResponse({
     this.transcript,
@@ -150,7 +151,6 @@ class AiVoiceResponse {
       lang == 'am' ? (responseAm.isNotEmpty ? responseAm : responseEn) : (responseEn.isNotEmpty ? responseEn : responseAm);
 }
 
-/// Riverpod provider
 final aiVoiceRepositoryProvider = Provider<AiVoiceRepository>((ref) {
   return AiVoiceRepository(ref.watch(dioClientProvider));
 });

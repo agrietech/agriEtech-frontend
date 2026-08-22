@@ -53,6 +53,10 @@ class AiVoiceNotifier extends StateNotifier<AiVoiceState> {
 
   void setLanguage(String lang) => state = state.copyWith(language: lang);
 
+  void clearMessages() => state = state.copyWith(messages: const []);
+
+  Future<void> sendQuestion(String question) => askText(question);
+
   Future<void> askText(String question) async {
     if (question.trim().isEmpty) return;
     

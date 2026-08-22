@@ -378,7 +378,7 @@ class _CreateDiagnosisScreenState extends ConsumerState<CreateDiagnosisScreen> {
                         left: 10,
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(color: Colors.black70, borderRadius: BorderRadius.circular(6)),
+                          decoration: BoxDecoration(color: const Color(0xB3000000), borderRadius: BorderRadius.circular(6)),
                           child: const Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -418,25 +418,22 @@ class _CreateDiagnosisScreenState extends ConsumerState<CreateDiagnosisScreen> {
               onChanged: (v) => setState(() => _selectedCropType = v),
             ),
             const SizedBox(height: 16),
-            farmsAsync.when(
-              data: (farms) {
-                if (farms.isEmpty) return const SizedBox.shrink();
-                return DropdownButtonFormField<String>(
-                  value: _selectedFarmId,
-                  decoration: InputDecoration(
-                    labelText: 'Link to Farm Plot (Optional)',
-                    prefixIcon: const Icon(Icons.agriculture),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  items: farms.map((farm) {
-                    return DropdownMenuItem(value: farm.id, child: Text('${farm.farmName} (${farm.primaryCrop})'));
-                  }).toList(),
-                  onChanged: (v) => setState(() => _selectedFarmId = v),
-                );
-              },
-              loading: () => const SizedBox.shrink(),
-              error: (_, __) => const SizedBox.shrink(),
-            ),
+            if (farmsAsync.farms.isNotEmpty)
+              DropdownButtonFormField<String>(
+                value: _selectedFarmId,
+                decoration: InputDecoration(
+                  labelText: 'Link to Farm Plot (Optional)',
+                  prefixIcon: const Icon(Icons.agriculture),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                items: farmsAsync.farms.map((farm) {
+                  return DropdownMenuItem(
+                    value: farm.id,
+                    child: Text(farm.name),
+                  );
+                }).toList(),
+                onChanged: (v) => setState(() => _selectedFarmId = v),
+              ),
             const SizedBox(height: 24),
             SizedBox(
               height: 50,

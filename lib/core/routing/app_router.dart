@@ -21,6 +21,7 @@ import '../../features/sensors/screens/register_sensor_screen.dart';
 import '../../features/weather/presentation/screens/weather_screen.dart';
 import '../../features/boundaries/screens/boundaries_screen.dart';
 import '../../features/analytics/screens/analytics_screen.dart';
+import '../../features/ai_voice/presentation/screens/ai_assistant_screen.dart';
 
 /// Listenable that notifies GoRouter whenever AuthState changes
 class AuthChangeNotifier extends ChangeNotifier {
@@ -172,6 +173,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
 
       // Analytics route (Researchers, Officers, Admin only)
+      GoRoute(
+        path: '/ai-assistant',
+        builder: (context, state) => const AiAssistantScreen(),
+      ),
       GoRoute(
         path: '/analytics',
         builder: (context, state) => const AnalyticsScreen(),
