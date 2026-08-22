@@ -208,7 +208,7 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
           ),
         ),
         child: const Icon(
-          Icons.psychology,
+          Icons.mic_rounded,
           color: Color(0xFFF59E0B),
           size: 26,
         ),

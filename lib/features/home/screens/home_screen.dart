@@ -254,6 +254,73 @@ class HomeScreen extends ConsumerWidget {
                     crossAxisSpacing: 14,
                     childAspectRatio: 1.1,
                     children: [
+                      InkWell(
+                        onTap: () => AiAssistantSheet.show(context),
+                        borderRadius: BorderRadius.circular(16),
+                        child: Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF1B5E20), Color(0xFF0F3E14)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF1B5E20).withValues(alpha: 0.3),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                            border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.6), width: 1.5),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF59E0B).withValues(alpha: 0.2),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: const Icon(Icons.mic_rounded, color: Color(0xFFF59E0B), size: 22),
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF59E0B),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: const Text(
+                                      'Voice AI',
+                                      style: TextStyle(color: Colors.black, fontSize: 10, fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: const [
+                                  Text(
+                                    'AI Voice Assistant',
+                                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                                  ),
+                                  SizedBox(height: 2),
+                                  Text(
+                                    'አማርኛ & English Voice Q&A',
+                                    style: TextStyle(color: Colors.white70, fontSize: 11),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                       _buildTechMenuCard(
                         context,
                         title: 'Operations Hub',
@@ -349,9 +416,9 @@ class HomeScreen extends ConsumerWidget {
         backgroundColor: const Color(0xFF1B5E20),
         foregroundColor: Colors.white,
         elevation: 4,
-        icon: const Icon(Icons.psychology, color: Color(0xFFF59E0B)),
+        icon: const Icon(Icons.mic_rounded, color: Color(0xFFF59E0B), size: 24),
         label: const Text(
-          'Agri-AI Assistant',
+          'Ask AI Voice (ድምፅ)',
           style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 0.3),
         ),
       ),
