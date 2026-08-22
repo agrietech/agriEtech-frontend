@@ -1,317 +1,450 @@
-<!DOCTYPE html><html lang="en"><head>
-  <base href="$FLUTTER_BASE_HREF">
+<!doctype html>
+<html lang="en">
 
-  <meta charset="UTF-8">
-  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="description" content="agriEtech">
-  <meta name="theme-color" content="#1B5E20">
+<head>
+    <base href="$FLUTTER_BASE_HREF" />
 
-  <!-- iOS meta tags & icons -->
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="agriEtech">
-  <link rel="apple-touch-icon" href="favicon.svg">
+    <meta charset="UTF-8" />
+    <meta content="IE=Edge" http-equiv="X-UA-Compatible" />
+    <meta name="viEthiopia generally uses a four-season model that aligns with its unique agricultural and weather cycles, mapped directly below to both the Gregorian (Western) months and the corresponding Ethiopian calendar months.1. ጸደይ / መኸር (Tseday / Meher) – SpringGregorian Months: September to NovemberEthiopian Months: Meskerem, Tikimt, HidarCharacteristics: Known as the harvest and flower-blooming season. It begins immediately after the Ethiopian New Year (September 11) as fields turn bright yellow with the indigenous Meskel daisies.2. በጋ (Bega) – Summer / Dry SeasonGregorian Months: December to FebruaryEthiopian Months: Tahsas, Tir, YakatitCharacteristics: This is the primary dry, sunny, and windy season. Mornings can be chilly with occasional frost in the highlands, making it the peak travel season.3. በልግ / መፀው (Belg / Metsew) – Autumn / Short Rainy SeasonGregorian Months: March to MayEthiopian Months: Maggabit, Miyazya, GinbotCharacteristics: Features mild temperatures and occasional light showers. May stands out as typically the hottest month of the year across the country.4. ክረምት (Kiremt) – Winter / Long Rainy SeasonGregorian Months: June to AugustEthiopian Months: Sene, Hamle, NehasseCharacteristics: The main winter season characterized by frequent, heavy rainfall, cloudy skies, and cooler daily temperatures. This season crucial for Ethiopia’s agriculture, feeding up to 95% of food crop productionewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="description" content="agriEtech" />
+    <meta name="theme-color" content="#1B5E20" />
 
-  <!-- Favicon -->
-  <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <link rel="icon" type="image/png" href="favicon.png">
-  <link rel="shortcut icon" href="favicon.png">
+    <!-- iOS meta tags & icons -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="agriEtech" />
+    <link rel="apple-touch-icon" href="favicon.svg" />
 
-  <!-- Google Fonts Preconnect & Inter / Outfit Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="icon" type="image/png" href="favicon.png" />
+    <link rel="shortcut icon" href="favicon.png" />
 
-  <title>agriEtech — Multi-Hazard Early Warning Platform</title>
-  <link rel="manifest" href="manifest.json">
+    <!-- Google Fonts Preconnect & Inter / Outfit Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet" />
 
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-    body {
-      background-color: #0F2916;
-      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      overflow: hidden;
-      height: 100vh;
-      width: 100vw;
-    }
-    #loading-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      width: 100vw;
-      position: fixed;
-      top: 0;
-      left: 0;
-      background: radial-gradient(circle at 50% 38%, #1B5E20 0%, #0D2E14 55%, #071A0B 100%);
-      z-index: 99999;
-      transition: opacity 0.35s ease-out, visibility 0.35s ease-out;
-    }
-    #loading-container.fade-out {
-      opacity: 0;
-      visibility: hidden;
-      pointer-events: none;
-    }
-    .brand-glow {
-      position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .brand-glow::before {
-      content: '';
-      position: absolute;
-      width: 140px;
-      height: 140px;
-      background: radial-gradient(circle, rgba(245, 158, 11, 0.25) 0%, rgba(74, 222, 128, 0.15) 45%, transparent 70%);
-      border-radius: 50%;
-      filter: blur(16px);
-      animation: pulseGlow 2.4s infinite alternate ease-in-out;
-    }
-    .brand-icon {
-      width: 88px;
-      height: 88px;
-      background: linear-gradient(135deg, #1B5E20 0%, #2E7D32 50%, #14532D 100%);
-      border-radius: 26px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 1.5px solid rgba(245, 158, 11, 0.55);
-      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4), 0 0 20px rgba(245, 158, 11, 0.2);
-      position: relative;
-      z-index: 1;
-      transform: translateY(0);
-      animation: floatBadge 3s ease-in-out infinite alternate;
-    }
-    .brand-icon svg {
-      width: 54px;
-      height: 54px;
-    }
-    .brand-title {
-      margin-top: 24px;
-      font-size: 32px;
-      font-weight: 800;
-      letter-spacing: -0.8px;
-      display: flex;
-      align-items: baseline;
-      justify-content: center;
-      text-shadow: 0 2px 10px rgba(0,0,0,0.3);
-    }
-    .title-agri {
-      color: #A5D6A7;
-      font-weight: 700;
-    }
-    .title-e {
-      color: #F59E0B;
-      font-weight: 900;
-      font-size: 35px;
-      margin: 0 1px;
-      text-shadow: 0 0 12px rgba(245, 158, 11, 0.6);
-    }
-    .title-tech {
-      color: #4ADE80;
-      font-weight: 800;
-    }
-    .brand-badge {
-      margin-top: 8px;
-      padding: 4px 14px;
-      background: rgba(46, 125, 50, 0.35);
-      border: 1px solid rgba(74, 222, 128, 0.3);
-      border-radius: 20px;
-      font-size: 11px;
-      font-weight: 700;
-      color: #86EFAC;
-      letter-spacing: 1.4px;
-      text-transform: uppercase;
-      backdrop-filter: blur(8px);
-    }
-    .spinner-wrapper {
-      margin-top: 36px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .spinner {
-      width: 32px;
-      height: 32px;
-      border: 3px solid rgba(74, 222, 128, 0.2);
-      border-top-color: #F59E0B;
-      border-right-color: #4ADE80;
-      border-radius: 50%;
-      animation: spin 0.85s linear infinite;
-    }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-    @keyframes floatBadge {
-      0% { transform: translateY(0px) scale(1); }
-      100% { transform: translateY(-4px) scale(1.02); }
-    }
-    @keyframes pulseGlow {
-      0% { opacity: 0.5; transform: scale(0.9); }
-      100% { opacity: 1; transform: scale(1.15); }
-    }
-  </style>
-  
-  
-  <style id="splash-screen-style">
-    html {
-      height: 100%
-    }
+    <title>agriEtech — Multi-Hazard Early Warning Platform</title>
+    <link rel="manifest" href="manifest.json" />
 
-    body {
-      margin: 0;
-      min-height: 100%;
-      background-color: #1B5E20;
-          background-size: 100% 100%;
-    }
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            background-color: #0f2916;
+            font-family: "Outfit", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+        
+        #loading-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            width: 100vw;
+            position: fixed;
+            top: 0;
+            left: 0;
+            background: radial-gradient( circle at 50% 38%, #1b5e20 0%, #0d2e14 55%, #071a0b 100%);
+            z-index: 99999;
+            transition: opacity 0.35s ease-out, visibility 0.35s ease-out;
+        }
+        
+        #loading-container.fade-out {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+        
+        .brand-glow {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .brand-glow::before {
+            content: "";
+            position: absolute;
+            width: 140px;
+            height: 140px;
+            background: radial-gradient( circle, rgba(245, 158, 11, 0.25) 0%, rgba(74, 222, 128, 0.15) 45%, transparent 70%);
+            border-radius: 50%;
+            filter: blur(16px);
+            animation: pulseGlow 2.4s infinite alternate ease-in-out;
+        }
+        
+        .brand-icon {
+            width: 88px;
+            height: 88px;
+            background: linear-gradient( 135deg, #1b5e20 0%, #2e7d32 50%, #14532d 100%);
+            border-radius: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1.5px solid rgba(245, 158, 11, 0.55);
+            box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4), 0 0 20px rgba(245, 158, 11, 0.2);
+            position: relative;
+            z-index: 1;
+            transform: translateY(0);
+            animation: floatBadge 3s ease-in-out infinite alternate;
+        }
+        
+        .brand-icon svg {
+            width: 54px;
+            height: 54px;
+        }
+        
+        .brand-title {
+            margin-top: 24px;
+            font-size: 32px;
+            font-weight: 800;
+            letter-spacing: -0.8px;
+            display: flex;
+            align-items: baseline;
+            justify-content: center;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .title-agri {
+            color: #a5d6a7;
+            font-weight: 700;
+        }
+        
+        .title-e {
+            color: #f59e0b;
+            font-weight: 900;
+            font-size: 35px;
+            margin: 0 1px;
+            text-shadow: 0 0 12px rgba(245, 158, 11, 0.6);
+        }
+        
+        .title-tech {
+            color: #4ade80;
+            font-weight: 800;
+        }
+        
+        .brand-badge {
+            margin-top: 8px;
+            padding: 4px 14px;
+            background: rgba(46, 125, 50, 0.35);
+            border: 1px solid rgba(74, 222, 128, 0.3);
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #86efac;
+            letter-spacing: 1.4px;
+            text-transform: uppercase;
+            backdrop-filter: blur(8px);
+        }
+        
+        .spinner-wrapper {
+            margin-top: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid rgba(74, 222, 128, 0.2);
+            border-top-color: #f59e0b;
+            border-right-color: #4ade80;
+            border-radius: 50%;
+            animation: spin 0.85s linear infinite;
+        }
+        
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        
+        @keyframes floatBadge {
+            0% {
+                transform: translateY(0px) scale(1);
+            }
+            100% {
+                transform: translateY(-4px) scale(1.02);
+            }
+        }
+        
+        @keyframes pulseGlow {
+            0% {
+                opacity: 0.5;
+                transform: scale(0.9);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1.15);
+            }
+        }
+    </style>
 
-    .center {
-      margin: 0;
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      -ms-transform: translate(-50%, -50%);
-      transform: translate(-50%, -50%);
-    }
-
-    .contain {
-      display:block;
-      width:100%; height:100%;
-      object-fit: contain;
-    }
-
-    .stretch {
-      display:block;
-      width:100%; height:100%;
-    }
-
-    .cover {
-      display:block;
-      width:100%; height:100%;
-      object-fit: cover;
-    }
-
-    .bottom {
-      position: absolute;
-      bottom: 0;
-      left: 50%;
-      -ms-transform: translate(-50%, 0);
-      transform: translate(-50%, 0);
-    }
-
-    .bottomLeft {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-    }
-
-    .bottomRight {
-      position: absolute;
-      bottom: 0;
-      right: 0;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      body {
-        background-color: #0F2916;
-          }
-    }
-  </style>
-  <script id="splash-screen-script">
-    function removeSplashFromWeb() {
-      document.getElementById("splash")?.remove();
-      document.getElementById("splash-branding")?.remove();
-      document.body.style.background = "transparent";
-    }
-  </script>
+    <style id="splash-screen-style">
+        html {
+            height: 100%;
+        }
+        
+        body {
+            margin: 0;
+            min-height: 100%;
+            background-color: #1b5e20;
+            background-size: 100% 100%;
+        }
+        
+        .center {
+            margin: 0;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            -ms-transform: translate(-50%, -50%);
+            transform: translate(-50%, -50%);
+        }
+        
+        .contain {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        
+        .stretch {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .cover {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .bottom {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            -ms-transform: translate(-50%, 0);
+            transform: translate(-50%, 0);
+        }
+        
+        .bottomLeft {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+        }
+        
+        .bottomRight {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #0f2916;
+            }
+        }
+    </style>
+    <script id="splash-screen-script">
+        function removeSplashFromWeb() {
+            document.getElementById("splash") ? .remove();
+            document.getElementById("splash-branding") ? .remove();
+            document.body.style.background = "transparent";
+        }
+    </script>
 </head>
+
 <body>
-  <picture id="splash">
-      <source srcset="splash/img/light-1x.png 1x, splash/img/light-2x.png 2x, splash/img/light-3x.png 3x, splash/img/light-4x.png 4x" media="(prefers-color-scheme: light)">
-      <source srcset="splash/img/dark-1x.png 1x, splash/img/dark-2x.png 2x, splash/img/dark-3x.png 3x, splash/img/dark-4x.png 4x" media="(prefers-color-scheme: dark)">
-      <img class="center" aria-hidden="true" src="splash/img/light-1x.png" alt="">
-  </picture>
-  
-  <div id="loading-container">
-    <div class="brand-glow">
-      <div class="brand-icon">
-        <!-- Authentic Ethiopian Agricultural & Tech Vector Emblem -->
-        <svg fill="none" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-          <!-- Solar Ray Accents -->
-          <line x1="50" y1="12" x2="50" y2="24" stroke="#F59E0B" stroke-width="2.5" stroke-linecap="round" opacity="0.6"></line>
-          <line x1="23" y1="23" x2="31" y2="31" stroke="#F59E0B" stroke-width="2.5" stroke-linecap="round" opacity="0.6"></line>
-          <line x1="77" y1="23" x2="69" y2="31" stroke="#F59E0B" stroke-width="2.5" stroke-linecap="round" opacity="0.6"></line>
-          
-          <!-- Highland Terraces (Base Terrain) -->
-          <path d="M0 85C25 72 65 80 100 70V100H0V85Z" fill="#0D2E14"></path>
-          <path d="M0 90C35 78 70 86 100 80V100H0V90Z" fill="#091F0E"></path>
-          
-          <!-- Blue Nile Water Curve -->
-          <path d="M30 75C45 82 52 92 65 100H75C60 90 52 80 38 75Z" fill="#38BDF8"></path>
-          
-          <!-- Golden Teff & Wheat Stalk -->
-          <path d="M48 88C42 56 32 28 30 20" stroke="#F59E0B" stroke-width="3" stroke-linecap="round"></path>
-          <ellipse cx="27" cy="24" rx="5" transform="rotate(-30 27 24)" fill="#FBBF24"></ellipse>
-          <ellipse cx="37" cy="30" rx="5" transform="rotate(30 37 30)" fill="#F59E0B"></ellipse>
-          <ellipse cx="27" cy="38" rx="5" transform="rotate(-35 27 38)" fill="#FBBF24"></ellipse>
-          <ellipse cx="38" cy="46" rx="5" transform="rotate(35 38 46)" fill="#F59E0B"></ellipse>
-          <ellipse cx="30" cy="56" rx="5" transform="rotate(-35 30 56)" fill="#FBBF24"></ellipse>
+    <picture id="splash">
+        <source srcset="
+          splash/img/light-1x.png 1x,
+          splash/img/light-2x.png 2x,
+          splash/img/light-3x.png 3x,
+          splash/img/light-4x.png 4x
+        " media="(prefers-color-scheme: light)" />
+        <source srcset="
+          splash/img/dark-1x.png 1x,
+          splash/img/dark-2x.png 2x,
+          splash/img/dark-3x.png 3x,
+          splash/img/dark-4x.png 4x
+        " media="(prefers-color-scheme: dark)" />
+        <img class="center" aria-hidden="true" src="splash/img/light-1x.png" alt="" />
+    </picture>
 
-          <!-- Ethiopian Emerald Coffee Leaf with Vein -->
-          <path d="M52 74C60 58 84 48 82 32C70 38 56 52 52 74Z" fill="#4ADE80"></path>
-          <path d="M54 70C66 52 78 38 78 38" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" opacity="0.7"></path>
+    <div id="loading-container">
+        <div class="brand-glow">
+            <div class="brand-icon">
+                <!-- Authentic Ethiopian Agricultural & Tech Vector Emblem -->
+                <svg fill="none" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <!-- Solar Ray Accents -->
+            <line
+              x1="50"
+              y1="12"
+              x2="50"
+              y2="24"
+              stroke="#F59E0B"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              opacity="0.6"
+            ></line>
+            <line
+              x1="23"
+              y1="23"
+              x2="31"
+              y2="31"
+              stroke="#F59E0B"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              opacity="0.6"
+            ></line>
+            <line
+              x1="77"
+              y1="23"
+              x2="69"
+              y2="31"
+              stroke="#F59E0B"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              opacity="0.6"
+            ></line>
 
-          <!-- Ruby Coffee Cherries -->
-          <circle cx="54" cy="66" r="4.5" fill="#EF4444"></circle>
-          <circle cx="60" cy="70" r="4" fill="#DC2626"></circle>
+            <!-- Highland Terraces (Base Terrain) -->
+            <path d="M0 85C25 72 65 80 100 70V100H0V85Z" fill="#0D2E14"></path>
+            <path d="M0 90C35 78 70 86 100 80V100H0V90Z" fill="#091F0E"></path>
 
-          <!-- Early-Warning Satellite & Telemetry Orbital Waves -->
-          <path d="M62 26A18 18 0 0 1 84 26" stroke="#38BDF8" stroke-width="2.5" stroke-linecap="round" opacity="0.9"></path>
-          <path d="M68 22A10 10 0 0 1 78 22" stroke="#38BDF8" stroke-width="2" stroke-linecap="round" opacity="0.6"></path>
-          
-          <!-- Telemetry Core Pulse -->
-          <circle cx="73" cy="18" r="3" fill="#F59E0B"></circle>
-          <circle cx="73" cy="18" r="1.5" fill="#FFFFFF"></circle>
-        </svg>
-      </div>
+            <!-- Blue Nile Water Curve -->
+            <path
+              d="M30 75C45 82 52 92 65 100H75C60 90 52 80 38 75Z"
+              fill="#38BDF8"
+            ></path>
+
+            <!-- Golden Teff & Wheat Stalk -->
+            <path
+              d="M48 88C42 56 32 28 30 20"
+              stroke="#F59E0B"
+              stroke-width="3"
+              stroke-linecap="round"
+            ></path>
+            <ellipse
+              cx="27"
+              cy="24"
+              rx="5"
+              transform="rotate(-30 27 24)"
+              fill="#FBBF24"
+            ></ellipse>
+            <ellipse
+              cx="37"
+              cy="30"
+              rx="5"
+              transform="rotate(30 37 30)"
+              fill="#F59E0B"
+            ></ellipse>
+            <ellipse
+              cx="27"
+              cy="38"
+              rx="5"
+              transform="rotate(-35 27 38)"
+              fill="#FBBF24"
+            ></ellipse>
+            <ellipse
+              cx="38"
+              cy="46"
+              rx="5"
+              transform="rotate(35 38 46)"
+              fill="#F59E0B"
+            ></ellipse>
+            <ellipse
+              cx="30"
+              cy="56"
+              rx="5"
+              transform="rotate(-35 30 56)"
+              fill="#FBBF24"
+            ></ellipse>
+
+            <!-- Ethiopian Emerald Coffee Leaf with Vein -->
+            <path
+              d="M52 74C60 58 84 48 82 32C70 38 56 52 52 74Z"
+              fill="#4ADE80"
+            ></path>
+            <path
+              d="M54 70C66 52 78 38 78 38"
+              stroke="#FFFFFF"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              opacity="0.7"
+            ></path>
+
+            <!-- Ruby Coffee Cherries -->
+            <circle cx="54" cy="66" r="4.5" fill="#EF4444"></circle>
+            <circle cx="60" cy="70" r="4" fill="#DC2626"></circle>
+
+            <!-- Early-Warning Satellite & Telemetry Orbital Waves -->
+            <path
+              d="M62 26A18 18 0 0 1 84 26"
+              stroke="#38BDF8"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              opacity="0.9"
+            ></path>
+            <path
+              d="M68 22A10 10 0 0 1 78 22"
+              stroke="#38BDF8"
+              stroke-width="2"
+              stroke-linecap="round"
+              opacity="0.6"
+            ></path>
+
+            <!-- Telemetry Core Pulse -->
+            <circle cx="73" cy="18" r="3" fill="#F59E0B"></circle>
+            <circle cx="73" cy="18" r="1.5" fill="#FFFFFF"></circle>
+          </svg>
+            </div>
+        </div>
+
+        <div class="brand-title">
+            <span class="title-agri">agri</span><span class="title-e">E</span
+        ><span class="title-tech">tech</span>
+        </div>
+
+        <div class="brand-badge">Early Warning Platform</div>
+
+        <div class="spinner-wrapper">
+            <div class="spinner"></div>
+        </div>
     </div>
-    
-    <div class="brand-title">
-      <span class="title-agri">agri</span><span class="title-e">E</span><span class="title-tech">tech</span>
-    </div>
-    
-    <div class="brand-badge">Early Warning Platform</div>
-    
-    <div class="spinner-wrapper">
-      <div class="spinner"></div>
-    </div>
-  </div>
 
-  <script src="flutter_bootstrap.js" async=""></script>
-  <script>
-    function hideLoader() {
-      const loader = document.getElementById('loading-container');
-      if (loader && !loader.classList.contains('fade-out')) {
-        loader.classList.add('fade-out');
-        setTimeout(() => {
-          if (loader.parentNode) loader.parentNode.removeChild(loader);
-        }, 380);
-      }
-    }
+    <script src="flutter_bootstrap.js" async=""></script>
+    <script>
+        function hideLoader() {
+            const loader = document.getElementById("loading-container");
+            if (loader && !loader.classList.contains("fade-out")) {
+                loader.classList.add("fade-out");
+                setTimeout(() => {
+                    if (loader.parentNode) loader.parentNode.removeChild(loader);
+                }, 380);
+            }
+        }
 
-    // 1. Flutter engine first frame event
-    window.addEventListener('flutter-first-frame', hideLoader);
+        // 1. Flutter engine first frame event
+        window.addEventListener("flutter-first-frame", hideLoader);
 
-    // 2. Safety timeout (ensures the loader NEVER stays stuck even on slow networks or errors)
-    setTimeout(hideLoader, 2500);
-  </script>
+        // 2. Safety timeout (ensures the loader NEVER stays stuck even on slow networks or errors)
+        setTimeout(hideLoader, 2500);
+    </script>
+</body>
 
-
-</body></html>
+</html>

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../providers/ai_voice_provider.dart';
 
 /// Professional Full-Screen AI Agronomic Voice & Chat Assistant
@@ -17,20 +16,30 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
     with SingleTickerProviderStateMixin {
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final FocusNode _focusNode = FocusNode();
   late AnimationController _pulseController;
   bool _isRecording = false;
+  bool _autoSpeak = true;
+  String? _currentlyPlayingText;
 
   @override
   void initState() {
     super.initState();
     _pulseController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1000),
+      duration: const Duration(milliseconds: 900),
     )..repeat(reverse: true);
+
+    _focusNode.addListener(() {
+      if (_focusNode.hasFocus) {
+        Future.delayed(const Duration(milliseconds: 250), _scrollToBottom);
+      }
+    });
   }
 
   @override
   void dispose() {
+    _focusNode.dispose();
     _textController.dispose();
     _scrollController.dispose();
     _pulseController.dispose();
@@ -41,7 +50,7 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
+          _scrollController.position.maxScrollExtent + 80,
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeOut,
         );
@@ -51,59 +60,83 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
 
   void _toggleRecording() {
     if (_isRecording) {
-      // Finish recording and send
       setState(() => _isRecording = false);
-      final lang = ref.read(aiVoiceProvider).language;
-      final defaultQuestions = {
-        'am': 'የጤፍ እና የስንዴ መዝሪያ ወቅት እና የማዳበሪያ አጠቃቀም መመሪያ ቢነግሩኝ?',
-        'en': 'What is the agronomic advisory for Teff and Wheat planting, rust prevention, and fertilizer schedule this season?',
-      };
-      final question = defaultQuestions[lang] ?? defaultQuestions['am']!;
-      _submitQuery(question);
+      final text = _textController.text.trim();
+      if (text.isNotEmpty) {
+        _submitQuery(text);
+      } else {
+        final lang = ref.read(aiVoiceProvider).language;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              lang == 'am'
+                  ? 'እባክዎን ጥያቄዎን ይፃፉ ወይም ከታች ካሉት አማራጮች አንዱን ይምረጡ'
+                  : 'Please type your question or select a topic chip below',
+            ),
+            duration: const Duration(seconds: 2),
+            backgroundColor: const Color(0xFF2E7D32),
+          ),
+        );
+      }
     } else {
-      // Start recording
       setState(() => _isRecording = true);
     }
   }
 
-  void _submitQuery(String query) {
+  Future<void> _submitQuery(String query) async {
     final text = query.trim();
     if (text.isEmpty) return;
 
     _textController.clear();
     FocusScope.of(context).unfocus();
-    ref.read(aiVoiceProvider.notifier).sendQuestion(text);
+
+    await ref.read(aiVoiceProvider.notifier).sendQuestion(text);
     _scrollToBottom();
+
+    if (_autoSpeak) {
+      final state = ref.read(aiVoiceProvider);
+      final lastMsg = state.messages.isNotEmpty ? state.messages.last : null;
+      if (lastMsg != null && !lastMsg.isUser) {
+        _playVoiceAudio(lastMsg.aiResponse?.audioUrl, lastMsg.text);
+      }
+    }
   }
 
   Future<void> _playVoiceAudio(String? audioUrl, String text) async {
     final lang = ref.read(aiVoiceProvider).language;
-    final encodedText = Uri.encodeComponent(text.length > 180 ? text.substring(0, 180) : text);
-    final streamUrl = audioUrl ?? 'https://translate.google.com/translate_tts?ie=UTF-8&q=$encodedText&tl=$lang&client=tw-ob';
+    final clean = text
+        .replaceAll(RegExp(r'[*#_~>]'), '')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    final sample = clean.length > 220 ? clean.substring(0, 220) : clean;
+    final encodedSample = Uri.encodeComponent(sample);
+    final streamUrl = audioUrl ?? 'https://agrietech.onrender.com/api/v1/ai/tts-stream?text=$encodedSample&lang=$lang';
+
+    setState(() => _currentlyPlayingText = text);
 
     try {
       final uri = Uri.parse(streamUrl);
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(lang == 'am' ? 'የድምፅ ንባብ ተጀምሯል...' : 'Playing AI Voice audio...'),
-              backgroundColor: AppTheme.primaryColor,
-            ),
-          );
-        }
       }
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(lang == 'am' ? 'የድምፅ ንባብ ተጀምሯል...' : 'Playing AI Voice audio...'),
-            backgroundColor: AppTheme.primaryColor,
+            content: Text(
+              lang == 'am'
+                  ? 'የድምፅ መልዕክት እየተጫወተ ነው...'
+                  : 'Playing voice audio advisory...',
+            ),
+            backgroundColor: const Color(0xFF2E7D32),
+            duration: const Duration(seconds: 2),
           ),
         );
       }
+    } finally {
+      Future.delayed(const Duration(seconds: 4), () {
+        if (mounted) setState(() => _currentlyPlayingText = null);
+      });
     }
   }
 
@@ -127,26 +160,31 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
         ? [
             '🌾 ጤፍ ለመዝራት የተሻለው ወቅት መቼ ነው?',
             '🌽 የበቆሎ አባጨጓሬ (ፎል አርሚዎርም) መከላከያ',
+            '🍎 የፖም ዛፍ ማዳቀልና የፍራፍሬ እንክብካቤ',
+            '🍅 የቲማቲም ቅጠል መድረቅ (Late Blight) መፍትሄ',
             '🌾 የስንዴ ግንድ ዋግ በሽታ መከላከያ ዘዴዎች',
             '💧 የአፈር እርጥበት እና የመስኖ አጠቃቀም',
-            '🧪 የዩሪያ እና የNPS ማዳበሪያ አጠቃቀም',
-            '⛅ የአየር ሁኔታ እና የዝናብ ትንበያ',
+            '🧪 የአፈር አሲዳማነትና የኖራ አጠቃቀም',
+            '☕ የቡና ፍሬ በሽታ (CBD) መከላከያ',
           ]
         : [
             '🌾 Best time to plant Teff & spacing?',
             '🌽 Maize Fall Armyworm IPM control',
+            '🍎 Apple tree grafting & nursery care',
+            '🍅 Tomato Late Blight fungicide guide',
             '🌾 Wheat Stem Rust fungicide treatment',
             '💧 Soil moisture & furrow irrigation',
-            '🧪 Urea & NPS balanced fertilizer guide',
-            '⛅ Weather & climate risk forecast',
+            '🧪 Soil acidity & agricultural lime guide',
+            '☕ Coffee Berry Disease (CBD) prevention',
           ];
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(6),
+              padding: const EdgeInsets.all(7),
               decoration: const BoxDecoration(
                 color: Color(0xFF2E7D32),
                 shape: BoxShape.circle,
@@ -154,23 +192,47 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
               child: const Icon(Icons.psychology, color: Colors.white, size: 20),
             ),
             const SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  isAmharic ? 'የአግሪቴክ AI ረዳት' : 'AgriEtech AI Assistant',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                ),
-                Text(
-                  isAmharic ? 'የድምፅና የጽሑፍ የግብርና አማካሪ' : 'Bilingual Voice & Text Advisory',
-                  style: const TextStyle(fontSize: 11, color: Colors.white70),
-                ),
-              ],
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    isAmharic ? 'የአግሪቴክ AI አማካሪ' : 'AgriEtech AI Advisor',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  Text(
+                    isAmharic ? 'ቀጥታ የድምፅና የጽሑፍ የግብርና መመሪያ' : 'Live Voice & Text Agronomic Guidance',
+                    style: const TextStyle(fontSize: 10.5, color: Colors.white70),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
         actions: [
-          // Language Switcher Toggle
+          IconButton(
+            icon: Icon(
+              _autoSpeak ? Icons.volume_up_rounded : Icons.volume_off_rounded,
+              color: _autoSpeak ? const Color(0xFF81C784) : Colors.white60,
+              size: 22,
+            ),
+            tooltip: isAmharic
+                ? (_autoSpeak ? 'የድምፅ ንባብ በርቷል' : 'የድምፅ ንባብ ጠፍቷል')
+                : (_autoSpeak ? 'Auto-speak Voice ON' : 'Auto-speak Voice OFF'),
+            onPressed: () {
+              setState(() => _autoSpeak = !_autoSpeak);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    _autoSpeak
+                        ? (isAmharic ? 'ድምፅ በራስ-ሰር ይጫወታል' : 'Auto Voice Output Enabled')
+                        : (isAmharic ? 'የድምፅ ንባብ ተዘግቷል' : 'Auto Voice Output Muted'),
+                  ),
+                  duration: const Duration(seconds: 1),
+                ),
+              );
+            },
+          ),
           Container(
             margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
             padding: const EdgeInsets.all(2),
@@ -222,235 +284,243 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.refresh_rounded),
-            tooltip: 'Clear Conversation',
+            icon: const Icon(Icons.delete_sweep_outlined),
+            tooltip: 'Clear Chat',
             onPressed: () => ref.read(aiVoiceProvider.notifier).clearMessages(),
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // Quick Topic Chips Carousel
-          Container(
-            height: 48,
-            padding: const EdgeInsets.symmetric(vertical: 6),
-            color: isDark ? const Color(0xFF162416) : const Color(0xFFEDF7ED),
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              itemCount: quickChips.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
-              itemBuilder: (context, idx) {
-                final chip = quickChips[idx];
-                return ActionChip(
-                  label: Text(
-                    chip,
-                    style: TextStyle(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w500,
-                      color: isDark ? Colors.white : AppTheme.primaryDark,
-                    ),
-                  ),
-                  backgroundColor: isDark ? const Color(0xFF243B24) : Colors.white,
-                  side: BorderSide(color: const Color(0xFF2E7D32).withValues(alpha: 0.3)),
-                  onPressed: () => _submitQuery(chip.replaceFirst(RegExp(r'^[^\s]+\s+'), '')),
-                );
-              },
-            ),
-          ),
-
-          // Messages List
-          Expanded(
-            child: aiState.messages.isEmpty
-                ? Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(28.0),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(24),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  const Color(0xFF2E7D32).withValues(alpha: 0.15),
-                                  const Color(0xFF1B5E20).withValues(alpha: 0.05),
-                                ],
-                              ),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.eco, size: 56, color: Color(0xFF2E7D32)),
-                          ),
-                          const SizedBox(height: 20),
-                          Text(
-                            isAmharic ? 'የኢትዮጵያ ግብርና AI ድምፅ ረዳት' : 'Ethiopian Agronomic AI Assistant',
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            isAmharic
-                                ? 'ስለ ጤፍ፣ ስንዴ፣ በቆሎ፣ አባጨጓሬ፣ ማዳበሪያና የአፈር እንክብካቤ በማይክሮፎኑ ተጭነው ይናገሩ ወይም ከላይ ካሉት አማራጮች አንዱን ይምረጡ።'
-                                : 'Ask scientifically grounded questions about crop protection, fertilizer timing, soil moisture, and pest outbreaks in Amharic & English.',
-                            style: const TextStyle(color: Colors.grey, fontSize: 13, height: 1.4),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Quick Topic Chips Carousel
+            Container(
+              height: 48,
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              color: isDark ? const Color(0xFF142214) : const Color(0xFFF1F8F1),
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                itemCount: quickChips.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 8),
+                itemBuilder: (context, index) {
+                  final chip = quickChips[index];
+                  return ActionChip(
+                    label: Text(
+                      chip,
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? const Color(0xFF81C784) : const Color(0xFF1B5E20),
                       ),
                     ),
-                  )
-                : ListView.builder(
-                    controller: _scrollController,
-                    padding: const EdgeInsets.all(16),
-                    itemCount: aiState.messages.length + (aiState.isLoading ? 1 : 0),
-                    itemBuilder: (context, index) {
-                      if (index == aiState.messages.length) {
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 12.0),
-                          child: Row(
-                            children: [
-                              const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF2E7D32)),
-                              ),
-                              const SizedBox(width: 12),
-                              Text(
-                                isAmharic ? 'የግብርና AI መልስ በማዘጋጀት ላይ ነው...' : 'Generating agronomic advisory...',
-                                style: const TextStyle(fontSize: 12.5, fontStyle: FontStyle.italic, color: Colors.grey),
-                              ),
-                            ],
-                          ),
-                        );
-                      }
+                    backgroundColor: isDark ? const Color(0xFF1F331F) : Colors.white,
+                    side: BorderSide(color: const Color(0xFF2E7D32).withValues(alpha: 0.3)),
+                    onPressed: () => _submitQuery(chip.replaceFirst(RegExp(r'^[^s]+s'), '')),
+                  );
+                },
+              ),
+            ),
 
-                      final msg = aiState.messages[index];
-                      final isUser = msg.isUser;
-                      final audioUrl = msg.aiResponse?.audioUrlAm ?? msg.aiResponse?.audioUrlEn ?? aiState.lastResponse?.audioUrlAm ?? aiState.lastResponse?.audioUrlEn;
+            const Divider(height: 1),
 
-                      if (isUser) {
-                        return Align(
-                          alignment: Alignment.centerRight,
-                          child: Container(
-                            margin: const EdgeInsets.only(bottom: 12, left: 48),
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                            decoration: const BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [Color(0xFF1B5E20), Color(0xFF2E7D32)],
+            // Messages View
+            Expanded(
+              child: aiState.messages.isEmpty
+                  ? Center(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(24.0),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF2E7D32).withValues(alpha: 0.1),
+                                shape: BoxShape.circle,
                               ),
-                              borderRadius: BorderRadius.only(
-                                topLeft: Radius.circular(18),
-                                topRight: Radius.circular(18),
-                                bottomLeft: Radius.circular(18),
-                                bottomRight: Radius.circular(4),
-                              ),
+                              child: const Icon(Icons.psychology, size: 56, color: Color(0xFF2E7D32)),
                             ),
-                            child: Text(
-                              msg.text,
-                              style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500),
+                            const SizedBox(height: 16),
+                            Text(
+                              isAmharic ? 'የግብርና AI ረዳትዎን ይጠይቁ' : 'Ask AgriEtech AI Agronomist',
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                             ),
-                          ),
-                        );
-                      }
-
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 16, right: 28),
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF1C2B1C) : const Color(0xFFF6FAF6),
-                          borderRadius: BorderRadius.circular(18),
-                          border: Border.all(color: const Color(0xFF2E7D32).withValues(alpha: 0.25)),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.04),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
+                            const SizedBox(height: 8),
+                            Text(
+                              isAmharic
+                                  ? 'ስለ ሰብል እንክብካቤ፣ ፍራፍሬዎች፣ ተባዮች፣ ዝገት፣ ማዳበሪያና የአየር ሁኔታ ማንኛውንም ጥያቄ ይጠይቁ'
+                                  : 'Get scientifically verified advice on Ethiopian crops, fruit trees, pests, rust, soil management, and weather.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(fontSize: 13, color: Colors.grey.shade600, height: 1.4),
                             ),
                           ],
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      ),
+                    )
+                  : ListView.builder(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      itemCount: aiState.messages.length + (aiState.isLoading ? 1 : 0),
+                      itemBuilder: (context, index) {
+                        if (index == aiState.messages.length) {
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            child: Row(
                               children: [
-                                Row(
-                                  children: [
-                                    const Icon(Icons.verified, size: 16, color: Color(0xFF2E7D32)),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      isAmharic ? 'የግብርና መመሪያ' : 'Agronomic Guidance',
-                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5, color: Color(0xFF2E7D32)),
-                                    ),
-                                  ],
+                                const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF2E7D32)),
                                 ),
-                                Row(
-                                  children: [
-                                    IconButton(
-                                      icon: const Icon(Icons.volume_up_rounded, size: 20, color: Color(0xFF2E7D32)),
-                                      tooltip: isAmharic ? 'ድምፅ አጫውት' : 'Listen with Voice',
-                                      onPressed: () => _playVoiceAudio(audioUrl, msg.text),
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(Icons.copy_rounded, size: 18, color: Colors.grey),
-                                      tooltip: 'Copy Advisory',
-                                      onPressed: () => _copyToClipboard(msg.text),
-                                    ),
-                                  ],
+                                const SizedBox(width: 12),
+                                Text(
+                                  isAmharic ? 'የግብርና AI መልስ በማዘጋጀት ላይ ነው...' : 'Generating agronomic advisory...',
+                                  style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: Colors.grey),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 6),
-                            SelectableText(
-                              msg.text,
-                              style: const TextStyle(fontSize: 13.5, height: 1.5),
-                            ),
-                            if (msg.aiResponse?.recommendedAction != null &&
-                                msg.aiResponse!.recommendedAction!.isNotEmpty) ...[
-                              const SizedBox(height: 12),
-                              Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF2E7D32).withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(color: const Color(0xFF2E7D32).withValues(alpha: 0.3)),
-                                ),
-                                child: Row(
-                                  children: [
-                                    const Icon(Icons.task_alt, size: 16, color: Color(0xFF2E7D32)),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(
-                                        'Recommended Action: ${msg.aiResponse!.recommendedAction!}',
-                                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF2E7D32)),
-                                      ),
-                                    ),
-                                  ],
+                          );
+                        }
+
+                        final msg = aiState.messages[index];
+                        final isUser = msg.isUser;
+                        final audioUrl = msg.aiResponse?.audioUrl;
+                        final isPlaying = _currentlyPlayingText == msg.text;
+
+                        if (isUser) {
+                          return Align(
+                            alignment: Alignment.centerRight,
+                            child: Container(
+                              margin: const EdgeInsets.only(bottom: 12, left: 48),
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF1B5E20),
+                                borderRadius: BorderRadius.only(
+                                  topLeft: Radius.circular(18),
+                                  topRight: Radius.circular(18),
+                                  bottomLeft: Radius.circular(18),
+                                  bottomRight: Radius.circular(4),
                                 ),
                               ),
-                            ],
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-          ),
+                              child: Text(
+                                msg.text,
+                                style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500),
+                              ),
+                            ),
+                          );
+                        }
 
-          // Bottom Bar (Text Input & Voice Controls)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF142214) : Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.06),
-                  blurRadius: 12,
-                  offset: const Offset(0, -3),
-                ),
-              ],
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 16, right: 24),
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: isDark ? const Color(0xFF1B2C1B) : const Color(0xFFF4F9F4),
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(18),
+                              topRight: Radius.circular(18),
+                              bottomRight: Radius.circular(18),
+                              bottomLeft: Radius.circular(4),
+                            ),
+                            border: Border.all(
+                              color: isPlaying ? const Color(0xFF2E7D32) : const Color(0xFFC8E6C9),
+                              width: isPlaying ? 2 : 1,
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.auto_awesome, color: Color(0xFF2E7D32), size: 16),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        isAmharic ? 'የግብርና መመሪያ' : 'Agronomic Guidance',
+                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5, color: Color(0xFF2E7D32)),
+                                      ),
+                                    ],
+                                  ),
+                                  Row(
+                                    children: [
+                                      IconButton(
+                                        icon: Icon(
+                                          isPlaying ? Icons.graphic_eq_rounded : Icons.volume_up_rounded,
+                                          size: 20,
+                                          color: isPlaying ? const Color(0xFFF59E0B) : const Color(0xFF2E7D32),
+                                        ),
+                                        tooltip: isAmharic ? 'ድምፅ አዳምጥ' : 'Listen with Voice',
+                                        onPressed: () => _playVoiceAudio(audioUrl, msg.text),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.copy_rounded, size: 18, color: Colors.grey),
+                                        tooltip: 'Copy Advisory',
+                                        onPressed: () => _copyToClipboard(msg.text),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              SelectableText(
+                                msg.text,
+                                style: TextStyle(
+                                  fontSize: 13.5,
+                                  height: 1.55,
+                                  color: isDark ? Colors.white : const Color(0xFF1F2937),
+                                ),
+                              ),
+                              if (msg.aiResponse?.recommendedAction != null &&
+                                  msg.aiResponse!.recommendedAction!.isNotEmpty) ...[
+                                const SizedBox(height: 12),
+                                Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF2E7D32).withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(color: const Color(0xFF2E7D32).withValues(alpha: 0.3)),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.task_alt, size: 16, color: Color(0xFF2E7D32)),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          'Recommended Action: ${msg.aiResponse!.recommendedAction ?? ""}',
+                                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF2E7D32)),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        );
+                      },
+                    ),
             ),
-            child: SafeArea(
-              top: false,
+
+            // Bottom Input Bar with Multi-line Protection & Keyboard Inset
+            Container(
+              padding: EdgeInsets.only(
+                left: 14,
+                right: 14,
+                top: 10,
+                bottom: MediaQuery.of(context).viewInsets.bottom > 0 ? 8 : 12,
+              ),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF142214) : Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 12,
+                    offset: const Offset(0, -3),
+                  ),
+                ],
+              ),
               child: _isRecording
                   ? AnimatedBuilder(
                       animation: _pulseController,
@@ -468,7 +538,7 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Text(
-                                  isAmharic ? 'ድምፅዎን በማዳመጥ ላይ ነው... ሲጨርሱ ይጫኑ' : 'Listening to voice query... Tap check to send',
+                                  isAmharic ? 'ጥያቄዎን ይናገሩ ወይም ይፃፉ...' : 'Speak or type your question...',
                                   style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 13),
                                 ),
                               ),
@@ -486,11 +556,13 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
                       },
                     )
                   : Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         // Mic Button
                         GestureDetector(
                           onTap: _toggleRecording,
                           child: Container(
+                            margin: const EdgeInsets.only(bottom: 2),
                             padding: const EdgeInsets.all(12),
                             decoration: const BoxDecoration(
                               gradient: LinearGradient(
@@ -503,36 +575,64 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
                         ),
                         const SizedBox(width: 10),
 
-                        // Text Field
+                        // High-Contrast Multi-line Text Field (Never Hides Typed Text)
                         Expanded(
-                          child: TextField(
-                            controller: _textController,
-                            decoration: InputDecoration(
-                              hintText: isAmharic ? 'የግብርና ጥያቄዎን እዚህ ይጻፉ ወይም ይናገሩ...' : 'Ask agronomic or pest question...',
-                              hintStyle: const TextStyle(fontSize: 13),
-                              filled: true,
-                              fillColor: isDark ? const Color(0xFF1F331F) : const Color(0xFFF1F5F1),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(24),
-                                borderSide: BorderSide.none,
+                          child: Container(
+                            constraints: const BoxConstraints(maxHeight: 120),
+                            decoration: BoxDecoration(
+                              color: isDark ? const Color(0xFF1F331F) : const Color(0xFFF1F5F1),
+                              borderRadius: BorderRadius.circular(22),
+                              border: Border.all(
+                                color: isDark ? Colors.white24 : Colors.grey.shade300,
                               ),
                             ),
-                            onSubmitted: _submitQuery,
+                            child: TextField(
+                              controller: _textController,
+                              focusNode: _focusNode,
+                              minLines: 1,
+                              maxLines: 4,
+                              keyboardType: TextInputType.multiline,
+                              textInputAction: TextInputAction.send,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: isDark ? Colors.white : const Color(0xFF111827),
+                                fontWeight: FontWeight.w500,
+                              ),
+                              decoration: InputDecoration(
+                                hintText: isAmharic
+                                    ? 'ጥያቄዎን እዚህ ይጻፉ ወይም ይናገሩ...'
+                                    : 'Type crop or pest question...',
+                                hintStyle: TextStyle(
+                                  fontSize: 13,
+                                  color: isDark ? Colors.white54 : Colors.grey.shade600,
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                border: InputBorder.none,
+                              ),
+                              onSubmitted: _submitQuery,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 8),
 
                         // Send Button
-                        IconButton(
-                          icon: const Icon(Icons.send_rounded, color: Color(0xFF2E7D32), size: 26),
-                          onPressed: () => _submitQuery(_textController.text),
+                        Container(
+                          margin: const EdgeInsets.only(bottom: 2),
+                          child: IconButton.filled(
+                            icon: const Icon(Icons.send_rounded, size: 20),
+                            style: IconButton.styleFrom(
+                              backgroundColor: const Color(0xFF2E7D32),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.all(12),
+                            ),
+                            onPressed: () => _submitQuery(_textController.text),
+                          ),
                         ),
                       ],
                     ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
