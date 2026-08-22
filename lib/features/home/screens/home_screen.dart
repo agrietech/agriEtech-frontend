@@ -1,4 +1,3 @@
-import 'package:url_launcher/url_launcher_string.dart';
 import '../../alerts/providers/alert_provider.dart';
 import 'main_navigation_shell.dart';
 import 'package:flutter/material.dart';
@@ -428,18 +427,6 @@ class HomeScreen extends ConsumerWidget {
                           route: '/analytics',
                           accentColor: const Color(0xFF4338CA),
                         ),
-                      if (user?.role.name.toUpperCase() == 'ADMIN' || RoleUtils.getRoleDisplayName(user?.role).toUpperCase() == 'ADMIN')
-                        _buildTechMenuCard(
-                          context,
-                          ref,
-                          title: 'Admin Console',
-                          subtitle: 'Users, CRUD & system fleet',
-                          badgeText: 'ADMIN',
-                          badgeColor: const Color(0xFFDC2626),
-                          icon: Icons.admin_panel_settings_outlined,
-                          route: 'admin_web_console',
-                          accentColor: const Color(0xFFDC2626),
-                        ),
                     ],
                   ),
                 ],
@@ -496,7 +483,6 @@ class HomeScreen extends ConsumerWidget {
   Widget _buildTechMenuCard(
     BuildContext context,
     WidgetRef ref, {
-
     required String title,
     required String subtitle,
     required String badgeText,
@@ -524,11 +510,7 @@ class HomeScreen extends ConsumerWidget {
           onTap: () {
             if (route == '/farms') {
               ref.read(navigationIndexProvider.notifier).state = 1;
-            } else if (route == 'admin_web_console') {
-              launchUrlString('http://localhost:3000/admin/dashboard', mode: LaunchMode.externalApplication);
-              return;
-            }
-            if (route == '/alerts') {
+            } else if (route == '/alerts') {
               ref.read(navigationIndexProvider.notifier).state = 2;
             } else if (route == '/dashboard') {
               ref.read(navigationIndexProvider.notifier).state = 3;
@@ -568,25 +550,24 @@ class HomeScreen extends ConsumerWidget {
                         badgeText,
                         style: TextStyle(
                           color: badgeColor,
-                          fontSize: 9,
+                          fontSize: 10,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
                   ],
                 ),
+                const SizedBox(height: 8),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       title,
                       style: const TextStyle(
-                        fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF1F2937),
+                        fontSize: 14,
+                        color: Colors.black87,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
                     Text(
