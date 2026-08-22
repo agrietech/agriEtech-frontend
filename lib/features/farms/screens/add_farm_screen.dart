@@ -7,7 +7,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/validators.dart';
 import '../providers/farm_provider.dart';
 
-/// Add Farm Screen with Guaranteed GPS Capture, Woreda Quick-Select & Manual Fallback
+/// Add Farm Screen with Guaranteed Manual Coordinates, Woreda Presets & GPS Auto-Capture
 class AddFarmScreen extends ConsumerStatefulWidget {
   const AddFarmScreen({super.key});
 
@@ -28,11 +28,10 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
   String? _selectedIrrigation = 'Rainfed';
   String _selectedWoredaPreset = 'Adama Zuria (Oromia)';
 
-  double _latitude = 8.54;
-  double _longitude = 39.27;
+  double _latitude = 8.54000;
+  double _longitude = 39.27000;
   bool _isLoading = false;
   bool _isGettingLocation = false;
-  bool _manualCoordinateMode = false;
 
   final Map<String, List<double>> _woredaPresets = {
     'Adama Zuria (Oromia)': [8.54000, 39.27000],
@@ -51,9 +50,6 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
     super.initState();
     _latController.text = _latitude.toStringAsFixed(5);
     _lngController.text = _longitude.toStringAsFixed(5);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _getCurrentLocation();
-    });
   }
 
   @override
@@ -78,7 +74,7 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Location preset set to $woredaName'),
+          content: Text('Coordinates updated from $woredaName preset'),
           backgroundColor: const Color(0xFF2E7D32),
           duration: const Duration(seconds: 2),
         ),
@@ -118,7 +114,7 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
           });
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('GPS Location captured: ${_latitude.toStringAsFixed(5)}, ${_longitude.toStringAsFixed(5)}'),
+              content: Text('GPS Captured: ${_latitude.toStringAsFixed(5)}, ${_longitude.toStringAsFixed(5)}'),
               backgroundColor: const Color(0xFF2E7D32),
             ),
           );
@@ -127,7 +123,7 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Location active (Regional coordinates: 8.54000, 39.27000 - Adama Zuria)'),
+              content: Text('Using regional reference coordinates (Adama Zuria)'),
               backgroundColor: Color(0xFF2E7D32),
             ),
           );
@@ -137,7 +133,7 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Location reference set to Adama Zuria'),
+            content: Text('You can manually edit coordinates below'),
             backgroundColor: Color(0xFF2E7D32),
           ),
         );
@@ -152,8 +148,8 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
   Future<void> _saveFarm() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final parsedLat = double.tryParse(_latController.text) ?? _latitude;
-    final parsedLng = double.tryParse(_lngController.text) ?? _longitude;
+    final parsedLat = double.tryParse(_latController.text.trim()) ?? _latitude;
+    final parsedLng = double.tryParse(_lngController.text.trim()) ?? _longitude;
 
     setState(() => _isLoading = true);
 
@@ -302,7 +298,7 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
             ),
             const SizedBox(height: 16),
 
-            // Location Card with Woreda Quick Select & GPS
+            // Location Card with Manual Coordinates, Woreda Presets & GPS Button
             Card(
               elevation: 0,
               shape: RoundedRectangleBorder(
@@ -315,101 +311,81 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Row(
-                          children: [
-                            const Icon(Icons.location_on, color: AppTheme.primaryColor, size: 22),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Farm Location',
-                              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                            ),
-                          ],
-                        ),
-                        TextButton.icon(
-                          icon: Icon(_manualCoordinateMode ? Icons.list : Icons.edit_location_alt, size: 16),
-                          label: Text(_manualCoordinateMode ? 'Presets' : 'Manual GPS', style: const TextStyle(fontSize: 12)),
-                          onPressed: () => setState(() => _manualCoordinateMode = !_manualCoordinateMode),
+                        const Icon(Icons.location_on, color: AppTheme.primaryColor, size: 22),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Farm Location & Coordinates',
+                          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
                     const SizedBox(height: 12),
 
-                    if (!_manualCoordinateMode) ...[
-                      // Quick Woreda Region Selector
-                      DropdownButtonFormField<String>(
-                        value: _selectedWoredaPreset,
-                        decoration: InputDecoration(
-                          labelText: 'Select Woreda / Location Preset',
-                          prefixIcon: const Icon(Icons.map_outlined),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                          filled: true,
-                          fillColor: isDark ? const Color(0xFF1B2E1E) : const Color(0xFFF9FAF9),
+                    // Quick Woreda Region Selector
+                    DropdownButtonFormField<String>(
+                      value: _selectedWoredaPreset,
+                      decoration: InputDecoration(
+                        labelText: 'Select Woreda Preset (Auto-fills Coordinates)',
+                        prefixIcon: const Icon(Icons.map_outlined),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        filled: true,
+                        fillColor: isDark ? const Color(0xFF1B2E1E) : const Color(0xFFF9FAF9),
+                      ),
+                      items: _woredaPresets.keys.map((woreda) {
+                        return DropdownMenuItem(value: woreda, child: Text(woreda, style: const TextStyle(fontSize: 13)));
+                      }).toList(),
+                      onChanged: (v) {
+                        if (v != null) _applyWoredaPreset(v);
+                      },
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Manual Latitude & Longitude Input Fields
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: _latController,
+                            decoration: InputDecoration(
+                              labelText: 'Latitude (°N)',
+                              hintText: '8.54000',
+                              prefixIcon: const Icon(Icons.north_east, size: 18),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                              filled: true,
+                              fillColor: isDark ? const Color(0xFF1B2E1E) : const Color(0xFFF9FAF9),
+                            ),
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            validator: Validators.numeric,
+                          ),
                         ),
-                        items: _woredaPresets.keys.map((woreda) {
-                          return DropdownMenuItem(value: woreda, child: Text(woreda, style: const TextStyle(fontSize: 13)));
-                        }).toList(),
-                        onChanged: (v) {
-                          if (v != null) _applyWoredaPreset(v);
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                    ],
-
-                    if (_manualCoordinateMode) ...[
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextFormField(
-                              controller: _latController,
-                              decoration: const InputDecoration(labelText: 'Latitude', border: OutlineInputBorder()),
-                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: TextFormField(
+                            controller: _lngController,
+                            decoration: InputDecoration(
+                              labelText: 'Longitude (°E)',
+                              hintText: '39.27000',
+                              prefixIcon: const Icon(Icons.south_east, size: 18),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                              filled: true,
+                              fillColor: isDark ? const Color(0xFF1B2E1E) : const Color(0xFFF9FAF9),
                             ),
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            validator: Validators.numeric,
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: TextFormField(
-                              controller: _lngController,
-                              decoration: const InputDecoration(labelText: 'Longitude', border: OutlineInputBorder()),
-                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                    ],
-
-                    // Coordinates Display Pill
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE8F5E9),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: const Color(0xFFC8E6C9)),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.check_circle, color: Color(0xFF2E7D32), size: 20),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              'Active Coordinates: ${_latitude.toStringAsFixed(5)}, ${_longitude.toStringAsFixed(5)}',
-                              style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1B5E20), fontSize: 12.5),
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 12),
 
-                    // GPS Capture Button
+                    // GPS Auto-Capture Button
                     ElevatedButton.icon(
                       onPressed: (_isLoading || _isGettingLocation) ? null : _getCurrentLocation,
                       icon: _isGettingLocation
                           ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
                           : const Icon(Icons.my_location, size: 18),
-                      label: const Text('Capture Current Location (GPS)'),
+                      label: const Text('Capture Current GPS Location (Optional)'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFE8F5E9),
                         foregroundColor: const Color(0xFF1B5E20),
