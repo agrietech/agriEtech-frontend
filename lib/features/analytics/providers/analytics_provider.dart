@@ -55,9 +55,7 @@ final analyticsDataProvider =
       final crop = f.primaryCrop;
       cropDistribution[crop] = (cropDistribution[crop] ?? 0) + 1;
     }
-    if (cropDistribution.isEmpty) {
-      cropDistribution.addAll({'Wheat': 4, 'Teff': 3, 'Maize': 2, 'Barley': 1});
-    }
+    
 
     // Build dynamic alert frequency from live alerts
     final alertFrequency = <String, int>{};
@@ -65,9 +63,7 @@ final analyticsDataProvider =
       final hazard = a.hazardType;
       alertFrequency[hazard] = (alertFrequency[hazard] ?? 0) + 1;
     }
-    if (alertFrequency.isEmpty) {
-      alertFrequency.addAll({'DROUGHT': 2, 'FLOOD': 1, 'LOCUST_PEST': 1});
-    }
+    
 
     // Build regional breakdown map
     final regionalMap = <String, dynamic>{};
@@ -76,9 +72,7 @@ final analyticsDataProvider =
       final count = r.totalWoredas;
       regionalMap[name] = count;
     }
-    if (regionalMap.isEmpty) {
-      regionalMap.addAll({'Oromia': 580, 'Amhara': 420, 'Tigray': 110, 'Somali': 80, 'Sidama': 60});
-    }
+    
 
     // Build live risk trends from temporal trends or real observations
     final riskTrendsList = <Map<String, dynamic>>[];

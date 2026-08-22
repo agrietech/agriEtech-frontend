@@ -68,11 +68,15 @@ class DashboardData {
     if (map['farmSummary'] is Map<String, dynamic>) {
       farmSummary = FarmSummary.fromJson(map['farmSummary'] as Map<String, dynamic>);
     } else {
+      final totalFarms = ((map['totalFarmsRegistered'] ?? map['totalFarms'] ?? map['farmsCount'] ?? 0) as num).toInt();
+      final farmsAtRisk = ((map['activeEarlyWarnings'] ?? map['alertsCount'] ?? 0) as num).toInt();
+      final activeSensors = ((map['activeSensors'] ?? map['sensorsCount'] ?? 0) as num).toInt();
+      final totalArea = ((map['totalAreaHectares'] ?? map['monitoredHectares'] ?? (totalFarms * 2.5)) as num).toDouble();
       farmSummary = FarmSummary(
-        totalFarms: (map['totalFarmsRegistered'] ?? 1250) as int,
-        totalArea: 4500.0,
-        farmsAtRisk: (map['activeEarlyWarnings'] ?? 12) as int,
-        activeSensors: (map['activeSensors'] ?? 420) as int,
+        totalFarms: totalFarms,
+        totalArea: totalArea,
+        farmsAtRisk: farmsAtRisk,
+        activeSensors: activeSensors,
       );
     }
 
@@ -80,10 +84,10 @@ class DashboardData {
     if (map['systemHealth'] is Map<String, dynamic>) {
       systemHealth = SystemHealth.fromJson(map['systemHealth'] as Map<String, dynamic>);
     } else {
-      systemHealth = const SystemHealth(
+      systemHealth = SystemHealth(
         status: 'OPERATIONAL',
-        activeUsers: 1540,
-        dataPointsToday: 28500,
+        activeUsers: ((map['totalUsers'] ?? map['usersCount'] ?? 0) as num).toInt(),
+        dataPointsToday: ((map['totalTelemetryPoints'] ?? 120) as num).toInt(),
         apiHealthy: true,
       );
     }
