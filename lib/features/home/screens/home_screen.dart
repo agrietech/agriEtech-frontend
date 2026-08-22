@@ -1,3 +1,4 @@
+import 'package:url_launcher/url_launcher_string.dart';
 import '../../alerts/providers/alert_provider.dart';
 import 'main_navigation_shell.dart';
 import 'package:flutter/material.dart';
@@ -427,6 +428,18 @@ class HomeScreen extends ConsumerWidget {
                           route: '/analytics',
                           accentColor: const Color(0xFF4338CA),
                         ),
+                      if (user?.role.name.toUpperCase() == 'ADMIN' || RoleUtils.getRoleDisplayName(user?.role).toUpperCase() == 'ADMIN')
+                        _buildTechMenuCard(
+                          context,
+                          ref,
+                          title: 'Admin Console',
+                          subtitle: 'Users, CRUD & system fleet',
+                          badgeText: 'ADMIN',
+                          badgeColor: const Color(0xFFDC2626),
+                          icon: Icons.admin_panel_settings_outlined,
+                          route: 'admin_web_console',
+                          accentColor: const Color(0xFFDC2626),
+                        ),
                     ],
                   ),
                 ],
@@ -435,18 +448,7 @@ class HomeScreen extends ConsumerWidget {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => AiAssistantSheet.show(context),
-        backgroundColor: const Color(0xFF1B5E20),
-        foregroundColor: Colors.white,
-        elevation: 4,
-        icon: const Icon(Icons.mic_rounded, color: Color(0xFFF59E0B), size: 24),
-        label: const Text(
-          'Ask AI Voice (ድምፅ)',
-          style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 0.3),
-        ),
-      ),
-    );
+      );
   }
 
   Widget _buildQuickTelemetryItem({
@@ -522,7 +524,11 @@ class HomeScreen extends ConsumerWidget {
           onTap: () {
             if (route == '/farms') {
               ref.read(navigationIndexProvider.notifier).state = 1;
-            } else if (route == '/alerts') {
+            } else if (route == 'admin_web_console') {
+              launchUrlString('http://localhost:3000/admin/dashboard', mode: LaunchMode.externalApplication);
+              return;
+            }
+            if (route == '/alerts') {
               ref.read(navigationIndexProvider.notifier).state = 2;
             } else if (route == '/dashboard') {
               ref.read(navigationIndexProvider.notifier).state = 3;

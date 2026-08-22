@@ -10,6 +10,13 @@ class AlertRepository {
 
   AlertRepository(this._dioClient);
 
+  /// Mark alert as read
+  Future<void> markAsRead(String id) async {
+    try {
+      await _dioClient.patch('/alerts/$id/read');
+    } catch (_) {}
+  }
+
   /// Create a new alert (Officers/Agents/Admin only)
   Future<AlertModel> createAlert(CreateAlertRequest request) async {
     try {
