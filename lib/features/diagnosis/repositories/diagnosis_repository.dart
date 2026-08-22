@@ -19,34 +19,48 @@ class DiagnosisRepository {
         'cropType': request.cropType,
       });
 
-      final Response response;
-      if (request.imageBytes != null && request.imageBytes!.isNotEmpty) {
-        response = await _dioClient.uploadBytes(
-          ApiEndpoints.diagnose,
-          request.imageBytes!,
-          fileName: 'plantscan_${DateTime.now().millisecondsSinceEpoch}.jpg',
-          fieldName: 'image',
-          data: {
-            'farmId': request.farmId,
-            if (request.cropType != null) 'cropType': request.cropType,
-            'language': request.language,
-          },
-        );
-      } else if (request.imagePath != null && request.imagePath!.isNotEmpty) {
-        response = await _dioClient.uploadFile(
-          ApiEndpoints.diagnose,
-          request.imagePath!,
-          fieldName: 'image',
-          data: {
-            'farmId': request.farmId,
-            if (request.cropType != null) 'cropType': request.cropType,
-            'language': request.language,
-          },
-        );
-      } else {
+      Response response;
+      try {
+        if (request.imageBytes != null && request.imageBytes!.isNotEmpty) {
+          response = await _dioClient.uploadBytes(
+            ApiEndpoints.diagnose,
+            request.imageBytes!,
+            fileName: 'plantscan_${DateTime.now().millisecondsSinceEpoch}.jpg',
+            fieldName: 'image',
+            data: {
+              'farmId': request.farmId,
+              if (request.cropType != null) 'cropType': request.cropType,
+              'language': request.language,
+            },
+          );
+        } else if (request.imagePath != null && request.imagePath!.isNotEmpty) {
+          response = await _dioClient.uploadFile(
+            ApiEndpoints.diagnose,
+            request.imagePath!,
+            fieldName: 'image',
+            data: {
+              'farmId': request.farmId,
+              if (request.cropType != null) 'cropType': request.cropType,
+              'language': request.language,
+            },
+          );
+        } else {
+          response = await _dioClient.post(
+            ApiEndpoints.diagnose,
+            data: request.toJson(),
+          );
+        }
+      } catch (uploadError) {
+        AppLogger.warning('Multipart upload failed, falling back to JSON base64 upload', uploadError);
         response = await _dioClient.post(
           ApiEndpoints.diagnose,
-          data: request.toJson(),
+          data: {
+            'farmId': request.farmId,
+            if (request.imageBase64.isNotEmpty) 'imageBase64': request.imageBase64,
+            if (request.imageBase64.isNotEmpty) 'image': 'data:image/jpeg;base64,${request.imageBase64}',
+            if (request.cropType != null) 'cropType': request.cropType,
+            'language': request.language,
+          },
         );
       }
 

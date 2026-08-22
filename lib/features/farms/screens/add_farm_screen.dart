@@ -44,51 +44,69 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
     try {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        throw LocationError.serviceDisabled();
+        // Fallback to default Ethiopian coordinates if location service is disabled
+        _useFallbackLocation('Location services disabled. Used default Ethiopian region coordinates.');
+        return;
       }
 
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          throw LocationError.permissionDenied();
-        }
       }
 
-      if (permission == LocationPermission.deniedForever) {
-        throw LocationError.permissionDenied();
+      if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+        _useFallbackLocation('Location permission denied. Used default region coordinates.');
+        return;
       }
 
-      final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
-
-      setState(() {
-        _latitude = position.latitude;
-        _longitude = position.longitude;
-      });
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Location captured successfully'),
-            backgroundColor: Color(0xFF2E7D32),
-          ),
+      Position? position;
+      try {
+        position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.medium,
+          timeLimit: const Duration(seconds: 8),
         );
+      } catch (_) {
+        position = await Geolocator.getLastKnownPosition();
       }
-    } on AppError catch (e) {
-      if (mounted) {
-        ErrorHandler.showErrorSnackBar(context, e);
+
+      if (position != null) {
+        setState(() {
+          _latitude = position!.latitude;
+          _longitude = position.longitude;
+        });
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Location captured successfully'),
+              backgroundColor: Color(0xFF2E7D32),
+            ),
+          );
+        }
+      } else {
+        _useFallbackLocation('GPS signal weak. Used regional center coordinates.');
       }
     } catch (e) {
-      if (mounted) {
-        ErrorHandler.showErrorSnackBar(
-          context,
-          LocationError.timeout(),
-        );
-      }
+      _useFallbackLocation('Location error. Used default region coordinates.');
     } finally {
-      setState(() => _isGettingLocation = false);
+      if (mounted) {
+        setState(() => _isGettingLocation = false);
+      }
+    }
+  }
+
+  void _useFallbackLocation(String message) {
+    setState(() {
+      _latitude = 8.5414;  // Default Adama / Oromia region latitude
+      _longitude = 39.2689; // Default Adama / Oromia region longitude
+    });
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('$message (8.5414, 39.2689)'),
+          backgroundColor: const Color(0xFF1976D2),
+        ),
+      );
     }
   }
 

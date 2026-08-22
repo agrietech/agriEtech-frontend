@@ -76,5 +76,9 @@
 		<string>AgriEtech requires gallery access to upload crop photos for disease diagnosis.</string>
 		<key>NSMicrophoneUsageDescription</key>
 		<string>AgriEtech requires microphone access for AI voice inquiries.</string>
+		<key>NSLocationWhenInUseUsageDescription</key>
+		<string>AgriEtech requires location access to capture farm GPS coordinates and polygon boundaries.</string>
+		<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+		<string>AgriEtech requires location access to capture farm GPS coordinates and local hazard warnings.</string>
 	</dict>
 </plist>
