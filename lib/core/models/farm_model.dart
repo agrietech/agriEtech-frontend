@@ -291,8 +291,11 @@ class CreateFarmRequest {
 
   Map<String, dynamic> toJson() => {
     'farmName': farmName,
+    'name': farmName,
     'primaryCrop': primaryCrop,
+    'cropType': primaryCrop,
     'areaHectares': areaHectares,
+    'size': areaHectares,
     'latitude': latitude,
     'longitude': longitude,
     if (woredaId != null) 'woredaId': woredaId,
