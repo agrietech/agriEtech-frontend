@@ -93,13 +93,22 @@ flutter:
           style: italic
 
 flutter_launcher_icons:
-  android: true
+  android: "ic_launcher"
   ios: true
   image_path: "assets/icons/app_icon.png"
   min_sdk_android: 21
   adaptive_icon_background: "#1B5E20"
   adaptive_icon_foreground: "assets/icons/app_icon.png"
   remove_alpha_ios: true
+  web:
+    generate: true
+    image_path: "assets/icons/app_icon.png"
+    background_color: "#1B5E20"
+    theme_color: "#1B5E20"
+  windows:
+    generate: true
+    image_path: "assets/icons/app_icon.png"
+    icon_size: 48
 
 flutter_native_splash:
   color: "#1B5E20"
