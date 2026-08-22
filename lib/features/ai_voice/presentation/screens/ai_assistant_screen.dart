@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
+import '../../../../core/utils/in_app_audio.dart';
 import '../providers/ai_voice_provider.dart';
 
 /// Professional Full-Screen AI Agronomic Voice & Chat Assistant
+/// - Plays voice directly in-app on the current screen (no external tabs)
+/// - Multi-line high-contrast keyboard-safe input
+/// - Real dynamic agronomic question answering in Amharic & English
 class AiAssistantScreen extends ConsumerStatefulWidget {
   const AiAssistantScreen({super.key});
 
@@ -20,7 +23,7 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
   late AnimationController _pulseController;
   bool _isRecording = false;
   bool _autoSpeak = true;
-  String? _currentlyPlayingText;
+  String? _currentlyPlayingKey;
 
   @override
   void initState() {
@@ -39,6 +42,7 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
 
   @override
   void dispose() {
+    InAppAudioPlayer.instance.stop();
     _focusNode.dispose();
     _textController.dispose();
     _scrollController.dispose();
@@ -70,8 +74,8 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
           SnackBar(
             content: Text(
               lang == 'am'
-                  ? 'እባክዎን ጥያቄዎን ይፃፉ ወይም ከታች ካሉት አማራጮች አንዱን ይምረጡ'
-                  : 'Please type your question or select a topic chip below',
+                  ? 'ጥያቄዎን ይፃፉ ወይም ከታች ካሉት አማራጮች አንዱን ይምረጡ'
+                  : 'Type your question or pick a topic below',
             ),
             duration: const Duration(seconds: 2),
             backgroundColor: const Color(0xFF2E7D32),
@@ -88,21 +92,29 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
     if (text.isEmpty) return;
 
     _textController.clear();
+    setState(() => _isRecording = false);
     FocusScope.of(context).unfocus();
 
     await ref.read(aiVoiceProvider.notifier).sendQuestion(text);
     _scrollToBottom();
 
+    // Auto-readout if enabled
     if (_autoSpeak) {
       final state = ref.read(aiVoiceProvider);
       final lastMsg = state.messages.isNotEmpty ? state.messages.last : null;
       if (lastMsg != null && !lastMsg.isUser) {
-        _playVoiceAudio(lastMsg.aiResponse?.audioUrl, lastMsg.text);
+        _playInAppAudio(lastMsg.aiResponse?.audioUrl, lastMsg.text, lastMsg.timestamp.toString());
       }
     }
   }
 
-  Future<void> _playVoiceAudio(String? audioUrl, String text) async {
+  Future<void> _playInAppAudio(String? audioUrl, String text, String messageKey) async {
+    if (_currentlyPlayingKey == messageKey) {
+      InAppAudioPlayer.instance.stop();
+      setState(() => _currentlyPlayingKey = null);
+      return;
+    }
+
     final lang = ref.read(aiVoiceProvider).language;
     final clean = text
         .replaceAll(RegExp(r'[*#_~>]'), '')
@@ -110,34 +122,29 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
         .trim();
     final sample = clean.length > 220 ? clean.substring(0, 220) : clean;
     final encodedSample = Uri.encodeComponent(sample);
-    final streamUrl = audioUrl ?? 'https://agrietech.onrender.com/api/v1/ai/tts-stream?text=$encodedSample&lang=$lang';
+    final streamUrl = audioUrl ??
+        'https://agrietech.onrender.com/api/v1/ai/tts-stream?text=$encodedSample&lang=$lang';
 
-    setState(() => _currentlyPlayingText = text);
+    setState(() => _currentlyPlayingKey = messageKey);
 
-    try {
-      final uri = Uri.parse(streamUrl);
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      }
-    } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              lang == 'am'
-                  ? 'የድምፅ መልዕክት እየተጫወተ ነው...'
-                  : 'Playing voice audio advisory...',
+    await InAppAudioPlayer.instance.playAudioUrl(
+      streamUrl,
+      onComplete: () {
+        if (mounted) setState(() => _currentlyPlayingKey = null);
+      },
+      onError: (_) {
+        if (mounted) {
+          setState(() => _currentlyPlayingKey = null);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(lang == 'am' ? 'የድምፅ መልዕክት እየተጫወተ ነው...' : 'Playing voice advisory...'),
+              backgroundColor: const Color(0xFF2E7D32),
+              duration: const Duration(seconds: 2),
             ),
-            backgroundColor: const Color(0xFF2E7D32),
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      }
-    } finally {
-      Future.delayed(const Duration(seconds: 4), () {
-        if (mounted) setState(() => _currentlyPlayingText = null);
-      });
-    }
+          );
+        }
+      },
+    );
   }
 
   void _copyToClipboard(String text) {
@@ -158,17 +165,17 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
 
     final quickChips = isAmharic
         ? [
-            '🌾 ጤፍ ለመዝራት የተሻለው ወቅት መቼ ነው?',
+            '🌾 ጤፍ ለመዝራት የተሻለው ወቅትና የዘር መጠን?',
             '🌽 የበቆሎ አባጨጓሬ (ፎል አርሚዎርም) መከላከያ',
             '🍎 የፖም ዛፍ ማዳቀልና የፍራፍሬ እንክብካቤ',
             '🍅 የቲማቲም ቅጠል መድረቅ (Late Blight) መፍትሄ',
-            '🌾 የስንዴ ግንድ ዋግ በሽታ መከላከያ ዘዴዎች',
+            '🌾 የስንዴ ግንድ ዋግ በሽታ መከላከያ መድኃኒት',
             '💧 የአፈር እርጥበት እና የመስኖ አጠቃቀም',
             '🧪 የአፈር አሲዳማነትና የኖራ አጠቃቀም',
             '☕ የቡና ፍሬ በሽታ (CBD) መከላከያ',
           ]
         : [
-            '🌾 Best time to plant Teff & spacing?',
+            '🌾 Best time to plant Teff & seed rate?',
             '🌽 Maize Fall Armyworm IPM control',
             '🍎 Apple tree grafting & nursery care',
             '🍅 Tomato Late Blight fungicide guide',
@@ -201,7 +208,7 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                   Text(
-                    isAmharic ? 'ቀጥታ የድምፅና የጽሑፍ የግብርና መመሪያ' : 'Live Voice & Text Agronomic Guidance',
+                    isAmharic ? 'ቀጥታ የድምፅና የጽሑፍ የግብርና መመሪያ' : 'Live In-App Voice & Agronomic Guidance',
                     style: const TextStyle(fontSize: 10.5, color: Colors.white70),
                   ),
                 ],
@@ -210,6 +217,7 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
           ],
         ),
         actions: [
+          // Auto-Speak Toggle
           IconButton(
             icon: Icon(
               _autoSpeak ? Icons.volume_up_rounded : Icons.volume_off_rounded,
@@ -233,6 +241,7 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
               );
             },
           ),
+          // Language Switcher
           Container(
             margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
             padding: const EdgeInsets.all(2),
@@ -286,7 +295,10 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
           IconButton(
             icon: const Icon(Icons.delete_sweep_outlined),
             tooltip: 'Clear Chat',
-            onPressed: () => ref.read(aiVoiceProvider.notifier).clearMessages(),
+            onPressed: () {
+              InAppAudioPlayer.instance.stop();
+              ref.read(aiVoiceProvider.notifier).clearMessages();
+            },
           ),
         ],
       ),
@@ -386,7 +398,8 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
                         final msg = aiState.messages[index];
                         final isUser = msg.isUser;
                         final audioUrl = msg.aiResponse?.audioUrl;
-                        final isPlaying = _currentlyPlayingText == msg.text;
+                        final msgKey = msg.timestamp.toString();
+                        final isPlaying = _currentlyPlayingKey == msgKey;
 
                         if (isUser) {
                           return Align(
@@ -447,12 +460,14 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
                                     children: [
                                       IconButton(
                                         icon: Icon(
-                                          isPlaying ? Icons.graphic_eq_rounded : Icons.volume_up_rounded,
-                                          size: 20,
-                                          color: isPlaying ? const Color(0xFFF59E0B) : const Color(0xFF2E7D32),
+                                          isPlaying ? Icons.stop_circle_rounded : Icons.volume_up_rounded,
+                                          size: 22,
+                                          color: isPlaying ? const Color(0xFFEF4444) : const Color(0xFF2E7D32),
                                         ),
-                                        tooltip: isAmharic ? 'ድምፅ አዳምጥ' : 'Listen with Voice',
-                                        onPressed: () => _playVoiceAudio(audioUrl, msg.text),
+                                        tooltip: isPlaying
+                                            ? (isAmharic ? 'ድምፅ አቁም' : 'Stop Audio')
+                                            : (isAmharic ? 'በስክሪኑ ላይ አዳምጥ' : 'Listen In-App'),
+                                        onPressed: () => _playInAppAudio(audioUrl, msg.text, msgKey),
                                       ),
                                       IconButton(
                                         icon: const Icon(Icons.copy_rounded, size: 18, color: Colors.grey),
@@ -526,28 +541,28 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
                       animation: _pulseController,
                       builder: (context, child) {
                         return Container(
-                          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 14),
                           decoration: BoxDecoration(
-                            color: Colors.red.shade900.withValues(alpha: 0.15 + _pulseController.value * 0.15),
+                            color: Colors.green.shade900.withValues(alpha: 0.2 + _pulseController.value * 0.1),
                             borderRadius: BorderRadius.circular(28),
-                            border: Border.all(color: Colors.red.shade400),
+                            border: Border.all(color: const Color(0xFF2E7D32)),
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.mic, color: Colors.red, size: 26),
-                              const SizedBox(width: 12),
+                              const Icon(Icons.mic, color: Color(0xFF2E7D32), size: 24),
+                              const SizedBox(width: 10),
                               Expanded(
                                 child: Text(
-                                  isAmharic ? 'ጥያቄዎን ይናገሩ ወይም ይፃፉ...' : 'Speak or type your question...',
-                                  style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 13),
+                                  isAmharic ? 'ጥያቄዎን ይፃፉ ወይም ከላይ ይምረጡ...' : 'Type question or pick topic...',
+                                  style: const TextStyle(color: Color(0xFF2E7D32), fontWeight: FontWeight.bold, fontSize: 13),
                                 ),
                               ),
                               IconButton(
-                                icon: const Icon(Icons.check_circle, color: Color(0xFF2E7D32), size: 30),
+                                icon: const Icon(Icons.send_rounded, color: Color(0xFF2E7D32), size: 24),
                                 onPressed: _toggleRecording,
                               ),
                               IconButton(
-                                icon: const Icon(Icons.cancel, color: Colors.grey, size: 24),
+                                icon: const Icon(Icons.close, color: Colors.grey, size: 20),
                                 onPressed: () => setState(() => _isRecording = false),
                               ),
                             ],
@@ -601,7 +616,7 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
                               decoration: InputDecoration(
                                 hintText: isAmharic
                                     ? 'ጥያቄዎን እዚህ ይጻፉ ወይም ይናገሩ...'
-                                    : 'Type crop or pest question...',
+                                    : 'Type crop, soil or pest question...',
                                 hintStyle: TextStyle(
                                   fontSize: 13,
                                   color: isDark ? Colors.white54 : Colors.grey.shade600,

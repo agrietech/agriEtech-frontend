@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
+import '../../../../core/utils/in_app_audio.dart';
 import '../providers/ai_voice_provider.dart';
 
 /// Interactive AI Voice & Agronomic Assistant Bottom Sheet
@@ -29,6 +29,7 @@ class _AiAssistantSheetState extends ConsumerState<AiAssistantSheet>
   late AnimationController _pulseController;
   bool _isRecording = false;
   bool _autoSpeak = true;
+  String? _currentlyPlayingKey;
 
   @override
   void initState() {
@@ -47,6 +48,7 @@ class _AiAssistantSheetState extends ConsumerState<AiAssistantSheet>
 
   @override
   void dispose() {
+    InAppAudioPlayer.instance.stop();
     _focusNode.dispose();
     _questionController.dispose();
     _scrollController.dispose();
@@ -83,8 +85,8 @@ class _AiAssistantSheetState extends ConsumerState<AiAssistantSheet>
         SnackBar(
           content: Text(
             lang == 'am'
-                ? 'እባክዎን ጥያቄዎን ይፃፉ ወይም ከታች ካሉት አማራጮች አንዱን ይምረጡ'
-                : 'Please type your question or select a topic chip below',
+                ? 'ጥያቄዎን ይፃፉ ወይም ከታች ካሉት አማራጮች አንዱን ይምረጡ'
+                : 'Type question or pick topic below',
           ),
           duration: const Duration(seconds: 2),
           backgroundColor: const Color(0xFF2E7D32),
@@ -107,12 +109,18 @@ class _AiAssistantSheetState extends ConsumerState<AiAssistantSheet>
       final state = ref.read(aiVoiceProvider);
       final lastMsg = state.messages.isNotEmpty ? state.messages.last : null;
       if (lastMsg != null && !lastMsg.isUser) {
-        _playVoiceAudio(lastMsg.aiResponse?.audioUrl, lastMsg.text);
+        _playInAppAudio(lastMsg.aiResponse?.audioUrl, lastMsg.text, lastMsg.timestamp.toString());
       }
     }
   }
 
-  Future<void> _playVoiceAudio(String? audioUrl, String text) async {
+  Future<void> _playInAppAudio(String? audioUrl, String text, String messageKey) async {
+    if (_currentlyPlayingKey == messageKey) {
+      InAppAudioPlayer.instance.stop();
+      setState(() => _currentlyPlayingKey = null);
+      return;
+    }
+
     final lang = ref.read(aiVoiceProvider).language;
     final clean = text
         .replaceAll(RegExp(r'[*#_~>]'), '')
@@ -120,26 +128,29 @@ class _AiAssistantSheetState extends ConsumerState<AiAssistantSheet>
         .trim();
     final sample = clean.length > 220 ? clean.substring(0, 220) : clean;
     final encodedSample = Uri.encodeComponent(sample);
-    final streamUrl = audioUrl ?? 'https://agrietech.onrender.com/api/v1/ai/tts-stream?text=$encodedSample&lang=$lang';
+    final streamUrl = audioUrl ??
+        'https://agrietech.onrender.com/api/v1/ai/tts-stream?text=$encodedSample&lang=$lang';
 
-    try {
-      final uri = Uri.parse(streamUrl);
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      }
-    } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              lang == 'am' ? 'የድምፅ መልዕክት እየተጫወተ ነው...' : 'Playing AI voice advisory...',
+    setState(() => _currentlyPlayingKey = messageKey);
+
+    await InAppAudioPlayer.instance.playAudioUrl(
+      streamUrl,
+      onComplete: () {
+        if (mounted) setState(() => _currentlyPlayingKey = null);
+      },
+      onError: (_) {
+        if (mounted) {
+          setState(() => _currentlyPlayingKey = null);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(lang == 'am' ? 'የድምፅ መልዕክት እየተጫወተ ነው...' : 'Playing voice advisory...'),
+              backgroundColor: const Color(0xFF2E7D32),
+              duration: const Duration(seconds: 2),
             ),
-            backgroundColor: const Color(0xFF2E7D32),
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      }
-    }
+          );
+        }
+      },
+    );
   }
 
   @override
@@ -337,6 +348,8 @@ class _AiAssistantSheetState extends ConsumerState<AiAssistantSheet>
                       final msg = aiState.messages[index];
                       final isUser = msg.isUser;
                       final audioUrl = msg.aiResponse?.audioUrl;
+                      final msgKey = msg.timestamp.toString();
+                      final isPlaying = _currentlyPlayingKey == msgKey;
 
                       if (isUser) {
                         return Align(
@@ -373,7 +386,10 @@ class _AiAssistantSheetState extends ConsumerState<AiAssistantSheet>
                                 bottomRight: Radius.circular(16),
                                 bottomLeft: Radius.circular(4),
                               ),
-                              border: Border.all(color: const Color(0xFFC8E6C9)),
+                              border: Border.all(
+                                color: isPlaying ? const Color(0xFF2E7D32) : const Color(0xFFC8E6C9),
+                                width: isPlaying ? 2 : 1,
+                              ),
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -392,16 +408,21 @@ class _AiAssistantSheetState extends ConsumerState<AiAssistantSheet>
                                       ],
                                     ),
                                     ElevatedButton.icon(
-                                      icon: const Icon(Icons.volume_up_rounded, size: 16),
-                                      label: Text(isAmharic ? 'ድምፅ አዳምጥ' : 'Listen', style: const TextStyle(fontSize: 11)),
+                                      icon: Icon(isPlaying ? Icons.stop_circle_rounded : Icons.volume_up_rounded, size: 16),
+                                      label: Text(
+                                        isPlaying
+                                            ? (isAmharic ? 'አቁም' : 'Stop')
+                                            : (isAmharic ? 'ድምፅ አዳምጥ' : 'Listen In-App'),
+                                        style: const TextStyle(fontSize: 11),
+                                      ),
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor: const Color(0xFF2E7D32),
+                                        backgroundColor: isPlaying ? const Color(0xFFEF4444) : const Color(0xFF2E7D32),
                                         foregroundColor: Colors.white,
                                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                         minimumSize: Size.zero,
                                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                       ),
-                                      onPressed: () => _playVoiceAudio(audioUrl, msg.text),
+                                      onPressed: () => _playInAppAudio(audioUrl, msg.text, msgKey),
                                     ),
                                   ],
                                 ),
