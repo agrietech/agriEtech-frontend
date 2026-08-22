@@ -42,28 +42,28 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
     setState(() => _isGettingLocation = true);
 
     try {
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        // Fallback to default Ethiopian coordinates if location service is disabled
-        _useFallbackLocation('Location services disabled. Used default Ethiopian region coordinates.');
-        return;
-      }
-
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
       }
 
-      if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
-        _useFallbackLocation('Location permission denied. Used default region coordinates.');
+      if (permission == LocationPermission.deniedForever) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Location permission denied in settings. Please enable GPS permissions.'),
+              backgroundColor: Color(0xFFD32F2F),
+            ),
+          );
+        }
         return;
       }
 
       Position? position;
       try {
         position = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.medium,
-          timeLimit: const Duration(seconds: 8),
+          desiredAccuracy: LocationAccuracy.high,
+          timeLimit: const Duration(seconds: 15),
         );
       } catch (_) {
         position = await Geolocator.getLastKnownPosition();
@@ -77,36 +77,43 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Location captured successfully'),
-              backgroundColor: Color(0xFF2E7D32),
+            SnackBar(
+              content: Text('GPS Location captured: ${position.latitude.toStringAsFixed(5)}, ${position.longitude.toStringAsFixed(5)}'),
+              backgroundColor: const Color(0xFF2E7D32),
             ),
           );
         }
       } else {
-        _useFallbackLocation('GPS signal weak. Used regional center coordinates.');
+        bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+        if (!serviceEnabled && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('GPS Location service is turned off on your device. Please enable Location/GPS.'),
+              backgroundColor: Color(0xFFF57C00),
+            ),
+          );
+        } else if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Unable to acquire GPS lock. Please check your device location settings.'),
+              backgroundColor: Color(0xFFD32F2F),
+            ),
+          );
+        }
       }
     } catch (e) {
-      _useFallbackLocation('Location error. Used default region coordinates.');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('GPS capture error: ${e.toString()}'),
+            backgroundColor: const Color(0xFFD32F2F),
+          ),
+        );
+      }
     } finally {
       if (mounted) {
         setState(() => _isGettingLocation = false);
       }
-    }
-  }
-
-  void _useFallbackLocation(String message) {
-    setState(() {
-      _latitude = 8.5414;  // Default Adama / Oromia region latitude
-      _longitude = 39.2689; // Default Adama / Oromia region longitude
-    });
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('$message (8.5414, 39.2689)'),
-          backgroundColor: const Color(0xFF1976D2),
-        ),
-      );
     }
   }
 
