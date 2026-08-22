@@ -27,7 +27,7 @@ class DashboardData {
     if (map['riskSummary'] is Map<String, dynamic>) {
       riskSummary = RiskSummary.fromJson(map['riskSummary'] as Map<String, dynamic>);
     } else {
-      final compRisk = map['compositeRiskDistribution'] as Map<String, dynamic>? ?? {};
+      final compRisk = map['compositeRiskDistribution'] is Map ? Map<String, dynamic>.from(map['compositeRiskDistribution'] as Map) : <String, dynamic>{};
       final low = (compRisk['greenCount'] as num?)?.toInt() ?? 45;
       final mod = (compRisk['yellowCount'] as num?)?.toInt() ?? 25;
       final high = (compRisk['orangeCount'] as num?)?.toInt() ?? 10;
@@ -44,7 +44,7 @@ class DashboardData {
 
     final alerts = map['recentAlerts'] is List
         ? (map['recentAlerts'] as List)
-            .map((a) => RecentAlert.fromJson(a as Map<String, dynamic>))
+            .map((a) => RecentAlert.fromJson(a is Map ? Map<String, dynamic>.from(a) : <String, dynamic>{}))
             .toList()
         : <RecentAlert>[];
 
@@ -52,7 +52,7 @@ class DashboardData {
     if (map['weatherSummary'] is Map<String, dynamic>) {
       weatherSummary = WeatherSummary.fromJson(map['weatherSummary'] as Map<String, dynamic>);
     } else {
-      final vigor = map['nationalSeasonVigor'] as Map<String, dynamic>? ?? {};
+      final vigor = map['nationalSeasonVigor'] is Map ? Map<String, dynamic>.from(map['nationalSeasonVigor'] as Map) : <String, dynamic>{};
       weatherSummary = WeatherSummary(
         current: CurrentWeather(
           temperature: 24.5,
