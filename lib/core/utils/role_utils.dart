@@ -19,21 +19,21 @@ class RoleUtils {
 
   /// Check if user can view analytics
   static bool canViewAnalytics(UserRole? role) {
-    return role != null;
+    return role == UserRole.researcher ||
+        role == UserRole.woredaOfficer ||
+        role == UserRole.admin;
   }
 
   /// Check if user can register sensors
   static bool canRegisterSensors(UserRole? role) {
-    return role == UserRole.farmer ||
-        role == UserRole.developmentAgent ||
+    return role == UserRole.developmentAgent ||
         role == UserRole.woredaOfficer ||
         role == UserRole.admin;
   }
 
   /// Check if user can manage sensors
   static bool canManageSensors(UserRole? role) {
-    return role == UserRole.farmer ||
-        role == UserRole.developmentAgent ||
+    return role == UserRole.developmentAgent ||
         role == UserRole.woredaOfficer ||
         role == UserRole.admin;
   }
