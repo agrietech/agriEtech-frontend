@@ -37,7 +37,7 @@ dependencies:
   shared_preferences: ^2.2.3
   flutter_secure_storage: ^9.2.1
   connectivity_plus: ^6.0.3
-  workmanager: ^0.5.2
+  workmanager: ^0.9.0
 
   # Media & Imaging
   image_picker: ^1.1.1
@@ -71,6 +71,19 @@ dev_dependencies:
   flutter_launcher_icons: ^0.13.1
   flutter_native_splash: ^2.4.0
 
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "web/icons/Icon-512.png"
+  min_sdk_android: 21
+  web:
+    generate: true
+    image_path: "web/icons/Icon-512.png"
+  windows:
+    generate: true
+    image_path: "web/icons/Icon-512.png"
+    icon_size: 48
+
 flutter:
   uses-material-design: true
   assets:
@@ -91,34 +104,3 @@ flutter:
           weight: 700
         - asset: assets/fonts/Roboto-Italic.ttf
           style: italic
-
-flutter_launcher_icons:
-  android: "ic_launcher"
-  ios: true
-  image_path: "assets/icons/app_icon.png"
-  min_sdk_android: 21
-  adaptive_icon_background: "#1B5E20"
-  adaptive_icon_foreground: "assets/icons/app_icon.png"
-  remove_alpha_ios: true
-  web:
-    generate: true
-    image_path: "assets/icons/app_icon.png"
-    background_color: "#1B5E20"
-    theme_color: "#1B5E20"
-  windows:
-    generate: true
-    image_path: "assets/icons/app_icon.png"
-    icon_size: 48
-
-flutter_native_splash:
-  color: "#1B5E20"
-  color_dark: "#0F2916"
-  image: "assets/images/logo.png"
-  android_12:
-    image: "assets/icons/app_icon.png"
-    icon_background_color: "#1B5E20"
-    icon_background_color_dark: "#0F2916"
-  android: true
-  ios: true
-  web: true
-  fullscreen: true
