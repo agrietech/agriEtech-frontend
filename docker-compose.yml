@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  agrietech-frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: agrietech-frontend-web
+    restart: unless-stopped
+    ports:
+      - '8080:80'
+    environment:
+      - API_BASE_URL=https://agrietech.onrender.com/api/v1
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://localhost/']
+      interval: 30s
+      timeout: 5s
+      retries: 3
