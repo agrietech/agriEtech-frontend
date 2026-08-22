@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "829883935180",
+    "project_id": "agrietech-app",
+    "storage_bucket": "agrietech-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:829883935180:android:93506709a11b41e3451569",
+        "android_client_info": {
+          "package_name": "com.agrietech.agrietech"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD92qrjnVEEipZ_rZxlPi9d-dZtw5OeZAE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

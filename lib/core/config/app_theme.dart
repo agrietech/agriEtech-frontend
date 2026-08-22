@@ -25,7 +25,7 @@ class AppTheme {
         brightness: Brightness.light,
         surface: surfaceLight,
       ),
-      fontFamily: 'Inter',
+      fontFamily: 'Roboto',
     );
   }
 
@@ -37,7 +37,7 @@ class AppTheme {
         brightness: Brightness.dark,
         surface: surfaceDark,
       ),
-      fontFamily: 'Inter',
+      fontFamily: 'Roboto',
     );
   }
 }

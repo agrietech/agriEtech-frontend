@@ -21,3 +21,4 @@ Thumbs.db
 *.freezed.dart
 .flutter-plugins
 .flutter-plugins-dependencies
+*.log

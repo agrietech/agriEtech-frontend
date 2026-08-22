@@ -1,18 +1,4 @@
-///
-/// @file app_router.dart
-/// @description GoRouter configuration defining navigation hierarchy, bottom nav shell, and deep linking.
-/// @author Frontend Core / Navigation Lead
-///
-library app_router;
+/// Re-export the primary application router to prevent duplicate definitions
+library app_router_config;
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-
-final appRouterProvider = Provider<GoRouter>((ref) {
-  return GoRouter(
-    initialLocation: '/',
-    routes: [
-      // TODO: Define ShellRoute with BottomNavigationBar and Feature Routes
-    ],
-  );
-});
+export '../routing/app_router.dart';
