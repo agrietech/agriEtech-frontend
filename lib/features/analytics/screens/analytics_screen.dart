@@ -873,15 +873,15 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
   String _formatPeriod(String period) {
     switch (period) {
       case 'DAILY':
-        return 'Daily (ዕለታዊ)';
+        return 'Daily (\u12d5\u1208\u1273\u12ca)';
       case 'WEEKLY':
-        return 'Weekly (ሳምንታዊ)';
+        return 'Weekly (\u1233\u121d\u1295\u1273\u12ca)';
       case 'MONTHLY':
-        return 'Monthly (ወራዊ)';
+        return 'Monthly (\u12c8\u122b\u12ca)';
       case 'SEASONAL':
-        return 'Seasonal (ወቅታዊ)';
+        return 'Seasonal (\u12c8\u1245\u1273\u12ca)';
       case 'YEARLY':
-        return 'Yearly (ዓመታዊ)';
+        return 'Yearly (\u12d3\u1218\u1273\u12ca)';
       default:
         return period;
     }

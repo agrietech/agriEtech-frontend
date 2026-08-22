@@ -50,10 +50,33 @@ void main() {
       expect(DateFormatter.isToday(now.subtract(const Duration(days: 5))), isFalse);
     });
 
-    test('getSeason identifies Ethiopian agricultural seasons', () {
-      expect(DateFormatter.getSeason(DateTime(2026, 7, 15)), contains('Kiremt'));
-      expect(DateFormatter.getSeason(DateTime(2026, 11, 20)), contains('Bega'));
-      expect(DateFormatter.getSeason(DateTime(2026, 4, 10)), contains('Belg'));
+    test('getSeason identifies all 4 Ethiopian agricultural seasons', () {
+      // 1. Tseday / Meher (Sep - Nov | Meskerem, Tikimt, Hidar)
+      final tseday = DateFormatter.getEthiopianSeasonInfo(DateTime(2026, 10, 15));
+      expect(tseday.nameEn, equals('Tseday / Meher'));
+      expect(tseday.gregorianMonths, equals('September to November'));
+      expect(tseday.ethiopianMonthsEn, equals('Meskerem, Tikimt, Hidar'));
+
+      // 2. Bega (Dec - Feb | Tahsas, Tir, Yakatit)
+      final bega = DateFormatter.getEthiopianSeasonInfo(DateTime(2026, 1, 10));
+      expect(bega.nameEn, equals('Bega'));
+      expect(bega.gregorianMonths, equals('December to February'));
+      expect(bega.ethiopianMonthsEn, equals('Tahsas, Tir, Yakatit'));
+
+      // 3. Belg / Metsew (Mar - May | Maggabit, Miyazya, Ginbot)
+      final belg = DateFormatter.getEthiopianSeasonInfo(DateTime(2026, 4, 20));
+      expect(belg.nameEn, equals('Belg / Metsew'));
+      expect(belg.gregorianMonths, equals('March to May'));
+      expect(belg.ethiopianMonthsEn, equals('Maggabit, Miyazya, Ginbot'));
+
+      // 4. Kiremt (Jun - Aug | Sene, Hamle, Nehasse)
+      final kiremt = DateFormatter.getEthiopianSeasonInfo(DateTime(2026, 7, 15));
+      expect(kiremt.nameEn, equals('Kiremt'));
+      expect(kiremt.gregorianMonths, equals('June to August'));
+      expect(kiremt.ethiopianMonthsEn, equals('Sene, Hamle, Nehasse'));
+      
+      // All 4 seasons list check
+      expect(DateFormatter.allSeasons.length, equals(4));
     });
   });
 }
