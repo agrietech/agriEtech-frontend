@@ -43,24 +43,39 @@ class FarmModel {
   });
 
   factory FarmModel.fromJson(Map<String, dynamic> json) {
+    double parseNum(dynamic v, double fallback) {
+      if (v is num) return v.toDouble();
+      if (v is String) return double.tryParse(v) ?? fallback;
+      return fallback;
+    }
+
+    double lat = parseNum(json['latitude'] ?? json['lat'], 8.54);
+    double lng = parseNum(json['longitude'] ?? json['lng'] ?? json['lon'], 39.27);
+    if (json['coordinates'] is List && (json['coordinates'] as List).length >= 2) {
+      lng = parseNum((json['coordinates'] as List)[0], lng);
+      lat = parseNum((json['coordinates'] as List)[1], lat);
+    }
+
     return FarmModel(
-      id: (json['id'] ?? json['_id'] ?? '').toString(),
-      userId: (json['userId'] ?? '').toString(),
-      farmName: (json['farmName'] ?? json['name'] ?? 'Farm Plot').toString(),
-      primaryCrop: (json['primaryCrop'] ?? 'Mixed').toString(),
-      areaHectares: ((json['areaHectares'] ?? 1.0) as num).toDouble(),
-      latitude: ((json['latitude'] ?? 8.54) as num).toDouble(),
-      longitude: ((json['longitude'] ?? 39.27) as num).toDouble(),
-      soilType: json['soilType'] as String?,
-      irrigationType: json['irrigationType'] as String?,
-      additionalCrops: json['additionalCrops'] as String?,
-      woredaId: (json['woredaId'] ?? json['woreda']?['id']) as String?,
+      id: (json['id'] ?? json['_id'] ?? json['farmId'] ?? json['uuid'] ?? '').toString(),
+      userId: (json['userId'] ?? json['user_id'] ?? json['ownerId'] ?? '').toString(),
+      farmName: (json['farmName'] ?? json['name'] ?? json['title'] ?? 'Farm Plot').toString(),
+      primaryCrop: (json['primaryCrop'] ?? json['cropType'] ?? json['crop'] ?? 'Mixed').toString(),
+      areaHectares: parseNum(json['areaHectares'] ?? json['size'] ?? json['area'] ?? json['farmSize'], 1.0),
+      latitude: lat,
+      longitude: lng,
+      soilType: (json['soilType'] ?? json['soil_type']) as String?,
+      irrigationType: (json['irrigationType'] ?? json['irrigation_type']) as String?,
+      additionalCrops: (json['additionalCrops'] ?? json['additional_crops']) as String?,
+      woredaId: (json['woredaId'] ?? json['woreda_id'] ?? json['woreda']?['id']) as String?,
       woreda: json['woreda'] is Map<String, dynamic>
           ? WoredaInfo.fromJson(json['woreda'] as Map<String, dynamic>)
           : null,
       geoJsonBoundary: json['geoJsonBoundary'] is Map<String, dynamic>
           ? json['geoJsonBoundary'] as Map<String, dynamic>
-          : (json['polygonGeojson'] as Map<String, dynamic>?),
+          : (json['polygonGeojson'] is Map<String, dynamic>
+              ? json['polygonGeojson'] as Map<String, dynamic>
+              : (json['boundary'] as Map<String, dynamic>?)),
       sensors: json['sensors'] is List
           ? (json['sensors'] as List)
               .map((s) => SensorModel.fromJson(s as Map<String, dynamic>))
@@ -278,14 +293,14 @@ class CreateFarmRequest {
   factory CreateFarmRequest.fromJson(Map<String, dynamic> json) {
     return CreateFarmRequest(
       farmName: (json['farmName'] ?? json['name'] ?? '').toString(),
-      primaryCrop: (json['primaryCrop'] ?? '').toString(),
-      areaHectares: ((json['areaHectares'] ?? 1.0) as num).toDouble(),
-      latitude: ((json['latitude'] ?? 0.0) as num).toDouble(),
-      longitude: ((json['longitude'] ?? 0.0) as num).toDouble(),
-      woredaId: json['woredaId'] as String?,
-      soilType: json['soilType'] as String?,
-      irrigationType: json['irrigationType'] as String?,
-      additionalCrops: json['additionalCrops'] as String?,
+      primaryCrop: (json['primaryCrop'] ?? json['cropType'] ?? json['crop'] ?? '').toString(),
+      areaHectares: ((json['areaHectares'] ?? json['size'] ?? json['area'] ?? 1.0) as num).toDouble(),
+      latitude: ((json['latitude'] ?? json['lat'] ?? 0.0) as num).toDouble(),
+      longitude: ((json['longitude'] ?? json['lng'] ?? json['lon'] ?? 0.0) as num).toDouble(),
+      woredaId: (json['woredaId'] ?? json['woreda_id']) as String?,
+      soilType: (json['soilType'] ?? json['soil_type']) as String?,
+      irrigationType: (json['irrigationType'] ?? json['irrigation_type']) as String?,
+      additionalCrops: (json['additionalCrops'] ?? json['additional_crops']) as String?,
       geoJsonBoundary: json['geoJsonBoundary'] as Map<String, dynamic>?,
     );
   }
@@ -295,16 +310,25 @@ class CreateFarmRequest {
     'name': farmName,
     'primaryCrop': primaryCrop,
     'cropType': primaryCrop,
+    'crop': primaryCrop,
     'areaHectares': areaHectares,
     'size': areaHectares,
+    'area': areaHectares,
     'latitude': latitude,
+    'lat': latitude,
     'longitude': longitude,
+    'lng': longitude,
+    'lon': longitude,
     if (woredaId != null) 'woredaId': woredaId,
+    if (woredaId != null) 'woreda_id': woredaId,
     if (soilType != null) 'soilType': soilType,
+    if (soilType != null) 'soil_type': soilType,
     if (irrigationType != null) 'irrigationType': irrigationType,
+    if (irrigationType != null) 'irrigation_type': irrigationType,
     if (additionalCrops != null) 'additionalCrops': additionalCrops,
     if (geoJsonBoundary != null) 'geoJsonBoundary': geoJsonBoundary,
     if (geoJsonBoundary != null) 'polygonGeojson': geoJsonBoundary,
+    if (geoJsonBoundary != null) 'boundary': geoJsonBoundary,
   };
 }
 

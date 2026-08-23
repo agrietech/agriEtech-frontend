@@ -73,8 +73,47 @@ class FarmRepository {
         ApiConstants.farms, data: request.toJson(),
       );
       
-      final rawData = response.data is Map && response.data['data'] != null ? response.data['data'] : response.data;
-      final farm = FarmModel.fromJson(rawData as Map<String, dynamic>);
+      dynamic raw = response.data;
+      Map<String, dynamic> farmJson = {};
+      
+      if (raw is Map) {
+        final rawMap = Map<String, dynamic>.from(raw);
+        if (rawMap['data'] is Map) {
+          final dataMap = Map<String, dynamic>.from(rawMap['data'] as Map);
+          farmJson = dataMap['farm'] is Map
+              ? Map<String, dynamic>.from(dataMap['farm'] as Map)
+              : dataMap;
+        } else if (rawMap['farm'] is Map) {
+          farmJson = Map<String, dynamic>.from(rawMap['farm'] as Map);
+        } else {
+          farmJson = rawMap;
+        }
+      }
+      
+      // If server returned partial data, inject request data to guarantee clean model
+      if ((farmJson['farmName'] == null && farmJson['name'] == null) || farmJson['farmName'] == 'Farm Plot') {
+        farmJson['farmName'] = request.farmName;
+      }
+      if (farmJson['primaryCrop'] == null && farmJson['cropType'] == null) {
+        farmJson['primaryCrop'] = request.primaryCrop;
+      }
+      if (farmJson['areaHectares'] == null && farmJson['size'] == null) {
+        farmJson['areaHectares'] = request.areaHectares;
+      }
+      if (farmJson['latitude'] == null && farmJson['lat'] == null) {
+        farmJson['latitude'] = request.latitude;
+      }
+      if (farmJson['longitude'] == null && farmJson['lng'] == null) {
+        farmJson['longitude'] = request.longitude;
+      }
+      if (farmJson['woredaId'] == null && request.woredaId != null) {
+        farmJson['woredaId'] = request.woredaId;
+      }
+      if (farmJson['id'] == null && farmJson['_id'] == null) {
+        farmJson['id'] = 'farm_${DateTime.now().millisecondsSinceEpoch}';
+      }
+      
+      final farm = FarmModel.fromJson(farmJson);
       
       AppLogger.info('Farm created successfully: ${farm.id}');
       
@@ -88,6 +127,7 @@ class FarmRepository {
       
       throw NetworkError.fromDioException(e);
     } catch (e, stackTrace) {
+      if (e is AppError) rethrow;
       AppLogger.error('Unexpected farm creation error', e, stackTrace);
       throw UnknownError(message: 'Failed to create farm: ${e.toString()}');
     }

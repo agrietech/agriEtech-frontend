@@ -198,56 +198,132 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
   Future<void> _getCurrentLocation() async {
     setState(() => _isGettingLocation = true);
     try {
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Location permission denied. Using selected Woreda coordinates.')),
-            );
-          }
-          return;
-        }
-      }
-
-      if (permission == LocationPermission.deniedForever) {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Location permission permanently denied. Using selected Woreda coordinates.')),
+            SnackBar(
+              content: const Text('Device Location Services (GPS) are disabled. Please enable GPS in settings.'),
+              action: SnackBarAction(
+                label: 'Settings',
+                textColor: Colors.white,
+                onPressed: () => Geolocator.openLocationSettings(),
+              ),
+              behavior: SnackBarBehavior.floating,
+            ),
           );
         }
         return;
       }
 
-      final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.medium,
-        timeLimit: const Duration(seconds: 4),
-      );
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
 
-      if (position.latitude >= 3.0 && position.latitude <= 15.0 &&
-          position.longitude >= 33.0 && position.longitude <= 48.0) {
-        setState(() {
-          _latitude = position.latitude;
-          _longitude = position.longitude;
-          _latController.text = position.latitude.toStringAsFixed(5);
-          _lngController.text = position.longitude.toStringAsFixed(5);
-        });
+      if (permission == LocationPermission.denied) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Location permission denied. You can select your Region/Woreda from the list.'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+        return;
+      }
+
+      if (permission == LocationPermission.deniedForever) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('GPS captured: ${_latitude.toStringAsFixed(4)}, ${_longitude.toStringAsFixed(4)}'),
+              content: const Text('Location permission permanently denied. Enable in app settings or choose Woreda.'),
+              action: SnackBarAction(
+                label: 'Settings',
+                textColor: Colors.white,
+                onPressed: () => Geolocator.openAppSettings(),
+              ),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+        return;
+      }
+
+      Position? position;
+      try {
+        position = await Geolocator.getLastKnownPosition();
+      } catch (_) {}
+
+      try {
+        position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high,
+          timeLimit: const Duration(seconds: 12),
+        );
+      } catch (_) {
+        // Fallback to last known position if active query times out
+      }
+
+      if (position != null) {
+        final lat = position.latitude;
+        final lng = position.longitude;
+        _latitude = lat;
+        _longitude = lng;
+        _latController.text = lat.toStringAsFixed(5);
+        _lngController.text = lng.toStringAsFixed(5);
+
+        // Automatically match closest Ethiopian Region & Woreda
+        WoredaLocation? closestWoreda;
+        String? closestRegion;
+        double minDistance = double.infinity;
+
+        for (final region in _ethiopianRegions) {
+          for (final woreda in region.woredas) {
+            final dLat = woreda.lat - lat;
+            final dLng = woreda.lng - lng;
+            final dist = (dLat * dLat) + (dLng * dLng);
+            if (dist < minDistance) {
+              minDistance = dist;
+              closestWoreda = woreda;
+              closestRegion = region.regionName;
+            }
+          }
+        }
+
+        if (closestWoreda != null && closestRegion != null) {
+          _selectedRegion = closestRegion;
+          _selectedWoredaName = closestWoreda.woredaName;
+          _selectedWoredaId = closestWoreda.woredaId;
+        }
+
+        setState(() {});
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('GPS Captured: ${lat.toStringAsFixed(5)}°N, ${lng.toStringAsFixed(5)}°E ($_selectedWoredaName)'),
               backgroundColor: const Color(0xFF2E7D32),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Could not acquire live GPS signal. Selected administrative Woreda coordinates applied.'),
+              backgroundColor: Color(0xFF2E7D32),
+              behavior: SnackBarBehavior.floating,
             ),
           );
         }
       }
-    } catch (_) {
+    } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('GPS unavailable. Woreda coordinates automatically assigned.'),
-            backgroundColor: Color(0xFF2E7D32),
+          SnackBar(
+            content: Text('GPS notice: Using administrative coordinates (${e.toString()})'),
+            behavior: SnackBarBehavior.floating,
           ),
         );
       }
@@ -263,18 +339,18 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
 
     final parsedLat = double.tryParse(_latController.text.trim()) ?? _latitude;
     final parsedLng = double.tryParse(_lngController.text.trim()) ?? _longitude;
+    final size = double.tryParse(_sizeController.text.trim()) ?? 1.0;
 
     setState(() => _isLoading = true);
 
     try {
-      final size = double.tryParse(_sizeController.text.trim()) ?? 1.0;
       await ref.read(farmsProvider.notifier).createFarm(
             CreateFarmRequest(
               farmName: _nameController.text.trim(),
               areaHectares: size,
               primaryCrop: _selectedCrop ?? 'Teff',
-              soilType: _selectedSoil ?? 'Vertisol (Black Cotton - \u1325\u1241\u122d \u12a0\u1268\u122d)',
-              irrigationType: _selectedIrrigation ?? 'Rainfed (\u12e8\u12dd\u1293\u1265 \u12a5\u122d\u123b)',
+              soilType: _selectedSoil ?? 'Vertisol (Black Cotton - ጥቁር አፈር)',
+              irrigationType: _selectedIrrigation ?? 'Rainfed (የዝናብ እርሻ)',
               latitude: parsedLat,
               longitude: parsedLng,
               woredaId: _selectedWoredaId,
@@ -284,21 +360,28 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Farm parcel registered successfully!'),
+            content: Text('Farm registered successfully!'),
             backgroundColor: Color(0xFF2E7D32),
+            behavior: SnackBarBehavior.floating,
           ),
         );
         context.pop();
       }
     } catch (e) {
       if (mounted) {
+        final errorMsg = e.toString().replaceAll('Exception:', '').replaceAll('UnknownError:', '').trim();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Notice: Farm registered with local synchronization (${e.toString()})'),
-            backgroundColor: const Color(0xFF2E7D32),
+            content: Text('Failed to register farm: $errorMsg'),
+            backgroundColor: const Color(0xFFC62828),
+            behavior: SnackBarBehavior.floating,
+            action: SnackBarAction(
+              label: 'Retry',
+              textColor: Colors.white,
+              onPressed: _saveFarm,
+            ),
           ),
         );
-        context.pop();
       }
     } finally {
       if (mounted) {
@@ -630,42 +713,87 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
                     ),
                   ],
 
-                  // MODE 2: Optional Device Auto-GPS
+                  // MODE 2: Device Auto-GPS
                   if (_locationMode == 2) ...[
                     Container(
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: isDark ? const Color(0xFF1B2E1E) : Colors.white,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey.shade300),
+                        border: Border.all(
+                          color: const Color(0xFF2E7D32).withValues(alpha: 0.35),
+                        ),
                       ),
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'GPS: ${_latitude.toStringAsFixed(4)}°N, ${_longitude.toStringAsFixed(4)}°E',
-                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                                  ),
-                                  const Text('Tap button to query device satellite GPS', style: TextStyle(color: Colors.grey, fontSize: 11)),
-                                ],
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        const Icon(Icons.satellite_alt, color: Color(0xFF2E7D32), size: 18),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          '${_latitude.toStringAsFixed(5)}°N, ${_longitude.toStringAsFixed(5)}°E',
+                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      'Woreda Match: $_selectedWoredaName, $_selectedRegion',
+                                      style: TextStyle(
+                                        color: isDark ? Colors.grey.shade400 : const Color(0xFF2E7D32),
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                               ElevatedButton.icon(
                                 onPressed: _isGettingLocation || _isLoading ? null : _getCurrentLocation,
                                 icon: _isGettingLocation
-                                    ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                                    ? const SizedBox(
+                                        width: 14,
+                                        height: 14,
+                                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                      )
                                     : const Icon(Icons.my_location, size: 16),
-                                label: const Text('Acquire GPS'),
+                                label: Text(_isGettingLocation ? 'Acquiring...' : 'Acquire GPS'),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0xFF2E7D32),
                                   foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                                 ),
                               ),
                             ],
+                          ),
+                          const SizedBox(height: 10),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF2E7D32).withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Row(
+                              children: [
+                                Icon(Icons.info_outline, size: 14, color: Color(0xFF2E7D32)),
+                                SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    'GPS automatically captures exact satellite coordinates and links the nearest Ethiopian administrative woreda hub.',
+                                    style: TextStyle(fontSize: 10.5, color: Color(0xFF2E7D32)),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
