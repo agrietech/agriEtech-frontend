@@ -15,6 +15,9 @@ abstract class AppError extends Equatable implements Exception {
 
   @override
   List<Object?> get props => [message, code, details];
+
+  @override
+  String toString() => message;
 }
 
 /// Network related errors
