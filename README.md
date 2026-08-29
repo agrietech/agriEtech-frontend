@@ -1,176 +1,106 @@
-# agriEtech — Multi-Hazard Early Warning & Agriculture Advisory System
+# AgriEtech Frontend
 
-**Production-ready Flutter cross-platform client (Android, iOS, Web, Desktop) for agricultural multi-hazard monitoring, AI crop pathology, IoT telemetry, and early warning in Ethiopia.**
+**Cross-Platform Flutter Mobile & Web Client for Ethiopian Multi-Hazard Agricultural Early Warning & Planetary Intelligence**
 
----
-
-## 🌟 Overview
-
-**agriEtech** connects smallholder farmers, development agents, woreda officers, and agricultural researchers to real-time climatological hazard models, AI crop pathology, OpenStreetMap farm geofencing, and IoT telemetry streams.
-
-- **Status**: ✅ **100% Complete — 50/50 Tests Passing — 0 Analyzer Issues**
-- **Brand Identity**: 3-Segment `agriEtech` Typography (`agri` + `E` + `tech`) with Forest Green (`#2E7D32` / `#1B5E20`) Material 3 Theme
-- **Target Platforms**: Android, iOS, Web, Windows, macOS, Linux
-- **Backend Service**: Node.js REST API + Socket.IO WebSockets (`agriEtech-backend`)
-- **Architecture**: Clean Architecture with Riverpod 2.x State Management & Cache-First Offline Persistence
+[![Flutter](https://img.shields.io/badge/Flutter-3.x%20Cross--Platform-02569B?logo=flutter)](https://flutter.dev)
+[![Dart](https://img.shields.io/badge/Dart-3.x-0175C2?logo=dart)](https://dart.dev)
+[![Riverpod](https://img.shields.io/badge/State-Riverpod%202.x-black)](https://riverpod.dev)
+[![GoRouter](https://img.shields.io/badge/Routing-GoRouter%2014.x-blue)](https://pub.dev/packages/go_router)
+[![OpenStreetMap](https://img.shields.io/badge/GIS-FlutterMap%20OSM-7EBC6F?logo=openstreetmap)](https://pub.dev/packages/flutter_map)
 
 ---
 
-## 👥 Development Team & Module Assignments
+## 🌟 Executive Overview
 
-| # | Team Member | Student ID | Role | Owned Module Domains |
-|---|---|---|---|---|
-| **1** | **Abraham Amogne** | `CTC-329-26` | 🏆 **Team Lead & Core Frontend** | `lib/core/*` (Network, Storage, Theme, Routing, Utils, Widgets)<br>`lib/features/auth/` · `lib/features/boundaries/` · `lib/features/home/` |
-| **2** | **Abenezer Endrias** | `CTC-1826-26` | 🌤️ **Weather & Analytics Engineer** | `lib/features/weather/` (16-day forecast, meteograms, ET0)<br>`lib/features/analytics/` (Belg vs. Kiremt seasonal climatology) |
-| **3** | **Abinu Mathewos** | `CTC-1258-26` | 🌱 **Farms, Soil & AI Pathology Engineer** | `lib/features/farms/` (GPS polygon mapping, geofencing)<br>`lib/features/soil/` (SoilGrids pH & moisture)<br>`lib/features/diagnosis/`, `disease/`, `disease_diagnosis/` |
-| **4** | **Alen Biruk** | `CTC-2176-26` | 🛡️ **Multi-Hazard Dashboards Engineer** | `lib/features/dashboard/`, `risk/`, `risk_dashboard/` (Composite index)<br>`lib/features/drought/` (SPI gauge) · `lib/features/flood/` (GloFAS hydrograph)<br>`lib/features/vegetation/` (NDVI) · `lib/features/locust_pest/` (FAO swarm radar) |
-| **5** | **Banchamlak Golla** | `CTC-2952-26` | 📡 **Alerts, IoT Sensors & Sync Engineer** | `lib/features/alerts/` (Real-time push, WebSocket, inbox)<br>`lib/features/sensors/` (IoT telemetry & battery alerts)<br>`lib/features/offline_sync/` (Workmanager & Hive queue) |
+**AgriEtech Frontend** is a production-ready Flutter 3.x client engineered for Android, iOS, and Web. It delivers real-time multi-hazard agricultural intelligence to Ethiopian farmers, development agents, woreda officers, and researchers. The client features 6 dedicated disaster domain screens, an interactive Ethiopian GIS Spatial Risk Map with Woreda choropleth risk polygons, an interactive USSD `*212#` simulator, multimodal AI crop pathology scanner, and offline-first data caching.
 
 ---
 
-## ✨ Core Feature Domains
+## 🚀 Key Client Capabilities
 
-### 1. 🔐 Authentication & Role-Based Access Control
-- JWT-based authentication supporting login via **Username or Email** with encrypted token keystore.
-- Forgot Password reset dialog with backend token dispatch.
-- 5 User Roles with granular capability enforcement: `FARMER`, `DEVELOPMENT_AGENT`, `WOREDA_OFFICER`, `RESEARCHER`, `ADMIN`.
+1. **Strictly Ethiopian Spatial Risk GIS Map (`/risk-map`)**:
+   - Locked strictly to Ethiopia's sovereign coordinates ($3.2^\circ\text{N} - 15.2^\circ\text{N}, 32.8^\circ\text{E} - 48.2^\circ\text{E}$).
+   - High-precision Woreda choropleth polygons with 8 disaster layer modes (*All Hazards, Seismology, Soil Degradation, Landslides, Drought SPI-3, GloFAS Floods, Volcanoes, and Farm Plots*).
+   - Interactive Telemetry Inspector Bottom Sheet with live KPIs and 1-tap navigation to dedicated disaster screens.
 
-### 2. 🛡️ Multi-Hazard Composite Dashboard
-- Master Woreda risk score uniting 6 hazard types: Drought, Flood, Locust Swarms, Vegetation Stress, Frost, and Heat Stress.
-- Color-coded severity indicators (Low, Moderate, High, Critical).
-- Role-specific quick actions and immediate summary banners.
+2. **6 Dedicated Disaster Intelligence Monitoring Centers**:
+   - 🌋 **Seismology & Tectonic Faults (`/seismology`)**: Live USGS Horn of Africa earthquake list, Wonji Rift fault buffer alerts, PGA acceleration ($g$), and dam tension crack alarms.
+   - 🌱 **Soil Degradation & RUSLE (`/soil-degradation`)**: RUSLE equation decomposition ($A = R \times K \times LS \times C \times P$), SOC loss, nutrient leaching, and Agricultural Lime (ኖራ) prescriptions.
+   - ⛰️ **Landslides & Mudflows (`/landslides`)**: Geotechnical Factor of Safety ($FS$), DEM 30m slope %, and SAR soil saturation %.
+   - ☀️ **Drought Intelligence (`/drought-intelligence`)**: CHIRPS SPI-1/SPI-3 anomalies, Sentinel-2 VCI canopy vigor, and Landsat CWSI thermal stress.
+   - 🌊 **Flash Floods (`/flood-intelligence`)**: Copernicus GloFAS live river basin discharge ($m^3/s$) and return period warnings.
+   - 🔥 **Volcanic Hazards (`/volcanic-hazards`)**: Active caldera proximity rings (*Erta Ale, Alutu, Fentale, Corbetti*), MODIS FIRMS thermal radiative power, and $SO_2$ alerts.
 
-### 3. 🗺️ Farm Geofencing & GPS Mapping
-- Interactive OpenStreetMap drawing tool with `flutter_map` and `latlong2`.
-- Automatic polygon area calculation (hectares) and centroid coordinates.
-- Selection of 14 Ethiopian staple crops, soil types, and irrigation methods.
+3. **USSD `*212#` Phone Simulator & SMS Character Budgeter (`/ussd-console`)**:
+   - Interactive hardware phone dialer simulator executing all 6 branches of the `*212#` USSD state machine.
+   - Real-time UCS-2 Unicode (70 chars) vs. GSM 7-bit (160 chars) character counter and multi-language transmission calculator.
 
-### 4. 🌤️ Weather Forecasting & Climatology Analytics
-- 16-day Open-Meteo predictions with hourly temperature spline curves.
-- Interactive meteogram with precipitation amounts and touch tooltips.
-- Solar radiation, humidity, wind velocity, and ET0 evapotranspiration metrics.
-- Seasonal climatology comparisons (Belg vs. Kiremt seasons) with dekadal trends.
+4. **AI Crop Disease Camera Scanner (`/diagnosis`)**:
+   - Camera and gallery image classification for endemic crop pathogens (Teff Rust, Coffee Leaf Rust, Maize Streak Virus).
+   - Localized organic and chemical treatment prescriptions in English and Amharic.
 
-### 5. 🔬 AI Crop Pathology & Disease Diagnosis
-- Camera viewfinder capture and gallery image analysis.
-- AI disease classification with confidence percentage score.
-- Localized actionable treatment plans and prevention tips in English and Amharic.
-
-### 6. 📡 IoT Sensor Fleet Management & Telemetry
-- Supports 4 sensor types: Soil Moisture, Temperature, Rain Gauge, and Leaf Wetness.
-- Real-time telemetry line charts with configurable time horizons (24h, 7d, 30d).
-- Low battery alerts (< 20%) and sensor operational health tracking.
-
-### 7. 🚨 Real-Time Advisories & Alert Inbox
-- Live Socket.IO WebSocket stream + Firebase Cloud Messaging push advisories.
-- 3 Priority Channels (Critical, High, General) with severity filtering.
-- Role-gated alert creation for Woreda Officers and Administrators.
-
-### 8. 🏜️ Drought, Flood, Locust & NDVI Specialized Views
-- **Drought**: Radial animated needle SPI gauge (SPI-30 / SPI-90) and deficit trends.
-- **Flood**: GloFAS river discharge hydrographs with 2-year, 5-year, and 20-year return period alarms.
-- **NDVI**: MODIS & Sentinel-2 satellite vegetation health against 10-year baselines.
-- **Locust Radar**: FAO swarm polygon map overlays and real-time proximity alerts (≤ 50 km).
-
-### 9. 📴 Offline-First Synchronization Architecture
-- High-speed Hive NoSQL local key-value caching across 6 core boxes.
-- `pending_actions` queue flushed via Workmanager background jobs when connectivity is restored.
-- Conflict resolution policies: Last-Write-Wins, Server-Authoritative, and Append-Only.
+5. **7-Tier Role-Based UI Gating (`RoleUtils`)**:
+   - Dynamic interface adapting to `FARMER`, `DEVELOPMENT_AGENT`, `WOREDA_OFFICER`, `ZONAL_OFFICER`, `REGIONAL_OFFICER`, `RESEARCHER`, and `ADMIN`.
 
 ---
 
-## 🏗️ Technical Architecture
+## 🏗️ Architecture Blueprint
 
-```mermaid
-graph TB
-    subgraph UI["Presentation Layer (Flutter)"]
-        SC["Screens (25+ Views)"]
-        WG["Widgets (50+ Components)"]
-        PR["Riverpod Notifiers & StateProviders"]
-    end
-
-    subgraph Domain["Domain Layer"]
-        MD["Models (User, Farm, Risk, Sensor, Alert)"]
-        RU["RoleUtils & Policy Guards"]
-        UT["Date, Geo & Validation Utils"]
-    end
-
-    subgraph Data["Data Layer"]
-        RP["Repositories (Cache-First)"]
-        DIO["Dio HTTP Client (REST)"]
-        WS["SocketClient (WebSocket)"]
-        HIV["Hive NoSQL Database"]
-        SEC["FlutterSecureStorage"]
-    end
-
-    SC --> PR
-    WG --> PR
-    PR --> RP
-    RP --> MD
-    RP --> DIO
-    RP --> WS
-    RP --> HIV
-    RP --> SEC
-    PR --> RU
-    PR --> UT
+```
+lib/
+├── core/                       # Core Foundation Layer
+│   ├── constants/              # API endpoints, asset paths, keys
+│   ├── models/                 # Shared data models (UserModel, UserRole)
+│   ├── network/                # Dio client, interceptors, error handling
+│   ├── routing/                # AppRouter & GoRouter declarations
+│   ├── storage/                # Encrypted secure storage service
+│   ├── theme/                  # AppTheme, color tokens, typography
+│   ├── utils/                  # RoleUtils, DateFormatter, AppLogger
+│   └── widgets/                # Reusable UI atoms (AgriEtechLogo, Badges)
+│
+└── features/                   # Domain Feature Modules
+    ├── auth/                   # Authentication & Role Requests
+    ├── home/                   # Navigation Shell & Role Dashboard
+    ├── risk/                   # Multi-Hazard & 6 Dedicated Disaster Screens
+    ├── farms/                  # GIS Farm Plot Mapping & Parcels
+    ├── alerts/                 # Early Warning List & Creation
+    ├── sensors/                # IoT Sensor Fleet & Registration
+    ├── diagnosis/              # AI Multimodal Crop Vision & Pathology
+    ├── weather/                # Hyper-Local Weather Telemetry
+    ├── boundaries/             # Administrative Woreda GIS Boundaries
+    ├── analytics/              # Agro-Analytics, USSD Hub & GIS Map
+    └── ai_voice/               # Multilingual Voice AI Assistant
 ```
 
 ---
 
-## 🚀 Getting Started
+## 🛠️ Quick Start & Installation
 
 ### Prerequisites
-- Flutter SDK `>= 3.0.0`
-- Dart SDK `>= 3.0.0`
-- Node.js backend running on `localhost:5000` (or `10.0.2.2:5000` for Android emulator)
+- Flutter 3.19+ / Dart 3.3+
+- Android Studio / Xcode / Chrome for Web
 
-### Installation & Run
-
+### Setup
 ```bash
-# 1. Clone repository and navigate to folder
-cd c:\Users\a\Desktop\agrietech-frontend
-
-# 2. Install dependencies
+# 1. Install dependencies
 flutter pub get
 
-# 3. Verify code quality & tests
+# 2. Verify static analysis
 flutter analyze
-flutter test
 
-# 4. Run application
-flutter run -d chrome     # Run on Web (Chrome)
-flutter run -d windows    # Run on Windows Desktop
-flutter run -d edge       # Run on Microsoft Edge
+# 3. Launch mobile / web app
+flutter run
 ```
 
 ---
 
-## 🧪 Quality & Test Suite Verification
+## 📚 Official Documentation Catalog
 
-| Test Suite | File | Tests | Status |
-|---|---|---|---|
-| **AgriEtechLogo** | `test/core/agrietech_logo_test.dart` | 5 | ✅ Pass |
-| **App Theme** | `test/core/app_theme_test.dart` | 2 | ✅ Pass |
-| **Date Formatter** | `test/core/date_formatter_test.dart` | 8 | ✅ Pass |
-| **Error Handler** | `test/core/error_handler_test.dart` | 4 | ✅ Pass |
-| **Network & API** | `test/core/network_test.dart` | 3 | ✅ Pass |
-| **Role Utils** | `test/core/role_utils_test.dart` | 6 | ✅ Pass |
-| **Validators** | `test/core/validators_test.dart` | 11 | ✅ Pass |
-| **Alert Repository** | `test/features/alert_repository_test.dart` | 2 | ✅ Pass |
-| **Auth & RBAC** | `test/features/auth_test.dart` | 4 | ✅ Pass |
-| **Boundaries** | `test/features/boundary_repository_test.dart` | 1 | ✅ Pass |
-| **Diagnosis** | `test/features/diagnosis_repository_test.dart` | 1 | ✅ Pass |
-| **Farms** | `test/features/farms_statistics_test.dart` | 1 | ✅ Pass |
-| **Sensors** | `test/features/sensor_repository_test.dart` | 1 | ✅ Pass |
-| **Smoke Test** | `test/widget_test.dart` | 1 | ✅ Pass |
-| **TOTAL** | **14 Test Files** | **50 / 50** | ✅ **100% Pass** |
+For in-depth frontend technical guides, refer to the [**Frontend Documentation Catalog**](docs/README.md):
 
----
-
-## 📚 Technical Documentation
-
-For in-depth architecture details, consult the `docs/` folder:
-- 📖 [Architecture Guide](file:///c:/Users/a/Desktop/agrietech-frontend/docs/ARCHITECTURE.md) — Clean Architecture, Riverpod flows, and offline sync.
-- 🗂️ [Modules Catalog](file:///c:/Users/a/Desktop/agrietech-frontend/docs/MODULES_CATALOG.md) — Comprehensive catalog of all 20 feature directories and core utilities.
-- 👥 [Team Tasks & Sprint Plan](file:///c:/Users/a/Desktop/agrietech-frontend/docs/TEAM_TASKS.md) — Team member roles, student IDs, deliverables, and acceptance criteria.
-- 🎨 [Design System](file:///c:/Users/a/Desktop/agrietech-frontend/docs/DESIGN_SYSTEM.md) — Color palettes, typography, spacing, and UI components.
+- [Architecture Blueprint](docs/ARCHITECTURE.md)
+- [Design System & Theme Standards](docs/DESIGN_SYSTEM.md)
+- [Dedicated Disaster Screens & GIS Specifications](docs/DISASTER_SCREENS_AND_GIS.md)
+- [Feature Modules Catalog](docs/FEATURE_MODULES.md)
+- [Role-Based UI Gating Guide](docs/ROLE_BASED_UI_GUIDE.md)
+- [App Icon Setup Guide](docs/APP_ICON_SETUP.md)
