@@ -91,6 +91,7 @@ class BoundaryMapScreen extends StatelessWidget {
         ],
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'fab_boundary_map',
         onPressed: () {
           // In a real app, this would recenter the map
           ScaffoldMessenger.of(context).showSnackBar(

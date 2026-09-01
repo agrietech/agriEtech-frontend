@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/widgets/error_view.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/utils/role_utils.dart';
+import '../../../core/widgets/shimmer_loading.dart';
+import '../../../core/widgets/empty_state_view.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../models/alert_models.dart';
 import '../providers/alert_provider.dart';
@@ -31,8 +34,22 @@ class _AlertsListScreenState extends ConsumerState<AlertsListScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Alerts'),
+        title: const Text('Alerts & Advisories'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.done_all),
+            tooltip: 'Mark All as Read',
+            onPressed: () {
+              ref.read(alertListProvider.notifier).markAllAsRead();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('All alerts marked as read'),
+                  backgroundColor: Color(0xFF2E7D32),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.filter_list_off),
             tooltip: 'Clear Filters',
@@ -88,33 +105,13 @@ class _AlertsListScreenState extends ConsumerState<AlertsListScreen> {
               data: (alerts) {
                 if (alerts.isEmpty) {
                   return SliverFillRemaining(
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.notifications_none,
-                            size: 64,
-                            color: Colors.grey[400],
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'No alerts available',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleMedium
-                                ?.copyWith(color: Colors.grey[600]),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Alerts will appear here when created',
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyMedium
-                                ?.copyWith(color: Colors.grey[500]),
-                          ),
-                        ],
-                      ),
+                    hasScrollBody: false,
+                    child: EmptyStateView(
+                      icon: Icons.notifications_active_outlined,
+                      title: 'All Clear — No Active Alerts',
+                      message: 'There are currently no active drought, pest, flood, or frost hazards reported for your administrative jurisdiction.',
+                      actionLabel: 'Refresh Hazard Telemetry',
+                      onAction: () => ref.read(alertListProvider.notifier).refresh(),
                     ),
                   );
                 }
@@ -139,37 +136,14 @@ class _AlertsListScreenState extends ConsumerState<AlertsListScreen> {
                 );
               },
               loading: () => const SliverFillRemaining(
-                child: Center(child: CircularProgressIndicator()),
+                child: ListSkeleton(count: 3),
               ),
               error: (error, stack) => SliverFillRemaining(
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.wifi_off, size: 48, color: Colors.grey[400]),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Unable to load alerts',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Please check your network connection and try again.',
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodyMedium
-                            ?.copyWith(color: Colors.grey[500]),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 16),
-                      ElevatedButton.icon(
-                        onPressed: () =>
-                            ref.read(alertListProvider.notifier).refresh(),
-                        icon: const Icon(Icons.refresh),
-                        label: const Text('Retry'),
-                      ),
-                    ],
-                  ),
+                child: AppErrorView(
+                  icon: Icons.notifications_off_rounded,
+                  title: 'Unable to load alerts',
+                  message: error.toString(),
+                  onRetry: () => ref.read(alertListProvider.notifier).refresh(),
                 ),
               ),
             ),
@@ -178,6 +152,7 @@ class _AlertsListScreenState extends ConsumerState<AlertsListScreen> {
       ),
       floatingActionButton: canCreateAlerts
           ? FloatingActionButton.extended(
+              heroTag: 'fab_alerts_list',
               onPressed: () {
                 Navigator.push(
                   context,
@@ -194,6 +169,9 @@ class _AlertsListScreenState extends ConsumerState<AlertsListScreen> {
   }
 
   void _showAlertDetails(BuildContext context, AlertModel alert) {
+    if (!alert.isRead) {
+      ref.read(alertListProvider.notifier).markAsRead(alert.id);
+    }
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,

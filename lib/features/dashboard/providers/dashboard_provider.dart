@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/error/app_error.dart';
-import '../../../core/models/analytics_model.dart' hide TrendDataPoint;
+import '../../analytics/models/analytics_model.dart' hide TrendDataPoint;
 import '../../../core/utils/logger.dart';
 import '../models/dashboard_models.dart';
 import '../repositories/dashboard_repository.dart';

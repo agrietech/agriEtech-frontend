@@ -155,14 +155,20 @@ class Validators {
     return null;
   }
 
+  /// Check if coordinates are strictly within Ethiopian national borders
+  static bool isWithinEthiopia(double? lat, double? lng) {
+    if (lat == null || lng == null) return false;
+    return lat >= 3.4 && lat <= 14.9 && lng >= 33.0 && lng <= 48.0;
+  }
+
   /// Validate Ethiopian coordinates
   static String? ethiopianLatitude(String? value) {
     final latError = latitude(value);
     if (latError != null) return latError;
     
     final lat = double.parse(value!);
-    if (lat < 3.0 || lat > 15.0) {
-      return 'Latitude must be within Ethiopia (3.0 to 15.0)';
+    if (lat < 3.4 || lat > 14.9) {
+      return 'Latitude must be within Ethiopia (3.4° to 14.9°N)';
     }
     
     return null;
@@ -174,7 +180,7 @@ class Validators {
     
     final lng = double.parse(value!);
     if (lng < 33.0 || lng > 48.0) {
-      return 'Longitude must be within Ethiopia (33.0 to 48.0)';
+      return 'Longitude must be within Ethiopia (33.0° to 48.0°E)';
     }
     
     return null;

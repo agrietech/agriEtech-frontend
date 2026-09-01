@@ -158,8 +158,22 @@ class DioClient {
     );
   }
 
-  /// Refresh access token
+  Future<bool>? _refreshFuture;
+
+  /// Refresh access token with concurrency lock
   Future<bool> _refreshToken() async {
+    if (_refreshFuture != null) {
+      return _refreshFuture!;
+    }
+    _refreshFuture = _performTokenRefresh();
+    try {
+      return await _refreshFuture!;
+    } finally {
+      _refreshFuture = null;
+    }
+  }
+
+  Future<bool> _performTokenRefresh() async {
     try {
       final refreshToken = await _storage.getRefreshToken();
       if (refreshToken == null) {

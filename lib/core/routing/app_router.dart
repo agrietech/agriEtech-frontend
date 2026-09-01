@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/auth/providers/auth_provider.dart';
+import '../utils/role_utils.dart';
 import '../../features/auth/screens/splash_screen.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/register_screen.dart';
 import '../../features/auth/screens/change_password_screen.dart';
+import '../../features/auth/screens/profile_screen.dart';
+import '../../features/auth/screens/role_application_screen.dart';
 import '../../features/home/screens/main_navigation_shell.dart';
 import '../../features/dashboard/screens/dashboard_screen.dart';
 import '../../features/farms/screens/farms_list_screen.dart';
@@ -14,14 +17,23 @@ import '../../features/farms/screens/add_farm_screen.dart';
 import '../../features/alerts/screens/alerts_list_screen.dart';
 import '../../features/alerts/screens/create_alert_screen.dart';
 import '../../features/risk/screens/risk_map_screen.dart';
+import '../../features/risk/screens/disaster_intelligence_screen.dart';
+import '../../features/risk/screens/seismology_detail_screen.dart';
+import '../../features/risk/screens/soil_degradation_screen.dart';
+import '../../features/risk/screens/landslide_risk_screen.dart';
+import '../../features/risk/screens/drought_intelligence_screen.dart';
+import '../../features/risk/screens/flood_intelligence_screen.dart';
+import '../../features/risk/screens/volcanic_hazard_screen.dart';
+import '../../features/analytics/screens/ussd_alert_console_screen.dart';
+
 import '../../features/diagnosis/screens/diagnosis_list_screen.dart';
 import '../../features/diagnosis/screens/create_diagnosis_screen.dart';
 import '../../features/sensors/screens/sensors_list_screen.dart';
 import '../../features/sensors/screens/register_sensor_screen.dart';
-import '../../features/weather/presentation/screens/weather_screen.dart';
+import '../../features/weather/screens/weather_screen.dart';
 import '../../features/boundaries/screens/boundaries_screen.dart';
 import '../../features/analytics/screens/analytics_screen.dart';
-import '../../features/ai_voice/presentation/screens/ai_assistant_screen.dart';
+import '../../features/ai_voice/screens/ai_assistant_screen.dart';
 
 /// Listenable that notifies GoRouter whenever AuthState changes
 class AuthChangeNotifier extends ChangeNotifier {
@@ -72,6 +84,47 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return '/home';
       }
 
+      // 5. Role-based route authorization guards
+      if (isAuthenticated) {
+        final role = authState.user?.role;
+
+        // Alert creation — only officers, DAs, and admin
+        if (currentLoc == '/alerts/create' &&
+            !RoleUtils.canCreateAlerts(role)) {
+          return '/home';
+        }
+
+        // Sensor registration — only DAs, officers, and admin
+        if (currentLoc == '/sensors/register' &&
+            !RoleUtils.canRegisterSensors(role)) {
+          return '/home';
+        }
+
+        // USSD console — only officers and admin
+        if (currentLoc == '/ussd-console' &&
+            !authState.canAccessUssdConsole) {
+          return '/home';
+        }
+
+        // Analytics — only officers, researchers, and admin
+        if (currentLoc == '/analytics' &&
+            !RoleUtils.canViewAnalytics(role)) {
+          return '/home';
+        }
+
+        // Farm registration — only farmers and DAs
+        if (currentLoc == '/farms/add' &&
+            !RoleUtils.canManageFarms(role)) {
+          return '/home';
+        }
+
+        // Disease diagnosis creation — only farmers, DAs, and officers
+        if ((currentLoc == '/diagnosis/create' || currentLoc == '/create-diagnosis') &&
+            !RoleUtils.canCreateDiagnosis(role)) {
+          return '/home';
+        }
+      }
+
       return null;
     },
     routes: [
@@ -103,8 +156,22 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       // Profile routes
       GoRoute(
+        path: '/profile',
+        builder: (context, state) => const ProfileScreen(),
+      ),
+      GoRoute(
         path: '/change-password',
         builder: (context, state) => const ChangePasswordScreen(),
+      ),
+
+      // Role Application route
+      GoRoute(
+        path: '/apply-role',
+        builder: (context, state) => const RoleApplicationScreen(),
+      ),
+      GoRoute(
+        path: '/role-application',
+        builder: (context, state) => const RoleApplicationScreen(),
       ),
 
       // Farms routes
@@ -134,11 +201,48 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const CreateAlertScreen(),
       ),
 
-      // Risk map route
+      // Risk map & Multi-Hazard Disaster Intelligence routes
+      GoRoute(
+        path: '/risks',
+        builder: (context, state) => const RiskMapScreen(),
+      ),
       GoRoute(
         path: '/risk-map',
         builder: (context, state) => const RiskMapScreen(),
       ),
+      GoRoute(
+        path: '/disasters',
+        builder: (context, state) => const DisasterIntelligenceScreen(),
+      ),
+      GoRoute(
+        path: '/seismology',
+        builder: (context, state) => const SeismologyDetailScreen(),
+      ),
+      GoRoute(
+        path: '/soil-degradation',
+        builder: (context, state) => const SoilDegradationScreen(),
+      ),
+      GoRoute(
+        path: '/landslides',
+        builder: (context, state) => const LandslideRiskScreen(),
+      ),
+      GoRoute(
+        path: '/drought-intelligence',
+        builder: (context, state) => const DroughtIntelligenceScreen(),
+      ),
+      GoRoute(
+        path: '/flood-intelligence',
+        builder: (context, state) => const FloodIntelligenceScreen(),
+      ),
+      GoRoute(
+        path: '/volcanic-hazards',
+        builder: (context, state) => const VolcanicHazardScreen(),
+      ),
+      GoRoute(
+        path: '/ussd-console',
+        builder: (context, state) => const UssdAlertConsoleScreen(),
+      ),
+
 
       // Diagnosis routes
       GoRoute(
@@ -149,6 +253,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/diagnosis/create',
         builder: (context, state) => const CreateDiagnosisScreen(),
       ),
+      GoRoute(
+        path: '/create-diagnosis',
+        builder: (context, state) => const CreateDiagnosisScreen(),
+      ),
+
 
       // Sensor routes
       GoRoute(
@@ -172,7 +281,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const BoundariesScreen(),
       ),
 
-      // Analytics route (Researchers, Officers, Admin only)
+      // AI & Analytics routes
       GoRoute(
         path: '/ai-assistant',
         builder: (context, state) => const AiAssistantScreen(),

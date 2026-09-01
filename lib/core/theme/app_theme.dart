@@ -1,14 +1,32 @@
 import 'package:flutter/material.dart';
+export 'app_tokens.dart';
 
-/// Application theme configuration featuring an agricultural Green brand identity
+/// Application theme configuration featuring an agricultural Green brand identity & Obsidian High-Tech AgTech aesthetic
 class AppTheme {
-  // Brand Colors (Lush Agricultural Palette)
-  static const Color primaryColor = Color(0xFF2E7D32); // Lush Forest Green
-  static const Color primaryDark = Color(0xFF1B5E20);  // Deep Emerald Green
-  static const Color primaryLight = Color(0xFF4CAF50); // Vibrant Leaf Green
-  static const Color secondaryColor = Color(0xFF00796B); // Teal / Irrigation Blue-Green
-  static const Color tertiaryColor = Color(0xFFE65100);  // Warm Amber / Sunburst
-  static const Color neutralBackground = Color(0xFFF8FBF8); // Fresh Soft Tinted Surface
+  // Brand Colors (Light Green Natural Professional / Expert AgTech Palette)
+  static const Color primaryColor = Color(0xFF15803D); // Lush Emerald Green
+  static const Color primaryDark = Color(0xFF166534);  // Deep Forest Green
+  static const Color primaryLight = Color(0xFF22C55E); // Vibrant Leaf Green
+  static const Color primaryContainer = Color(0xFFDCFCE7); // Light Sage Container
+  static const Color secondaryColor = Color(0xFF0D9488); // Teal / Hydro Irrigation
+  static const Color tertiaryColor = Color(0xFFD97706);  // Warm Ethiopian Amber / Harvest Wheat
+
+  // Surface and Container Tokens (Natural Light Professional System)
+  static const Color surfaceLight = Color(0xFFF4F9F4); // Natural Light Mint Alabaster
+  static const Color surfaceDark = Color(0xFF0E1E14); // Deep Forest Slate
+  static const Color cardLight = Colors.white;
+  static const Color cardDark = Color(0xFF162A1D); // Forest Slate Card
+  static const Color borderLight = Color(0xFFE2ECE2); // Subtle Sage Border
+  static const Color borderDark = Color(0xFF23442E); // Deep Sage Border
+  static const Color headerDark = Color(0xFF14532D); // Deep Botanical Header
+  static const Color accentGreen = Color(0xFF16A34A); // Lush Fresh Green
+  static const Color neutralDark = Color(0xFF1E293B); // Slate 800 High-Contrast Neutral
+
+  // Natural Glassmorphic Overlays
+  static const Color glassDark = Color(0xDE132419);
+  static const Color glassLight = Color(0xF2FFFFFF);
+  static const Color glassBorderDark = Color(0x3322C55E);
+  static const Color glassBorderLight = Color(0x2E15803D);
 
   // High-Tech Telemetry & Sensor Tokens
   static const Color telemetryNdvi = Color(0xFF10B981); // Satellite NDVI Emerald
@@ -18,17 +36,35 @@ class AppTheme {
   static const Color telemetryDrought = Color(0xFFF59E0B); // Drought Hazard Amber
   static const Color telemetryFlood = Color(0xFF3B82F6); // Hydro Flood Indigo
 
-  // AgTech Gradients
+  // AgTech Natural Gradients (Vibrant & Organic — Zero Pitch-Black)
   static const LinearGradient primaryGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFF1B5E20), Color(0xFF2E7D32), Color(0xFF388E3C)],
+    colors: [Color(0xFF15803D), Color(0xFF16A34A), Color(0xFF22C55E)],
+  );
+
+  static const LinearGradient naturalLightGradient = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0xFFF0FDF4), Color(0xFFDCFCE7), Color(0xFFF4F9F4)],
+  );
+
+  static const LinearGradient naturalHeroGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF14532D), Color(0xFF15803D), Color(0xFF16A34A)],
   );
 
   static const LinearGradient techHeaderGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFF0F2E14), Color(0xFF1B5E20), Color(0xFF004D40)],
+    colors: [Color(0xFF14532D), Color(0xFF15803D), Color(0xFF166534)],
+  );
+
+  static const LinearGradient obsidianGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF122418), Color(0xFF1B3825)],
   );
 
   static const LinearGradient riskCriticalGradient = LinearGradient(
@@ -46,13 +82,13 @@ class AppTheme {
   // System & Alert Colors
   static const Color errorColor = Color(0xFFD32F2F);
   static const Color warningColor = Color(0xFFF57C00);
-  static const Color successColor = Color(0xFF2E7D32);
+  static const Color successColor = Color(0xFF15803D);
 
   // Risk Level Colors (Early Warning Standards)
-  static const Color lowRiskColor = Color(0xFF43A047);
-  static const Color moderateRiskColor = Color(0xFFFB8C00);
-  static const Color highRiskColor = Color(0xFFF4511E);
-  static const Color criticalRiskColor = Color(0xFFD32F2F);
+  static const Color lowRiskColor = Color(0xFF16A34A);
+  static const Color moderateRiskColor = Color(0xFFF59E0B);
+  static const Color highRiskColor = Color(0xFFEA580C);
+  static const Color criticalRiskColor = Color(0xFFDC2626);
 
   /// Get color for a risk/severity level string
   static Color getRiskColor(String? level) {
@@ -70,7 +106,7 @@ class AppTheme {
     }
   }
 
-  // Light Theme
+  // Light Theme (Natural Professional)
   static ThemeData get lightTheme {
     final colorScheme = ColorScheme.fromSeed(
       seedColor: primaryColor,
@@ -78,6 +114,7 @@ class AppTheme {
       secondary: secondaryColor,
       tertiary: tertiaryColor,
       surface: Colors.white,
+      primaryContainer: primaryContainer,
       brightness: Brightness.light,
     );
 
@@ -85,18 +122,18 @@ class AppTheme {
       useMaterial3: true,
       fontFamily: 'Roboto',
       colorScheme: colorScheme,
-      scaffoldBackgroundColor: const Color(0xFFF7FAF7),
+      scaffoldBackgroundColor: surfaceLight,
       appBarTheme: const AppBarTheme(
         centerTitle: false,
         elevation: 0,
         scrolledUnderElevation: 1,
         backgroundColor: Colors.white,
-        foregroundColor: Color(0xFF1E2E1E),
-        iconTheme: IconThemeData(color: primaryDark),
+        foregroundColor: Color(0xFF14532D),
+        iconTheme: IconThemeData(color: primaryColor),
         titleTextStyle: TextStyle(
-          color: Color(0xFF1E2E1E),
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
+          color: Color(0xFF14532D),
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
           letterSpacing: -0.3,
         ),
       ),
@@ -106,7 +143,7 @@ class AppTheme {
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: Colors.grey.shade200, width: 1),
+          side: const BorderSide(color: borderLight, width: 1),
         ),
         margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 0),
       ),
@@ -115,48 +152,28 @@ class AppTheme {
           backgroundColor: primaryColor,
           foregroundColor: Colors.white,
           elevation: 0,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
           textStyle: const TextStyle(
-            fontSize: 16,
+            fontSize: 15,
             fontWeight: FontWeight.w600,
             letterSpacing: 0.2,
-          ),
-        ),
-      ),
-      filledButtonTheme: FilledButtonThemeData(
-        style: FilledButton.styleFrom(
-          backgroundColor: primaryColor,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      ),
-      outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: primaryColor,
-          side: const BorderSide(color: primaryColor, width: 1.5),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
           ),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.shade300),
+          borderSide: const BorderSide(color: borderLight),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.shade300),
+          borderSide: const BorderSide(color: borderLight),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -166,56 +183,37 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: errorColor, width: 1.5),
         ),
-        labelStyle: TextStyle(color: Colors.grey.shade700),
-      ),
-      chipTheme: ChipThemeData(
-        backgroundColor: const Color(0xFFE8F5E9),
-        selectedColor: primaryColor,
-        labelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
       ),
       navigationBarTheme: NavigationBarThemeData(
         elevation: 3,
         backgroundColor: Colors.white,
-        indicatorColor: const Color(0xFFE8F5E9),
+        indicatorColor: primaryContainer,
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
             return const TextStyle(
               color: primaryColor,
               fontWeight: FontWeight.w600,
-              fontSize: 12,
+              fontSize: 11,
             );
           }
           return TextStyle(
             color: Colors.grey.shade600,
             fontWeight: FontWeight.normal,
-            fontSize: 12,
+            fontSize: 11,
           );
         }),
-        iconTheme: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) {
-            return const IconThemeData(color: primaryColor);
-          }
-          return IconThemeData(color: Colors.grey.shade600);
-        }),
-      ),
-      floatingActionButtonTheme: const FloatingActionButtonThemeData(
-        backgroundColor: primaryColor,
-        foregroundColor: Colors.white,
-        elevation: 3,
-        shape: CircleBorder(),
       ),
     );
   }
 
-  // Dark Theme
+  // Dark Theme (Forest Slate AgTech)
   static ThemeData get darkTheme {
     final colorScheme = ColorScheme.fromSeed(
       seedColor: primaryColor,
       primary: primaryLight,
-      secondary: const Color(0xFF80CBC4),
+      secondary: const Color(0xFF2DD4BF),
+      surface: surfaceDark,
+      primaryContainer: const Color(0xFF1A3825),
       brightness: Brightness.dark,
     );
 
@@ -223,30 +221,66 @@ class AppTheme {
       useMaterial3: true,
       fontFamily: 'Roboto',
       colorScheme: colorScheme,
-      scaffoldBackgroundColor: const Color(0xFF121812),
+      scaffoldBackgroundColor: surfaceDark,
       appBarTheme: const AppBarTheme(
         centerTitle: false,
         elevation: 0,
         scrolledUnderElevation: 1,
-        backgroundColor: Color(0xFF1A221A),
+        backgroundColor: Color(0xFF14281C),
         foregroundColor: Colors.white,
+        iconTheme: IconThemeData(color: primaryLight),
+        titleTextStyle: TextStyle(
+          color: Colors.white,
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
+          letterSpacing: -0.3,
+        ),
       ),
       cardTheme: CardThemeData(
         elevation: 0,
-        color: const Color(0xFF1E281E),
+        color: cardDark,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: Color(0xFF2C3A2C), width: 1),
+          side: const BorderSide(color: borderDark, width: 1),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: const Color(0xFF1E281E),
+        fillColor: cardDark,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF2C3A2C)),
+          borderSide: const BorderSide(color: borderDark),
         ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: borderDark),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: primaryLight, width: 2),
+        ),
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        elevation: 3,
+        backgroundColor: const Color(0xFF14281C),
+        indicatorColor: const Color(0xFF224830),
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return const TextStyle(
+              color: primaryLight,
+              fontWeight: FontWeight.w600,
+              fontSize: 11,
+            );
+          }
+          return TextStyle(
+            color: Colors.grey.shade400,
+            fontWeight: FontWeight.normal,
+            fontSize: 11,
+          );
+        }),
       ),
     );
   }
 }
+

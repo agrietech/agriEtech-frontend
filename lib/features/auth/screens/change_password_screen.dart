@@ -5,6 +5,7 @@ import '../providers/auth_provider.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/error/error_handler.dart';
 import '../../../core/error/app_error.dart';
+import '../../../core/theme/app_theme.dart';
 
 class ChangePasswordScreen extends ConsumerStatefulWidget {
   const ChangePasswordScreen({super.key});
@@ -72,13 +73,13 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(AppSpacing.lg),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.sm),
 
                 // Current password
                 TextFormField(
@@ -98,8 +99,8 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                         });
                       },
                     ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                    border: const OutlineInputBorder(
+                      borderRadius: AppRadii.roundedMd,
                     ),
                   ),
                   obscureText: _obscureCurrentPassword,
@@ -107,7 +108,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                   validator: (value) => Validators.required(value, 'Current password'),
                   enabled: !_isLoading,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpacing.md),
 
                 // New password
                 TextFormField(
@@ -127,8 +128,8 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                         });
                       },
                     ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                    border: const OutlineInputBorder(
+                      borderRadius: AppRadii.roundedMd,
                     ),
                   ),
                   obscureText: _obscureNewPassword,
@@ -136,7 +137,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                   validator: Validators.password,
                   enabled: !_isLoading,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpacing.md),
 
                 // Confirm password
                 TextFormField(
@@ -156,8 +157,8 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                         });
                       },
                     ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                    border: const OutlineInputBorder(
+                      borderRadius: AppRadii.roundedMd,
                     ),
                   ),
                   obscureText: _obscureConfirmPassword,
@@ -169,15 +170,15 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                   ),
                   enabled: !_isLoading,
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: AppSpacing.xl),
 
                 // Update button
                 ElevatedButton(
                   onPressed: _isLoading ? null : _changePassword,
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: AppRadii.roundedMd,
                     ),
                   ),
                   child: _isLoading
@@ -191,10 +192,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                         )
                       : const Text(
                           'Update Password',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: AppTypography.titleMedium,
                         ),
                 ),
               ],

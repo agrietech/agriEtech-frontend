@@ -29,7 +29,12 @@ class ApiConstants {
   static const String regions = '$boundaries/regions';
   static const String zones = '$boundaries/zones';
   static const String woredas = '$boundaries/woredas';
+  static const String kebeles = '$boundaries/kebeles';
+  static const String hierarchy = '$boundaries/hierarchy';
+  static const String nationalSummary = '$boundaries/summary';
   static String woredaById(String id) => '$boundaries/woredas/$id';
+  static String kebeleById(String id) => '$boundaries/kebeles/$id';
+
 
   // 3. Farm Plot Registry Endpoints (/farms)
   static const String farms = '/farms';
@@ -71,6 +76,15 @@ class ApiConstants {
   static const String temporalTrends = '$analytics/temporal-trends';
   static const String agronomicAdvisories = '$analytics/agronomic-advisories';
   static const String analyticsAiInsights = '$analytics/ai-insights';
+  static const String hyperLocal = '$analytics/hyper-local';
+  static const String soilProfile = '$analytics/soil-profile';
+  static const String downscaledForecast = '$analytics/downscaled-forecast';
+  static const String agroZone = '$analytics/agro-zone';
+  static const String seismology = '$analytics/seismology';
+  static const String soilDegradation = '$analytics/soil-degradation';
+  static const String naturalDisasters = '$analytics/natural-disasters';
+
+
 
   // 9A. Location-Based Map & Analytics (/analytics/location)
   static const String locationMap = '$analytics/location/map';

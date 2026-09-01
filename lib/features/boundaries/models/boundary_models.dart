@@ -230,6 +230,61 @@ class WoredaModel {
   }
 }
 
+/// Kebele model (Admin 4 - Peasant Association with AgroZone & Elevation)
+class KebeleModel {
+  final String id;
+  final String woredaId;
+  final String name;
+  final double elevationMeters;
+  final String agroZone;
+  final String dominantSoilType;
+  final double soilPh;
+  final String? ftcName;
+  final double centerLat;
+  final double centerLng;
+
+  const KebeleModel({
+    required this.id,
+    required this.woredaId,
+    required this.name,
+    this.elevationMeters = 1800,
+    this.agroZone = 'WEINA_DEGA',
+    this.dominantSoilType = 'Nitisol / Vertisol',
+    this.soilPh = 6.5,
+    this.ftcName,
+    this.centerLat = 8.54,
+    this.centerLng = 39.27,
+  });
+
+  factory KebeleModel.fromJson(Map<String, dynamic> json) {
+    return KebeleModel(
+      id: (json['id'] ?? '').toString(),
+      woredaId: (json['woredaId'] ?? '').toString(),
+      name: (json['name'] ?? json['nameEn'] ?? json['nameAm'] ?? '').toString(),
+      elevationMeters: json['elevationMeters'] != null ? (json['elevationMeters'] as num).toDouble() : 1800.0,
+      agroZone: (json['agroZone'] ?? 'WEINA_DEGA').toString(),
+      dominantSoilType: (json['dominantSoilType'] ?? 'Nitisol / Vertisol').toString(),
+      soilPh: json['soilPh'] != null ? (json['soilPh'] as num).toDouble() : 6.5,
+      ftcName: json['ftcName'] as String?,
+      centerLat: json['centerLat'] != null ? (json['centerLat'] as num).toDouble() : 8.54,
+      centerLng: json['centerLng'] != null ? (json['centerLng'] as num).toDouble() : 39.27,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'woredaId': woredaId,
+    'name': name,
+    'elevationMeters': elevationMeters,
+    'agroZone': agroZone,
+    'dominantSoilType': dominantSoilType,
+    'soilPh': soilPh,
+    if (ftcName != null) 'ftcName': ftcName,
+    'centerLat': centerLat,
+    'centerLng': centerLng,
+  };
+}
+
 /// Basic region information
 class RegionBasicInfo {
   final String id;

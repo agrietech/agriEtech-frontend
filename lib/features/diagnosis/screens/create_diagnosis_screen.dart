@@ -1,16 +1,24 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/theme/app_theme.dart';
-
+import '../../../core/constants/api_constants.dart';
+import '../../../core/l10n/app_localizations.dart';
+import '../../offline_sync/domain/sync_service.dart';
 import '../../farms/providers/farms_provider.dart';
 import '../models/diagnosis_models.dart';
 import '../providers/diagnosis_provider.dart';
+import '../widgets/ai_leaf_scanner_modal.dart';
 
 class CreateDiagnosisScreen extends ConsumerStatefulWidget {
-  const CreateDiagnosisScreen({super.key});
+  final bool autoLaunchScanner;
+
+  const CreateDiagnosisScreen({
+    super.key,
+    this.autoLaunchScanner = true,
+  });
 
   @override
   ConsumerState<CreateDiagnosisScreen> createState() =>
@@ -20,117 +28,156 @@ class CreateDiagnosisScreen extends ConsumerStatefulWidget {
 class _CreateDiagnosisScreenState extends ConsumerState<CreateDiagnosisScreen> {
   final _formKey = GlobalKey<FormState>();
   final ImagePicker _picker = ImagePicker();
+  final TextEditingController _customCropController = TextEditingController();
 
   Uint8List? _selectedImageBytes;
   String? _selectedFarmId;
-  String? _selectedCropType = 'Wheat';
+  String _selectedCropType = 'Wheat';
+  String? _imageSourceLabel;
   bool _isSubmitting = false;
 
-  final Uint8List _sampleLeafBytes = Uint8List.fromList([
-    137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82, 0, 0, 0, 1, 0,
-    0, 0, 1, 8, 6, 0, 0, 0, 31, 213, 196, 203, 0, 0, 0, 13, 73, 68, 65, 84, 120,
-    156, 99, 96, 248, 207, 192, 0, 0, 3, 1, 1, 0, 24, 221, 141, 176, 0, 0, 0, 0,
-    73, 69, 78, 68, 174, 66, 96, 130
-  ]);
+  final List<String> _cropOptions = const [
+    'Wheat',
+    'Teff',
+    'Maize',
+    'Barley',
+    'Sorghum',
+    'Coffee',
+    'Sesame',
+    'Chickpeas',
+    'Lentils',
+    'Faba Bean',
+    'Enset',
+    'Avocado',
+    'Potato',
+    'Red Pepper / Berbere',
+    'Garlic',
+    'Other (Custom Crop)',
+  ];
 
   @override
   void initState() {
     super.initState();
-    _selectedCropType = 'Wheat';
-    _selectedImageBytes = _sampleLeafBytes;
+    if (widget.autoLaunchScanner) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _selectedImageBytes == null) {
+          _openScannerModal();
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _customCropController.dispose();
+    super.dispose();
+  }
+
+  /// Open the Silicon Valley interactive AI Leaf Scanner & Camera Viewfinder
+  Future<void> _openScannerModal() async {
+    final result = await AiLeafScannerModal.show(
+      context,
+      initialCropType: _selectedCropType,
+    );
+
+    if (result != null && mounted) {
+      _applyAcquisitionResult(result);
+    }
+  }
+
+  void _applyAcquisitionResult(ScannerAcquisitionResult result) {
+    setState(() {
+      _selectedImageBytes = result.imageBytes;
+      _imageSourceLabel = result.sourceLabel;
+      if (result.suggestedCrop != null) {
+        final match = _cropOptions.firstWhere(
+          (c) => c.toLowerCase().contains(result.suggestedCrop!.toLowerCase()) ||
+                 result.suggestedCrop!.toLowerCase().contains(c.toLowerCase()),
+          orElse: () => _selectedCropType,
+        );
+        _selectedCropType = match;
+      }
+    });
+
+    HapticFeedback.mediumImpact();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.check_circle, color: Colors.white, size: 20),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Acquired leaf from ${result.sourceLabel}',
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: const Color(0xFF2E7D32),
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   Future<void> _pickImage(ImageSource source) async {
     try {
       final picked = await _picker.pickImage(
         source: source,
-        maxWidth: 1024,
-        maxHeight: 1024,
-        imageQuality: 85,
+        maxWidth: 1440,
+        maxHeight: 1440,
+        imageQuality: 88,
       );
       if (picked != null) {
         final bytes = await picked.readAsBytes();
         if (mounted) {
-          setState(() {
-            _selectedImageBytes = bytes;
-          });
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Leaf photo acquired successfully!'),
-              backgroundColor: Color(0xFF2E7D32),
-              duration: Duration(seconds: 1),
+          _applyAcquisitionResult(
+            ScannerAcquisitionResult(
+              imageBytes: bytes,
+              sourceLabel: source == ImageSource.camera ? 'Camera' : 'Gallery',
             ),
           );
         }
-      } else {
-        if (mounted && _selectedImageBytes == null) {
-          setState(() {
-            _selectedImageBytes = _sampleLeafBytes;
-          });
-        }
       }
-    } catch (_) {
+    } catch (e) {
       if (mounted) {
-        setState(() {
-          _selectedImageBytes = _sampleLeafBytes;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Sample leaf photo loaded for AI pathology scan'),
-            backgroundColor: Color(0xFF2E7D32),
-            duration: Duration(seconds: 1),
-          ),
-        );
+        // Fallback gracefully to interactive scanner modal
+        _openScannerModal();
       }
     }
   }
 
-  void _showImageSourceDialog() {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          child: Wrap(
-            children: [
-              ListTile(
-                leading: const Icon(Icons.camera_alt, color: AppTheme.primaryColor),
-                title: const Text('Take Photo (Camera)'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _pickImage(ImageSource.camera);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.photo_library, color: AppTheme.secondaryColor),
-                title: const Text('Choose from Gallery'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _pickImage(ImageSource.gallery);
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+  String _getEffectiveCrop() {
+    if (_selectedCropType == 'Other (Custom Crop)') {
+      final custom = _customCropController.text.trim();
+      return custom.isNotEmpty ? custom : 'Custom Crop';
+    }
+    return _selectedCropType;
   }
 
   Future<void> _submitDiagnosis() async {
+    if (_selectedImageBytes == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please capture or choose a leaf photo to diagnose.'),
+          backgroundColor: Colors.orange,
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
     setState(() => _isSubmitting = true);
 
-    try {
-      final uploadBytes = _selectedImageBytes ?? _sampleLeafBytes;
-      final base64Image = base64Encode(uploadBytes);
+    final effectiveCrop = _getEffectiveCrop();
+    final base64Image = _selectedImageBytes != null ? base64Encode(_selectedImageBytes!) : '';
 
+    try {
       final request = CreateDiagnosisRequest(
         farmId: _selectedFarmId ?? 'farm_demo_01',
         imageBase64: base64Image,
-        imageBytes: uploadBytes,
-        cropType: _selectedCropType ?? 'Wheat',
+        imageBytes: _selectedImageBytes,
+        cropType: effectiveCrop,
       );
 
       final repository = ref.read(diagnosisRepositoryProvider);
@@ -139,35 +186,41 @@ class _CreateDiagnosisScreenState extends ConsumerState<CreateDiagnosisScreen> {
       if (mounted) {
         _showDiagnosisResultDialog(diagnosis);
       }
-    } catch (_) {
-      final crop = _selectedCropType ?? 'Wheat';
-      final isMaize = crop.toLowerCase().contains('maize') || crop.toLowerCase().contains('corn');
-      final isTeff = crop.toLowerCase().contains('teff');
-
-      final diagnosis = DiagnosisModel.fromJson({
-        'id': 'diag_${DateTime.now().millisecondsSinceEpoch}',
+    } catch (e) {
+      final payload = {
         'farmId': _selectedFarmId ?? 'farm_demo_01',
-        'cropType': crop,
-        'cropIdentified': isMaize ? 'Maize (Zea mays)' : (isTeff ? 'Teff (Eragrostis tef)' : 'Wheat (Triticum aestivum)'),
-        'cropIdentifiedAm': isMaize ? 'በቆሎ' : (isTeff ? 'ጤፍ' : 'ስንዴ'),
-        'imageUrl': '/uploads/diagnoses/sample_crop.jpg',
-        'diseaseName': isMaize ? 'Fall Armyworm Infestation' : (isTeff ? 'Teff Rust' : 'Wheat Stem Rust'),
-        'diseaseNameAm': isMaize ? 'የመኸር ሰራዊት አባጨጓሬ (ፎል አርሚዎርም)' : (isTeff ? 'የጤፍ ዋግ' : 'የስንዴ ግንድ ዋግ (ረስት)'),
-        'pathogen': isMaize ? 'Spodoptera frugiperda' : (isTeff ? 'Uromyces eragrostidis' : 'Puccinia graminis'),
-        'severity': 'HIGH',
-        'confidenceScore': 0.94,
-        'symptomsEn': isMaize ? 'Ragged feeding holes on whorl leaves and frass.' : 'Reddish-brown pustules on stems and leaf sheaths.',
-        'symptomsAm': isMaize ? 'በበቆሎው እምብርት ቅጠሎች ላይ የተቀደዱ ቀዳዳዎች እና እዳሪ ይታያሉ።' : 'በግንዱ እና በቅጠሉ ላይ ቀይ-ቡናማ አረፋዎችና የዝገት ምልክቶች ይታያሉ።',
-        'treatmentEn': isMaize ? 'Chemical: Apply Ampligo 150 ZC | Organic: Neem seed powder' : 'Chemical: Apply Tilt 250 EC fungicide | Organic: Remove infected plant residues',
-        'treatmentAm': isMaize ? 'ኬሚካል፡ አምፕሊጎ 150 ዜድሲ ይርጩ | የተፈጥሮ፡ የኒም ፍሬ ዱቄት ያድርጉ' : 'ኬሚካል፡ ቲልት 250 ኢሲ ፀረ-ፈንገስ በአፋጣኝ ይርጩ | የተፈጥሮ፡ የተጎዱ የዕፅዋት ቅሪቶችን ያስወግዱ',
-        'preventionEn': 'Plant disease-resistant seed varieties and practice crop rotation.',
-        'preventionAm': 'የተሻሻሉ የበሽታ ተከላካይ ዘሮችን ይጠቀሙ፤ ሰብል ማፈራረቅን ይተግብሩ።',
-        'aiModel': 'Plant.id Botanical + Google Gemini 2.5 Flash',
-        'createdAt': DateTime.now().toIso8601String(),
-      });
+        'imageBase64': base64Image,
+        'cropType': effectiveCrop,
+      };
+      await SyncService.enqueue(ApiConstants.diagnose, 'POST', payload);
 
       if (mounted) {
-        _showDiagnosisResultDialog(diagnosis);
+        final errorMsg = e.toString().replaceAll('Exception:', '').replaceAll('UnknownError:', '').trim();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.cloud_off, color: Colors.white, size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    errorMsg.isNotEmpty && !errorMsg.contains('null')
+                        ? 'Diagnostic queued offline ($errorMsg). Will analyze when connected.'
+                        : 'Diagnostic queued offline. Will analyze when connected.',
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: const Color(0xFFE65100),
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 4),
+            action: SnackBarAction(
+              label: 'Retry',
+              textColor: Colors.white,
+              onPressed: _submitDiagnosis,
+            ),
+          ),
+        );
       }
     } finally {
       if (mounted) {
@@ -177,280 +230,464 @@ class _CreateDiagnosisScreenState extends ConsumerState<CreateDiagnosisScreen> {
   }
 
   void _showDiagnosisResultDialog(DiagnosisModel diagnosis) {
-    showModalBottomSheet(
+    final conf = diagnosis.confidenceScore != null
+        ? (diagnosis.confidenceScore! * 100).toStringAsFixed(1)
+        : '94.0';
+
+    showDialog(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => Container(
-        height: MediaQuery.of(context).size.height * 0.85,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              decoration: const BoxDecoration(
-                gradient: AppTheme.techHeaderGradient,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.biotech, color: Color(0xFFF59E0B), size: 26),
-                  const SizedBox(width: 12),
-                  const Expanded(
-                    child: Text(
-                      'AI Pathology Result Report',
-                      style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close, color: Colors.white),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
-              ),
-            ),
+            const Icon(Icons.verified, color: Color(0xFF2E7D32), size: 28),
+            const SizedBox(width: 10),
             Expanded(
-              child: ListView(
-                padding: const EdgeInsets.all(20),
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF0FDF4),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFF86EFAC)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              diagnosis.cropIdentified ?? 'Wheat (Triticum aestivum)',
-                              style: const TextStyle(fontSize: 13, color: Color(0xFF166534), fontWeight: FontWeight.bold),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(color: const Color(0xFF15803D), borderRadius: BorderRadius.circular(12)),
-                              child: Text(
-                                '${((diagnosis.confidenceScore ?? 0.94) * 100).toStringAsFixed(1)}% Confidence',
-                                style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          diagnosis.diseaseName ?? 'Wheat Stem Rust',
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF14532D)),
-                        ),
-                        if (diagnosis.diseaseNameAm != null) ...[
-                          const SizedBox(height: 4),
-                          Text(
-                            diagnosis.diseaseNameAm!,
-                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Color(0xFF166534)),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildSectionHeader(Icons.healing, 'Recommended Treatment (ህክምና)'),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEFF6FF),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFBFDBFE)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          diagnosis.treatmentEn ?? diagnosis.treatment ?? 'Apply recommended fungicide (Tilt 250 EC)',
-                          style: const TextStyle(fontSize: 13, height: 1.4, color: Color(0xFF1E3A8A)),
-                        ),
-                        if (diagnosis.treatmentAm != null) ...[
-                          const Divider(height: 16),
-                          Text(
-                            diagnosis.treatmentAm!,
-                            style: const TextStyle(fontSize: 13, height: 1.4, color: Color(0xFF1E3A8A), fontWeight: FontWeight.w500),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  FilledButton.icon(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      Navigator.pop(context);
-                    },
-                    icon: const Icon(Icons.check),
-                    label: const Text('Save & Done'),
-                    style: FilledButton.styleFrom(backgroundColor: AppTheme.primaryColor, padding: const EdgeInsets.symmetric(vertical: 14)),
-                  ),
-                ],
+              child: Text(
+                'AI Diagnosis Complete',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildSectionHeader(IconData icon, String title) {
-    return Row(
-      children: [
-        Icon(icon, size: 18, color: AppTheme.primaryDark),
-        const SizedBox(width: 8),
-        Text(
-          title,
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF1F2937)),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2E7D32).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        diagnosis.diseaseName ?? 'Identified Foliar Pathogen',
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF1B5E20)),
+                      ),
+                      if (diagnosis.diseaseNameAm != null) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          diagnosis.diseaseNameAm!,
+                          style: const TextStyle(fontSize: 14, color: Color(0xFF2E7D32), fontWeight: FontWeight.w600),
+                        ),
+                      ],
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF2E7D32),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              'Confidence: $conf%',
+                              style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: Colors.red.shade700,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              'Severity: ${diagnosis.severity ?? "HIGH"}',
+                              style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Recommended Action Plan:',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                ),
+                const SizedBox(height: 8),
+                if (diagnosis.treatmentEn != null || diagnosis.treatment != null) ...[
+                  const Text('💊 Treatment Prescription:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.blueGrey)),
+                  const SizedBox(height: 4),
+                  Text(
+                    diagnosis.treatmentEn ?? diagnosis.treatment!,
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+                if (diagnosis.preventionEn != null || diagnosis.preventionTips != null) ...[
+                  const Text('🌿 Agronomic & Cultural Controls:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF1B5E20))),
+                  const SizedBox(height: 4),
+                  Text(
+                    diagnosis.preventionEn ?? diagnosis.preventionTips!,
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                ],
+              ],
+            ),
+          ),
         ),
-      ],
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context); // Close dialog
+              Navigator.pop(context); // Return to diagnosis list
+            },
+            child: const Text('Done'),
+          ),
+        ],
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final farmsAsync = ref.watch(farmsProvider);
+    final farmsState = ref.watch(farmsProvider);
+    final currentLang = ref.watch(appLocaleProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isAmharic = currentLang == 'am';
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Crop Disease Scanner'),
+        title: Text(
+          isAmharic ? 'የሰብል በሽታ ምርመራ (AI ስካነር)' : 'AI Crop Pathology Scanner',
+        ),
       ),
       body: Form(
         key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16.0),
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E2E1E) : Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey.shade300),
-              ),
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Row(
-                        children: [
-                          Icon(Icons.biotech, color: AppTheme.secondaryColor, size: 20),
-                          SizedBox(width: 8),
-                          Text('AI Leaf Vision Scanner', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                        ],
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF10B981).withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Text('AI VISION v2.4', style: TextStyle(color: Color(0xFF10B981), fontSize: 10, fontWeight: FontWeight.bold)),
-                      ),
-                    ],
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Photo acquisition preview card
+              GestureDetector(
+                onTap: _openScannerModal,
+                child: Container(
+                  height: 240,
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF162516) : const Color(0xFFF1F8F1),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: const Color(0xFF2E7D32).withValues(alpha: 0.4),
+                      width: 2,
+                    ),
                   ),
-                  const SizedBox(height: 16),
-                  Stack(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(14),
-                        child: Image.memory(
-                          _selectedImageBytes ?? _sampleLeafBytes,
-                          width: double.infinity,
-                          height: 220,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                      Positioned(
-                        top: 10,
-                        left: 10,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(color: const Color(0xB3000000), borderRadius: BorderRadius.circular(6)),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
+                  child: _selectedImageBytes != null
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(18),
+                          child: Stack(
+                            fit: StackFit.expand,
                             children: [
-                              Icon(Icons.check_circle, color: Color(0xFF10B981), size: 12),
-                              SizedBox(width: 4),
-                              Text('READY FOR SCAN', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                              Image.memory(
+                                _selectedImageBytes!,
+                                fit: BoxFit.cover,
+                              ),
+                              Positioned(
+                                top: 12,
+                                left: 12,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.75),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(color: Colors.white24),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.verified, color: Color(0xFF4ADE80), size: 13),
+                                      const SizedBox(width: 5),
+                                      Text(
+                                        _imageSourceLabel ?? (isAmharic ? 'ለAI ምርመራ ዝግጁ' : 'Ready for Scan'),
+                                        style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                bottom: 12,
+                                right: 12,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.75),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.camera_alt, color: Colors.white, size: 14),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        isAmharic ? 'ፎቶ ቀይር' : 'Change Photo',
+                                        style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
+                        )
+                      : Stack(
+                          children: [
+                            // Corner targeting brackets
+                            Positioned(
+                              top: 14,
+                              left: 14,
+                              child: Container(
+                                width: 24,
+                                height: 24,
+                                decoration: const BoxDecoration(
+                                  border: Border(
+                                    top: BorderSide(color: Color(0xFF2E7D32), width: 3),
+                                    left: BorderSide(color: Color(0xFF2E7D32), width: 3),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              top: 14,
+                              right: 14,
+                              child: Container(
+                                width: 24,
+                                height: 24,
+                                decoration: const BoxDecoration(
+                                  border: Border(
+                                    top: BorderSide(color: Color(0xFF2E7D32), width: 3),
+                                    right: BorderSide(color: Color(0xFF2E7D32), width: 3),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              bottom: 14,
+                              left: 14,
+                              child: Container(
+                                width: 24,
+                                height: 24,
+                                decoration: const BoxDecoration(
+                                  border: Border(
+                                    bottom: BorderSide(color: Color(0xFF2E7D32), width: 3),
+                                    left: BorderSide(color: Color(0xFF2E7D32), width: 3),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              bottom: 14,
+                              right: 14,
+                              child: Container(
+                                width: 24,
+                                height: 24,
+                                decoration: const BoxDecoration(
+                                  border: Border(
+                                    bottom: BorderSide(color: Color(0xFF2E7D32), width: 3),
+                                    right: BorderSide(color: Color(0xFF2E7D32), width: 3),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF2E7D32).withValues(alpha: 0.1),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.document_scanner,
+                                      size: 44,
+                                      color: Color(0xFF2E7D32),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    isAmharic ? 'የሰብል ቅጠል ካሜራ ስካነርን ክፈት' : 'Launch AI Leaf Camera Scanner',
+                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    isAmharic
+                                        ? 'የታመመውን ቅጠል በክፈፉ ውስጥ ያስተካክሉ'
+                                        : 'Align single symptomatic leaf inside targeting frame',
+                                    style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF2E7D32).withValues(alpha: 0.08),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Text(
+                                      isAmharic
+                                          ? '☀️ የተፈጥሮ ብርሃን • 🔍 15-20 ሳ.ሜ ርቀት • 🌿 ጥርት ያለ'
+                                          : '☀️ Natural Light • 🔍 15-20cm Distance • 🌿 In Focus',
+                                      style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: Color(0xFF1B5E20)),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // Quick Input Action Buttons: Camera Scanner, Gallery, Specimen
+              Row(
+                children: [
+                  Expanded(
                     child: OutlinedButton.icon(
-                      onPressed: () => _showImageSourceDialog(),
-                      icon: const Icon(Icons.camera_alt),
-                      label: const Text('Take Photo or Pick Leaf Image'),
-                      style: OutlinedButton.styleFrom(foregroundColor: AppTheme.secondaryColor),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        side: const BorderSide(color: Color(0xFF2E7D32)),
+                      ),
+                      onPressed: _openScannerModal,
+                      icon: const Icon(Icons.camera_alt, size: 16, color: Color(0xFF2E7D32)),
+                      label: Text(
+                        isAmharic ? 'ካሜራ' : 'Camera UI',
+                        style: const TextStyle(fontSize: 12, color: Color(0xFF2E7D32), fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        side: BorderSide(color: Colors.grey.shade400),
+                      ),
+                      onPressed: () => _pickImage(ImageSource.gallery),
+                      icon: Icon(Icons.photo_library, size: 16, color: Colors.grey.shade700),
+                      label: Text(
+                        isAmharic ? 'ማዕከለ-ስዕላት' : 'Gallery',
+                        style: TextStyle(fontSize: 12, color: Colors.grey.shade800),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        side: BorderSide(color: Colors.amber.shade700),
+                      ),
+                      onPressed: _openScannerModal,
+                      icon: Icon(Icons.biotech, size: 16, color: Colors.amber.shade800),
+                      label: Text(
+                        isAmharic ? 'የናሙና ቅጠል' : 'Specimen',
+                        style: TextStyle(fontSize: 12, color: Colors.amber.shade900, fontWeight: FontWeight.bold),
+                      ),
                     ),
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 20),
-            DropdownButtonFormField<String>(
-              initialValue: _selectedCropType,
-              decoration: InputDecoration(
-                labelText: 'Select Crop Type',
-                prefixIcon: const Icon(Icons.grass),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              items: ['Wheat', 'Teff', 'Maize', 'Barley', 'Sorghum'].map((crop) {
-                return DropdownMenuItem(value: crop, child: Text(crop));
-              }).toList(),
-              onChanged: (v) => setState(() => _selectedCropType = v),
-            ),
-            const SizedBox(height: 16),
-            if (farmsAsync.farms.isNotEmpty)
+
+              const SizedBox(height: 20),
+
+              // Farm Selector
+              if (farmsState.hasFarms) ...[
+                DropdownButtonFormField<String>(
+                  initialValue: _selectedFarmId,
+                  decoration: InputDecoration(
+                    labelText: isAmharic ? 'የታለመው እርሻ (አስገዳጅ ያልሆነ)' : 'Target Farm Plot (Optional)',
+                    prefixIcon: const Icon(Icons.agriculture_outlined),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  items: farmsState.farms.map((f) {
+                    return DropdownMenuItem<String>(
+                      value: f.id,
+                      child: Text('${f.farmName} (${f.primaryCrop})'),
+                    );
+                  }).toList(),
+                  onChanged: (val) => setState(() => _selectedFarmId = val),
+                ),
+                const SizedBox(height: 16),
+              ],
+
+              // Crop Selector Dropdown
               DropdownButtonFormField<String>(
-                initialValue: _selectedFarmId,
+                initialValue: _selectedCropType,
                 decoration: InputDecoration(
-                  labelText: 'Link to Farm Plot (Optional)',
-                  prefixIcon: const Icon(Icons.agriculture),
+                  labelText: isAmharic ? 'የታለመው ሰብል አይነት' : 'Target Crop Type',
+                  prefixIcon: const Icon(Icons.grass_outlined),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                items: farmsAsync.farms.map((farm) {
-                  return DropdownMenuItem(
-                    value: farm.id,
-                    child: Text(farm.name),
+                items: _cropOptions.map((c) {
+                  return DropdownMenuItem<String>(
+                    value: c,
+                    child: Text(c),
                   );
                 }).toList(),
-                onChanged: (v) => setState(() => _selectedFarmId = v),
+                onChanged: (val) {
+                  if (val != null) {
+                    setState(() => _selectedCropType = val);
+                  }
+                },
               ),
-            const SizedBox(height: 24),
-            SizedBox(
-              height: 50,
-              child: ElevatedButton.icon(
-                onPressed: _isSubmitting ? null : _submitDiagnosis,
-                icon: const Icon(Icons.biotech, size: 20),
-                label: _isSubmitting
-                    ? const CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
-                    : const Text('Analyze Crop Disease (AI Vision)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+
+              // Dynamic Custom Crop Input
+              if (_selectedCropType == 'Other (Custom Crop)') ...[
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _customCropController,
+                  decoration: InputDecoration(
+                    labelText: isAmharic ? 'የሰብሉ ዝርያ ስም' : 'Custom Crop Variety Name',
+                    prefixIcon: const Icon(Icons.eco_outlined, color: AppTheme.primaryColor),
+                    border: const OutlineInputBorder(borderRadius: AppRadii.roundedMd),
+                  ),
+                ),
+              ],
+
+              const SizedBox(height: 28),
+
+              // Submit Diagnosis Button
+              ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.secondaryColor,
+                  backgroundColor: AppTheme.primaryColor,
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: const RoundedRectangleBorder(borderRadius: AppRadii.roundedMd),
+                  elevation: 2,
+                ),
+                onPressed: _isSubmitting ? null : _submitDiagnosis,
+                icon: _isSubmitting
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                      )
+                    : const Icon(Icons.document_scanner_outlined),
+                label: Text(
+                  _isSubmitting
+                      ? (isAmharic ? 'ምርመራ በAI እየተካሄደ ነው...' : 'Scanning Pathology via Dual-AI...')
+                      : (isAmharic ? 'የበሽታ ምርመራ በAI ጀምር' : 'Run Dual-AI Pathology Scan'),
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

@@ -142,8 +142,8 @@ class AgriEtechLogo extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: isDark
-              ? const [Color(0xFF0D2818), Color(0xFF1B5E20), Color(0xFF0F381E)]
-              : const [Color(0xFF1B5E20), Color(0xFF2E7D32), Color(0xFF14532D)],
+              ? const [Color(0xFF14532D), Color(0xFF15803D), Color(0xFF166534)]
+              : const [Color(0xFF15803D), Color(0xFF16A34A), Color(0xFF22C55E)],
         ),
         borderRadius: BorderRadius.circular(badgeSize * 0.28),
         boxShadow: [
@@ -355,7 +355,7 @@ class _EthiopianAgriEmblemPainter extends CustomPainter {
 
     final hillPaint = Paint()
       ..shader = const LinearGradient(
-        colors: [Color(0xFF0F381E), Color(0xFF1B5E20), Color(0xFF0B2912)],
+        colors: [Color(0xFF15803D), Color(0xFF16A34A), Color(0xFF166534)],
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
       ).createShader(Rect.fromLTWH(0, h * 0.58, w, h * 0.42));

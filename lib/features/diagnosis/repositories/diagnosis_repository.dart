@@ -74,36 +74,14 @@ class DiagnosisRepository {
       final diagnosis = DiagnosisModel.fromJson(map);
       AppLogger.success('Diagnosis created successfully', {'diagnosisId': diagnosis.id});
       return diagnosis;
+    } on DioException catch (e) {
+      AppLogger.error('Failed to create diagnosis via API', e);
+      throw ErrorHandler.handleError(e);
     } catch (e) {
-      AppLogger.warning('Creating local resilient diagnosis result fallback: $e');
-      final crop = request.cropType ?? 'Wheat';
-      final isMaize = crop.toLowerCase().contains('maize') || crop.toLowerCase().contains('corn');
-      final isTeff = crop.toLowerCase().contains('teff');
-
-      final diagnosisId = 'diag_${DateTime.now().millisecondsSinceEpoch}';
-      final map = {
-        'id': diagnosisId,
-        'farmId': request.farmId.isNotEmpty ? request.farmId : 'farm_demo_01',
-        'cropType': crop,
-        'cropIdentified': isMaize ? 'Maize (Zea mays)' : (isTeff ? 'Teff (Eragrostis tef)' : 'Wheat (Triticum aestivum)'),
-        'cropIdentifiedAm': isMaize ? 'በቆሎ' : (isTeff ? 'ጤፍ' : 'ስንዴ'),
-        'imageUrl': '/uploads/diagnoses/sample_crop.jpg',
-        'diseaseName': isMaize ? 'Fall Armyworm Infestation' : (isTeff ? 'Teff Rust' : 'Wheat Stem Rust'),
-        'diseaseNameAm': isMaize ? 'የመኸር አሜሪካን ተምች' : (isTeff ? 'የጤፍ ዝገት' : 'የስንዴ ግንድ ዝገት (ዋግ)'),
-        'pathogen': isMaize ? 'Spodoptera frugiperda' : (isTeff ? 'Uromyces eragrostidis' : 'Puccinia graminis'),
-        'severity': 'HIGH',
-        'confidenceScore': 0.94,
-        'symptomsEn': isMaize ? 'Ragged feeding holes on whorl leaves and sawdust frass.' : 'Reddish-brown pustules on stems and leaf sheaths.',
-        'symptomsAm': isMaize ? 'በቆሎ ቅጠል ላይ የተበጣጠሱ ቀዳዳዎች' : 'በስንዴ ግንድ ላይ ቀይ ቡናማ የዋግ ነጠብጣቦች',
-        'treatmentEn': isMaize ? 'Chemical: Apply Ampligo 150 ZC | Organic: Neem seed powder' : 'Chemical: Apply Tilt 250 EC fungicide | Organic: Remove infected plant residues',
-        'treatmentAm': isMaize ? 'ኬሚካል: አምፕሊጎ 150 ፀረ-ተባይ | ባህላዊ: የኒም ዛፍ ዱቄት' : 'ኬሚካል: ቲልት 250 ፈንገስ ማጥፊያ | ባህላዊ: የተጎዱ ቅሪቶችን ማስወገድ',
-        'treatmentOm': 'Dawaa Tilt 250 EC biifaa.',
-        'preventionEn': 'Plant disease-resistant seed varieties and practice crop rotation.',
-        'preventionAm': 'በሽታን የሚቋቋሙ ዝርያዎችን መጠቀምና የሰብል ፈረቃ ማድረግ',
-        'aiModel': 'Plant.id Botanical + Google Gemini 2.5 Flash',
-        'createdAt': DateTime.now().toIso8601String(),
-      };
-      return DiagnosisModel.fromJson(map);
+      AppLogger.error('Unexpected error during diagnosis creation', e);
+      throw UnknownError(
+        message: 'Diagnosis service error: ${e.toString()}',
+      );
     }
   }
 

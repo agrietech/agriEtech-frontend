@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../models/sensor_models.dart';
 import '../providers/sensor_provider.dart';
@@ -56,7 +57,7 @@ class _SensorDetailScreenState extends ConsumerState<SensorDetailScreen> {
           ref.invalidate(sensorTelemetryProvider);
         },
         child: ListView(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(AppSpacing.screenPadding),
           children: [
             // Sensor Info Card
             Card(
@@ -535,17 +536,14 @@ class _SensorDetailScreenState extends ConsumerState<SensorDetailScreen> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.cardPadding),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: isDark
-              ? [const Color(0xFF064E3B), const Color(0xFF022C22)]
-              : [const Color(0xFFECFDF5), const Color(0xFFD1FAE5)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+        color: isDark ? const Color(0xFF162A1D) : AppTheme.primaryContainer,
+        borderRadius: AppRadii.roundedLg,
+        border: Border.all(
+          color: isDark ? AppTheme.borderDark : AppTheme.borderLight,
         ),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFF6EE7B7)),
+        boxShadow: AppShadows.soft(isDark: isDark),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -556,24 +554,24 @@ class _SensorDetailScreenState extends ConsumerState<SensorDetailScreen> {
                 width: 10,
                 height: 10,
                 decoration: const BoxDecoration(
-                  color: Color(0xFF10B981),
+                  color: AppTheme.telemetryNdvi,
                   shape: BoxShape.circle,
                 ),
               ),
               const SizedBox(width: 8),
-              const Text(
+              Text(
                 'Firebase & Realtime IoT Stream: Ready',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 13,
-                  color: Color(0xFF065F46),
+                  color: isDark ? Colors.white : AppTheme.primaryDark,
                 ),
               ),
               const Spacer(),
               TextButton.icon(
                 onPressed: () => _showRecordProbeDialog(context),
-                icon: const Icon(Icons.add_chart, size: 16),
-                label: const Text('Probe Sample', style: TextStyle(fontSize: 12)),
+                icon: const Icon(Icons.add_chart, size: 16, color: AppTheme.primaryColor),
+                label: const Text('Probe Sample', style: TextStyle(fontSize: 12, color: AppTheme.primaryColor, fontWeight: FontWeight.bold)),
               ),
             ],
           ),
@@ -581,15 +579,15 @@ class _SensorDetailScreenState extends ConsumerState<SensorDetailScreen> {
           liveReadingAsync.when(
             data: (reading) => Text(
               'Live Stream update: Moisture ${reading.soilMoisture?.toStringAsFixed(1) ?? '--'}% | Temp ${reading.soilTemp?.toStringAsFixed(1) ?? reading.ambientTemp?.toStringAsFixed(1) ?? '--'}°C',
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF047857)),
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: isDark ? Colors.grey.shade300 : AppTheme.primaryDark),
             ),
-            loading: () => const Text(
+            loading: () => Text(
               'Listening for live telemetry packets from hardware node...',
-              style: TextStyle(fontSize: 11.5, color: Color(0xFF047857)),
+              style: TextStyle(fontSize: 11.5, color: isDark ? Colors.grey.shade400 : AppTheme.neutralDark),
             ),
-            error: (_, __) => const Text(
+            error: (_, __) => Text(
               'Telemetry sync active via REST API polling fallback',
-              style: TextStyle(fontSize: 11.5, color: Color(0xFF047857)),
+              style: TextStyle(fontSize: 11.5, color: isDark ? Colors.grey.shade400 : AppTheme.neutralDark),
             ),
           ),
         ],

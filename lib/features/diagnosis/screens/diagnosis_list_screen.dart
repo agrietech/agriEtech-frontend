@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/utils/date_formatter.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/utils/role_utils.dart';
+import '../../../core/widgets/error_view.dart';
+import '../../../core/widgets/shimmer_loading.dart';
+
+import '../../../core/widgets/empty_state_view.dart';
+import '../../../core/utils/date_formatter.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../models/diagnosis_models.dart';
 import '../providers/diagnosis_provider.dart';
@@ -21,7 +26,15 @@ class DiagnosisListScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Disease Diagnosis'),
+        elevation: 0,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              ref.read(diagnosisListProvider.notifier).refresh();
+              ref.invalidate(diagnosisStatisticsProvider);
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.filter_list_off),
             tooltip: 'Clear Filters',
@@ -48,33 +61,13 @@ class DiagnosisListScreen extends ConsumerWidget {
               data: (diagnoses) {
                 if (diagnoses.isEmpty) {
                   return SliverFillRemaining(
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.biotech_outlined,
-                            size: 64,
-                            color: Colors.grey[400],
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'No diagnoses available',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleMedium
-                                ?.copyWith(color: Colors.grey[600]),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Upload plant images to get started',
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyMedium
-                                ?.copyWith(color: Colors.grey[500]),
-                          ),
-                        ],
-                      ),
+                    hasScrollBody: false,
+                    child: EmptyStateView(
+                      icon: Icons.biotech_outlined,
+                      title: 'No Plant Health Scans',
+                      message: 'Take or upload photos of crop leaves displaying lesions, rust, or discoloration to receive instant AI pathogen diagnosis and organic treatment protocols.',
+                      actionLabel: 'Scan Crop Leaf',
+                      onAction: () => context.push('/diagnosis/create'),
                     ),
                   );
                 }
@@ -102,35 +95,14 @@ class DiagnosisListScreen extends ConsumerWidget {
                 );
               },
               loading: () => const SliverFillRemaining(
-                child: Center(child: CircularProgressIndicator()),
+                child: ListSkeleton(count: 3),
               ),
               error: (error, stack) => SliverFillRemaining(
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.error_outline,
-                          size: 48, color: Colors.red[300]),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Failed to load diagnoses',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        error.toString(),
-                        style: Theme.of(context).textTheme.bodyMedium,
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 16),
-                      ElevatedButton.icon(
-                        onPressed: () =>
-                            ref.read(diagnosisListProvider.notifier).refresh(),
-                        icon: const Icon(Icons.refresh),
-                        label: const Text('Retry'),
-                      ),
-                    ],
-                  ),
+                child: AppErrorView(
+                  icon: Icons.biotech_rounded,
+                  title: 'Failed to load diagnoses',
+                  message: error.toString(),
+                  onRetry: () => ref.read(diagnosisListProvider.notifier).refresh(),
                 ),
               ),
             ),
@@ -139,6 +111,7 @@ class DiagnosisListScreen extends ConsumerWidget {
       ),
       floatingActionButton: RoleUtils.canCreateDiagnosis(user?.role)
           ? FloatingActionButton.extended(
+              heroTag: 'fab_diagnosis_list',
               onPressed: () {
                 Navigator.push(
                   context,

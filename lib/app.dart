@@ -12,12 +12,14 @@ class AgriEtechApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
+    final currentLang = ref.watch(appLocaleProvider);
 
     return MaterialApp.router(
-      title: 'agriEtech',
+      title: 'AgriEtech',
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.light,
+      locale: Locale(currentLang),
       routerConfig: router,
       debugShowCheckedModeBanner: false,
       localizationsDelegates: const [
@@ -29,6 +31,9 @@ class AgriEtechApp extends ConsumerWidget {
       supportedLocales: const [
         Locale('en', ''), // English
         Locale('am', ''), // Amharic
+        Locale('om', ''), // Afaan Oromoo
+        Locale('ti', ''), // Tigrinya
+        Locale('so', ''), // Somali
       ],
       builder: (context, child) {
         return MediaQuery(

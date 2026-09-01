@@ -61,15 +61,15 @@ void main() {
     });
 
     test('role display names and descriptions', () {
-      expect(RoleUtils.getRoleDisplayName(UserRole.farmer), equals('Farmer'));
-      expect(RoleUtils.getRoleDisplayName(UserRole.developmentAgent), equals('Development Agent'));
+      expect(RoleUtils.getRoleDisplayName(UserRole.farmer), equals('Smallholder Farmer'));
+      expect(RoleUtils.getRoleDisplayName(UserRole.developmentAgent), equals('Development Agent (DA)'));
       expect(RoleUtils.getRoleDisplayName(UserRole.woredaOfficer), equals('Woreda Officer'));
-      expect(RoleUtils.getRoleDisplayName(UserRole.researcher), equals('Researcher'));
-      expect(RoleUtils.getRoleDisplayName(UserRole.admin), equals('Administrator'));
-      expect(RoleUtils.getRoleDisplayName(null), equals('User'));
+      expect(RoleUtils.getRoleDisplayName(UserRole.researcher), equals('Agronomy Researcher'));
+      expect(RoleUtils.getRoleDisplayName(UserRole.admin), equals('National Administrator'));
+      expect(RoleUtils.getRoleDisplayName(null), equals('Smallholder Farmer'));
 
       expect(RoleUtils.getRolePermissions(UserRole.farmer), isNotEmpty);
-      expect(RoleUtils.getRolePermissions(UserRole.admin), contains('Full system access'));
+      expect(RoleUtils.getRolePermissions(UserRole.admin), contains('Supreme National oversight'));
     });
   });
 }

@@ -42,6 +42,10 @@ class AppLogger {
     }
   }
 
+  /// Alias for warning
+  static void warn(String message, [Object? error]) => warning(message, error);
+
+
   /// Log error message
   static void error(String message, [Object? error, StackTrace? stackTrace]) {
     if (AppEnv.debugMode || kDebugMode) {

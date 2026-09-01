@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/error/app_error.dart';
 import '../../../core/error/error_handler.dart';
 import '../../../core/network/dio_client.dart';
@@ -15,6 +16,31 @@ class AlertRepository {
     try {
       await _dioClient.patch('/alerts/$id/read');
     } catch (_) {}
+  }
+
+  /// Get single alert by ID
+  Future<AlertModel> getAlertById(String id) async {
+    try {
+      final response = await _dioClient.get('/alerts/$id');
+      final raw = response.data is Map && response.data['data'] != null
+          ? response.data['data'] as Map<String, dynamic>
+          : response.data as Map<String, dynamic>;
+      final map = Map<String, dynamic>.from(raw);
+      map['title'] = map['title'] ?? map['titleEn'] ?? map['titleAm'] ?? 'Alert';
+      map['message'] = map['message'] ?? map['messageEn'] ?? map['messageAm'] ?? '';
+      map['createdAt'] = map['createdAt'] ?? map['sentAt'] ?? DateTime.now().toIso8601String();
+      map['updatedAt'] = map['updatedAt'] ?? map['createdAt'];
+      map['woredaId'] = map['woredaId'] ?? '';
+      map['hazardType'] = map['hazardType'] ?? 'GENERAL';
+      map['severity'] = map['severity'] ?? 'LOW';
+      return AlertModel.fromJson(map);
+    } on DioException catch (e) {
+      AppLogger.error('Failed to fetch alert $id', e);
+      throw ErrorHandler.handleError(e);
+    } catch (e) {
+      AppLogger.error('Unexpected error fetching alert $id', e);
+      throw const UnknownError(message: 'Failed to fetch alert details');
+    }
   }
 
   /// Create a new alert (Officers/Agents/Admin only)
@@ -61,18 +87,21 @@ class AlertRepository {
     String? woredaId,
     String? severity,
     String? hazardType,
+    int? limit,
   }) async {
     try {
       AppLogger.info('Fetching alerts', {
         'woredaId': woredaId,
         'severity': severity,
         'hazardType': hazardType,
+        'limit': limit,
       });
 
       final queryParams = <String, dynamic>{};
       if (woredaId != null) queryParams['woredaId'] = woredaId;
       if (severity != null) queryParams['severity'] = severity;
       if (hazardType != null) queryParams['hazardType'] = hazardType;
+      if (limit != null) queryParams['limit'] = limit;
 
       final response = await _dioClient.get(
         '/alerts',
@@ -191,3 +220,9 @@ class AlertRepository {
     );
   }
 }
+
+/// Authoritative Provider for AlertRepository
+final alertRepositoryProvider = Provider<AlertRepository>((ref) {
+  final dioClient = ref.watch(dioClientProvider);
+  return AlertRepository(dioClient);
+});

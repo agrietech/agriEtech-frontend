@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/role_utils.dart';
+import '../../../core/widgets/shimmer_loading.dart';
+import '../../../core/widgets/empty_state_view.dart';
+import '../../../core/widgets/error_view.dart';
+
 import '../../auth/providers/auth_provider.dart';
 import '../models/sensor_models.dart';
 import '../providers/sensor_provider.dart';
@@ -21,8 +27,16 @@ class SensorsListScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Sensors'),
+        title: const Text('IoT Sensor Network'),
+        elevation: 0,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              ref.read(sensorListProvider.notifier).refresh();
+              ref.invalidate(sensorStatisticsProvider);
+            },
+          ),
           if (lowBatterySensors.isNotEmpty)
             IconButton(
               icon: Badge(
@@ -58,33 +72,13 @@ class SensorsListScreen extends ConsumerWidget {
               data: (sensors) {
                 if (sensors.isEmpty) {
                   return SliverFillRemaining(
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.sensors_off,
-                            size: 64,
-                            color: Colors.grey[400],
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'No sensors available',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleMedium
-                                ?.copyWith(color: Colors.grey[600]),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Register sensors to get started',
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyMedium
-                                ?.copyWith(color: Colors.grey[500]),
-                          ),
-                        ],
-                      ),
+                    hasScrollBody: false,
+                    child: EmptyStateView(
+                      icon: Icons.sensors_outlined,
+                      title: 'No Active IoT Sensors',
+                      message: 'Deploy LoRa/Cellular soil moisture, canopy temperature, and micro-climate nodes to capture ground-truth telemetry.',
+                      actionLabel: 'Register Sensor Node',
+                      onAction: () => context.push('/sensors/register'),
                     ),
                   );
                 }
@@ -118,34 +112,14 @@ class SensorsListScreen extends ConsumerWidget {
                 );
               },
               loading: () => const SliverFillRemaining(
-                child: Center(child: CircularProgressIndicator()),
+                child: ListSkeleton(count: 3),
               ),
               error: (error, stack) => SliverFillRemaining(
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.sensors_off, size: 48, color: Colors.grey[400]),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Unable to load sensors',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Please check your network connection and try again.',
-                        style: Theme.of(context).textTheme.bodyMedium,
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 16),
-                      ElevatedButton.icon(
-                        onPressed: () =>
-                            ref.read(sensorListProvider.notifier).refresh(),
-                        icon: const Icon(Icons.refresh),
-                        label: const Text('Retry'),
-                      ),
-                    ],
-                  ),
+                child: AppErrorView(
+                  icon: Icons.sensors_off_rounded,
+                  title: 'Unable to load sensors',
+                  message: error.toString(),
+                  onRetry: () => ref.read(sensorListProvider.notifier).refresh(),
                 ),
               ),
             ),
@@ -154,6 +128,7 @@ class SensorsListScreen extends ConsumerWidget {
       ),
       floatingActionButton: RoleUtils.canManageSensors(user?.role)
           ? FloatingActionButton.extended(
+              heroTag: 'fab_sensors_list',
               onPressed: () {
                 Navigator.push(
                   context,
@@ -221,8 +196,8 @@ class SensorsListScreen extends ConsumerWidget {
   }
 
   Color _getBatteryColor(double level) {
-    if (level >= 50) return const Color(0xFF43A047);
-    if (level >= 20) return const Color(0xFFFB8C00);
-    return const Color(0xFFD32F2F);
+    if (level >= 50) return AppTheme.primaryColor;
+    if (level >= 20) return AppTheme.warningColor;
+    return AppTheme.errorColor;
   }
 }

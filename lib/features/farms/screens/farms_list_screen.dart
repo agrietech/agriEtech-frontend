@@ -2,9 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/utils/role_utils.dart';
+import '../../../core/widgets/shimmer_loading.dart';
+import '../../../core/widgets/empty_state_view.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../providers/farms_provider.dart';
 import '../../../core/utils/date_formatter.dart';
+import '../../../core/widgets/error_view.dart';
+
 
 class FarmsListScreen extends ConsumerStatefulWidget {
   const FarmsListScreen({super.key});
@@ -57,11 +61,22 @@ class _FarmsListScreenState extends ConsumerState<FarmsListScreen> {
   Widget build(BuildContext context) {
     final farmsState = ref.watch(farmsProvider);
     final statistics = ref.watch(farmStatisticsProvider);
-    final user = ref.watch(currentUserProvider);
+    final authState = ref.watch(authProvider);
+
+    String getScreenTitle() {
+      if (authState.isFarmer) return 'My Farms';
+      if (authState.isDevelopmentAgent) return 'Kebele Farm Registry';
+      if (authState.isWoredaOfficer) return 'Woreda Farm Registry';
+      if (authState.isZonalOfficer) return 'Zonal Farm Registry';
+      if (authState.isRegionalOfficer) return 'Regional Farm Registry';
+      if (authState.isResearcher) return 'Research Farm Plots';
+      if (authState.isAdmin) return 'National Farm Registry';
+      return 'Farm Registry';
+    }
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Farms'),
+        title: Text(getScreenTitle()),
         elevation: 0,
         actions: [
           IconButton(
@@ -84,8 +99,9 @@ class _FarmsListScreenState extends ConsumerState<FarmsListScreen> {
         ],
       ),
       body: _buildBody(context, farmsState, statistics),
-      floatingActionButton: RoleUtils.canManageFarms(user?.role)
+      floatingActionButton: RoleUtils.canManageFarms(authState.user?.role)
           ? FloatingActionButton.extended(
+              heroTag: 'fab_farms_list',
               onPressed: () => context.push('/farms/add'),
               icon: const Icon(Icons.add),
               label: const Text('Add Farm'),
@@ -98,87 +114,24 @@ class _FarmsListScreenState extends ConsumerState<FarmsListScreen> {
     final theme = Theme.of(context);
 
     if (state.isLoading && !state.hasFarms) {
-      return const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('Loading farms...'),
-          ],
-        ),
-      );
+      return const ListSkeleton(count: 4);
     }
 
     if (state.hasError && !state.hasFarms) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.error_outline,
-                size: 64,
-                color: Colors.red.withValues(alpha: 0.5),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Failed to load farms',
-                style: theme.textTheme.titleLarge,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                state.error?.message ?? 'Unknown error',
-                style: theme.textTheme.bodyMedium,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton.icon(
-                onPressed: () => ref.read(farmsProvider.notifier).loadFarms(),
-                icon: const Icon(Icons.refresh),
-                label: const Text('Retry'),
-              ),
-            ],
-          ),
-        ),
+      return AppErrorView(
+        title: 'Failed to load farms',
+        message: state.error?.message ?? 'Unknown error occurred while fetching farm registry.',
+        onRetry: _refreshFarms,
       );
     }
 
     if (!state.hasFarms) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.agriculture_outlined,
-                size: 80,
-                color: theme.primaryColor.withValues(alpha: 0.3),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'No farms yet',
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Start by adding your first farm to monitor risks and receive early warnings',
-                style: theme.textTheme.bodyMedium,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton.icon(
-                onPressed: () => context.push('/farms/add'),
-                icon: const Icon(Icons.add),
-                label: const Text('Add Your First Farm'),
-              ),
-            ],
-          ),
-        ),
+      return EmptyStateView(
+        icon: Icons.agriculture_rounded,
+        title: 'No Registered Farms',
+        message: 'Start by mapping your farm plot boundaries to receive hyper-local risk forecasts, weather alerts, and soil health monitoring.',
+        actionLabel: 'Register Farm Plot',
+        onAction: () => context.push('/farms/add'),
       );
     }
 

@@ -4,8 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/date_formatter.dart';
-import '../../../core/models/analytics_model.dart';
+import '../../../core/utils/role_utils.dart';
+import '../models/analytics_model.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../providers/analytics_provider.dart';
+
+import '../widgets/ethiopia_gis_map_widget.dart';
 
 class AnalyticsScreen extends ConsumerStatefulWidget {
   const AnalyticsScreen({super.key});
@@ -21,10 +25,12 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
   @override
   Widget build(BuildContext context) {
     final analyticsAsync = ref.watch(analyticsDataProvider(_selectedPeriod));
+    final user = ref.watch(currentUserProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final canExport = RoleUtils.canExportData(user?.role);
 
-    return Scaffold
-      (appBar: AppBar(
+    return Scaffold(
+      appBar: AppBar(
         title: const Text('Analytics & Agronomic Intelligence'),
         actions: [
           IconButton(
@@ -32,29 +38,31 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
             tooltip: 'Refresh Data',
             onPressed: () => ref.invalidate(analyticsDataProvider(_selectedPeriod)),
           ),
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert),
-            onSelected: (value) {
-              if (value == 'export') {
-                _showExportDialog();
-              }
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'export',
-                child: Row(
-                  children: [
-                    Icon(Icons.download),
-                    SizedBox(width: 8),
-                    Text('Export Analytics Report'),
-                  ],
+          if (canExport)
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert),
+              onSelected: (value) {
+                if (value == 'export') {
+                  _showExportDialog();
+                }
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'export',
+                  child: Row(
+                    children: [
+                      Icon(Icons.download),
+                      SizedBox(width: 8),
+                      Text('Export Analytics Report'),
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
         ],
       ),
       body: Column(
+
         children: [
           // Timeframe Pill Selector
           Container(
@@ -110,6 +118,9 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
                 child: ListView(
                   padding: const EdgeInsets.all(16),
                   children: [
+                    // National GIS Telemetry Map of Ethiopia
+                    const EthiopiaGisMapWidget(height: 340),
+                    const SizedBox(height: 16),
                     _buildExecutiveOverviewCard(data, isDark),
                     const SizedBox(height: 16),
                     if (data['cropCalendar'] is CropCalendarModel) ...[

@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/models/alert_model.dart';
-import '../../../core/repositories/alert_repository.dart';
+import '../models/alert_models.dart';
+import '../repositories/alert_repository.dart';
 
 /// Alerts provider
 final alertsProvider = FutureProvider<List<AlertModel>>((ref) async {

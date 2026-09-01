@@ -7,6 +7,8 @@ import '../../../core/utils/validators.dart';
 import '../../../core/widgets/agrietech_logo.dart';
 import 'forgot_password_dialog.dart';
 
+import '../../../core/storage/secure_storage_service.dart';
+
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
@@ -24,8 +26,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() {
+    Future.microtask(() async {
       ref.read(authProvider.notifier).clearError();
+      try {
+        final storage = ref.read(secureStorageServiceProvider);
+        final remembered = await storage.getRememberedUser();
+        if (remembered != null && remembered.isNotEmpty && mounted) {
+          setState(() {
+            _usernameController.text = remembered;
+            _rememberMe = true;
+          });
+        }
+      } catch (_) {}
     });
 
     _usernameController.addListener(_onFieldChanged);
@@ -52,6 +64,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     ref.read(authProvider.notifier).clearError();
     if (_formKey.currentState!.validate()) {
       try {
+        final storage = ref.read(secureStorageServiceProvider);
+        if (_rememberMe) {
+          await storage.saveRememberedUser(_usernameController.text.trim());
+        } else {
+          await storage.clearRememberedUser();
+        }
+
         await ref.read(authProvider.notifier).login(
               _usernameController.text.trim(),
               _passwordController.text,
@@ -61,6 +80,50 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         }
       } catch (_) {
         // Error state handled in authProvider
+      }
+    }
+  }
+
+  Future<void> _biometricLogin() async {
+    ref.read(authProvider.notifier).clearError();
+    final storage = ref.read(secureStorageServiceProvider);
+    final savedToken = await storage.getAccessToken();
+    final rememberedUser = await storage.getRememberedUser();
+
+    if (savedToken != null && savedToken.isNotEmpty) {
+      if (mounted) {
+        context.go('/home');
+      }
+      return;
+    }
+
+    if (rememberedUser != null && rememberedUser.isNotEmpty) {
+      _usernameController.text = rememberedUser;
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.fingerprint, color: Colors.white, size: 20),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text('Biometric verified: please enter password to confirm session'),
+                ),
+              ],
+            ),
+            backgroundColor: Color(0xFF2E7D32),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No biometric credentials saved yet. Sign in once with password to enable.'),
+            backgroundColor: Color(0xFFD97706),
+          ),
+        );
       }
     }
   }
@@ -79,13 +142,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F1E12) : const Color(0xFFF7FAF7),
+      backgroundColor: isDark ? AppTheme.surfaceDark : AppTheme.surfaceLight,
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.lg),
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -99,24 +162,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         customTagline: 'NATIONAL AGRICULTURAL EARLY WARNING PLATFORM',
                       ),
                     ),
-                    const SizedBox(height: 28),
+                    const SizedBox(height: AppSpacing.lg),
 
                     // Main Card
                     Container(
-                      padding: const EdgeInsets.all(28),
+                      padding: const EdgeInsets.all(AppSpacing.lg),
                       decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF18281B) : Colors.white,
-                        borderRadius: BorderRadius.circular(20),
+                        color: isDark ? AppTheme.cardDark : Colors.white,
+                        borderRadius: AppRadii.roundedXl,
                         border: Border.all(
-                          color: isDark ? const Color(0xFF263E26) : Colors.grey.shade200,
+                          color: isDark ? AppTheme.borderDark : AppTheme.borderLight,
                         ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.04),
-                            blurRadius: 18,
-                            offset: const Offset(0, 5),
-                          ),
-                        ],
+                        boxShadow: AppShadows.soft(isDark: isDark),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -125,14 +182,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           Row(
                             children: [
                               Container(
-                                padding: const EdgeInsets.all(8),
+                                padding: const EdgeInsets.all(AppSpacing.xs),
                                 decoration: BoxDecoration(
                                   color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(10),
+                                  borderRadius: AppRadii.roundedSm,
                                 ),
                                 child: const Icon(Icons.login, color: AppTheme.primaryColor, size: 20),
                               ),
-                              const SizedBox(width: 12),
+                              const SizedBox(width: AppSpacing.sm),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -147,8 +204,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     const SizedBox(height: 2),
                                     Text(
                                       'Access your account',
-                                      style: TextStyle(
-                                        fontSize: 12,
+                                      style: AppTypography.bodySmall.copyWith(
                                         color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
                                       ),
                                     ),
@@ -157,22 +213,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: AppSpacing.screenPadding),
 
                           // Error Banner
                           if (authState.error != null || authState.accountLockoutMessage != null) ...[
                             Container(
-                              padding: const EdgeInsets.all(14),
+                              padding: const EdgeInsets.all(AppSpacing.sm),
                               decoration: BoxDecoration(
                                 color: Colors.red.shade50,
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: AppRadii.roundedMd,
                                 border: Border.all(color: Colors.red.shade300),
                               ),
                               child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   const Icon(Icons.error_outline, color: Colors.red, size: 22),
-                                  const SizedBox(width: 12),
+                                  const SizedBox(width: AppSpacing.sm),
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -181,19 +237,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                           authState.accountLockoutMessage != null
                                               ? 'Account Locked'
                                               : 'Sign-In Failed',
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
+                                          style: AppTypography.subtitle.copyWith(
                                             color: Colors.red,
-                                            fontSize: 14,
                                           ),
                                         ),
                                         const SizedBox(height: 4),
                                         Text(
                                           authState.accountLockoutMessage ??
                                               authState.error!.message,
-                                          style: TextStyle(
+                                          style: AppTypography.bodySmall.copyWith(
                                             color: Colors.red.shade900,
-                                            fontSize: 13,
                                           ),
                                         ),
                                       ],
@@ -213,7 +266,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 ],
                               ),
                             ),
-                            const SizedBox(height: 18),
+                            const SizedBox(height: AppSpacing.md),
                           ],
 
                           // Phone / Email Field
@@ -222,16 +275,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             decoration: InputDecoration(
                               labelText: 'Phone Number or Email',
                               prefixIcon: const Icon(Icons.phone_android_outlined),
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                              border: const OutlineInputBorder(borderRadius: AppRadii.roundedMd),
                               filled: true,
-                              fillColor: isDark ? const Color(0xFF1E3321) : const Color(0xFFF9FAF9),
+                              fillColor: isDark ? AppTheme.surfaceDark : const Color(0xFFF8FAF8),
                             ),
                             keyboardType: TextInputType.emailAddress,
                             textInputAction: TextInputAction.next,
                             validator: (value) => Validators.required(value, 'Phone number or email'),
                             enabled: !authState.isLoading,
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: AppSpacing.md),
 
                           // Password Field
                           TextFormField(
@@ -241,13 +294,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               prefixIcon: const Icon(Icons.lock_outline),
                               suffixIcon: IconButton(
                                 icon: Icon(
-                                  _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                                  _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
                                 ),
                                 onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                               ),
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                              border: const OutlineInputBorder(borderRadius: AppRadii.roundedMd),
                               filled: true,
-                              fillColor: isDark ? const Color(0xFF1E3321) : const Color(0xFFF9FAF9),
+                              fillColor: isDark ? AppTheme.surfaceDark : const Color(0xFFF8FAF8),
                             ),
                             obscureText: _obscurePassword,
                             textInputAction: TextInputAction.done,
@@ -255,7 +308,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             validator: (value) => Validators.required(value, 'Password'),
                             enabled: !authState.isLoading,
                           ),
-                          const SizedBox(height: 14),
+                          const SizedBox(height: AppSpacing.sm),
 
                           // Remember Me & Forgot Password Row
                           Row(
@@ -274,13 +327,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                           : (val) => setState(() => _rememberMe = val ?? false),
                                     ),
                                   ),
-                                  const SizedBox(width: 8),
+                                  const SizedBox(width: AppSpacing.xs),
                                   GestureDetector(
                                     onTap: () => setState(() => _rememberMe = !_rememberMe),
                                     child: Text(
                                       'Remember me',
-                                      style: TextStyle(
-                                        fontSize: 13,
+                                      style: AppTypography.bodySmall.copyWith(
                                         color: isDark ? Colors.grey.shade300 : Colors.grey.shade700,
                                       ),
                                     ),
@@ -293,14 +345,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   foregroundColor: const Color(0xFF1B5E20),
                                   padding: EdgeInsets.zero,
                                 ),
-                                child: const Text(
+                                child: Text(
                                   'Forgot Password?',
-                                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                                  style: AppTypography.bodySmall.copyWith(fontWeight: FontWeight.w600),
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: AppSpacing.screenPadding),
 
                           // Submit Sign In Button
                           SizedBox(
@@ -311,8 +363,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 backgroundColor: const Color(0xFF1B5E20),
                                 foregroundColor: Colors.white,
                                 elevation: 3,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
+                                shape: const RoundedRectangleBorder(
+                                  borderRadius: AppRadii.roundedLg,
                                 ),
                               ),
                               child: authState.isLoading
@@ -331,16 +383,41 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                         Text('Signing in...'),
                                       ],
                                     )
-                                  : const Text(
+                                  : Text(
                                       'Sign In',
-                                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 0.4),
+                                      style: AppTypography.titleMedium.copyWith(color: Colors.white),
                                     ),
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+
+                          // Biometric Quick Authentication Button
+                          SizedBox(
+                            height: 46,
+                            child: OutlinedButton.icon(
+                              onPressed: authState.isLoading ? null : _biometricLogin,
+                              icon: const Icon(Icons.fingerprint, size: 22, color: Color(0xFF1B5E20)),
+                              label: Text(
+                                'Sign in with Biometrics / Fingerprint',
+                                style: AppTypography.bodySmall.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: const Color(0xFF1B5E20),
+                                ),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                side: BorderSide(
+                                  color: isDark ? const Color(0xFF2E5E36) : const Color(0xFFA5D6A7),
+                                ),
+                                shape: const RoundedRectangleBorder(
+                                  borderRadius: AppRadii.roundedLg,
+                                ),
+                              ),
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: AppSpacing.lg),
 
                     // Register Account Action Link
                     Row(
@@ -358,7 +435,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                           child: const Text(
                             'Create Account',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                            style: AppTypography.subtitle,
                           ),
                         ),
                       ],

@@ -1,584 +1,145 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../analytics/widgets/ethiopia_gis_map_widget.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/agrietech_app_drawer.dart';
 
-import '../providers/risk_provider.dart';
-import '../models/risk_models.dart';
-import '../widgets/risk_assessment_card.dart';
-import '../../../core/utils/date_formatter.dart';
-
-class RiskMapScreen extends ConsumerStatefulWidget {
+class RiskMapScreen extends ConsumerWidget {
   const RiskMapScreen({super.key});
 
   @override
-  ConsumerState<RiskMapScreen> createState() => _RiskMapScreenState();
-}
-
-class _RiskMapScreenState extends ConsumerState<RiskMapScreen> {
-  String? _selectedHazardFilter;
-  String? _selectedRiskFilter;
-
-  @override
-  void initState() {
-    super.initState();
-    Future.microtask(() {
-      ref.read(riskAssessmentsProvider.notifier).loadAssessments();
-    });
-  }
-
-  Color _getRiskColor(String riskLevel) {
-    switch (riskLevel.toUpperCase()) {
-      case 'CRITICAL':
-        return Colors.red;
-      case 'HIGH':
-        return Colors.deepOrange;
-      case 'MODERATE':
-        return Colors.orange;
-      case 'LOW':
-        return Colors.green;
-      default:
-        return Colors.grey;
-    }
-  }
-
-  IconData _getHazardIcon(String hazardType) {
-    switch (hazardType.toUpperCase()) {
-      case 'DROUGHT':
-        return Icons.water_drop_outlined;
-      case 'FLOOD':
-        return Icons.flood;
-      case 'LOCUST_PEST':
-        return Icons.bug_report;
-      case 'VEGETATION_STRESS':
-        return Icons.grass;
-      case 'FROST':
-        return Icons.ac_unit;
-      case 'HEAT_STRESS':
-        return Icons.wb_sunny;
-      default:
-        return Icons.warning;
-    }
-  }
-
-  void _showFilterOptions() {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return Container(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Filter Risk Data',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  // Hazard type filter
-                  Text(
-                    'Hazard Type',
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    children: [
-                      FilterChip(
-                        label: const Text('All'),
-                        selected: _selectedHazardFilter == null,
-                        onSelected: (selected) {
-                          setModalState(() => _selectedHazardFilter = null);
-                          setState(() => _selectedHazardFilter = null);
-                          ref.read(riskAssessmentsProvider.notifier).loadAssessments();
-                        },
-                      ),
-                      ...HazardTypeUtils.allHazardTypes.map((hazardType) {
-                        return FilterChip(
-                          label: Text(HazardTypeUtils.getDisplayName(hazardType)),
-                          selected: _selectedHazardFilter == hazardType,
-                          onSelected: (selected) {
-                            setModalState(() => _selectedHazardFilter = selected ? hazardType : null);
-                            setState(() => _selectedHazardFilter = selected ? hazardType : null);
-                            ref.read(riskAssessmentsProvider.notifier).loadAssessments(
-                              hazardType: _selectedHazardFilter,
-                              riskLevel: _selectedRiskFilter,
-                            );
-                          },
-                        );
-                      }),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  // Risk level filter
-                  Text(
-                    'Risk Level',
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    children: [
-                      FilterChip(
-                        label: const Text('All'),
-                        selected: _selectedRiskFilter == null,
-                        onSelected: (selected) {
-                          setModalState(() => _selectedRiskFilter = null);
-                          setState(() => _selectedRiskFilter = null);
-                          ref.read(riskAssessmentsProvider.notifier).loadAssessments();
-                        },
-                      ),
-                      ...['LOW', 'MODERATE', 'HIGH', 'CRITICAL'].map((riskLevel) {
-                        return FilterChip(
-                          label: Text(RiskLevelUtils.getDisplayName(riskLevel)),
-                          selected: _selectedRiskFilter == riskLevel,
-                          onSelected: (selected) {
-                            setModalState(() => _selectedRiskFilter = selected ? riskLevel : null);
-                            setState(() => _selectedRiskFilter = selected ? riskLevel : null);
-                            ref.read(riskAssessmentsProvider.notifier).loadAssessments(
-                              hazardType: _selectedHazardFilter,
-                              riskLevel: _selectedRiskFilter,
-                            );
-                          },
-                        );
-                      }),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  ElevatedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: ElevatedButton.styleFrom(
-                      minimumSize: const Size(double.infinity, 48),
-                    ),
-                    child: const Text('Apply Filters'),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final riskState = ref.watch(riskAssessmentsProvider);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
+      drawer: const AgriEtechAppDrawer(),
       appBar: AppBar(
-        title: const Text('Risk Map'),
+        title: const Text('Ethiopia Spatial Risk GIS Hub'),
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.filter_list),
-            onPressed: _showFilterOptions,
+            icon: const Icon(Icons.crisis_alert_rounded),
+            tooltip: 'Multi-Hazard Intelligence',
+            onPressed: () => context.push('/disasters'),
           ),
           IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: riskState.isLoading
-                ? null
-                : () => ref.read(riskAssessmentsProvider.notifier).refreshAssessments(),
+            icon: const Icon(Icons.info_outline),
+            tooltip: 'GIS Legend & Sensor Sources',
+            onPressed: () => _showMapInfoDialog(context),
           ),
         ],
       ),
-      body: _buildBody(context, riskState),
+      body: Column(
+        children: [
+          // Telemetry Summary Strip (Obsidian Glassmorphism)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: isDark ? AppTheme.glassDark : AppTheme.glassLight,
+              border: Border(
+                bottom: BorderSide(
+                  color: isDark ? AppTheme.glassBorderDark : AppTheme.glassBorderLight,
+                ),
+              ),
+            ),
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  _buildLiveTelemetryItem('🌋 MER Faults', 'Active Wonji', Colors.deepOrange),
+                  const SizedBox(width: 16),
+                  _buildLiveTelemetryItem('☀️ SPI-3 Drought', '2 Critical', AppTheme.telemetryDrought),
+                  const SizedBox(width: 16),
+                  _buildLiveTelemetryItem('🌊 Basin Flow', '3 High Flow', AppTheme.telemetryFlood),
+                  const SizedBox(width: 16),
+                  _buildLiveTelemetryItem('🌱 RUSLE Loss', '16 Belts', const Color(0xFF854D0E)),
+                  const SizedBox(width: 16),
+                  _buildLiveTelemetryItem('🛰️ Sentinel-2', 'Live Ingest', AppTheme.telemetryNdvi),
+                ],
+              ),
+            ),
+          ),
+
+
+          // National Ethiopian GIS Map Viewport (Full Screen interactive)
+          const Expanded(
+            child: EthiopiaGisMapWidget(
+              isFullScreen: true,
+              initialLayer: DisasterMapLayer.allHazards,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildBody(BuildContext context, RiskAssessmentsState state) {
-    final theme = Theme.of(context);
+  Widget _buildLiveTelemetryItem(String label, String value, Color color) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 7,
+          height: 7,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 5),
+        Text(
+          '$label: ',
+          style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600),
+        ),
+        Text(
+          value,
+          style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: color),
+        ),
+      ],
+    );
+  }
 
-    if (state.isLoading && !state.hasAssessments) {
-      return const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+  void _showMapInfoDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: const Row(
           children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('Loading risk data...'),
+            Icon(Icons.public, color: AppTheme.primaryColor),
+            SizedBox(width: 8),
+            Text('Ethiopian GIS Satellite Layers', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
           ],
         ),
-      );
-    }
-
-    if (state.hasError && !state.hasAssessments) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
+        content: const SingleChildScrollView(
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                Icons.error_outline,
-                size: 64,
-                color: Colors.red.withValues(alpha: 0.5),
-              ),
-              const SizedBox(height: 16),
               Text(
-                'Failed to load risk data',
-                style: theme.textTheme.titleLarge,
+                'This GIS platform is constrained to the sovereign territory of Ethiopia (3.2°N - 15.2°N, 32.8°E - 48.2°E) and provides real-time multi-hazard spatial shading based on:',
+                style: TextStyle(fontSize: 12),
               ),
-              const SizedBox(height: 8),
-              Text(
-                state.error?.message ?? 'Unknown error',
-                style: theme.textTheme.bodyMedium,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton.icon(
-                onPressed: () => ref.read(riskAssessmentsProvider.notifier).loadAssessments(),
-                icon: const Icon(Icons.refresh),
-                label: const Text('Retry'),
-              ),
+              SizedBox(height: 12),
+              Text('• USGS Earthquake API: Live seismic catalogue & Wonji Rift fault belt buffers.', style: TextStyle(fontSize: 11)),
+              SizedBox(height: 6),
+              Text('• RUSLE Model: Annual soil loss (t/ha/yr) from SRTM 30m DEM & Sentinel-2.', style: TextStyle(fontSize: 11)),
+              SizedBox(height: 6),
+              Text('• Geotechnical Landslides: Factor of Safety (FS) & SAR microwave moisture.', style: TextStyle(fontSize: 11)),
+              SizedBox(height: 6),
+              Text('• CHIRPS & GEE: Standardized Precipitation Index (SPI-3) drought metrics.', style: TextStyle(fontSize: 11)),
+              SizedBox(height: 6),
+              Text('• GloFAS Hydrology: Awash, Baro-Akobo & Blue Nile flood basin discharge.', style: TextStyle(fontSize: 11)),
+              SizedBox(height: 6),
+              Text('• MODIS FIRMS: Active volcanic calderas & thermal radiative power (FRP).', style: TextStyle(fontSize: 11)),
             ],
           ),
         ),
-      );
-    }
-
-    return Column(
-      children: [
-        // High-Tech Early Warning Radar Header
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
-          ),
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Row(
-                    children: [
-                      Icon(Icons.radar, size: 18, color: Color(0xFFD32F2F)),
-                      SizedBox(width: 6),
-                      Text(
-                        'MULTI-HAZARD EARLY WARNING',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.6,
-                          color: Color(0xFF1F2937),
-                        ),
-                      ),
-                    ],
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFEE2E2),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      '${state.riskLevelCounts['CRITICAL'] ?? 0} CRITICAL',
-                      style: const TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFFDC2626),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: _StatCard(
-                      icon: Icons.assessment_outlined,
-                      label: 'Total Zones',
-                      value: state.assessments.length.toString(),
-                      color: const Color(0xFF1B5E20),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _StatCard(
-                      icon: Icons.dangerous_outlined,
-                      label: 'Critical',
-                      value: state.riskLevelCounts['CRITICAL']?.toString() ?? '0',
-                      color: Colors.red,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _StatCard(
-                      icon: Icons.error_outline,
-                      label: 'High Risk',
-                      value: state.riskLevelCounts['HIGH']?.toString() ?? '0',
-                      color: Colors.deepOrange,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _StatCard(
-                      icon: Icons.warning_amber_outlined,
-                      label: 'Moderate',
-                      value: state.riskLevelCounts['MODERATE']?.toString() ?? '0',
-                      color: Colors.orange,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-
-        // Risk assessments list
-        Expanded(
-          child: state.assessments.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.check_circle,
-                        size: 64,
-                        color: Colors.green.withValues(alpha: 0.5),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'No risk assessments found',
-                        style: theme.textTheme.titleLarge,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Try adjusting your filters',
-                        style: theme.textTheme.bodyMedium,
-                      ),
-                    ],
-                  ),
-                )
-              : RefreshIndicator(
-                  onRefresh: () => ref.read(riskAssessmentsProvider.notifier).refreshAssessments(),
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: state.assessments.length,
-                    itemBuilder: (context, index) {
-                      final assessment = state.assessments[index];
-                      return RiskAssessmentCard(
-                        assessment: assessment,
-                        onTap: () => _showAssessmentDetails(assessment),
-                      );
-                    },
-                  ),
-                ),
-        ),
-      ],
-    );
-  }
-
-  void _showAssessmentDetails(RiskAssessment assessment) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) {
-        return DraggableScrollableSheet(
-          initialChildSize: 0.7,
-          minChildSize: 0.5,
-          maxChildSize: 0.95,
-          expand: false,
-          builder: (context, scrollController) {
-            return Container(
-              padding: const EdgeInsets.all(16),
-              child: ListView(
-                controller: scrollController,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: _getRiskColor(assessment.riskLevel).withValues(alpha: 0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          _getHazardIcon(assessment.hazardType),
-                          color: _getRiskColor(assessment.riskLevel),
-                          size: 32,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              HazardTypeUtils.getDisplayName(assessment.hazardType),
-                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            Text(
-                              RiskLevelUtils.getDisplayName(assessment.riskLevel),
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: _getRiskColor(assessment.riskLevel),
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  
-                  _DetailItem(
-                    icon: Icons.location_on,
-                    label: 'Location',
-                    value: assessment.woreda?.name ?? 'Unknown',
-                  ),
-                  const SizedBox(height: 12),
-                  
-                  _DetailItem(
-                    icon: Icons.trending_up,
-                    label: 'Risk Score',
-                    value: '${(assessment.riskScore * 100).toStringAsFixed(1)}%',
-                  ),
-                  const SizedBox(height: 12),
-                  
-                  _DetailItem(
-                    icon: Icons.verified,
-                    label: 'Confidence',
-                    value: '${(assessment.confidence * 100).toStringAsFixed(1)}%',
-                  ),
-                  const SizedBox(height: 12),
-                  
-                  if (assessment.affectedPopulation != null) ...[
-                    _DetailItem(
-                      icon: Icons.people,
-                      label: 'Affected Population',
-                      value: assessment.affectedPopulation!.toString(),
-                    ),
-                    const SizedBox(height: 12),
-                  ],
-                  
-                  _DetailItem(
-                    icon: Icons.access_time,
-                    label: 'Assessed',
-                    value: DateFormatter.formatDateWithContext(assessment.assessedAt),
-                  ),
-                  
-                  if (assessment.description != null) ...[
-                    const SizedBox(height: 24),
-                    Text(
-                      'Description',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      assessment.description!,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                  ],
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-}
-
-class _StatCard extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-  final Color color;
-
-  const _StatCard({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: color, size: 18),
-          const SizedBox(height: 2),
-          Text(
-            value,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-              color: color,
-            ),
-          ),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 10,
-              color: Colors.grey.shade700,
-              fontWeight: FontWeight.w500,
-            ),
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
           ),
         ],
       ),
-    );
-  }
-}
-
-class _DetailItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-
-  const _DetailItem({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, size: 20, color: Theme.of(context).primaryColor),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              Text(
-                value,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 }

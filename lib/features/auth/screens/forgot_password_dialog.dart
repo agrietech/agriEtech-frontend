@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/repositories/auth_repository.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/error/error_handler.dart';
 import '../../../core/error/app_error.dart';
+import '../../../core/theme/app_theme.dart';
 
 /// Professional dialog for requesting password reset via Phone/Email and entering new password
 class ForgotPasswordDialog extends ConsumerStatefulWidget {
@@ -33,8 +35,30 @@ class _ForgotPasswordDialogState extends ConsumerState<ForgotPasswordDialog> {
   bool _passwordResetSuccess = false;
   bool _obscurePassword = true;
 
+  int _remainingSeconds = 300; // 5 minutes
+  Timer? _countdownTimer;
+
+  String get _formattedRemainingTime {
+    final m = (_remainingSeconds ~/ 60).toString().padLeft(2, '0');
+    final s = (_remainingSeconds % 60).toString().padLeft(2, '0');
+    return '$m:$s';
+  }
+
+  void _startCountdown() {
+    _countdownTimer?.cancel();
+    setState(() => _remainingSeconds = 300);
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_remainingSeconds > 0) {
+        if (mounted) setState(() => _remainingSeconds--);
+      } else {
+        timer.cancel();
+      }
+    });
+  }
+
   @override
   void dispose() {
+    _countdownTimer?.cancel();
     _identifierController.dispose();
     _tokenController.dispose();
     _newPasswordController.dispose();
@@ -54,8 +78,10 @@ class _ForgotPasswordDialogState extends ConsumerState<ForgotPasswordDialog> {
             _isLoading = false;
             _codeSent = true;
           });
+          _startCountdown();
         }
       } on AppError catch (e) {
+
         if (mounted) {
           setState(() => _isLoading = false);
           ErrorHandler.showErrorSnackBar(context, e);
@@ -110,11 +136,9 @@ class _ForgotPasswordDialogState extends ConsumerState<ForgotPasswordDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return AlertDialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
+      shape: const RoundedRectangleBorder(
+        borderRadius: AppRadii.roundedXl,
       ),
       title: Row(
         children: [
@@ -130,33 +154,30 @@ class _ForgotPasswordDialogState extends ConsumerState<ForgotPasswordDialog> {
               size: 24,
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.sm),
           Text(
             _passwordResetSuccess
                 ? 'Password Reset'
                 : (_codeSent ? 'Set New Password' : 'Reset Password'),
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+            style: AppTypography.titleMedium,
           ),
         ],
       ),
       content: SingleChildScrollView(
         child: _passwordResetSuccess
-            ? Column(
+            ? const Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.check_circle_outline,
                     color: Color(0xFF2E7D32),
                     size: 54,
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: AppSpacing.md),
                   Text(
                     'Your password has been successfully updated!\nYou can now sign in with your new password.',
                     textAlign: TextAlign.center,
-                    style: theme.textTheme.bodyMedium,
+                    style: AppTypography.bodySmall,
                   ),
                 ],
               )
@@ -168,32 +189,90 @@ class _ForgotPasswordDialogState extends ConsumerState<ForgotPasswordDialog> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Container(
-                          padding: const EdgeInsets.all(12),
+                          padding: const EdgeInsets.all(AppSpacing.sm),
                           decoration: BoxDecoration(
                             color: const Color(0xFF10B981).withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: AppRadii.roundedSm,
                             border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
                           ),
                           child: Row(
                             children: [
                               const Icon(Icons.mark_email_read_outlined, color: Color(0xFF059669), size: 20),
-                              const SizedBox(width: 10),
+                              const SizedBox(width: AppSpacing.sm),
                               Expanded(
                                 child: Text(
                                   'A 6-digit verification code has been sent to ${_identifierController.text.trim()}.',
-                                  style: const TextStyle(
-                                    fontSize: 12,
+                                  style: AppTypography.caption.copyWith(
                                     fontWeight: FontWeight.w600,
-                                    color: Color(0xFF065F46),
+                                    color: const Color(0xFF065F46),
                                   ),
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: AppSpacing.xs),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
+                          decoration: BoxDecoration(
+                            color: _remainingSeconds > 60
+                                ? const Color(0xFFE8F5E9)
+                                : const Color(0xFFFEF2F2),
+                            borderRadius: AppRadii.roundedSm,
+                            border: Border.all(
+                              color: _remainingSeconds > 60
+                                  ? const Color(0xFF81C784)
+                                  : const Color(0xFFEF5350),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.timer_outlined,
+                                    size: 16,
+                                    color: _remainingSeconds > 60
+                                        ? const Color(0xFF2E7D32)
+                                        : const Color(0xFFC62828),
+                                  ),
+                                  const SizedBox(width: AppSpacing.xs),
+                                  Text(
+                                    _remainingSeconds > 0
+                                        ? 'Code valid for: $_formattedRemainingTime'
+                                        : 'Code expired (5-min window)',
+                                    style: AppTypography.caption.copyWith(
+                                      fontWeight: FontWeight.w700,
+                                      color: _remainingSeconds > 60
+                                          ? const Color(0xFF1B5E20)
+                                          : const Color(0xFFB71C1C),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              if (_remainingSeconds == 0)
+                                TextButton(
+                                  style: TextButton.styleFrom(
+                                    padding: EdgeInsets.zero,
+                                    visualDensity: VisualDensity.compact,
+                                  ),
+                                  onPressed: _isLoading ? null : _sendResetCode,
+                                  child: Text(
+                                    'Resend Code',
+                                    style: AppTypography.caption.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: const Color(0xFF2E7D32),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.md),
                         TextFormField(
                           controller: _tokenController,
+
                           keyboardType: TextInputType.number,
                           textAlign: TextAlign.center,
                           style: const TextStyle(
@@ -203,7 +282,6 @@ class _ForgotPasswordDialogState extends ConsumerState<ForgotPasswordDialog> {
                           ),
                           decoration: const InputDecoration(
                             labelText: '6-Digit Reset Code (OTP)',
-                            hintText: '123456',
                             prefixIcon: Icon(Icons.pin_outlined),
                             helperText: 'Enter the 6-digit number received in your email',
                           ),
@@ -219,7 +297,7 @@ class _ForgotPasswordDialogState extends ConsumerState<ForgotPasswordDialog> {
                           },
                           enabled: !_isLoading,
                         ),
-                        const SizedBox(height: 14),
+                        const SizedBox(height: AppSpacing.sm),
                         TextFormField(
                           controller: _newPasswordController,
                           decoration: InputDecoration(
@@ -247,16 +325,15 @@ class _ForgotPasswordDialogState extends ConsumerState<ForgotPasswordDialog> {
                       children: [
                         Text(
                           'Enter your Email Address or Phone Number to receive a 6-digit password reset code.',
-                          style: theme.textTheme.bodySmall?.copyWith(
+                          style: AppTypography.bodySmall.copyWith(
                             color: Colors.grey.shade700,
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: AppSpacing.md),
                         TextFormField(
                           controller: _identifierController,
                           decoration: const InputDecoration(
-                            labelText: 'Email Address or Phone',
-                            hintText: 'user@example.com or 0911...',
+                            labelText: 'Email Address or Phone Number',
                             prefixIcon: Icon(Icons.mail_outline),
                           ),
                           keyboardType: TextInputType.emailAddress,
@@ -265,14 +342,14 @@ class _ForgotPasswordDialogState extends ConsumerState<ForgotPasswordDialog> {
                           validator: (val) => (val == null || val.trim().isEmpty) ? 'Please enter email or phone' : null,
                           enabled: !_isLoading,
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: AppSpacing.sm),
                         Align(
                           alignment: Alignment.centerRight,
                           child: TextButton(
                             onPressed: () => setState(() => _codeSent = true),
                             child: const Text(
                               'I already have a 6-digit code',
-                              style: TextStyle(fontSize: 12),
+                              style: AppTypography.caption,
                             ),
                           ),
                         ),

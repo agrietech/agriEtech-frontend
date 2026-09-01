@@ -1,9 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/repositories/analytics_repository.dart';
+import '../repositories/analytics_repository.dart';
 import '../../../core/repositories/farm_repository.dart';
-import '../../../core/repositories/alert_repository.dart';
+import '../../alerts/repositories/alert_repository.dart';
 import '../../../core/models/farm_model.dart';
-import '../../../core/models/analytics_model.dart';
+import '../models/analytics_model.dart';
 import '../../alerts/models/alert_models.dart';
 import '../../../core/utils/logger.dart';
 

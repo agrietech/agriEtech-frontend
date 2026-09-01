@@ -45,17 +45,73 @@ class AuthState {
     );
   }
 
+  // ── Role identity getters ──────────────────────────────────────────
   bool get isFarmer => user?.role == UserRole.farmer;
   bool get isDevelopmentAgent => user?.role == UserRole.developmentAgent;
   bool get isWoredaOfficer => user?.role == UserRole.woredaOfficer;
+  bool get isZonalOfficer => user?.role == UserRole.zonalOfficer;
+  bool get isRegionalOfficer => user?.role == UserRole.regionalOfficer;
   bool get isResearcher => user?.role == UserRole.researcher;
   bool get isAdmin => user?.role == UserRole.admin;
 
+  // ── Composite role groups ──────────────────────────────────────────
+  /// Any administrative officer (woreda, zonal, regional, or national admin)
+  bool get isOfficer =>
+      isWoredaOfficer || isZonalOfficer || isRegionalOfficer || isAdmin;
+
+  /// Supervisory roles that oversee subordinate jurisdictions
+  bool get isSupervisory =>
+      isZonalOfficer || isRegionalOfficer || isAdmin;
+
+  // ── Jurisdiction level ─────────────────────────────────────────────
+  /// Returns the hierarchical jurisdiction scope for the authenticated user
+  String get jurisdictionLevel {
+    switch (user?.role) {
+      case UserRole.farmer:
+        return 'KEBELE';
+      case UserRole.developmentAgent:
+        return 'KEBELE';
+      case UserRole.woredaOfficer:
+        return 'WOREDA';
+      case UserRole.zonalOfficer:
+        return 'ZONE';
+      case UserRole.regionalOfficer:
+        return 'REGION';
+      case UserRole.researcher:
+        return 'NATIONAL';
+      case UserRole.admin:
+        return 'NATIONAL';
+      default:
+        return 'KEBELE';
+    }
+  }
+
+  // ── Permission flags ───────────────────────────────────────────────
   bool get canCreateAlerts =>
-      isWoredaOfficer || isDevelopmentAgent || isAdmin;
-  
+      isWoredaOfficer || isZonalOfficer || isRegionalOfficer ||
+      isDevelopmentAgent || isAdmin;
+
   bool get canAccessAllData => isResearcher || isAdmin;
-  
+
+  bool get canManageUsers => isAdmin;
+
+  bool get canViewSystemHealth =>
+      isWoredaOfficer || isZonalOfficer || isRegionalOfficer || isAdmin;
+
+  bool get canViewAggregateData =>
+      isZonalOfficer || isRegionalOfficer || isResearcher || isAdmin;
+
+  bool get canManageSensors =>
+      isDevelopmentAgent || isWoredaOfficer || isZonalOfficer ||
+      isRegionalOfficer || isAdmin;
+
+  bool get canExportData =>
+      isResearcher || isZonalOfficer || isRegionalOfficer ||
+      isWoredaOfficer || isAdmin;
+
+  bool get canAccessUssdConsole =>
+      isWoredaOfficer || isZonalOfficer || isRegionalOfficer || isAdmin;
+
   bool get hasWoredaAccess => user?.woredaId != null;
 }
 
@@ -222,21 +278,31 @@ class AuthNotifier extends StateNotifier<AuthState> {
     required String password,
     required String fullName,
     String? email,
+    String? role,
+    String? regionId,
+    String? zoneId,
     String? woredaId,
+    String? kebeleId,
+    String? kebeleName,
     String? preferredLang,
     String? deviceToken,
   }) async {
     state = state.copyWith(isLoading: true, clearError: true);
     
     try {
-      AppLogger.info('Registration attempt for phone: $phone');
+      AppLogger.info('Registration attempt for phone: $phone with role: ${role ?? "FARMER"}');
       
       final request = RegisterRequest(
         phone: phone,
         password: password,
         fullName: fullName,
         email: email,
+        role: role,
+        regionId: regionId,
+        zoneId: zoneId,
         woredaId: woredaId,
+        kebeleId: kebeleId,
+        kebeleName: kebeleName,
         preferredLang: preferredLang,
         deviceToken: deviceToken,
       );
