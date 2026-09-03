@@ -27,8 +27,8 @@ class WeatherForecastModel {
 
     return WeatherForecastModel(
       source: (json['source'] ?? 'Open-Meteo').toString(),
-      latitude: ((json['latitude'] ?? 9.145) as num).toDouble(),
-      longitude: ((json['longitude'] ?? 40.4897) as num).toDouble(),
+      latitude: ((json['latitude'] ?? 0.0) as num).toDouble(),
+      longitude: ((json['longitude'] ?? 0.0) as num).toDouble(),
       generatedAt: (json['generatedAt'] ?? json['generated_at'] ?? DateTime.now().toIso8601String()).toString(),
       daily: DailyWeatherModel.fromJson(dailyRaw),
       timezone: json['timezone'] as String?,
