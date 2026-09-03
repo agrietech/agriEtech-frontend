@@ -415,6 +415,9 @@ class RegisterRequest {
   final String? kebeleName;
   final String? preferredLang;
   final String? deviceToken;
+  final String? organizationName;
+  final String? staffIdNumber;
+  final String? justification;
 
   const RegisterRequest({
     required this.phone,
@@ -429,6 +432,9 @@ class RegisterRequest {
     this.kebeleName,
     this.preferredLang,
     this.deviceToken,
+    this.organizationName,
+    this.staffIdNumber,
+    this.justification,
   });
 
   factory RegisterRequest.fromJson(Map<String, dynamic> json) {
@@ -445,6 +451,9 @@ class RegisterRequest {
       kebeleName: json['kebeleName'] as String?,
       preferredLang: json['preferredLang'] as String?,
       deviceToken: json['deviceToken'] as String?,
+      organizationName: json['organizationName'] as String?,
+      staffIdNumber: json['staffIdNumber'] as String?,
+      justification: json['justification'] as String?,
     );
   }
 
@@ -463,6 +472,9 @@ class RegisterRequest {
     if (kebeleName != null) 'kebeleName': kebeleName,
     if (preferredLang != null) 'preferredLang': preferredLang,
     if (deviceToken != null) 'deviceToken': deviceToken,
+    if (organizationName != null) 'organizationName': organizationName,
+    if (staffIdNumber != null) 'staffIdNumber': staffIdNumber,
+    if (justification != null) 'justification': justification,
   };
 }
 
