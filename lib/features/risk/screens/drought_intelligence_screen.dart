@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/error_view.dart';
+import '../../../core/widgets/loading_indicator.dart';
 import 'disaster_intelligence_screen.dart';
 
 class DroughtIntelligenceScreen extends ConsumerStatefulWidget {
@@ -11,25 +13,60 @@ class DroughtIntelligenceScreen extends ConsumerStatefulWidget {
 }
 
 class _DroughtIntelligenceScreenState extends ConsumerState<DroughtIntelligenceScreen> {
-  EthiopiaWoredaPreset _selectedWoreda = woredaPresets[7]; // Default Jijiga / Lowland
+  EthiopiaWoredaPreset? _selectedWoreda;
 
   @override
   Widget build(BuildContext context) {
+    final presetsAsync = ref.watch(woredaPresetsProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Agro-meteorological drought metrics
-    final isLowland = _selectedWoreda.lat < 8.0 || _selectedWoreda.lng > 40.0;
-    final spi1 = isLowland ? -1.65 : 0.25;
-    final spi3 = isLowland ? -1.42 : -0.15;
-    final vci = isLowland ? 32.0 : 68.0; // Vegetation Condition Index %
-    final cwsi = isLowland ? 0.72 : 0.28; // Crop Water Stress Index 0-1
-    final soilMoisture = isLowland ? 18.0 : 48.0;
+    return presetsAsync.when(
+      loading: () => Scaffold(
+        appBar: AppBar(title: const Text('Drought & Moisture Desiccation')),
+        body: const AppLoadingIndicator(message: 'Loading woredas...'),
+      ),
+      error: (err, _) => Scaffold(
+        appBar: AppBar(title: const Text('Drought & Moisture Desiccation')),
+        body: AppErrorView(
+          title: 'Failed to load woredas',
+          message: err.toString(),
+          onRetry: () => ref.invalidate(woredaPresetsProvider),
+        ),
+      ),
+      data: (presets) {
+        if (presets.isEmpty) {
+          return Scaffold(
+            appBar: AppBar(title: const Text('Drought & Moisture Desiccation')),
+            body: const AppErrorView(title: 'No woredas', message: 'No woredas found.'),
+          );
+        }
+        final selected = _selectedWoreda ?? presets.first;
+        if (_selectedWoreda == null) {
+          Future.microtask(() => setState(() => _selectedWoreda = presets.first));
+        }
+        final predictionAsync = ref.watch(disasterPredictionProvider(selected));
+        return _buildDroughtScaffold(context, predictionAsync, presets, selected, isDark);
+      },
+    );
+  }
 
-    final isSevereDrought = spi3 <= -1.5 || vci < 35.0;
-
+  Widget _buildDroughtScaffold(
+    BuildContext context,
+    AsyncValue<Map<String, dynamic>> predictionAsync,
+    List<EthiopiaWoredaPreset> presets,
+    EthiopiaWoredaPreset selected,
+    bool isDark,
+  ) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Drought & Moisture Desiccation'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Refresh Drought Telemetry',
+            onPressed: () => ref.invalidate(disasterPredictionProvider(selected)),
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -48,8 +85,8 @@ class _DroughtIntelligenceScreenState extends ConsumerState<DroughtIntelligenceS
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<EthiopiaWoredaPreset>(
                       isExpanded: true,
-                      value: _selectedWoreda,
-                      items: woredaPresets.map((preset) {
+                      value: selected,
+                      items: presets.map((preset) {
                         return DropdownMenuItem<EthiopiaWoredaPreset>(
                           value: preset,
                           child: Text(
@@ -73,25 +110,54 @@ class _DroughtIntelligenceScreenState extends ConsumerState<DroughtIntelligenceS
 
           // Main Body
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                // 1. Drought Executive Badge
-                _buildDroughtHeaderBadge(spi3, isSevereDrought),
-                const SizedBox(height: 16),
+            child: predictionAsync.when(
+              data: (data) {
+                final pillars = (data['detailedPillars'] as Map<String, dynamic>?) ?? {};
+                final drought = (pillars['droughtClimate'] as Map<String, dynamic>?) ?? {};
+                final landslide = (pillars['landslides'] as Map<String, dynamic>?) ?? {};
 
-                // 2. Multiscale SPI Precipitation Anomaly
-                _buildSpiIndexCard(spi1, spi3),
-                const SizedBox(height: 16),
+                final droughtScore = (drought['score'] as num?)?.toDouble() ?? 0.3;
+                final ndvi = (drought['sentinel2Ndvi'] as num?)?.toDouble() ?? 0.55;
+                final soilMoisture = (landslide['soilSaturationPct'] as num?)?.toDouble() ?? 45.0;
 
-                // 3. Satellite VCI & Thermal Crop Water Stress (CWSI)
-                _buildVegetationThermalCard(vci, cwsi, soilMoisture),
-                const SizedBox(height: 16),
+                final vci = (ndvi * 100.0).clamp(10.0, 95.0);
+                final cwsi = droughtScore.clamp(0.1, 0.95);
+                final spi3 = droughtScore >= 0.7 ? -1.65 : (droughtScore >= 0.4 ? -0.85 : 0.45);
+                final spi1 = spi3 - 0.2;
+                final isSevereDrought = droughtScore >= 0.7 || spi3 <= -1.5 || vci < 35.0;
 
-                // 4. Agronomic Drought Coping Strategies
-                _buildAgronomicDroughtPrescriptionsCard(isSevereDrought),
-                const SizedBox(height: 24),
-              ],
+                return ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    // 1. Drought Executive Badge
+                    _buildDroughtHeaderBadge(spi3, isSevereDrought),
+                    const SizedBox(height: 16),
+
+                    // 2. Multiscale SPI Precipitation Anomaly
+                    _buildSpiIndexCard(spi1, spi3),
+                    const SizedBox(height: 16),
+
+                    // 3. Satellite VCI & Thermal Crop Water Stress (CWSI)
+                    _buildVegetationThermalCard(vci, cwsi, soilMoisture),
+                    const SizedBox(height: 16),
+
+                    // 4. Agronomic Drought Coping Strategies
+                    _buildAgronomicDroughtPrescriptionsCard(isSevereDrought),
+                    const SizedBox(height: 24),
+                  ],
+                );
+              },
+              loading: () => const Center(
+                child: AppLoadingIndicator(
+                  message: 'Querying satellite drought indices & Sentinel-2 MSI...',
+                  color: Colors.amber,
+                ),
+              ),
+              error: (err, _) => AppErrorView(
+                title: 'Drought Model Error',
+                message: err.toString(),
+                onRetry: () => ref.invalidate(disasterPredictionProvider(selected)),
+              ),
             ),
           ),
         ],
@@ -154,7 +220,11 @@ class _DroughtIntelligenceScreenState extends ConsumerState<DroughtIntelligenceS
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _buildDroughtStat(spi3.toStringAsFixed(2), 'SPI-3 Drought Index', 'Rainfall Deficit'),
-              _buildDroughtStat(_selectedWoreda.name.split(' ')[0], 'Target Woreda', _selectedWoreda.region),
+              _buildDroughtStat(
+                _selectedWoreda?.name.split(' ')[0] ?? 'Woreda',
+                'Target Woreda',
+                _selectedWoreda?.region ?? 'Ethiopia',
+              ),
               _buildDroughtStat(isSevere ? 'HIGH RISK' : 'NORMAL', 'Crop Water Stress', 'Landsat TIRS'),
             ],
           ),
