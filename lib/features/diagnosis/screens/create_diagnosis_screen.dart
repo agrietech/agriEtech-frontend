@@ -611,7 +611,7 @@ class _CreateDiagnosisScreenState extends ConsumerState<CreateDiagnosisScreen> {
                 DropdownButtonFormField<String>(
                   initialValue: _selectedFarmId,
                   decoration: InputDecoration(
-                    labelText: isAmharic ? 'የታለመው እርሻ (አስገዳጅ ያልሆነ)' : 'Target Farm Plot (Optional)',
+                    labelText: isAmharic ? 'የታለመው እርሻ' : 'Target Farm Plot',
                     prefixIcon: const Icon(Icons.agriculture_outlined),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   ),
