@@ -12,9 +12,9 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../offline_sync/domain/sync_service.dart';
+import '../../boundaries/providers/boundary_provider.dart';
+import '../../boundaries/models/boundary_models.dart';
 import '../providers/farms_provider.dart';
-
-
 
 class EthiopianCropOption {
   final String nameEn;
@@ -43,20 +43,6 @@ class EthiopianCrops {
   ];
 }
 
-class WoredaLocation {
-  final String woredaName;
-  final String woredaId;
-  final double lat;
-  final double lng;
-  const WoredaLocation(this.woredaName, this.woredaId, this.lat, this.lng);
-}
-
-class RegionData {
-  final String regionName;
-  final List<WoredaLocation> woredas;
-  const RegionData(this.regionName, this.woredas);
-}
-
 /// World-Class Enterprise Farm & GIS Plot Registration Screen
 class AddFarmScreen extends ConsumerStatefulWidget {
   const AddFarmScreen({super.key});
@@ -72,12 +58,10 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
   final _latController = TextEditingController(text: '8.54000');
   final _lngController = TextEditingController(text: '39.27000');
   final _customCropController = TextEditingController();
-  final _kebeleController = TextEditingController();
-  final _ftcController = TextEditingController();
 
   final MapController _miniMapController = MapController();
 
-  // 0: Tap on GIS Map, 1: Region / Woreda Picker, 2: Direct Coordinates, 3: Auto GPS
+  // 0: Tap on GIS Map, 1: Woreda Centroid, 2: Direct Coordinates, 3: Auto GPS
   int _locationMode = 0;
 
   String? _selectedCrop = 'Teff';
@@ -97,75 +81,6 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
   bool _isLoading = false;
   bool _isGettingLocation = false;
 
-  final List<RegionData> _ethiopianRegions = const [
-    RegionData('Oromia', [
-      WoredaLocation('Adama Zuria', 'ET040101', 8.54000, 39.27000),
-      WoredaLocation('Bishoftu / Ada\'a', 'ET040102', 8.75000, 38.98000),
-      WoredaLocation('Lume / Mojo', 'ET040103', 8.60000, 39.12000),
-      WoredaLocation('Jimma / Mana', 'ET040201', 7.67000, 36.83000),
-      WoredaLocation('Ambo Zuria', 'ET040301', 8.98000, 37.85000),
-      WoredaLocation('Shashamane Zuria', 'ET040401', 7.20000, 38.60000),
-      WoredaLocation('Bale / Goba', 'ET040501', 7.01000, 39.98000),
-      WoredaLocation('Nekemte / Guto Gida', 'ET040601', 9.08000, 36.54000),
-    ]),
-    RegionData('Amhara', [
-      WoredaLocation('Bahir Dar Zuria', 'ET030101', 11.59000, 37.39000),
-      WoredaLocation('Debre Birhan', 'ET030102', 9.68000, 39.53000),
-      WoredaLocation('Gondar Zuria', 'ET030201', 12.60000, 37.46000),
-      WoredaLocation('Dessie / Kalu', 'ET030301', 11.13000, 39.63000),
-      WoredaLocation('Debre Markos / Gozamin', 'ET030401', 10.33000, 37.73000),
-    ]),
-    RegionData('Sidama', [
-      WoredaLocation('Hawassa Zuria', 'ET160101', 7.05000, 38.48000),
-      WoredaLocation('Aleta Wondo', 'ET160102', 6.60000, 38.42000),
-      WoredaLocation('Yirgalem / Dale', 'ET160103', 6.75000, 38.40000),
-    ]),
-    RegionData('Tigray', [
-      WoredaLocation('Mekelle / Enderta', 'ET010101', 13.49000, 39.47000),
-      WoredaLocation('Shire / Inda Selassie', 'ET010201', 14.10000, 38.28000),
-      WoredaLocation('Axum Zuria', 'ET010301', 14.12000, 38.72000),
-    ]),
-    RegionData('Somali', [
-      WoredaLocation('Jigjiga Zuria', 'ET050101', 9.35000, 42.80000),
-      WoredaLocation('Gode / Shabele', 'ET050201', 5.95000, 43.55000),
-      WoredaLocation('Degehabur', 'ET050301', 8.22000, 43.56000),
-    ]),
-    RegionData('Central Ethiopia', [
-      WoredaLocation('Alaba Special Woreda', 'ET070101', 7.31000, 38.09000),
-      WoredaLocation('Wolaita Sodo / Boloso Sore', 'ET070201', 6.86000, 37.76000),
-      WoredaLocation('Hosaena / Lemo', 'ET070301', 7.55000, 37.85000),
-      WoredaLocation('Butajira / Meskan', 'ET070401', 8.12000, 38.37000),
-    ]),
-    RegionData('South Ethiopia', [
-      WoredaLocation('Arba Minch Zuria', 'ET080101', 6.03000, 37.55000),
-      WoredaLocation('Jinka / Bako Gazer', 'ET080201', 5.78000, 36.56000),
-      WoredaLocation('Dilla Zuria', 'ET080301', 6.41000, 38.31000),
-    ]),
-    RegionData('Benishangul-Gumuz', [
-      WoredaLocation('Ascosa / Assosa', 'ET060101', 10.06000, 34.53000),
-      WoredaLocation('Metekel / Mandura', 'ET060201', 10.95000, 36.33000),
-    ]),
-    RegionData('Gambella', [
-      WoredaLocation('Gambella Zuria', 'ET120101', 8.25000, 34.59000),
-      WoredaLocation('Itang Special Woreda', 'ET120201', 8.19000, 34.27000),
-    ]),
-    RegionData('Afar', [
-      WoredaLocation('Semera / Dubti', 'ET020101', 11.79000, 41.01000),
-      WoredaLocation('Awash Fentale', 'ET020201', 9.17000, 40.16000),
-    ]),
-    RegionData('Harari', [
-      WoredaLocation('Harar Zuria', 'ET130101', 9.31000, 42.12000),
-    ]),
-    RegionData('Dire Dawa', [
-      WoredaLocation('Dire Dawa Zuria', 'ET150101', 9.60000, 41.86000),
-    ]),
-    RegionData('Addis Ababa', [
-      WoredaLocation('Akaki Kality Sub-City', 'ET140101', 8.88000, 38.77000),
-      WoredaLocation('Yeka Sub-City', 'ET140201', 9.04000, 38.80000),
-      WoredaLocation('Bole Sub-City', 'ET140301', 8.98000, 38.82000),
-    ]),
-  ];
-
   bool _hasUnsavedChanges = false;
   Timer? _draftSaveTimer;
 
@@ -176,8 +91,6 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
 
     _nameController.addListener(_onFormChanged);
     _sizeController.addListener(_onFormChanged);
-    _kebeleController.addListener(_onFormChanged);
-    _ftcController.addListener(_onFormChanged);
 
     _latController.addListener(() {
       final v = double.tryParse(_latController.text);
@@ -217,8 +130,6 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
         'region': _selectedRegion,
         'woredaId': _selectedWoredaId,
         'woredaName': _selectedWoredaName,
-        'kebele': _kebeleController.text.trim(),
-        'ftc': _ftcController.text.trim(),
         'updatedAt': DateTime.now().toIso8601String(),
       };
       await prefs.setString('agrietech_farm_registration_draft', jsonEncode(draft));
@@ -253,8 +164,6 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
             if (draft['region'] != null) _selectedRegion = draft['region'];
             if (draft['woredaId'] != null) _selectedWoredaId = draft['woredaId'];
             if (draft['woredaName'] != null) _selectedWoredaName = draft['woredaName'];
-            if (draft['kebele'] != null) _kebeleController.text = draft['kebele'];
-            if (draft['ftc'] != null) _ftcController.text = draft['ftc'];
           });
         }
       }
@@ -273,55 +182,26 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
     _draftSaveTimer?.cancel();
     _nameController.removeListener(_onFormChanged);
     _sizeController.removeListener(_onFormChanged);
-    _kebeleController.removeListener(_onFormChanged);
-    _ftcController.removeListener(_onFormChanged);
 
     _nameController.dispose();
     _sizeController.dispose();
     _latController.dispose();
     _lngController.dispose();
     _customCropController.dispose();
-    _kebeleController.dispose();
-    _ftcController.dispose();
     super.dispose();
   }
 
-  List<WoredaLocation> get _currentWoredas {
-    final region = _ethiopianRegions.firstWhere(
-      (r) => r.regionName == _selectedRegion,
-      orElse: () => _ethiopianRegions[0],
-    );
-    return region.woredas;
-  }
-
-  void _onRegionChanged(String newRegion) {
+  void _onWoredaSelected(WoredaModel woreda) {
     setState(() {
-      _selectedRegion = newRegion;
-      final woredas = _currentWoredas;
-      final firstWoreda = woredas.isNotEmpty ? woredas[0] : const WoredaLocation('Central', 'ET040101', 8.54, 39.27);
-      _selectedWoredaName = firstWoreda.woredaName;
-      _selectedWoredaId = firstWoreda.woredaId;
-      _latitude = firstWoreda.lat;
-      _longitude = firstWoreda.lng;
-      _latController.text = firstWoreda.lat.toStringAsFixed(5);
-      _lngController.text = firstWoreda.lng.toStringAsFixed(5);
+      _selectedWoredaName = woreda.name;
+      _selectedWoredaId = woreda.id;
+      _selectedRegion = woreda.zone?.region?.name ?? 'National Scope';
+      _latitude = woreda.centerLat;
+      _longitude = woreda.centerLng;
+      _latController.text = woreda.centerLat.toStringAsFixed(5);
+      _lngController.text = woreda.centerLng.toStringAsFixed(5);
     });
-    _onFormChanged();
-  }
-
-  void _onWoredaChanged(String newWoredaName) {
-    final woreda = _currentWoredas.firstWhere(
-      (w) => w.woredaName == newWoredaName,
-      orElse: () => _currentWoredas[0],
-    );
-    setState(() {
-      _selectedWoredaName = woreda.woredaName;
-      _selectedWoredaId = woreda.woredaId;
-      _latitude = woreda.lat;
-      _longitude = woreda.lng;
-      _latController.text = woreda.lat.toStringAsFixed(5);
-      _lngController.text = woreda.lng.toStringAsFixed(5);
-    });
+    _miniMapController.move(LatLng(woreda.centerLat, woreda.centerLng), 11.5);
     _onFormChanged();
   }
 
@@ -355,28 +235,24 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
       _latController.text = point.latitude.toStringAsFixed(5);
       _lngController.text = point.longitude.toStringAsFixed(5);
 
-      // Find closest Ethiopian Woreda
-      WoredaLocation? closestWoreda;
-      String? closestRegion;
+      final woredas = ref.read(allWoredasProvider).asData?.value ?? [];
+      WoredaModel? closestWoreda;
       double minDistance = double.infinity;
 
-      for (final region in _ethiopianRegions) {
-        for (final woreda in region.woredas) {
-          final dLat = woreda.lat - point.latitude;
-          final dLng = woreda.lng - point.longitude;
-          final dist = (dLat * dLat) + (dLng * dLng);
-          if (dist < minDistance) {
-            minDistance = dist;
-            closestWoreda = woreda;
-            closestRegion = region.regionName;
-          }
+      for (final woreda in woredas) {
+        final dLat = woreda.centerLat - point.latitude;
+        final dLng = woreda.centerLng - point.longitude;
+        final dist = (dLat * dLat) + (dLng * dLng);
+        if (dist < minDistance) {
+          minDistance = dist;
+          closestWoreda = woreda;
         }
       }
 
-      if (closestWoreda != null && closestRegion != null) {
-        _selectedRegion = closestRegion;
-        _selectedWoredaName = closestWoreda.woredaName;
-        _selectedWoredaId = closestWoreda.woredaId;
+      if (closestWoreda != null) {
+        _selectedWoredaName = closestWoreda.name;
+        _selectedWoredaId = closestWoreda.id;
+        _selectedRegion = closestWoreda.zone?.region?.name ?? 'National Scope';
       }
     });
     _onFormChanged();
@@ -538,6 +414,7 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final woredasAsync = ref.watch(allWoredasProvider);
 
     return PopScope(
       canPop: !_hasUnsavedChanges,
@@ -863,33 +740,47 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
                     const SizedBox(height: 12),
                   ],
 
-                  // Mode 1: Administrative Woreda Picker
+                  // Mode 1: Administrative Woreda Centroid
                   if (_locationMode == 1) ...[
-                    DropdownButtonFormField<String>(
-                      initialValue: _selectedRegion,
-                      decoration: InputDecoration(
-                        labelText: 'Administrative Region',
-                        prefixIcon: const Icon(Icons.public),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                        filled: true,
-                        fillColor: isDark ? const Color(0xFF1B2E1E) : Colors.white,
+                    woredasAsync.when(
+                      data: (woredas) {
+                        final validWoredaId = woredas.any((w) => w.id == _selectedWoredaId)
+                            ? _selectedWoredaId
+                            : (woredas.isNotEmpty ? woredas.first.id : null);
+                        return DropdownButtonFormField<String>(
+                          key: ValueKey('woreda_picker_$validWoredaId'),
+                          initialValue: validWoredaId,
+                          decoration: InputDecoration(
+                            labelText: 'Woreda Centroid',
+                            prefixIcon: const Icon(Icons.location_city),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                            filled: true,
+                            fillColor: isDark ? const Color(0xFF1B2E1E) : Colors.white,
+                          ),
+                          items: woredas.map((w) {
+                            final regionName = w.zone?.region?.name ?? '';
+                            final subtitle = regionName.isNotEmpty ? ' ($regionName)' : '';
+                            return DropdownMenuItem(
+                              value: w.id,
+                              child: Text('${w.name}$subtitle'),
+                            );
+                          }).toList(),
+                          onChanged: _isLoading ? null : (v) {
+                            if (v != null) {
+                              final matched = woredas.firstWhere((w) => w.id == v);
+                              _onWoredaSelected(matched);
+                            }
+                          },
+                        );
+                      },
+                      loading: () => const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8),
+                        child: LinearProgressIndicator(),
                       ),
-                      items: _ethiopianRegions.map((r) => DropdownMenuItem(value: r.regionName, child: Text(r.regionName))).toList(),
-                      onChanged: _isLoading ? null : (v) => v != null ? _onRegionChanged(v) : null,
-                    ),
-                    const SizedBox(height: 12),
-
-                    DropdownButtonFormField<String>(
-                      initialValue: _selectedWoredaName,
-                      decoration: InputDecoration(
-                        labelText: 'Woreda Center',
-                        prefixIcon: const Icon(Icons.location_city),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                        filled: true,
-                        fillColor: isDark ? const Color(0xFF1B2E1E) : Colors.white,
+                      error: (_, __) => Text(
+                        'Woreda: $_selectedWoredaName',
+                        style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
-                      items: _currentWoredas.map((w) => DropdownMenuItem(value: w.woredaName, child: Text(w.woredaName))).toList(),
-                      onChanged: _isLoading ? null : (v) => v != null ? _onWoredaChanged(v) : null,
                     ),
                     const SizedBox(height: 12),
                   ],
@@ -961,39 +852,6 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
                     ),
                     const SizedBox(height: 12),
                   ],
-
-                  // Kebele & FTC Extension Station
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextFormField(
-                          controller: _kebeleController,
-                          decoration: InputDecoration(
-                            labelText: 'Kebele / Tabia (Admin 4)',
-                            prefixIcon: const Icon(Icons.home_outlined),
-                            border: const OutlineInputBorder(borderRadius: AppRadii.roundedMd),
-                            filled: true,
-                            fillColor: isDark ? AppTheme.surfaceDark : Colors.white,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: TextFormField(
-                          controller: _ftcController,
-                          decoration: InputDecoration(
-                            labelText: 'FTC / Extension Unit',
-                            prefixIcon: const Icon(Icons.home_work_outlined),
-                            border: const OutlineInputBorder(borderRadius: AppRadii.roundedMd),
-                            filled: true,
-                            fillColor: isDark ? AppTheme.surfaceDark : Colors.white,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 12),
 
                   // Centroid Confirmation Card
                   Container(
