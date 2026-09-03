@@ -6,6 +6,7 @@ import '../../../core/network/dio_client.dart';
 import '../../../core/constants/api_endpoints.dart';
 import '../../../core/widgets/error_view.dart';
 import '../../../core/widgets/loading_indicator.dart';
+import '../../boundaries/providers/boundary_provider.dart';
 
 // Location preset models for Ethiopian Woredas
 class EthiopiaWoredaPreset {
@@ -24,127 +25,37 @@ class EthiopiaWoredaPreset {
   });
 }
 
-const List<EthiopiaWoredaPreset> woredaPresets = [
-  EthiopiaWoredaPreset(name: 'Adama (Central Rift / Wonji Belt)', region: 'Oromia', lat: 8.54, lng: 39.27, slope: 8.5),
-  EthiopiaWoredaPreset(name: 'Semara (Afar Triple Junction Rift)', region: 'Afar', lat: 11.79, lng: 41.01, slope: 4.2),
-  EthiopiaWoredaPreset(name: 'Debre Berhan (Highland Escarpment)', region: 'Amhara', lat: 9.68, lng: 39.53, slope: 24.0),
-  EthiopiaWoredaPreset(name: 'Nekemte (Western Acidic Red Soils)', region: 'Oromia', lat: 9.08, lng: 36.55, slope: 14.5),
-  EthiopiaWoredaPreset(name: 'Arba Minch (Southern Rift & Lakes)', region: 'South Ethiopia', lat: 6.03, lng: 37.55, slope: 19.0),
-  EthiopiaWoredaPreset(name: 'Hawassa (Sidama Intra-Rift)', region: 'Sidama', lat: 7.05, lng: 38.48, slope: 9.0),
-  EthiopiaWoredaPreset(name: 'Bahir Dar (Lake Tana Basin)', region: 'Amhara', lat: 11.59, lng: 37.39, slope: 6.0),
-  EthiopiaWoredaPreset(name: 'Jijiga (Eastern Somali Lowlands)', region: 'Somali', lat: 9.35, lng: 42.80, slope: 3.5),
-  EthiopiaWoredaPreset(name: 'Jimma (Southwestern Coffee Belt)', region: 'Oromia', lat: 7.67, lng: 36.83, slope: 12.0),
-  EthiopiaWoredaPreset(name: 'Bale Robe (Highland Wheat Plateau)', region: 'Oromia', lat: 7.12, lng: 40.00, slope: 7.5),
-  EthiopiaWoredaPreset(name: 'Gonder (Northwestern Highlands)', region: 'Amhara', lat: 12.60, lng: 37.45, slope: 18.2),
-  EthiopiaWoredaPreset(name: 'Mekelle (Northern Semiarid Basin)', region: 'Tigray', lat: 13.50, lng: 39.47, slope: 11.4),
-  EthiopiaWoredaPreset(name: 'Dire Dawa (Eastern Foothills)', region: 'Dire Dawa', lat: 9.60, lng: 41.86, slope: 10.2),
-  EthiopiaWoredaPreset(name: 'Asosa (Western Bamboo & Gold Belt)', region: 'Benishangul-Gumuz', lat: 10.06, lng: 34.53, slope: 8.0),
-  EthiopiaWoredaPreset(name: 'Gambella (Baro-Akobo Flood Basin)', region: 'Gambella', lat: 8.25, lng: 34.58, slope: 2.1),
-  EthiopiaWoredaPreset(name: 'Wolaita Sodo (Southern Highlands)', region: 'South Ethiopia', lat: 6.86, lng: 37.75, slope: 16.5),
-];
+/// Provider that fetches woredas from backend and maps to EthiopiaWoredaPreset
+final woredaPresetsProvider = FutureProvider<List<EthiopiaWoredaPreset>>((ref) async {
+  final woredas = await ref.watch(allWoredasProvider.future);
+  return woredas.map((w) => EthiopiaWoredaPreset(
+    name: w.name,
+    region: w.zone?.region?.name ?? '',
+    lat: w.centerLat,
+    lng: w.centerLng,
+    slope: 0.0,
+  )).toList();
+});
 
-// Async provider for Multi-Hazard Disaster Predictions
+// Async provider for Multi-Hazard Disaster Predictions — backend only, no hardcoded fallback
 final disasterPredictionProvider = FutureProvider.family<Map<String, dynamic>, EthiopiaWoredaPreset>((ref, preset) async {
   final client = ref.watch(dioClientProvider);
 
+  final response = await client.dio.get<Map<String, dynamic>>(
+    ApiEndpoints.naturalDisasters,
+    queryParameters: {
+      'lat': preset.lat,
+      'lng': preset.lng,
+      'woredaName': preset.name,
+    },
+  );
 
-  try {
-    final response = await client.dio.get<Map<String, dynamic>>(
-      ApiEndpoints.naturalDisasters,
-      queryParameters: {
-        'lat': preset.lat,
-        'lng': preset.lng,
-        'woredaName': preset.name,
-      },
-    );
-
-    if (response.statusCode == 200 && response.data != null) {
-      final body = response.data!;
-      return (body['data'] as Map<String, dynamic>?) ?? body;
-    }
-  } catch (_) {
-    // Graceful offline fallback calculations if network is disconnected
+  if (response.statusCode == 200 && response.data != null) {
+    final body = response.data!;
+    return (body['data'] as Map<String, dynamic>?) ?? body;
   }
 
-  // Production-calibrated fallback model
-  return {
-    'woredaName': preset.name,
-    'compositeDisasterIndex': 0.54,
-    'overallAlertLevel': 'ORANGE_HIGH_ALERT',
-    'overallAlertAm': 'ደረጃ ብርቱካናማ፡ ከፍተኛ ጥንቃቄ የሚያስፈልግ',
-    'overallAlertOm': 'Sadarkaa Bifa Burtukaanaa: Ofeeggannoo Cimaa',
-    'top3DisasterRisks': [
-      {'hazard': 'EARTHQUAKE_SEISMIC', 'score': 0.85, 'details': 'Wonji Fault Belt (HIGH)'},
-      {'hazard': 'SOIL_EROSION_DEGRADATION', 'score': 0.62, 'details': '18.4 t/ha/yr (MODERATE)'},
-      {'hazard': 'LANDSLIDE_MUDFLOW', 'score': 0.45, 'details': 'MODERATE (Slope: ${preset.slope}%)'},
-    ],
-    'detailedPillars': {
-      'seismology': {
-        'nearestFaultSystem': {
-          'name': 'Wonji Fault Belt (Central Main Ethiopian Rift)',
-          'faultType': 'En-echelon Continental Extensional Rifting',
-          'distanceKm': 14.2,
-          'annualSlipRateMm': 5.5,
-        },
-        'seismicHazard': {
-          'peakGroundAccelerationG': 0.14,
-          'modifiedMercalliIntensity': 'VI (Very Strong - Minor plaster damage)',
-          'probabilityOfMag4PlusIn30Days': 0.42,
-          'riskLevel': 'HIGH',
-          'riskLevelAm': 'ከፍተኛ የመሬት መንቀጥቀጥ ስጋት ቀጠና',
-        },
-      },
-      'soilDegradation': {
-        'erosionMetrics': {
-          'annualSoilLossTonsPerHa': 18.4,
-          'severityCategory': 'MODERATE',
-          'severityAm': 'መካከለኛ የመሸርሸር አደጋ',
-          'isExceedingTolerableLimit': true,
-        },
-        'nutrientDepletion': {
-          'annualSocLossKgPerHa': 368,
-          'nitrogenLossKgPerHa': 29,
-          'phosphorusLossKgPerHa': 7,
-          'potassiumLossKgPerHa': 18,
-        },
-        'chemicalDegradation': {
-          'type': preset.lat > 9.0 && preset.lng < 37.0 ? 'SEVERE_ACIDIFICATION' : 'BALANCED',
-          'descriptionAm': 'የአፈር አሲዳማነትና ማዕድናት መታሰር (pH < 5.2)',
-          'dominantSoilType': 'Vertisol / Nitisol',
-        },
-        'conservationInterventions': {
-          'am': [
-            'የእርከን ስራ (ፋንያ ጁ) እና የድንጋይ እርከን ማጠናከር፤ የውሃ ማስተንፈሻ ቦዮችን ማዘጋጀት።',
-            'የቬቲቨር (Vetiver) ወይም የደሾ ሣር የመሸርሸር መከላከያ እርከን መትከል።',
-            'በየሄክታሩ ከ12-18 ኩንታል የእርሻ ኖራ (Agricultural Lime) በመበተን የአፈር አሲዳማነትን ማከም።',
-          ],
-          'om': [
-            'Daagaa Fanya Juu fi daagaa dhagaa hojjachuu; dhangala\'aa bishaanii to\'achuu.',
-            'Muka daagaa fi Marga Vetiiveerii/Deeshoo sararaan dhaabuu.',
-            'Nooraa qonnaa kuntaala 12-18/ha itti naquun koomii biyyoo wal-qixxeessuu.',
-          ],
-        },
-      },
-      'landslides': {
-        'score': 0.45,
-        'riskLevel': 'MODERATE',
-        'riskLevelAm': 'መካከለኛ የመሬት መንሸራተት ስጋት',
-        'slopePercent': preset.slope,
-        'soilSaturationPct': 58.0,
-      },
-      'volcanology': {
-        'nearestVolcano': 'Alutu Volcanic Complex',
-        'distanceKm': 42.0,
-        'riskLevel': 'LOW',
-        'volcanoType': 'Active Geothermal Complex',
-      },
-    },
-    'recommendedEmergencyActions': {
-      'en': 'Inspect masonry irrigation canals, earthen dams, and apply watershed terracing with Vetiver grass buffer strips.',
-      'am': 'የመስኖ ቦዮችና የውሃ ማቆሪያ ግድቦችን የመሰነጣጠቅ አደጋ ይፈትሹ፤ የተፋሰስ እርከን ስራዎችን ያጠናክሩ።',
-      'om': 'Hidha bishaanii fi sarara lolaa qonnaa yeroo yeroon hordofaa; daagaa qonnaa hojjadhaa.',
-    },
-  };
+  throw Exception('Failed to fetch disaster predictions for ${preset.name}');
 });
 
 class DisasterIntelligenceScreen extends ConsumerStatefulWidget {
@@ -155,12 +66,50 @@ class DisasterIntelligenceScreen extends ConsumerStatefulWidget {
 }
 
 class _DisasterIntelligenceScreenState extends ConsumerState<DisasterIntelligenceScreen> {
-  EthiopiaWoredaPreset _selectedWoreda = woredaPresets[0];
+  EthiopiaWoredaPreset? _selectedWoreda;
 
   @override
   Widget build(BuildContext context) {
-    final predictionAsync = ref.watch(disasterPredictionProvider(_selectedWoreda));
+    final presetsAsync = ref.watch(woredaPresetsProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return presetsAsync.when(
+      loading: () => Scaffold(
+        appBar: AppBar(title: const Text('Disaster & Seismology Intelligence')),
+        body: const AppLoadingIndicator(message: 'Loading woredas...'),
+      ),
+      error: (err, _) => Scaffold(
+        appBar: AppBar(title: const Text('Disaster & Seismology Intelligence')),
+        body: AppErrorView(
+          title: 'Failed to load woredas',
+          message: err.toString(),
+          onRetry: () => ref.invalidate(woredaPresetsProvider),
+        ),
+      ),
+      data: (presets) {
+        if (presets.isEmpty) {
+          return Scaffold(
+            appBar: AppBar(title: const Text('Disaster & Seismology Intelligence')),
+            body: const AppErrorView(title: 'No woredas available', message: 'No woredas found in the system.'),
+          );
+        }
+        final selected = _selectedWoreda ?? presets.first;
+        if (_selectedWoreda == null) {
+          Future.microtask(() => setState(() => _selectedWoreda = presets.first));
+        }
+        final predictionAsync = ref.watch(disasterPredictionProvider(selected));
+        return _buildMainScaffold(context, predictionAsync, presets, selected, isDark);
+      },
+    );
+  }
+
+  Widget _buildMainScaffold(
+    BuildContext context,
+    AsyncValue<Map<String, dynamic>> predictionAsync,
+    List<EthiopiaWoredaPreset> presets,
+    EthiopiaWoredaPreset selected,
+    bool isDark,
+  ) {
 
     return Scaffold(
       appBar: AppBar(
@@ -169,7 +118,7 @@ class _DisasterIntelligenceScreenState extends ConsumerState<DisasterIntelligenc
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: 'Refresh Satellite & Seismic Feed',
-            onPressed: () => ref.invalidate(disasterPredictionProvider(_selectedWoreda)),
+            onPressed: () => ref.invalidate(disasterPredictionProvider(selected)),
           ),
         ],
       ),
@@ -190,9 +139,9 @@ class _DisasterIntelligenceScreenState extends ConsumerState<DisasterIntelligenc
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<EthiopiaWoredaPreset>(
                       isExpanded: true,
-                      value: _selectedWoreda,
+                      value: selected,
                       icon: const Icon(Icons.keyboard_arrow_down),
-                      items: woredaPresets.map((preset) {
+                      items: presets.map((preset) {
                         return DropdownMenuItem<EthiopiaWoredaPreset>(
                           value: preset,
                           child: Text(
@@ -213,7 +162,7 @@ class _DisasterIntelligenceScreenState extends ConsumerState<DisasterIntelligenc
                 IconButton(
                   icon: const Icon(Icons.search, size: 20, color: AppTheme.primaryColor),
                   tooltip: 'Search All Ethiopian Woredas',
-                  onPressed: () => _showSearchWoredaDialog(context),
+                  onPressed: () => _showSearchWoredaDialog(context, presets),
                 ),
               ],
             ),
@@ -265,7 +214,7 @@ class _DisasterIntelligenceScreenState extends ConsumerState<DisasterIntelligenc
               error: (err, _) => AppErrorView(
                 title: 'Disaster Model Error',
                 message: err.toString(),
-                onRetry: () => ref.invalidate(disasterPredictionProvider(_selectedWoreda)),
+                onRetry: () => ref.invalidate(disasterPredictionProvider(selected)),
               ),
             ),
           ),
@@ -343,7 +292,7 @@ class _DisasterIntelligenceScreenState extends ConsumerState<DisasterIntelligenc
           ),
           const SizedBox(height: 4),
           Text(
-            'Target Woreda: ${_selectedWoreda.name}',
+            'Target Woreda: ${data['woredaName'] ?? _selectedWoreda?.name ?? 'Selected Area'}',
             style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 13),
           ),
         ],
@@ -820,14 +769,14 @@ class _DisasterIntelligenceScreenState extends ConsumerState<DisasterIntelligenc
     }
   }
 
-  void _showSearchWoredaDialog(BuildContext context) {
+  void _showSearchWoredaDialog(BuildContext context, List<EthiopiaWoredaPreset> presets) {
     showDialog(
       context: context,
       builder: (ctx) {
         String query = '';
         return StatefulBuilder(
           builder: (context, setDialogState) {
-            final filtered = woredaPresets.where((p) {
+            final filtered = presets.where((p) {
               final q = query.toLowerCase();
               return p.name.toLowerCase().contains(q) || p.region.toLowerCase().contains(q);
             }).toList();
@@ -867,7 +816,7 @@ class _DisasterIntelligenceScreenState extends ConsumerState<DisasterIntelligenc
                         separatorBuilder: (_, __) => const Divider(height: 1),
                         itemBuilder: (context, index) {
                           final item = filtered[index];
-                          final isSelected = item.name == _selectedWoreda.name;
+                          final isSelected = item.name == _selectedWoreda?.name;
                           return ListTile(
                             dense: true,
                             contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
