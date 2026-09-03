@@ -19,23 +19,23 @@ class BoundaryLocalCache {
   static final Map<String, List<WoredaModel>> _memWoredas = {};
   static final Map<String, WoredaModel> _memWoredaDetails = {};
 
-  /// Cold-boot baseline standard regions
+  /// Genuine OCHA HDX administrative regions
   static const List<RegionModel> defaultRegions = [
-    RegionModel(id: 'reg_oromia', code: 'OR', name: 'Oromia', createdAt: '2026-08-17T00:00:00.000Z', updatedAt: '2026-08-17T00:00:00.000Z'),
-    RegionModel(id: 'reg_amhara', code: 'AM', name: 'Amhara', createdAt: '2026-08-17T00:00:00.000Z', updatedAt: '2026-08-17T00:00:00.000Z'),
-    RegionModel(id: 'reg_sidama', code: 'SI', name: 'Sidama', createdAt: '2026-08-17T00:00:00.000Z', updatedAt: '2026-08-17T00:00:00.000Z'),
-    RegionModel(id: 'reg_tigray', code: 'TG', name: 'Tigray', createdAt: '2026-08-17T00:00:00.000Z', updatedAt: '2026-08-17T00:00:00.000Z'),
-    RegionModel(id: 'reg_somali', code: 'SO', name: 'Somali', createdAt: '2026-08-17T00:00:00.000Z', updatedAt: '2026-08-17T00:00:00.000Z'),
-    RegionModel(id: 'reg_central_ethiopia', code: 'CE', name: 'Central Ethiopia', createdAt: '2026-08-17T00:00:00.000Z', updatedAt: '2026-08-17T00:00:00.000Z'),
-    RegionModel(id: 'reg_south_ethiopia', code: 'SE', name: 'South Ethiopia', createdAt: '2026-08-17T00:00:00.000Z', updatedAt: '2026-08-17T00:00:00.000Z'),
-    RegionModel(id: 'reg_swepr', code: 'SW', name: "South West Ethiopia Peoples' Region", createdAt: '2026-08-17T00:00:00.000Z', updatedAt: '2026-08-17T00:00:00.000Z'),
-    RegionModel(id: 'reg_afar', code: 'AF', name: 'Afar', createdAt: '2026-08-17T00:00:00.000Z', updatedAt: '2026-08-17T00:00:00.000Z'),
-    RegionModel(id: 'reg_benishangul', code: 'BG', name: 'Benishangul-Gumuz', createdAt: '2026-08-17T00:00:00.000Z', updatedAt: '2026-08-17T00:00:00.000Z'),
-    RegionModel(id: 'reg_gambela', code: 'GA', name: 'Gambela', createdAt: '2026-08-17T00:00:00.000Z', updatedAt: '2026-08-17T00:00:00.000Z'),
-    RegionModel(id: 'reg_harari', code: 'HA', name: 'Harari', createdAt: '2026-08-17T00:00:00.000Z', updatedAt: '2026-08-17T00:00:00.000Z'),
-    RegionModel(id: 'reg_addis_ababa', code: 'AA', name: 'Addis Ababa (City Administration)', createdAt: '2026-08-17T00:00:00.000Z', updatedAt: '2026-08-17T00:00:00.000Z'),
-    RegionModel(id: 'reg_dire_dawa', code: 'DD', name: 'Dire Dawa (Administration)', createdAt: '2026-08-17T00:00:00.000Z', updatedAt: '2026-08-17T00:00:00.000Z'),
-    RegionModel(id: 'reg_snnp', code: 'SN', name: "Southern Nations, Nationalities & Peoples' (SNNPR)", createdAt: '2026-08-17T00:00:00.000Z', updatedAt: '2026-08-17T00:00:00.000Z'),
+    RegionModel(id: 'ET01', code: 'ET01', name: 'Tigray', createdAt: '2026-08-17T00:00:00.000Z', updatedAt: '2026-08-17T00:00:00.000Z'),
+    RegionModel(id: 'ET02', code: 'ET02', name: 'Afar', createdAt: '2026-08-17T00:00:00.000Z', updatedAt: '2026-08-17T00:00:00.000Z'),
+    RegionModel(id: 'ET03', code: 'ET03', name: 'Amhara', createdAt: '2026-08-17T00:00:00.000Z', updatedAt: '2026-08-17T00:00:00.000Z'),
+    RegionModel(id: 'ET04', code: 'ET04', name: 'Oromia', createdAt: '2026-08-17T00:00:00.000Z', updatedAt: '2026-08-17T00:00:00.000Z'),
+    RegionModel(id: 'ET05', code: 'ET05', name: 'Somali', createdAt: '2026-08-17T00:00:00.000Z', updatedAt: '2026-08-17T00:00:00.000Z'),
+    RegionModel(id: 'ET06', code: 'ET06', name: 'Benishangul-Gumuz', createdAt: '2026-08-17T00:00:00.000Z', updatedAt: '2026-08-17T00:00:00.000Z'),
+    RegionModel(id: 'ET07', code: 'ET07', name: 'Gambela', createdAt: '2026-08-17T00:00:00.000Z', updatedAt: '2026-08-17T00:00:00.000Z'),
+    RegionModel(id: 'ET08', code: 'ET08', name: 'Harari', createdAt: '2026-08-17T00:00:00.000Z', updatedAt: '2026-08-17T00:00:00.000Z'),
+    RegionModel(id: 'ET10', code: 'ET10', name: 'Sidama', createdAt: '2026-08-17T00:00:00.000Z', updatedAt: '2026-08-17T00:00:00.000Z'),
+    RegionModel(id: 'ET11', code: 'ET11', name: 'Central Ethiopia', createdAt: '2026-08-17T00:00:00.000Z', updatedAt: '2026-08-17T00:00:00.000Z'),
+    RegionModel(id: 'ET12', code: 'ET12', name: 'South Ethiopia', createdAt: '2026-08-17T00:00:00.000Z', updatedAt: '2026-08-17T00:00:00.000Z'),
+    RegionModel(id: 'ET13', code: 'ET13', name: 'South West Ethiopia', createdAt: '2026-08-17T00:00:00.000Z', updatedAt: '2026-08-17T00:00:00.000Z'),
+    RegionModel(id: 'ET14', code: 'ET14', name: 'Addis Ababa', createdAt: '2026-08-17T00:00:00.000Z', updatedAt: '2026-08-17T00:00:00.000Z'),
+    RegionModel(id: 'ET15', code: 'ET15', name: 'Dire Dawa', createdAt: '2026-08-17T00:00:00.000Z', updatedAt: '2026-08-17T00:00:00.000Z'),
+    RegionModel(id: 'ET99', code: 'ET99', name: 'Contested Area', createdAt: '2026-08-17T00:00:00.000Z', updatedAt: '2026-08-17T00:00:00.000Z'),
   ];
 
   // --------------------------------------------------------------------------
