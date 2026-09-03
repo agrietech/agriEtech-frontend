@@ -84,19 +84,24 @@ class ProfileScreen extends ConsumerWidget {
                       color: Colors.white.withValues(alpha: 0.15),
                       borderRadius: AppRadii.roundedXl,
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.verified_user_rounded, color: Color(0xFF4ADE80), size: 14),
-                        const SizedBox(width: 6),
-                        Text(
-                          userRole,
-                          style: AppTypography.bodySmall.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
+                    child: InkWell(
+                      onTap: () => _showRoleSwitchDialog(context, ref, user?.role.name ?? 'FARMER'),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.verified_user_rounded, color: Color(0xFF4ADE80), size: 14),
+                          const SizedBox(width: 6),
+                          Text(
+                            userRole,
+                            style: AppTypography.bodySmall.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 4),
+                          const Icon(Icons.edit_outlined, color: Colors.white70, size: 12),
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -350,6 +355,107 @@ class ProfileScreen extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+
+  void _showRoleSwitchDialog(BuildContext context, WidgetRef ref, String currentRole) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) {
+        final roles = [
+          {'id': 'FARMER', 'name': 'Farmer / አርሶ አደር', 'desc': 'Smallholder crop producer and livestock farmer'},
+          {'id': 'DEVELOPMENT_AGENT', 'name': 'Development Agent (DA)', 'desc': 'Frontline kebele extension advisor'},
+          {'id': 'WOREDA_OFFICER', 'name': 'Woreda Agricultural Officer', 'desc': 'Woreda early warning desk officer'},
+          {'id': 'ZONAL_OFFICER', 'name': 'Zonal Agricultural Officer', 'desc': 'Zonal directorate officer coordinating woredas'},
+          {'id': 'REGIONAL_OFFICER', 'name': 'Regional Agricultural Officer', 'desc': 'Regional agricultural bureau directorate officer'},
+          {'id': 'RESEARCHER', 'name': 'Agronomist / Researcher', 'desc': 'Soil and agro-climatic researcher'},
+        ];
+
+        return SafeArea(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(ctx).size.height * 0.85,
+            ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Switch Platform Role', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+                      IconButton(
+                        icon: const Icon(Icons.close, size: 20),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        onPressed: () => Navigator.of(ctx).pop(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  ...roles.map((r) {
+                    final isSelected = currentRole.toUpperCase() == r['id'];
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      decoration: BoxDecoration(
+                        color: isSelected ? const Color(0xFFECFDF5) : Colors.transparent,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: isSelected ? const Color(0xFF1B5E20) : Colors.grey.shade300,
+                          width: isSelected ? 1.5 : 1.0,
+                        ),
+                      ),
+                      child: ListTile(
+                        dense: true,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        title: Text(
+                          r['name']!,
+                          style: TextStyle(
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                            fontSize: 13.5,
+                            color: isSelected ? const Color(0xFF065F46) : Colors.black87,
+                          ),
+                        ),
+                        subtitle: Text(
+                          r['desc']!,
+                          style: TextStyle(fontSize: 11.5, color: Colors.grey.shade600),
+                        ),
+                        trailing: isSelected ? const Icon(Icons.check_circle, color: Color(0xFF1B5E20), size: 18) : null,
+                        onTap: () async {
+                          Navigator.of(ctx).pop();
+                          try {
+                            await ref.read(authProvider.notifier).updateUserRole(r['id']!);
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Role updated to ${r['name']}'),
+                                  backgroundColor: const Color(0xFF1B5E20),
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Failed to update role: $e'), backgroundColor: Colors.red),
+                              );
+                            }
+                          }
+                        },
+                      ),
+                    );
+                  }),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
