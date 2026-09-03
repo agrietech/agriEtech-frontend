@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/error_view.dart';
+import '../../../core/widgets/loading_indicator.dart';
 import 'disaster_intelligence_screen.dart';
 
 class VolcanicHazardScreen extends ConsumerStatefulWidget {
@@ -11,20 +13,60 @@ class VolcanicHazardScreen extends ConsumerStatefulWidget {
 }
 
 class _VolcanicHazardScreenState extends ConsumerState<VolcanicHazardScreen> {
-  EthiopiaWoredaPreset _selectedWoreda = woredaPresets[1]; // Default Semara / Afar
+  EthiopiaWoredaPreset? _selectedWoreda;
 
   @override
   Widget build(BuildContext context) {
+    final presetsAsync = ref.watch(woredaPresetsProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final isAfar = _selectedWoreda.name.contains('Semara');
-    final double nearestVolcanoKm = isAfar ? 32.0 : 78.0;
-    final String nearestName = isAfar ? 'Erta Ale Shield Volcano' : 'Alutu Volcanic Complex';
-    final isProximityAlert = nearestVolcanoKm < 45.0;
+    return presetsAsync.when(
+      loading: () => Scaffold(
+        appBar: AppBar(title: const Text('Volcanic & Geothermal Hazards')),
+        body: const AppLoadingIndicator(message: 'Loading woredas...'),
+      ),
+      error: (err, _) => Scaffold(
+        appBar: AppBar(title: const Text('Volcanic & Geothermal Hazards')),
+        body: AppErrorView(
+          title: 'Failed to load woredas',
+          message: err.toString(),
+          onRetry: () => ref.invalidate(woredaPresetsProvider),
+        ),
+      ),
+      data: (presets) {
+        if (presets.isEmpty) {
+          return Scaffold(
+            appBar: AppBar(title: const Text('Volcanic & Geothermal Hazards')),
+            body: const AppErrorView(title: 'No woredas', message: 'No woredas found.'),
+          );
+        }
+        final selected = _selectedWoreda ?? presets.first;
+        if (_selectedWoreda == null) {
+          Future.microtask(() => setState(() => _selectedWoreda = presets.first));
+        }
+        final predictionAsync = ref.watch(disasterPredictionProvider(selected));
+        return _buildVolcanicScaffold(context, predictionAsync, presets, selected, isDark);
+      },
+    );
+  }
 
+  Widget _buildVolcanicScaffold(
+    BuildContext context,
+    AsyncValue<Map<String, dynamic>> predictionAsync,
+    List<EthiopiaWoredaPreset> presets,
+    EthiopiaWoredaPreset selected,
+    bool isDark,
+  ) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Volcanic & Geothermal Hazards'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Refresh Volcanic Proximity',
+            onPressed: () => ref.invalidate(disasterPredictionProvider(selected)),
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -43,8 +85,8 @@ class _VolcanicHazardScreenState extends ConsumerState<VolcanicHazardScreen> {
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<EthiopiaWoredaPreset>(
                       isExpanded: true,
-                      value: _selectedWoreda,
-                      items: woredaPresets.map((preset) {
+                      value: selected,
+                      items: presets.map((preset) {
                         return DropdownMenuItem<EthiopiaWoredaPreset>(
                           value: preset,
                           child: Text(
@@ -68,25 +110,47 @@ class _VolcanicHazardScreenState extends ConsumerState<VolcanicHazardScreen> {
 
           // Main Body
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                // 1. Volcanic Hazard Header Badge
-                _buildVolcanicHeaderBadge(nearestVolcanoKm, nearestName, isProximityAlert),
-                const SizedBox(height: 16),
+            child: predictionAsync.when(
+              data: (data) {
+                final pillars = (data['detailedPillars'] as Map<String, dynamic>?) ?? {};
+                final volcanology = (pillars['volcanology'] as Map<String, dynamic>?) ?? {};
+                final double nearestVolcanoKm = (volcanology['distanceKm'] as num?)?.toDouble() ?? 65.0;
+                final String nearestName = (volcanology['nearestVolcano'] as String?) ?? 'Main Ethiopian Rift Caldera';
+                final String riskLevel = (volcanology['riskLevel'] as String?) ?? 'LOW';
+                final isProximityAlert = nearestVolcanoKm < 45.0 || riskLevel.contains('HIGH');
 
-                // 2. Active Calderas & Thermal Radiative Power (MODIS FIRMS)
-                _buildThermalAnomaliesCard(),
-                const SizedBox(height: 16),
+                return ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    // 1. Volcanic Hazard Header Badge
+                    _buildVolcanicHeaderBadge(nearestVolcanoKm, nearestName, isProximityAlert),
+                    const SizedBox(height: 16),
 
-                // 3. Ethiopian Active Volcanic Centers Registry
-                _buildVolcanicRegistryCard(),
-                const SizedBox(height: 16),
+                    // 2. Active Calderas & Thermal Radiative Power (MODIS FIRMS)
+                    _buildThermalAnomaliesCard(),
+                    const SizedBox(height: 16),
 
-                // 4. Ashfall & Gas Exposure Protocols
-                _buildAshfallProtocolsCard(),
-                const SizedBox(height: 24),
-              ],
+                    // 3. Ethiopian Active Volcanic Centers Registry
+                    _buildVolcanicRegistryCard(),
+                    const SizedBox(height: 16),
+
+                    // 4. Ashfall & Gas Exposure Protocols
+                    _buildAshfallProtocolsCard(),
+                    const SizedBox(height: 24),
+                  ],
+                );
+              },
+              loading: () => const Center(
+                child: AppLoadingIndicator(
+                  message: 'Querying Smithsonian GVP volcanic telemetry & thermal anomalies...',
+                  color: Colors.deepOrange,
+                ),
+              ),
+              error: (err, _) => AppErrorView(
+                title: 'Volcanic Model Error',
+                message: err.toString(),
+                onRetry: () => ref.invalidate(disasterPredictionProvider(selected)),
+              ),
             ),
           ),
         ],
