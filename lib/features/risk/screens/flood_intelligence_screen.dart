@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/error_view.dart';
+import '../../../core/widgets/loading_indicator.dart';
 import 'disaster_intelligence_screen.dart';
 
 class FloodIntelligenceScreen extends ConsumerStatefulWidget {
@@ -11,21 +13,60 @@ class FloodIntelligenceScreen extends ConsumerStatefulWidget {
 }
 
 class _FloodIntelligenceScreenState extends ConsumerState<FloodIntelligenceScreen> {
-  EthiopiaWoredaPreset _selectedWoreda = woredaPresets[0]; // Default Adama / Awash Basin
+  EthiopiaWoredaPreset? _selectedWoreda;
 
   @override
   Widget build(BuildContext context) {
+    final presetsAsync = ref.watch(woredaPresetsProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Hydrological Discharge Metrics
-    final isAwashBasin = _selectedWoreda.name.contains('Adama') || _selectedWoreda.name.contains('Semara');
-    final double dischargeM3s = isAwashBasin ? 342.0 : 128.0;
-    const double threshold5yr = 280.0;
-    final isFlooding = dischargeM3s > threshold5yr;
+    return presetsAsync.when(
+      loading: () => Scaffold(
+        appBar: AppBar(title: const Text('Flash Floods & River Basins')),
+        body: const AppLoadingIndicator(message: 'Loading woredas...'),
+      ),
+      error: (err, _) => Scaffold(
+        appBar: AppBar(title: const Text('Flash Floods & River Basins')),
+        body: AppErrorView(
+          title: 'Failed to load woredas',
+          message: err.toString(),
+          onRetry: () => ref.invalidate(woredaPresetsProvider),
+        ),
+      ),
+      data: (presets) {
+        if (presets.isEmpty) {
+          return Scaffold(
+            appBar: AppBar(title: const Text('Flash Floods & River Basins')),
+            body: const AppErrorView(title: 'No woredas', message: 'No woredas found.'),
+          );
+        }
+        final selected = _selectedWoreda ?? presets.first;
+        if (_selectedWoreda == null) {
+          Future.microtask(() => setState(() => _selectedWoreda = presets.first));
+        }
+        final predictionAsync = ref.watch(disasterPredictionProvider(selected));
+        return _buildFloodScaffold(context, predictionAsync, presets, selected, isDark);
+      },
+    );
+  }
 
+  Widget _buildFloodScaffold(
+    BuildContext context,
+    AsyncValue<Map<String, dynamic>> predictionAsync,
+    List<EthiopiaWoredaPreset> presets,
+    EthiopiaWoredaPreset selected,
+    bool isDark,
+  ) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Flash Floods & River Basins'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Refresh Flood & Inundation Data',
+            onPressed: () => ref.invalidate(disasterPredictionProvider(selected)),
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -44,8 +85,8 @@ class _FloodIntelligenceScreenState extends ConsumerState<FloodIntelligenceScree
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<EthiopiaWoredaPreset>(
                       isExpanded: true,
-                      value: _selectedWoreda,
-                      items: woredaPresets.map((preset) {
+                      value: selected,
+                      items: presets.map((preset) {
                         return DropdownMenuItem<EthiopiaWoredaPreset>(
                           value: preset,
                           child: Text(
@@ -69,25 +110,50 @@ class _FloodIntelligenceScreenState extends ConsumerState<FloodIntelligenceScree
 
           // Main Body
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                // 1. Flood Alert Status Badge
-                _buildFloodHeaderBadge(dischargeM3s, threshold5yr, isFlooding),
-                const SizedBox(height: 16),
+            child: predictionAsync.when(
+              data: (data) {
+                final pillars = (data['detailedPillars'] as Map<String, dynamic>?) ?? {};
+                final flood = (pillars['hydrologyFlood'] as Map<String, dynamic>?) ?? {};
+                final floodScore = (flood['score'] as num?)?.toDouble() ?? 0.2;
+                final floodInundationRisk = flood['floodInundationRisk'] as String? ?? 'LOW';
+                final elevation = (flood['elevationMeters'] as num?)?.toDouble() ?? 1800.0;
 
-                // 2. GloFAS River Discharge Gauge
-                _buildDischargeGaugeCard(dischargeM3s),
-                const SizedBox(height: 16),
+                final double dischargeM3s = ((floodScore * 380.0) + (elevation < 1200 ? 90.0 : 35.0)).clamp(30.0, 600.0);
+                const double threshold5yr = 280.0;
+                final isFlooding = dischargeM3s > threshold5yr || floodInundationRisk == 'MODERATE_TO_HIGH' || floodScore > 0.6;
 
-                // 3. Ethiopian Major River Basin Inundation Registry
-                _buildBasinInundationCard(),
-                const SizedBox(height: 16),
+                return ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    // 1. Flood Alert Status Badge
+                    _buildFloodHeaderBadge(dischargeM3s, threshold5yr, isFlooding),
+                    const SizedBox(height: 16),
 
-                // 4. Flood Evacuation & Canal Divergence Protocols
-                _buildFloodSafetyProtocolsCard(),
-                const SizedBox(height: 24),
-              ],
+                    // 2. GloFAS River Discharge Gauge
+                    _buildDischargeGaugeCard(dischargeM3s),
+                    const SizedBox(height: 16),
+
+                    // 3. Ethiopian Major River Basin Inundation Registry
+                    _buildBasinInundationCard(),
+                    const SizedBox(height: 16),
+
+                    // 4. Flood Evacuation & Canal Divergence Protocols
+                    _buildFloodSafetyProtocolsCard(),
+                    const SizedBox(height: 24),
+                  ],
+                );
+              },
+              loading: () => const Center(
+                child: AppLoadingIndicator(
+                  message: 'Querying GloFAS River Discharge & Inundation telemetry...',
+                  color: Colors.blue,
+                ),
+              ),
+              error: (err, _) => AppErrorView(
+                title: 'Flood Model Error',
+                message: err.toString(),
+                onRetry: () => ref.invalidate(disasterPredictionProvider(selected)),
+              ),
             ),
           ),
         ],
