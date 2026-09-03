@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Environment configuration with comprehensive settings
@@ -16,12 +18,24 @@ class AppEnv {
     return dotenv.env[key] ?? defaultValue;
   }
 
-  // API Configuration
-  static String get apiBaseUrl => 
-    _get('API_BASE_URL', 'https://agrietech.onrender.com/api/v1');
+  // API Configuration (Automatically routes to 10.0.2.2 on Android Emulators)
+  static String get apiBaseUrl {
+    final raw = _get('API_BASE_URL', 'http://localhost:5000/api/v1');
+    if (!kIsWeb && Platform.isAndroid) {
+      if (raw.contains('localhost')) return raw.replaceAll('localhost', '10.0.2.2');
+      if (raw.contains('127.0.0.1')) return raw.replaceAll('127.0.0.1', '10.0.2.2');
+    }
+    return raw;
+  }
   
-  static String get socketBaseUrl => 
-    _get('SOCKET_BASE_URL', 'https://agrietech.onrender.com');
+  static String get socketBaseUrl {
+    final raw = _get('SOCKET_BASE_URL', 'http://localhost:5000');
+    if (!kIsWeb && Platform.isAndroid) {
+      if (raw.contains('localhost')) return raw.replaceAll('localhost', '10.0.2.2');
+      if (raw.contains('127.0.0.1')) return raw.replaceAll('127.0.0.1', '10.0.2.2');
+    }
+    return raw;
+  }
 
   // Map Configuration
   static String get mapTileUrl => 
