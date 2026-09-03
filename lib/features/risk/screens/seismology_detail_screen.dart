@@ -11,98 +11,20 @@ import 'disaster_intelligence_screen.dart';
 final seismologyDetailProvider = FutureProvider.family<Map<String, dynamic>, EthiopiaWoredaPreset>((ref, preset) async {
   final client = ref.watch(dioClientProvider);
 
-  try {
-    final response = await client.dio.get<Map<String, dynamic>>(
-      ApiEndpoints.seismology,
-      queryParameters: {
-        'lat': preset.lat,
-        'lng': preset.lng,
-        'woredaName': preset.name,
-      },
-    );
-
-    if (response.statusCode == 200 && response.data != null) {
-      final body = response.data!;
-      return (body['data'] as Map<String, dynamic>?) ?? body;
-    }
-  } catch (_) {
-    // Fallback if offline
-  }
-
-  return {
-    'woredaName': preset.name,
-    'recentTectonicEventsCount': 4,
-    'locationRisk': {
-      'nearestFaultSystem': {
-        'name': 'Wonji Fault Belt (Central Main Ethiopian Rift)',
-        'region': 'OROMIA',
-        'faultType': 'En-echelon Continental Extensional Rifting',
-        'distanceKm': 14.2,
-        'annualSlipRateMm': 5.5,
-        'historicalMaxMagnitude': 6.5,
-      },
-      'seismicHazard': {
-        'peakGroundAcceleration_g': 0.28,
-        'mercalliIntensityExpected': 'VII (Very Strong Shaking)',
-        'soilAmplificationClass': 'Class D (Stiff Soil / Volcanic Ash / Pyroclastic deposits)',
-        'liquefactionSusceptibility': 'HIGH in alluvial agricultural basins',
-        'probabilityExceedance50Yr': '10% (equivalent to 475-year return period)',
-        'thirtyYearEarthquakeProbM5Plus': 78.5,
-        'compositeRiskLevel': 'HIGH_SEISMIC_ZONE',
-      },
+  final response = await client.dio.get<Map<String, dynamic>>(
+    ApiEndpoints.seismology,
+    queryParameters: {
+      'lat': preset.lat,
+      'lng': preset.lng,
+      'woredaName': preset.name,
     },
-    'infrastructureAdvisories': [
-      {
-        'category': 'Earth Dams & Spoil Bunds (ግድቦችና የውሃ ማቆሪያዎች)',
-        'action': 'Conduct immediate crest inspection for liquefaction transverse cracking; maintain 30% emergency freeboard margin.',
-        'severity': 'HIGH',
-      },
-      {
-        'category': 'Greenhouses & Masonry Stores (መጋዘኖችና የግሪንሀውስ መዋቅሮች)',
-        'action': 'Reinforce diagonal bracing and anchor masonry foundation footings against lateral seismic shear waves.',
-        'severity': 'MEDIUM',
-      },
-      {
-        'category': 'Subsurface Drip Lines (የከርሰ-ምድር መስኖ ቱቦዎች)',
-        'action': 'Deploy flexible PE expansion couplings across active ground rupture fissures to prevent catastrophic shear detachment.',
-        'severity': 'MEDIUM',
-      },
-    ],
-    'recentEarthquakesFeed': [
-      {
-        'magnitude': 4.8,
-        'depthKm': 10.0,
-        'location': 'Fentale Volcanic Complex, Afar-Oromia Border',
-        'time': DateTime.now().subtract(const Duration(hours: 36)).toIso8601String(),
-        'distanceKm': 48.0,
-        'felt': true,
-      },
-      {
-        'magnitude': 4.2,
-        'depthKm': 12.5,
-        'location': 'Wonji Geothermal Field, Adama',
-        'time': DateTime.now().subtract(const Duration(days: 4)).toIso8601String(),
-        'distanceKm': 26.5,
-        'felt': true,
-      },
-      {
-        'magnitude': 3.9,
-        'depthKm': 8.0,
-        'location': 'Lake Beseka Western Graben Margin',
-        'time': DateTime.now().subtract(const Duration(days: 9)).toIso8601String(),
-        'distanceKm': 62.0,
-        'felt': false,
-      },
-      {
-        'magnitude': 5.2,
-        'depthKm': 15.0,
-        'location': 'Dobi Graben Seismic Cluster, Afar Depression',
-        'time': DateTime.now().subtract(const Duration(days: 18)).toIso8601String(),
-        'distanceKm': 185.0,
-        'felt': true,
-      },
-    ],
-  };
+  );
+
+  if (response.statusCode == 200 && response.data != null) {
+    final body = response.data!;
+    return (body['data'] as Map<String, dynamic>?) ?? body;
+  }
+  throw Exception('Failed to fetch seismology data for ${preset.name}');
 });
 
 class SeismologyDetailScreen extends ConsumerStatefulWidget {
@@ -113,12 +35,35 @@ class SeismologyDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _SeismologyDetailScreenState extends ConsumerState<SeismologyDetailScreen> {
-  EthiopiaWoredaPreset _selectedWoreda = woredaPresets[0];
+  EthiopiaWoredaPreset? _selectedWoreda;
 
   @override
   Widget build(BuildContext context) {
-    final seismicAsync = ref.watch(seismologyDetailProvider(_selectedWoreda));
+    final presetsAsync = ref.watch(woredaPresetsProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return presetsAsync.when(
+      loading: () => Scaffold(
+        appBar: AppBar(title: const Text('Seismology & Rift Tectonics')),
+        body: const AppLoadingIndicator(message: 'Loading woredas...'),
+      ),
+      error: (err, _) => Scaffold(
+        appBar: AppBar(title: const Text('Seismology & Rift Tectonics')),
+        body: AppErrorView(title: 'Failed to load woredas', message: err.toString(), onRetry: () => ref.invalidate(woredaPresetsProvider)),
+      ),
+      data: (presets) {
+        if (presets.isEmpty) {
+          return Scaffold(appBar: AppBar(title: const Text('Seismology & Rift Tectonics')), body: const AppErrorView(title: 'No woredas', message: 'No woredas found.'));
+        }
+        final selected = _selectedWoreda ?? presets.first;
+        if (_selectedWoreda == null) Future.microtask(() => setState(() => _selectedWoreda = presets.first));
+        final seismicAsync = ref.watch(seismologyDetailProvider(selected));
+        return _buildSeismologyBody(context, seismicAsync, presets, selected, isDark);
+      },
+    );
+  }
+
+  Widget _buildSeismologyBody(BuildContext context, AsyncValue<Map<String, dynamic>> seismicAsync, List<EthiopiaWoredaPreset> presets, EthiopiaWoredaPreset selected, bool isDark) {
 
     return Scaffold(
       appBar: AppBar(
@@ -127,7 +72,7 @@ class _SeismologyDetailScreenState extends ConsumerState<SeismologyDetailScreen>
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: 'Refresh Seismic Telemetry',
-            onPressed: () => ref.invalidate(seismologyDetailProvider(_selectedWoreda)),
+            onPressed: () => ref.invalidate(seismologyDetailProvider(selected)),
           ),
         ],
       ),
@@ -148,8 +93,8 @@ class _SeismologyDetailScreenState extends ConsumerState<SeismologyDetailScreen>
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<EthiopiaWoredaPreset>(
                       isExpanded: true,
-                      value: _selectedWoreda,
-                      items: woredaPresets.map((preset) {
+                      value: selected,
+                      items: presets.map((preset) {
                         return DropdownMenuItem<EthiopiaWoredaPreset>(
                           value: preset,
                           child: Text(
@@ -217,7 +162,7 @@ class _SeismologyDetailScreenState extends ConsumerState<SeismologyDetailScreen>
               error: (err, _) => AppErrorView(
                 title: 'Seismic Telemetry Error',
                 message: err.toString(),
-                onRetry: () => ref.invalidate(seismologyDetailProvider(_selectedWoreda)),
+                onRetry: () => ref.invalidate(seismologyDetailProvider(selected)),
               ),
             ),
           ),
