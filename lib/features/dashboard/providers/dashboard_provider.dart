@@ -4,6 +4,7 @@ import '../../analytics/models/analytics_model.dart' hide TrendDataPoint;
 import '../../../core/utils/logger.dart';
 import '../models/dashboard_models.dart';
 import '../repositories/dashboard_repository.dart';
+import '../../analytics/repositories/analytics_repository.dart';
 
 /// Dashboard state
 class DashboardState {
@@ -244,68 +245,32 @@ class AdvisoryParams {
       limit.hashCode;
 }
 
-/// Provider for dashboard analytics
+/// Provider for dashboard analytics from live backend API
 final dashboardAnalyticsProvider = FutureProvider<DashboardAnalyticsModel>((ref) async {
-  return DashboardAnalyticsModel(
-    riskOverview: const RiskOverviewModel(
-      lowRisk: 12,
-      moderateRisk: 8,
-      highRisk: 4,
-      criticalRisk: 1,
-      total: 25,
-      avgScore: 2.1,
-      dominantHazard: 'DROUGHT',
-    ),
-    regionalBreakdown: const [
-      RegionalRiskModel(
-        regionId: '1',
-        regionName: 'Oromia',
-        totalWoredas: 10,
-        lowRisk: 5,
-        moderateRisk: 3,
-        highRisk: 2,
-        criticalRisk: 0,
-        avgRiskScore: 1.8,
-      ),
-      RegionalRiskModel(
-        regionId: '2',
-        regionName: 'Amhara',
-        totalWoredas: 8,
-        lowRisk: 4,
-        moderateRisk: 2,
-        highRisk: 1,
-        criticalRisk: 1,
-        avgRiskScore: 2.4,
-      ),
-    ],
-    weatherSummary: const WeatherSummaryModel(
-      avgTemperature: 22.0,
-      minTemperature: 15.0,
-      maxTemperature: 28.0,
-      totalRainfall: 15.5,
-      avgHumidity: 60.0,
-      avgWindSpeed: 10.0,
-      weatherCondition: 'Partly Cloudy',
-    ),
-    recentAlerts: const [],
-    cropCalendar: CropCalendarModel(
-      currentSeason: 'Meher',
-      cropStage: 'Vegetative',
-      recommendedActivities: const ['Weeding', 'Fertilizer application'],
-      seasonStart: DateTime(2026, 6, 1),
-      seasonEnd: DateTime(2026, 11, 30),
-      daysRemaining: 75,
-    ),
-  );
+  final repo = ref.watch(analyticsRepositoryProvider);
+  return await repo.getDashboardAnalytics();
 });
 
-/// Provider for temporal trends in professional dashboard
+/// Provider for temporal trends in professional dashboard from live backend API
 final dashboardTrendsProvider = FutureProvider.family<DashboardTrendsModel, String>((ref, period) async {
-  final now = DateTime.now();
+  final repo = ref.watch(analyticsRepositoryProvider);
+  final trendModel = await repo.getTemporalTrends(period);
   return DashboardTrendsModel(
-    riskTrend: List.generate(30, (i) => TrendValue(date: now.subtract(Duration(days: 29 - i)), value: 1.5 + (i % 5) * 0.4)),
-    rainfallTrend: List.generate(30, (i) => TrendValue(date: now.subtract(Duration(days: 29 - i)), value: (i % 7 == 0) ? 15.0 : (i % 3) * 3.5)),
-    temperatureTrend: List.generate(30, (i) => TrendValue(date: now.subtract(Duration(days: 29 - i)), value: 22.0 + (i % 6))),
-    ndviTrend: List.generate(30, (i) => TrendValue(date: now.subtract(Duration(days: 29 - i)), value: 0.45 + (i % 4) * 0.08)),
+    riskTrend: trendModel.riskTrend.map((s) => TrendValue(
+      date: DateTime.tryParse(s.date) ?? DateTime.now(),
+      value: s.value,
+    )).toList(),
+    rainfallTrend: trendModel.rainfallTrend.map((s) => TrendValue(
+      date: DateTime.tryParse(s.date) ?? DateTime.now(),
+      value: s.value,
+    )).toList(),
+    temperatureTrend: trendModel.temperatureTrend.map((s) => TrendValue(
+      date: DateTime.tryParse(s.date) ?? DateTime.now(),
+      value: s.value,
+    )).toList(),
+    ndviTrend: trendModel.ndviTrend.map((s) => TrendValue(
+      date: DateTime.tryParse(s.date) ?? DateTime.now(),
+      value: s.value,
+    )).toList(),
   );
 });
