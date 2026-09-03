@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/utils/validators.dart';
+import '../../boundaries/providers/boundary_provider.dart';
 import '../models/alert_models.dart';
 import '../providers/alert_provider.dart';
 
@@ -17,6 +18,9 @@ class _CreateAlertScreenState extends ConsumerState<CreateAlertScreen> {
   final _messageController = TextEditingController();
   final _woredaNameController = TextEditingController();
   final _actionItemsController = TextEditingController();
+
+  String? _selectedWoredaId;
+  String? _selectedWoredaName;
 
   String _selectedHazardType = 'DROUGHT';
   String _selectedSeverity = 'HIGH';
@@ -50,6 +54,7 @@ class _CreateAlertScreenState extends ConsumerState<CreateAlertScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final woredasAsync = ref.watch(allWoredasProvider);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Create Alert'),
@@ -207,11 +212,11 @@ class _CreateAlertScreenState extends ConsumerState<CreateAlertScreen> {
                     TextFormField(
                       controller: _actionItemsController,
                       decoration: const InputDecoration(
-                        labelText: 'Action Items (Optional)',
+                        labelText: 'Recommended Action Items',
                         prefixIcon: Icon(Icons.checklist),
                         border: OutlineInputBorder(),
                         helperText:
-                            'Recommended actions, one per line',
+                            'Recommended emergency mitigation actions, one per line',
                         alignLabelWithHint: true,
                       ),
                       maxLines: 4,
@@ -232,19 +237,62 @@ class _CreateAlertScreenState extends ConsumerState<CreateAlertScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Location (Optional)',
+                      'Target Geographic Scope',
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 16),
 
-                    // Woreda Name
-                    TextFormField(
-                      controller: _woredaNameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Woreda Name',
-                        prefixIcon: Icon(Icons.location_on),
-                        border: OutlineInputBorder(),
-                        helperText: 'Leave empty for all woredas',
+                    woredasAsync.when(
+                      data: (woredas) {
+                        final validWoredaId = woredas.any((w) => w.id == _selectedWoredaId)
+                            ? _selectedWoredaId
+                            : (woredas.isNotEmpty ? woredas.first.id : null);
+                        if (_selectedWoredaId == null && validWoredaId != null) {
+                          _selectedWoredaId = validWoredaId;
+                          final match = woredas.firstWhere((w) => w.id == validWoredaId);
+                          _selectedWoredaName = match.name;
+                        }
+                        return DropdownButtonFormField<String>(
+                          key: ValueKey('alert_woreda_$validWoredaId'),
+                          initialValue: validWoredaId,
+                          decoration: const InputDecoration(
+                            labelText: 'Target Woreda Jurisdiction',
+                            prefixIcon: Icon(Icons.location_on),
+                            border: OutlineInputBorder(),
+                            helperText: 'Jurisdiction receiving broadcast emergency telemetry',
+                          ),
+                          items: woredas.map((w) {
+                            final regionName = w.zone?.region?.name ?? '';
+                            final subtitle = regionName.isNotEmpty ? ' ($regionName)' : '';
+                            return DropdownMenuItem(
+                              value: w.id,
+                              child: Text('${w.name}$subtitle'),
+                            );
+                          }).toList(),
+                          onChanged: _isSubmitting
+                              ? null
+                              : (value) {
+                                  if (value != null) {
+                                    final matched = woredas.firstWhere((w) => w.id == value);
+                                    setState(() {
+                                      _selectedWoredaId = matched.id;
+                                      _selectedWoredaName = matched.name;
+                                    });
+                                  }
+                                },
+                        );
+                      },
+                      loading: () => const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8),
+                        child: LinearProgressIndicator(),
+                      ),
+                      error: (_, __) => TextFormField(
+                        controller: _woredaNameController,
+                        decoration: const InputDecoration(
+                          labelText: 'Woreda Name',
+                          prefixIcon: Icon(Icons.location_on),
+                          border: OutlineInputBorder(),
+                        ),
                       ),
                     ),
                   ],
@@ -328,9 +376,8 @@ class _CreateAlertScreenState extends ConsumerState<CreateAlertScreen> {
         severity: _selectedSeverity,
         headline: _titleController.text.trim(),
         message: _messageController.text.trim(),
-        woredaName: _woredaNameController.text.trim().isEmpty
-            ? null
-            : _woredaNameController.text.trim(),
+        woredaId: _selectedWoredaId ?? 'ET040101',
+        woredaName: _selectedWoredaName ?? (_woredaNameController.text.trim().isNotEmpty ? _woredaNameController.text.trim() : 'Adama Zuria'),
         actionItems: actionItems,
         priority: _priority,
         language: 'en',
