@@ -9,83 +9,25 @@ import '../../../core/widgets/app_surface_card.dart';
 import '../../../core/widgets/risk_gauge_widget.dart';
 import 'disaster_intelligence_screen.dart';
 
-
 // Async provider for Live Soil Degradation & RUSLE
 final soilDegradationDetailProvider = FutureProvider.family<Map<String, dynamic>, EthiopiaWoredaPreset>((ref, preset) async {
   final client = ref.watch(dioClientProvider);
 
-  try {
-    final response = await client.dio.get<Map<String, dynamic>>(
-      ApiEndpoints.soilDegradation,
-      queryParameters: {
-        'lat': preset.lat,
-        'lng': preset.lng,
-        'woredaName': preset.name,
-        'slopePct': preset.slope,
-      },
-    );
+  final response = await client.dio.get<Map<String, dynamic>>(
+    ApiEndpoints.soilDegradation,
+    queryParameters: {
+      'lat': preset.lat,
+      'lng': preset.lng,
+      'woredaName': preset.name,
+      'slopePct': preset.slope,
+    },
+  );
 
-    if (response.statusCode == 200 && response.data != null) {
-      final body = response.data!;
-      return (body['data'] as Map<String, dynamic>?) ?? body;
-    }
-  } catch (_) {
-    // Fallback if offline
+  if (response.statusCode == 200 && response.data != null) {
+    final body = response.data!;
+    return (body['data'] as Map<String, dynamic>?) ?? body;
   }
-
-  return {
-    'woredaName': preset.name,
-    'topography': {
-      'elevationMeters': preset.lat > 9.5 ? 2450 : 1850,
-      'slopePercent': preset.slope,
-      'topographicWetnessIndex': 6.8,
-    },
-    'rusleFactors': {
-      'R_rainfallErosivity': 580,
-      'K_soilErodibility': 0.026,
-      'LS_slopeLengthSteepness': (preset.slope / 10).clamp(0.8, 8.5),
-      'C_coverManagement': 0.35,
-      'P_supportPractice': 1.0,
-    },
-    'erosionMetrics': {
-      'annualSoilLossTonsPerHa': (preset.slope * 0.85).clamp(4.0, 48.0),
-      'severityCategory': preset.slope > 18.0 ? 'HIGH' : 'MODERATE',
-      'severityAm': preset.slope > 18.0 ? 'ከፍተኛ የመሬት መሸርሸር አደጋ' : 'መካከለኛ የመሸርሸር አደጋ',
-      'tolerableSoilLossThresholdTonsPerHa': 10.0,
-      'isExceedingTolerableLimit': preset.slope > 12.0,
-    },
-    'nutrientDepletion': {
-      'annualSocLossKgPerHa': (preset.slope * 18.0).round(),
-      'nitrogenLossKgPerHa': (preset.slope * 1.5).round(),
-      'phosphorusLossKgPerHa': (preset.slope * 0.4).round(),
-      'potassiumLossKgPerHa': (preset.slope * 0.9).round(),
-    },
-    'chemicalDegradation': {
-      'type': preset.lat > 9.0 && preset.lng < 37.0 ? 'SEVERE_ACIDIFICATION' : 'BALANCED',
-      'descriptionAm': preset.lat > 9.0 && preset.lng < 37.0 ? 'ከፍተኛ የአፈር አሲዳማነት (pH < 5.2) - ኖራ ያስፈልጋል' : 'መደበኛ ጤናማ አፈር',
-      'dominantSoilType': preset.lat > 9.0 && preset.lng < 37.0 ? 'Dystric Nitisol (Acidic Red Soil)' : 'Vertisol / Luvisol',
-    },
-    'conservationInterventions': {
-      'am': [
-        'የእርከን ስራ (ፋንያ ጁ) እና የድንጋይ እርከን ማጠናከር፤ የውሃ ማስተንፈሻ ቦዮችን ማዘጋጀት።',
-        'የቬቲቨር (Vetiver) ወይም የደሾ ሣር የመሸርሸር መከላከያ እርከን መትከል።',
-        'በየሄክታሩ ከ12-18 ኩንታል የእርሻ ኖራ (Agricultural Lime) በመበተን የአፈር አሲዳማነትን ማከም።',
-        'የግብርና-ደን ዛፎችን (እንደ ግራር/ግራቪሊያ) በሰብል ማሳዎች ውስጥ ደባልቆ መትከል።',
-      ],
-      'om': [
-        'Daagaa Fanya Juu fi daagaa dhagaa hojjachuu; dhangala\'aa bishaanii to\'achuu.',
-        'Muka daagaa fi Marga Vetiiveerii/Deeshoo sararaan dhaabuu.',
-        'Noota qonnaa (lime) hektaaratti kuntaala 12-18 facaasuun asidummaa biyyee yaaluu.',
-        'Mukkeen qonna-bosonaa (fkn. Laaftoo/Giraaviliyaa) maasii keessatti walmakuun dhaabuu.',
-      ],
-      'en': [
-        'Construct Fanya Juu physical soil bunds, stone terraces, and drainage cutoff drains.',
-        'Plant Vetiver or Desho grass vegetative hedgerows along contour lines.',
-        'Apply 1.2 - 1.8 tons/ha agricultural lime to neutralize severe soil acidity.',
-        'Implement agroforestry with Faidherbia albida and Sesbania in crop plots.',
-      ],
-    },
-  };
+  throw Exception('Failed to fetch soil degradation data for ${preset.name}');
 });
 
 class SoilDegradationScreen extends ConsumerStatefulWidget {
@@ -96,13 +38,35 @@ class SoilDegradationScreen extends ConsumerStatefulWidget {
 }
 
 class _SoilDegradationScreenState extends ConsumerState<SoilDegradationScreen> {
-  EthiopiaWoredaPreset _selectedWoreda = woredaPresets[0];
+  EthiopiaWoredaPreset? _selectedWoreda;
 
   @override
   Widget build(BuildContext context) {
-    final soilAsync = ref.watch(soilDegradationDetailProvider(_selectedWoreda));
+    final presetsAsync = ref.watch(woredaPresetsProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    return presetsAsync.when(
+      loading: () => Scaffold(
+        appBar: AppBar(title: const Text('Soil Degradation & RUSLE Loss')),
+        body: const AppLoadingIndicator(message: 'Loading woredas...'),
+      ),
+      error: (err, _) => Scaffold(
+        appBar: AppBar(title: const Text('Soil Degradation & RUSLE Loss')),
+        body: AppErrorView(title: 'Failed to load woredas', message: err.toString(), onRetry: () => ref.invalidate(woredaPresetsProvider)),
+      ),
+      data: (presets) {
+        if (presets.isEmpty) {
+          return Scaffold(appBar: AppBar(title: const Text('Soil Degradation & RUSLE Loss')), body: const AppErrorView(title: 'No woredas', message: 'No woredas found.'));
+        }
+        final selected = _selectedWoreda ?? presets.first;
+        if (_selectedWoreda == null) Future.microtask(() => setState(() => _selectedWoreda = presets.first));
+        final soilAsync = ref.watch(soilDegradationDetailProvider(selected));
+        return _buildSoilBody(context, soilAsync, presets, selected, isDark);
+      },
+    );
+  }
+
+  Widget _buildSoilBody(BuildContext context, AsyncValue<Map<String, dynamic>> soilAsync, List<EthiopiaWoredaPreset> presets, EthiopiaWoredaPreset selected, bool isDark) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Soil Degradation & RUSLE Loss'),
@@ -110,7 +74,7 @@ class _SoilDegradationScreenState extends ConsumerState<SoilDegradationScreen> {
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: 'Recalculate RUSLE Model',
-            onPressed: () => ref.invalidate(soilDegradationDetailProvider(_selectedWoreda)),
+            onPressed: () => ref.invalidate(soilDegradationDetailProvider(selected)),
           ),
         ],
       ),
@@ -131,8 +95,8 @@ class _SoilDegradationScreenState extends ConsumerState<SoilDegradationScreen> {
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<EthiopiaWoredaPreset>(
                       isExpanded: true,
-                      value: _selectedWoreda,
-                      items: woredaPresets.map((preset) {
+                      value: selected,
+                      items: presets.map((preset) {
                         return DropdownMenuItem<EthiopiaWoredaPreset>(
                           value: preset,
                           child: Text(
@@ -177,22 +141,21 @@ class _SoilDegradationScreenState extends ConsumerState<SoilDegradationScreen> {
                     _buildRusleFactorCard(rusle),
                     const SizedBox(height: AppSpacing.md),
 
-                    // 3. Nutrient Leaching & SOC Loss Metrics
+                    // 3. Macronutrient Topsoil Depletion Card
                     _buildNutrientDepletionCard(nutrients),
                     const SizedBox(height: AppSpacing.md),
 
-                    // 4. Soil Acidification & Salinization Diagnostics
+                    // 4. Chemical Soil Acidity & Liming Requirements
                     _buildChemicalHealthCard(chemical),
                     const SizedBox(height: AppSpacing.md),
 
-                    // 5. Actionable Engineering Prescriptions (Fanya Juu, Lime ኖራ)
+                    // 5. Actionable Terracing & Hedgerow Interventions
                     _buildPrescriptionsCard(interventions),
                     const SizedBox(height: AppSpacing.lg),
                   ],
                 );
               },
-              loading: () => const Padding(
-                padding: EdgeInsets.all(AppSpacing.xl),
+              loading: () => const Center(
                 child: AppLoadingIndicator(
                   message: 'Computing RUSLE erosivity & SOC depletion model...',
                   color: Color(0xFF854D0E),
@@ -201,7 +164,7 @@ class _SoilDegradationScreenState extends ConsumerState<SoilDegradationScreen> {
               error: (err, _) => AppErrorView(
                 title: 'Soil Model Error',
                 message: err.toString(),
-                onRetry: () => ref.invalidate(soilDegradationDetailProvider(_selectedWoreda)),
+                onRetry: () => ref.invalidate(soilDegradationDetailProvider(selected)),
               ),
             ),
           ),
