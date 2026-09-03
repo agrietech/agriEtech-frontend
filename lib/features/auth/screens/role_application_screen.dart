@@ -5,6 +5,8 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/models/user_model.dart';
 import '../../../core/utils/role_utils.dart';
 import '../../../core/widgets/agrietech_app_drawer.dart';
+import '../../../core/constants/api_constants.dart';
+import '../../../core/network/dio_client.dart';
 import '../providers/auth_provider.dart';
 import '../../boundaries/providers/boundary_provider.dart';
 
@@ -174,14 +176,40 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
 
     setState(() => _isSubmitting = true);
 
-    // Simulate backend verification & role application dispatch
-    await Future.delayed(const Duration(milliseconds: 900));
+    try {
+      final client = ref.read(dioClientProvider);
+      final payload = {
+        'requestedRole': _selectedRole,
+        'regionId': hierarchy.selectedRegion?.id,
+        'regionName': hierarchy.selectedRegion?.name,
+        if (hierarchy.selectedZone != null) 'zoneId': hierarchy.selectedZone?.id,
+        if (hierarchy.selectedZone != null) 'zoneName': hierarchy.selectedZone?.name,
+        if (hierarchy.selectedWoreda != null) 'woredaId': hierarchy.selectedWoreda?.id,
+        if (hierarchy.selectedWoreda != null) 'woredaName': hierarchy.selectedWoreda?.name,
+        if (_kebeleController.text.trim().isNotEmpty) 'kebeleName': _kebeleController.text.trim(),
+        'organizationName': _organizationController.text.trim(),
+        if (_staffIdController.text.trim().isNotEmpty) 'staffIdNumber': _staffIdController.text.trim(),
+        'justification': _justificationController.text.trim(),
+      };
 
-    if (mounted) {
-      setState(() {
-        _isSubmitting = false;
-        _isSubmitted = true;
-      });
+      await client.post(ApiConstants.roleRequests, data: payload);
+
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+          _isSubmitted = true;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to submit application: ${e.toString()}'),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+      }
     }
   }
 
@@ -397,9 +425,9 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
                               initialValue: hierarchy.zones.any((z) => z.id == hierarchy.selectedZone?.id)
                                   ? hierarchy.selectedZone?.id
                                   : null,
-                              hint: Text(hierarchy.selectedRegion == null ? 'Select Region first' : 'Select Zone (Optional)'),
+                              hint: Text(hierarchy.selectedRegion == null ? 'Select Region first' : 'Select Zone'),
                               decoration: InputDecoration(
-                                labelText: 'Zone / ዞን (Optional)',
+                                labelText: 'Zone / ዞን',
                                 prefixIcon: const Icon(Icons.map_outlined),
                                 border: const OutlineInputBorder(borderRadius: AppRadii.roundedMd),
                                 filled: true,
@@ -427,9 +455,9 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
                               initialValue: hierarchy.woredas.any((w) => w.id == hierarchy.selectedWoreda?.id)
                                   ? hierarchy.selectedWoreda?.id
                                   : null,
-                              hint: Text(hierarchy.selectedZone == null ? 'Select Zone first' : 'Select Woreda (Optional)'),
+                              hint: Text(hierarchy.selectedZone == null ? 'Select Zone first' : 'Select Woreda'),
                               decoration: InputDecoration(
-                                labelText: 'Woreda / ወረዳ (Optional)',
+                                labelText: 'Woreda / ወረዳ',
                                 prefixIcon: const Icon(Icons.holiday_village_outlined),
                                 border: const OutlineInputBorder(borderRadius: AppRadii.roundedMd),
                                 filled: true,
@@ -456,7 +484,7 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
                             TextFormField(
                               controller: _kebeleController,
                               decoration: InputDecoration(
-                                labelText: 'Kebele / Tabia / Ganda (Optional)',
+                                labelText: 'Kebele/ቀበሌ',
                                 prefixIcon: const Icon(Icons.signpost_outlined),
                                 border: const OutlineInputBorder(borderRadius: AppRadii.roundedMd),
                                 filled: true,
@@ -470,7 +498,7 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
 
                       // Section 3: Professional Affiliation & Verification
                       const Text(
-                        '3. Professional Credentials & Justification',
+                        '3. Professional Credentials',
                         style: AppTypography.subtitle,
                       ),
                       const SizedBox(height: AppSpacing.xs),
@@ -488,7 +516,7 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
                             TextFormField(
                               controller: _organizationController,
                               decoration: InputDecoration(
-                                labelText: 'Organization / Bureau / Institute *',
+                                labelText: 'Bureau / Institute *',
                                 prefixIcon: const Icon(Icons.business_outlined),
                                 border: const OutlineInputBorder(borderRadius: AppRadii.roundedMd),
                                 filled: true,
@@ -500,7 +528,7 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
                             TextFormField(
                               controller: _staffIdController,
                               decoration: InputDecoration(
-                                labelText: 'Official Staff ID / Badge Number (Optional)',
+                                labelText: 'Staff ID',
                                 prefixIcon: const Icon(Icons.badge_outlined),
                                 border: const OutlineInputBorder(borderRadius: AppRadii.roundedMd),
                                 filled: true,
@@ -512,13 +540,13 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
                               controller: _justificationController,
                               maxLines: 3,
                               decoration: InputDecoration(
-                                labelText: 'Professional Justification / Role Scope *',
+                                labelText: 'Role Scope *',
                                 prefixIcon: const Icon(Icons.description_outlined),
                                 border: const OutlineInputBorder(borderRadius: AppRadii.roundedMd),
                                 filled: true,
                                 fillColor: isDark ? AppTheme.surfaceDark : const Color(0xFFF8FAF8),
                               ),
-                              validator: (v) => (v == null || v.trim().isEmpty) ? 'Please provide a brief justification' : null,
+                              validator: (v) => (v == null || v.trim().isEmpty) ? 'Please provide a brief description' : null,
                             ),
                           ],
                         ),
@@ -548,7 +576,7 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
                                   ),
                                 )
                               : const Text(
-                                  'Submit Role Application',
+                                  'Submit',
                                   style: AppTypography.titleMedium,
                                 ),
                         ),
