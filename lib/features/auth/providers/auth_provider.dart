@@ -286,6 +286,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
     String? kebeleName,
     String? preferredLang,
     String? deviceToken,
+    String? organizationName,
+    String? staffIdNumber,
+    String? justification,
   }) async {
     state = state.copyWith(isLoading: true, clearError: true);
     
@@ -305,6 +308,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
         kebeleName: kebeleName,
         preferredLang: preferredLang,
         deviceToken: deviceToken,
+        organizationName: organizationName,
+        staffIdNumber: staffIdNumber,
+        justification: justification,
       );
       
       final response = await _authRepository.register(request);
@@ -479,6 +485,20 @@ class AuthNotifier extends StateNotifier<AuthState> {
     } catch (e) {
       AppLogger.warning('Profile refresh failed', e);
       // Don't update state on error - keep existing profile
+    }
+  }
+
+  /// Update active user role
+  Future<void> updateUserRole(String newRole) async {
+    if (!state.isAuthenticated) return;
+    try {
+      state = state.copyWith(isLoading: true);
+      final updated = await _authRepository.updateProfile({'role': newRole});
+      state = state.copyWith(user: updated, isLoading: false);
+      AppLogger.info('User role updated to $newRole');
+    } catch (e) {
+      state = state.copyWith(isLoading: false);
+      rethrow;
     }
   }
 
