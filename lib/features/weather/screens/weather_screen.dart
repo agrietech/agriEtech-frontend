@@ -39,11 +39,15 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
 
   void _loadWeatherData() {
     final user = ref.read(currentUserProvider);
-    final targetWoredaId = widget.woredaId ?? user?.woredaId ?? 'woreda_demo_01';
+    final targetWoredaId = widget.woredaId ?? user?.woredaId;
+    if (targetWoredaId == null || targetWoredaId.isEmpty) {
+      ref.read(weatherProvider.notifier).setMissingWoredaError();
+      return;
+    }
     ref.read(weatherProvider.notifier).loadForecast(
           woredaId: targetWoredaId,
-          latitude: widget.latitude ?? 9.145,
-          longitude: widget.longitude ?? 40.489,
+          latitude: widget.latitude,
+          longitude: widget.longitude,
         );
   }
 
