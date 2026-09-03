@@ -212,6 +212,27 @@ class AuthRepository {
     }
   }
 
+  /// Update user profile
+  Future<UserModel> updateProfile(Map<String, dynamic> updates) async {
+    try {
+      AppLogger.info('Updating user profile', updates);
+      final response = await _dioClient.put(
+        ApiConstants.profile,
+        data: updates,
+      );
+      final userData = response.data['user'] ?? response.data;
+      final updatedUser = UserModel.fromJson(userData as Map<String, dynamic>);
+      await _storage.saveUserData(jsonEncode(updatedUser.toJson()));
+      return updatedUser;
+    } on DioException catch (e) {
+      AppLogger.error('Failed to update profile', e);
+      throw NetworkError.fromDioException(e);
+    } catch (e, stackTrace) {
+      AppLogger.error('Unexpected profile update error', e, stackTrace);
+      throw UnknownError(message: 'Failed to update profile: ${e.toString()}');
+    }
+  }
+
   /// Get locally cached user profile for offline session continuity
   Future<UserModel?> getCachedUser() async {
     try {
