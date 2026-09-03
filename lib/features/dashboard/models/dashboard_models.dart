@@ -28,17 +28,17 @@ class DashboardData {
       riskSummary = RiskSummary.fromJson(map['riskSummary'] as Map<String, dynamic>);
     } else {
       final compRisk = map['compositeRiskDistribution'] is Map ? Map<String, dynamic>.from(map['compositeRiskDistribution'] as Map) : <String, dynamic>{};
-      final low = (compRisk['greenCount'] as num?)?.toInt() ?? 45;
-      final mod = (compRisk['yellowCount'] as num?)?.toInt() ?? 25;
-      final high = (compRisk['orangeCount'] as num?)?.toInt() ?? 10;
-      final crit = (compRisk['redCount'] as num?)?.toInt() ?? 4;
+      final low = (compRisk['greenCount'] as num?)?.toInt() ?? 0;
+      final mod = (compRisk['yellowCount'] as num?)?.toInt() ?? 0;
+      final high = (compRisk['orangeCount'] as num?)?.toInt() ?? 0;
+      final crit = (compRisk['redCount'] as num?)?.toInt() ?? 0;
       riskSummary = RiskSummary(
-        totalWoredas: (map['monitoredWoredas'] ?? (low + mod + high + crit)) as int,
+        totalWoredas: (map['monitoredWoredas'] ?? (low + mod + high + crit)) as int? ?? 0,
         lowRisk: low,
         moderateRisk: mod,
         highRisk: high,
         criticalRisk: crit,
-        affectedPopulation: 12000,
+        affectedPopulation: ((map['affectedPopulation'] ?? 0) as num).toInt(),
       );
     }
 
@@ -53,13 +53,14 @@ class DashboardData {
       weatherSummary = WeatherSummary.fromJson(map['weatherSummary'] as Map<String, dynamic>);
     } else {
       final vigor = map['nationalSeasonVigor'] is Map ? Map<String, dynamic>.from(map['nationalSeasonVigor'] as Map) : <String, dynamic>{};
+      final curWeather = map['currentWeather'] is Map ? Map<String, dynamic>.from(map['currentWeather'] as Map) : <String, dynamic>{};
       weatherSummary = WeatherSummary(
         current: CurrentWeather(
-          temperature: 24.5,
-          humidity: 58.0,
-          rainfall: 12.0,
-          windSpeed: 8.5,
-          condition: (vigor['condition'] ?? 'Favorable') as String?,
+          temperature: ((curWeather['temperature'] ?? map['temperature'] ?? 0.0) as num).toDouble(),
+          humidity: ((curWeather['humidity'] ?? map['humidity'] ?? 0.0) as num).toDouble(),
+          rainfall: ((curWeather['rainfall'] ?? map['rainfall'] ?? 0.0) as num).toDouble(),
+          windSpeed: ((curWeather['windSpeed'] ?? map['windSpeed'] ?? 0.0) as num).toDouble(),
+          condition: (curWeather['condition'] ?? vigor['condition'] ?? map['weatherCondition']) as String?,
         ),
       );
     }
@@ -71,7 +72,7 @@ class DashboardData {
       final totalFarms = ((map['totalFarmsRegistered'] ?? map['totalFarms'] ?? map['farmsCount'] ?? 0) as num).toInt();
       final farmsAtRisk = ((map['activeEarlyWarnings'] ?? map['alertsCount'] ?? 0) as num).toInt();
       final activeSensors = ((map['activeSensors'] ?? map['sensorsCount'] ?? 0) as num).toInt();
-      final totalArea = ((map['totalAreaHectares'] ?? map['monitoredHectares'] ?? (totalFarms * 2.5)) as num).toDouble();
+      final totalArea = ((map['totalAreaHectares'] ?? map['monitoredHectares'] ?? 0.0) as num).toDouble();
       farmSummary = FarmSummary(
         totalFarms: totalFarms,
         totalArea: totalArea,
@@ -85,9 +86,9 @@ class DashboardData {
       systemHealth = SystemHealth.fromJson(map['systemHealth'] as Map<String, dynamic>);
     } else {
       systemHealth = SystemHealth(
-        status: 'OPERATIONAL',
+        status: (map['systemStatus'] ?? map['status'] ?? 'OPERATIONAL').toString(),
         activeUsers: ((map['totalUsers'] ?? map['usersCount'] ?? 0) as num).toInt(),
-        dataPointsToday: ((map['totalTelemetryPoints'] ?? 120) as num).toInt(),
+        dataPointsToday: ((map['totalTelemetryPoints'] ?? 0) as num).toInt(),
         apiHealthy: true,
       );
     }
