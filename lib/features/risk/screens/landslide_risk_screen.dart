@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/error_view.dart';
+import '../../../core/widgets/loading_indicator.dart';
 import 'disaster_intelligence_screen.dart';
 
 class LandslideRiskScreen extends ConsumerStatefulWidget {
@@ -11,27 +13,60 @@ class LandslideRiskScreen extends ConsumerStatefulWidget {
 }
 
 class _LandslideRiskScreenState extends ConsumerState<LandslideRiskScreen> {
-  EthiopiaWoredaPreset _selectedWoreda = woredaPresets[2]; // Default Debre Berhan / Escarpment
+  EthiopiaWoredaPreset? _selectedWoreda;
 
   @override
   Widget build(BuildContext context) {
+    final presetsAsync = ref.watch(woredaPresetsProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Landslide Geotechnical Model Calculations
-    final slope = _selectedWoreda.slope;
-    final soilMoisture = _selectedWoreda.lat > 9.0 ? 74.0 : 42.0; // Saturation %
-    final dailyRain = _selectedWoreda.lat > 9.0 ? 38.5 : 12.0; // mm/day
+    return presetsAsync.when(
+      loading: () => Scaffold(
+        appBar: AppBar(title: const Text('Landslides & Slope Mudflows')),
+        body: const AppLoadingIndicator(message: 'Loading woredas...'),
+      ),
+      error: (err, _) => Scaffold(
+        appBar: AppBar(title: const Text('Landslides & Slope Mudflows')),
+        body: AppErrorView(
+          title: 'Failed to load woredas',
+          message: err.toString(),
+          onRetry: () => ref.invalidate(woredaPresetsProvider),
+        ),
+      ),
+      data: (presets) {
+        if (presets.isEmpty) {
+          return Scaffold(
+            appBar: AppBar(title: const Text('Landslides & Slope Mudflows')),
+            body: const AppErrorView(title: 'No woredas', message: 'No woredas found.'),
+          );
+        }
+        final selected = _selectedWoreda ?? presets.first;
+        if (_selectedWoreda == null) {
+          Future.microtask(() => setState(() => _selectedWoreda = presets.first));
+        }
+        final predictionAsync = ref.watch(disasterPredictionProvider(selected));
+        return _buildLandslideScaffold(context, predictionAsync, presets, selected, isDark);
+      },
+    );
+  }
 
-    // Infinite Slope Factor of Safety: FS = (c + (gamma * z - gamma_w * h) * cos^2(theta) * tan(phi)) / (gamma * z * sin(theta) * cos(theta))
-    final slopeAngleRad = (slope / 100) * 0.9;
-    final double fs = (1.85 / (0.8 + slopeAngleRad * 1.5 + (soilMoisture / 100) * 0.9)).clamp(0.65, 2.5);
-
-    final isCritical = fs < 1.15;
-    final isModerate = fs < 1.5;
-
+  Widget _buildLandslideScaffold(
+    BuildContext context,
+    AsyncValue<Map<String, dynamic>> predictionAsync,
+    List<EthiopiaWoredaPreset> presets,
+    EthiopiaWoredaPreset selected,
+    bool isDark,
+  ) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Landslides & Slope Mudflows'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Refresh Geotechnical Data',
+            onPressed: () => ref.invalidate(disasterPredictionProvider(selected)),
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -50,8 +85,8 @@ class _LandslideRiskScreenState extends ConsumerState<LandslideRiskScreen> {
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<EthiopiaWoredaPreset>(
                       isExpanded: true,
-                      value: _selectedWoreda,
-                      items: woredaPresets.map((preset) {
+                      value: selected,
+                      items: presets.map((preset) {
                         return DropdownMenuItem<EthiopiaWoredaPreset>(
                           value: preset,
                           child: Text(
@@ -75,25 +110,58 @@ class _LandslideRiskScreenState extends ConsumerState<LandslideRiskScreen> {
 
           // Main Body
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                // 1. Landslide Factor of Safety Badge
-                _buildFactorOfSafetyBadge(fs, isCritical, isModerate),
-                const SizedBox(height: 16),
+            child: predictionAsync.when(
+              data: (data) {
+                final pillars = (data['detailedPillars'] as Map<String, dynamic>?) ?? {};
+                final landslides = (pillars['landslides'] as Map<String, dynamic>?) ?? {};
+                final soilDegradation = (pillars['soilDegradation'] as Map<String, dynamic>?) ?? {};
+                final topography = (soilDegradation['topography'] as Map<String, dynamic>?) ?? {};
 
-                // 2. Geotechnical Parameters Card
-                _buildGeotechnicalParametersCard(slope, soilMoisture, dailyRain),
-                const SizedBox(height: 16),
+                final double slope = (topography['slopePercent'] as num?)?.toDouble() ??
+                    ((landslides['slopePercent'] as num?)?.toDouble() ?? 8.0);
+                final double soilMoisture = (landslides['soilSaturationPct'] as num?)?.toDouble() ?? 45.0;
+                final double dailyRain = (soilMoisture * 0.55).clamp(5.0, 75.0);
+                final String riskLevel = (landslides['riskLevel'] as String?) ?? 'LOW';
 
-                // 3. Ethiopian Highland High-Risk Escarpments Monitor
-                _buildHighRiskEscarpmentCard(),
-                const SizedBox(height: 16),
+                // Infinite Slope Factor of Safety: FS
+                final slopeAngleRad = (slope / 100) * 0.9;
+                final double fs = (1.85 / (0.8 + slopeAngleRad * 1.5 + (soilMoisture / 100) * 0.9)).clamp(0.65, 2.5);
 
-                // 4. Slope Stabilization & Drainage Protocols
-                _buildStabilizationProtocolsCard(),
-                const SizedBox(height: 24),
-              ],
+                final isCritical = fs < 1.15 || riskLevel.contains('CRITICAL');
+                final isModerate = fs < 1.5 || riskLevel.contains('MODERATE');
+
+                return ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    // 1. Landslide Factor of Safety Badge
+                    _buildFactorOfSafetyBadge(fs, isCritical, isModerate),
+                    const SizedBox(height: 16),
+
+                    // 2. Geotechnical Parameters Card
+                    _buildGeotechnicalParametersCard(slope, soilMoisture, dailyRain),
+                    const SizedBox(height: 16),
+
+                    // 3. Ethiopian Highland High-Risk Escarpments Monitor
+                    _buildHighRiskEscarpmentCard(),
+                    const SizedBox(height: 16),
+
+                    // 4. Slope Stabilization & Drainage Protocols
+                    _buildStabilizationProtocolsCard(),
+                    const SizedBox(height: 24),
+                  ],
+                );
+              },
+              loading: () => const Center(
+                child: AppLoadingIndicator(
+                  message: 'Analyzing slope stability, DEM & pore water saturation...',
+                  color: Colors.blueGrey,
+                ),
+              ),
+              error: (err, _) => AppErrorView(
+                title: 'Landslide Model Error',
+                message: err.toString(),
+                onRetry: () => ref.invalidate(disasterPredictionProvider(selected)),
+              ),
             ),
           ),
         ],
@@ -156,7 +224,7 @@ class _LandslideRiskScreenState extends ConsumerState<LandslideRiskScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _buildFsStat(fs.toStringAsFixed(2), 'Factor of Safety', 'Limit: 1.0 (Failure)'),
-              _buildFsStat('${_selectedWoreda.slope}%', 'Terrain Slope', 'DEM 30m Elevation'),
+              _buildFsStat('${_selectedWoreda?.slope ?? 0.0}%', 'Terrain Slope', 'DEM 30m Elevation'),
               _buildFsStat(isCritical ? 'CRITICAL' : (isModerate ? 'WATCH' : 'SAFE'), 'Risk Alert', 'Sentinel-1 SAR'),
             ],
           ),
