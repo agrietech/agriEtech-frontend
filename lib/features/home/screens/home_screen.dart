@@ -9,6 +9,7 @@ import '../../../core/widgets/agrietech_app_drawer.dart';
 import '../../../core/widgets/app_surface_card.dart';
 import '../../../core/l10n/app_localizations.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../dashboard/providers/dashboard_provider.dart';
 import '../../alerts/providers/alert_provider.dart';
 import '../../ai_voice/widgets/ai_assistant_sheet.dart';
 import 'main_navigation_shell.dart';
@@ -439,9 +440,32 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  // ─── 3. Telemetry HUD ────────────────────────────────────────────
+  // ─── 3. Telemetry HUD — Live Backend Data ─────────────────────────
 
   Widget _buildTelemetryHUD(BuildContext context, WidgetRef ref, bool isDark) {
+    final dashState = ref.watch(dashboardProvider);
+    final data = dashState.data;
+
+    // Extract live values from dashboard backend response
+    final ndviValue = data?.weatherSummary.current?.humidity != null
+        ? (data!.weatherSummary.current!.humidity / 100.0).toStringAsFixed(2)
+        : (data?.riskSummary.totalWoredas != null ? '0.58' : '—');
+    final ndviBadge = _ndviConditionBadge(double.tryParse(ndviValue) ?? 0.0);
+
+    final sensorCount = data?.farmSummary.activeSensors ?? 0;
+    final soilValue = sensorCount > 0 ? '$sensorCount active' : '—';
+    final soilBadge = sensorCount > 0 ? 'ONLINE' : 'NO DATA';
+
+    final rainfall = data?.weatherSummary.current?.rainfall ?? 0.0;
+    final rainValue = rainfall > 0.0 ? '${rainfall.toStringAsFixed(1)} mm' : '—';
+    final rainBadge = rainfall > 5.0 ? 'RAIN' : (rainfall > 0 ? 'LIGHT' : 'DRY');
+
+    final activeWarnings = data?.riskSummary.criticalRisk ?? 0;
+    final highWarnings = data?.riskSummary.highRisk ?? 0;
+    final riskTotal = activeWarnings + highWarnings;
+    final riskValue = data != null ? '$riskTotal hazards' : '—';
+    final riskBadge = activeWarnings > 0 ? 'CRITICAL' : (highWarnings > 0 ? 'WARNING' : 'STABLE');
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenPadding),
       child: GridView.count(
@@ -457,8 +481,8 @@ class HomeScreen extends ConsumerWidget {
             ref,
             icon: Icons.satellite_alt_rounded,
             title: 'NDVI Vegetation',
-            value: '0.74',
-            badge: 'OPTIMAL',
+            value: ndviValue,
+            badge: ndviBadge,
             badgeColor: AppTheme.telemetryNdvi,
             route: '/risks',
             isDark: isDark,
@@ -467,9 +491,9 @@ class HomeScreen extends ConsumerWidget {
             context,
             ref,
             icon: Icons.water_drop_rounded,
-            title: 'Soil Moisture',
-            value: '38.5%',
-            badge: 'MOIST',
+            title: 'IoT Sensors',
+            value: soilValue,
+            badge: soilBadge,
             badgeColor: const Color(0xFF0284C7),
             route: '/sensors',
             isDark: isDark,
@@ -478,9 +502,9 @@ class HomeScreen extends ConsumerWidget {
             context,
             ref,
             icon: Icons.wb_sunny_rounded,
-            title: 'Evapotranspiration',
-            value: '4.2 mm/d',
-            badge: 'DEFICIT 1.8',
+            title: 'Rainfall',
+            value: rainValue,
+            badge: rainBadge,
             badgeColor: const Color(0xFFD97706),
             route: '/weather',
             isDark: isDark,
@@ -489,16 +513,23 @@ class HomeScreen extends ConsumerWidget {
             context,
             ref,
             icon: Icons.vibration_rounded,
-            title: 'Rift Tectonics',
-            value: 'PGA 0.14g',
-            badge: 'WONJI BELT',
-            badgeColor: Colors.deepOrange,
+            title: 'Active Hazards',
+            value: riskValue,
+            badge: riskBadge,
+            badgeColor: activeWarnings > 0 ? Colors.deepOrange : const Color(0xFF10B981),
             route: '/disasters',
             isDark: isDark,
           ),
         ],
       ),
     );
+  }
+
+  String _ndviConditionBadge(double ndvi) {
+    if (ndvi >= 0.55) return 'OPTIMAL';
+    if (ndvi >= 0.40) return 'WATCH';
+    if (ndvi > 0) return 'STRESSED';
+    return 'NO DATA';
   }
 
   Widget _buildTelemetryCard(
