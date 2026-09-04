@@ -230,7 +230,7 @@ class _AiAssistantSheetState extends ConsumerState<AiAssistantSheet>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            isAmharic ? 'የግብርና AI ድምፅ ረዳት' : 'AgriEtech AI Voice Assistant',
+                            isAmharic ? 'የኢትዮ ፋርም AI ድምፅ ረዳት' : 'EthioFarm AI Voice Assistant',
                             style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
