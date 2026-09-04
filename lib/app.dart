@@ -15,7 +15,7 @@ class AgriEtechApp extends ConsumerWidget {
     final currentLang = ref.watch(appLocaleProvider);
 
     return MaterialApp.router(
-      title: 'AgriEtech',
+      title: 'EthioFarm',
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.light,
