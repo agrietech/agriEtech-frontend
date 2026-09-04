@@ -514,7 +514,7 @@ class _EthiopiaGisMapWidgetState extends ConsumerState<EthiopiaGisMapWidget> {
             style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor),
             onPressed: () {
               Navigator.pop(ctx);
-              context.push('/volcanic-hazard');
+              context.push('/volcanic-hazards');
             },
             child: const Text('Volcano Intel', style: TextStyle(color: Colors.white)),
           ),
