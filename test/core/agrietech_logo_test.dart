@@ -18,7 +18,7 @@ void main() {
 
       expect(find.byType(AgriEtechLogo), findsOneWidget);
       expect(find.byType(RichText), findsWidgets);
-      expect(find.text('EARLY WARNING PLATFORM'), findsOneWidget);
+      expect(find.text('SMART FARMING & EARLY WARNING'), findsOneWidget);
     });
 
     testWidgets('renders horizontal variant for app bar with 3-segment wordmark', (tester) async {
