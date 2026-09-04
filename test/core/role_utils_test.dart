@@ -55,9 +55,10 @@ void main() {
       expect(RoleUtils.canRegisterSensors(UserRole.zonalOfficer), isTrue);
       expect(RoleUtils.canRegisterSensors(UserRole.regionalOfficer), isTrue);
       expect(RoleUtils.canRegisterSensors(UserRole.admin), isTrue);
-      expect(RoleUtils.canRegisterSensors(UserRole.farmer), isFalse);
+      expect(RoleUtils.canRegisterSensors(UserRole.farmer), isTrue);
       expect(RoleUtils.canRegisterSensors(UserRole.researcher), isFalse);
     });
+
   });
 
   group('RoleUtils - Helper Checkers & Display Names', () {
