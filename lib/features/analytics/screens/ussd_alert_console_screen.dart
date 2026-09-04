@@ -97,7 +97,7 @@ class _UssdAlertConsoleScreenState extends ConsumerState<UssdAlertConsoleScreen>
     } catch (_) {
       // Local fallback simulation if offline
       _handleUssdResponse(
-        'CON AgriEtech Ethiopia (*212#)\n'
+        'CON EthioFarm Ethiopia (*212#)\n'
         '1. Weather Forecast\n'
         '2. Drought & Rain Status\n'
         '3. Flood Alert Status\n'
@@ -166,7 +166,7 @@ class _UssdAlertConsoleScreenState extends ConsumerState<UssdAlertConsoleScreen>
     } else if (input == '6') {
       _handleUssdResponse('CON Select Language / ቋንቋ ይምረጡ:\n1. አማርኛ (Amharic)\n2. Afaan Oromoo\n3. English');
     } else {
-      _handleUssdResponse('END Thank you for using AgriEtech (*212#). Response submitted to Development Agents.');
+      _handleUssdResponse('END Thank you for using EthioFarm (*212#). Response submitted to Development Agents.');
     }
   }
 
@@ -236,7 +236,7 @@ class _UssdAlertConsoleScreenState extends ConsumerState<UssdAlertConsoleScreen>
                   child: SingleChildScrollView(
                     child: Text(
                       _ussdSessionHistory.isEmpty
-                          ? 'Ready.\nDial *212# to launch AgriEtech Farmer Gateway.'
+                          ? 'Ready.\nDial *212# to launch EthioFarm Farmer Gateway.'
                           : _ussdSessionHistory,
                       style: const TextStyle(
                         fontFamily: 'monospace',
