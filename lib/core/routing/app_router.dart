@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../utils/role_utils.dart';
+import '../widgets/error_view.dart';
 import '../../features/auth/screens/splash_screen.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/register_screen.dart';
@@ -239,6 +240,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const VolcanicHazardScreen(),
       ),
       GoRoute(
+        path: '/volcanic-hazard',
+        builder: (context, state) => const VolcanicHazardScreen(),
+      ),
+      GoRoute(
         path: '/ussd-console',
         builder: (context, state) => const UssdAlertConsoleScreen(),
       ),
@@ -291,5 +296,20 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const AnalyticsScreen(),
       ),
     ],
+    errorBuilder: (context, state) => Scaffold(
+      appBar: AppBar(
+        title: const Text('Page Not Found'),
+        elevation: 0,
+      ),
+      body: Center(
+        child: AppErrorView(
+          icon: Icons.explore_off_rounded,
+          title: 'Page Not Found',
+          message: 'The requested page (${state.uri.toString()}) does not exist or has been moved.',
+          actionLabel: 'Go to Home',
+          onRetry: () => context.go('/home'),
+        ),
+      ),
+    ),
   );
 });
