@@ -172,9 +172,13 @@ class _CreateDiagnosisScreenState extends ConsumerState<CreateDiagnosisScreen> {
     final effectiveCrop = _getEffectiveCrop();
     final base64Image = _selectedImageBytes != null ? base64Encode(_selectedImageBytes!) : '';
 
+    final farmsState = ref.read(farmsProvider);
+    final fallbackFarmId = farmsState.hasFarms ? farmsState.farms.first.id : 'farm_demo_01';
+    final targetFarmId = _selectedFarmId ?? fallbackFarmId;
+
     try {
       final request = CreateDiagnosisRequest(
-        farmId: _selectedFarmId ?? 'farm_demo_01',
+        farmId: targetFarmId,
         imageBase64: base64Image,
         imageBytes: _selectedImageBytes,
         cropType: effectiveCrop,
@@ -188,7 +192,7 @@ class _CreateDiagnosisScreenState extends ConsumerState<CreateDiagnosisScreen> {
       }
     } catch (e) {
       final payload = {
-        'farmId': _selectedFarmId ?? 'farm_demo_01',
+        'farmId': targetFarmId,
         'imageBase64': base64Image,
         'cropType': effectiveCrop,
       };
