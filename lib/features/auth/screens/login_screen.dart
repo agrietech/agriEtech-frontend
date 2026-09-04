@@ -508,7 +508,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            'New to AgriEtech? ',
+                            'New to EthioFarm? ',
                             style: TextStyle(
                               fontSize: 13.5,
                               color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF6B7280),
