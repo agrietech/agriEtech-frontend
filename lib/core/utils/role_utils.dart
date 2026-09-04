@@ -32,7 +32,8 @@ class RoleUtils {
 
   /// Check if user can register IoT sensors
   static bool canRegisterSensors(UserRole? role) {
-    return role == UserRole.developmentAgent ||
+    return role == UserRole.farmer ||
+        role == UserRole.developmentAgent ||
         role == UserRole.woredaOfficer ||
         role == UserRole.zonalOfficer ||
         role == UserRole.regionalOfficer ||
@@ -41,12 +42,14 @@ class RoleUtils {
 
   /// Check if user can manage sensors
   static bool canManageSensors(UserRole? role) {
-    return role == UserRole.developmentAgent ||
+    return role == UserRole.farmer ||
+        role == UserRole.developmentAgent ||
         role == UserRole.woredaOfficer ||
         role == UserRole.zonalOfficer ||
         role == UserRole.regionalOfficer ||
         role == UserRole.admin;
   }
+
 
   /// Check if user can create crop disease diagnoses
   static bool canCreateDiagnosis(UserRole? role) {
