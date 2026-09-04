@@ -61,8 +61,15 @@ class DioClient {
           // Log error
           AppLogger.error('API Error: ${error.message}', error.error, error.stackTrace);
 
-          // Handle 401 Unauthorized
-          if (error.response?.statusCode == 401) {
+          // Handle 401 Unauthorized (exclude auth endpoints to avoid infinite refresh loops & deadlocks)
+          final path = error.requestOptions.path;
+          final isAuthEndpoint = path.contains(ApiConstants.login) ||
+              path.contains(ApiConstants.register) ||
+              path.contains(ApiConstants.refreshToken) ||
+              path.contains(ApiConstants.forgotPassword) ||
+              path.contains(ApiConstants.resetPassword);
+
+          if (error.response?.statusCode == 401 && !isAuthEndpoint) {
             final refreshed = await _refreshToken();
             if (refreshed) {
               try {
