@@ -429,7 +429,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     } else if (authState.isAdmin) {
       return 'National platform administration and system oversight';
     }
-    return 'Welcome to AgriEtech';
+    return 'Welcome to EthioFarm';
   }
 
   Widget _buildFarmSummaryCard(BuildContext context, FarmSummary farmSummary) {
