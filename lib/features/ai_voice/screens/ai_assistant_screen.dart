@@ -204,7 +204,7 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    isAmharic ? 'የአግሪቴክ AI አማካሪ' : 'AgriEtech AI Advisor',
+                    isAmharic ? 'የኢትዮ ፋርም AI አማካሪ' : 'EthioFarm AI Advisor',
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                   Text(
@@ -355,7 +355,7 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              isAmharic ? 'የግብርና AI ረዳትዎን ይጠይቁ' : 'Ask AgriEtech AI Agronomist',
+                              isAmharic ? 'የግብርና AI ረዳትዎን ይጠይቁ' : 'Ask EthioFarm AI Agronomist',
                               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                             ),
                             const SizedBox(height: 8),
