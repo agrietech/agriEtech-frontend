@@ -1,11 +1,11 @@
 {
-    "name": "agriEtech",
-    "short_name": "agriEtech",
+    "name": "EthioFarm - Smart Farming & Early Warning",
+    "short_name": "EthioFarm",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#1B5E20",
     "theme_color": "#1B5E20",
-    "description": "AgriEtech Multi-Hazard Early Warning Platform",
+    "description": "EthioFarm Multi-Hazard Early Warning & Smart Farming Platform",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
