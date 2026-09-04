@@ -42,6 +42,7 @@ void main() {
       expect(state.isDevelopmentAgent, isFalse);
       expect(state.canCreateAlerts, isFalse);
       expect(state.canAccessAllData, isFalse);
+      expect(state.canManageSensors, isTrue);
     });
 
     test('Woreda Officer and Admin can create alerts and access data', () {
