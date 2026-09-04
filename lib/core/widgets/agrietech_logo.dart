@@ -173,51 +173,38 @@ class AgriEtechLogo extends StatelessWidget {
     );
   }
 
-  /// Builds the 3-segment typography wordmark: [agri] + [E] + [tech]
+  /// Builds the typography wordmark: [Ethio] + [Farm]
   Widget _buildWordmark({
     required double fontSize,
     required bool isDark,
   }) {
-    // 1. "agri" - Deep Organic Forest Green
-    final agriColor = customTextColor ?? (isDark ? const Color(0xFFC8E6C9) : const Color(0xFF1B5E20));
+    // 1. "Ethio" - Deep Organic Forest Green
+    final ethioColor = customTextColor ?? (isDark ? const Color(0xFFC8E6C9) : const Color(0xFF1B5E20));
 
-    // 2. "E" - Golden Amber Innovation Accent
-    final eColor = customEColor ?? (isDark ? const Color(0xFFFFB74D) : const Color(0xFFE65100));
-
-    // 3. "tech" - Vibrant Agricultural Emerald Green
-    final techColor = customTextColor ?? (isDark ? const Color(0xFF81C784) : const Color(0xFF2E7D32));
+    // 2. "Farm" - Golden Amber Innovation Accent
+    final farmColor = customEColor ?? (isDark ? const Color(0xFFFFB74D) : const Color(0xFFE65100));
 
     return RichText(
       text: TextSpan(
         children: [
-          // Segment 1: agri
+          // Segment 1: Ethio
           TextSpan(
-            text: 'agri',
-            style: TextStyle(
-              fontSize: fontSize,
-              fontWeight: FontWeight.w700,
-              color: agriColor,
-              letterSpacing: -0.6,
-            ),
-          ),
-          // Segment 2: E (Highlighted capital)
-          TextSpan(
-            text: 'E',
-            style: TextStyle(
-              fontSize: fontSize * 1.06,
-              fontWeight: FontWeight.w900,
-              color: eColor,
-              letterSpacing: -0.2,
-            ),
-          ),
-          // Segment 3: tech
-          TextSpan(
-            text: 'tech',
+            text: 'Ethio',
             style: TextStyle(
               fontSize: fontSize,
               fontWeight: FontWeight.w800,
-              color: techColor,
+              color: ethioColor,
               letterSpacing: -0.6,
+            ),
+          ),
+          // Segment 2: Farm
+          TextSpan(
+            text: 'Farm',
+            style: TextStyle(
+              fontSize: fontSize,
+              fontWeight: FontWeight.w900,
+              color: farmColor,
+              letterSpacing: -0.3,
             ),
           ),
         ],
@@ -227,7 +214,7 @@ class AgriEtechLogo extends StatelessWidget {
 
   /// Builds the subtitle tagline badge
   Widget _buildTaglineBadge(bool isDark) {
-    final tagline = customTagline ?? 'EARLY WARNING PLATFORM';
+    final tagline = customTagline ?? 'SMART FARMING & EARLY WARNING';
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
       decoration: BoxDecoration(
