@@ -271,7 +271,7 @@ class _AiLeafScannerModalState extends State<AiLeafScannerModal>
       builder: (ctx) => AlertDialog(
         title: const Text('Camera Permission Needed'),
         content: const Text(
-          'AgriEtech needs camera access to scan and diagnose plant leaves. Please enable camera access in app settings.',
+          'EthioFarm needs camera access to scan and diagnose plant leaves. Please enable camera access in app settings.',
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
