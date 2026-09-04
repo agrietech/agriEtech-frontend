@@ -4,6 +4,7 @@ import '../../../core/repositories/auth_repository.dart';
 import '../../../core/services/notification_service.dart';
 import '../../../core/error/app_error.dart';
 import '../../../core/utils/logger.dart';
+import '../../../core/utils/role_utils.dart';
 
 /// Authentication state
 class AuthState {
@@ -101,9 +102,7 @@ class AuthState {
   bool get canViewAggregateData =>
       isZonalOfficer || isRegionalOfficer || isResearcher || isAdmin;
 
-  bool get canManageSensors =>
-      isDevelopmentAgent || isWoredaOfficer || isZonalOfficer ||
-      isRegionalOfficer || isAdmin;
+  bool get canManageSensors => RoleUtils.canManageSensors(user?.role);
 
   bool get canExportData =>
       isResearcher || isZonalOfficer || isRegionalOfficer ||
