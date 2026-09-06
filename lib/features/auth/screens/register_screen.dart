@@ -8,6 +8,7 @@ import '../../../core/error/app_error.dart';
 import '../../../core/widgets/agrietech_logo.dart';
 import '../../boundaries/repositories/boundary_local_cache.dart';
 import '../../boundaries/providers/boundary_provider.dart';
+import 'verify_phone_dialog.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -121,64 +122,96 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             );
 
         if (mounted) {
-          final isAuth = ref.read(authProvider).isAuthenticated;
-          if (isAuth) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Row(
-                  children: [
-                    Icon(Icons.check_circle_outline, color: Colors.white, size: 18),
-                    SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'Account registered successfully',
-                        style: TextStyle(fontWeight: FontWeight.w500),
+          final phoneInput = _phoneController.text.trim();
+          if (phoneInput.isNotEmpty) {
+            // Enterprise Out-of-Band Phone Ownership Verification Flow
+            await VerifyPhoneDialog.show(
+              context,
+              phone: phoneInput,
+              onSuccess: () {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Row(
+                        children: [
+                          Icon(Icons.verified, color: Colors.white, size: 18),
+                          SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'Phone verified! Welcome to EthioFarm.',
+                              style: TextStyle(fontWeight: FontWeight.w500),
+                            ),
+                          ),
+                        ],
                       ),
+                      backgroundColor: Color(0xFF1B5E20),
+                      duration: Duration(seconds: 3),
                     ),
-                  ],
-                ),
-                backgroundColor: Color(0xFF1B5E20),
-                duration: Duration(seconds: 3),
-              ),
+                  );
+                  context.go('/home');
+                }
+              },
             );
-            context.go('/home');
           } else {
-            showDialog(
-              context: context,
-              barrierDismissible: false,
-              builder: (ctx) => AlertDialog(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                title: const Row(
-                  children: [
-                    Icon(Icons.check_circle_outline, color: Color(0xFF1B5E20), size: 24),
-                    SizedBox(width: 10),
-                    Text('Registration Successful', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 17)),
+            final isAuth = ref.read(authProvider).isAuthenticated;
+            if (isAuth) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Row(
+                    children: [
+                      Icon(Icons.check_circle_outline, color: Colors.white, size: 18),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Account registered successfully',
+                          style: TextStyle(fontWeight: FontWeight.w500),
+                        ),
+                      ),
+                    ],
+                  ),
+                  backgroundColor: Color(0xFF1B5E20),
+                  duration: Duration(seconds: 3),
+                ),
+              );
+              context.go('/home');
+            } else {
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (ctx) => AlertDialog(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  title: const Row(
+                    children: [
+                      Icon(Icons.check_circle_outline, color: Color(0xFF1B5E20), size: 24),
+                      SizedBox(width: 10),
+                      Text('Registration Successful', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 17)),
+                    ],
+                  ),
+                  content: Text(
+                    isNonFarmer
+                        ? 'Your platform credential has been registered for $_selectedRole. You can now sign in.'
+                        : 'Your account has been created. You can now sign in.',
+                    style: const TextStyle(fontSize: 13.5, height: 1.4),
+                  ),
+                  actions: [
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(ctx).pop();
+                        context.go('/login');
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF1B5E20),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                      ),
+                      child: const Text('Sign in'),
+                    ),
                   ],
                 ),
-                content: Text(
-                  isNonFarmer
-                      ? 'Your platform credential has been registered for $_selectedRole. You can now sign in with your phone number.'
-                      : 'Your account has been created. You can now sign in with your mobile phone number.',
-                  style: const TextStyle(fontSize: 13.5, height: 1.4),
-                ),
-                actions: [
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(ctx).pop();
-                      context.go('/login');
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1B5E20),
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                    ),
-                    child: const Text('Sign in'),
-                  ),
-                ],
-              ),
-            );
+              );
+            }
           }
         }
       } on ValidationError catch (e) {
@@ -257,14 +290,14 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             'id': 'WOREDA_OFFICER',
             'title': 'Woreda Agricultural Officer',
             'amharic': 'የወረዳ ግብርና መኮንን',
-            'desc': 'Woreda desk officer managing early warning alerts',
+            'desc': 'Woreda desk officer managing smart alerts',
             'icon': Icons.admin_panel_settings_outlined,
           },
           {
             'id': 'ZONAL_OFFICER',
             'title': 'Zonal Agricultural Officer',
             'amharic': 'የዞን ግብርና መኮንን',
-            'desc': 'Zonal desk officer coordinating woreda early warnings',
+            'desc': 'Zonal desk officer coordinating woreda smart alerts',
             'icon': Icons.domain_outlined,
           },
           {
@@ -665,7 +698,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     children: [
                       // Brand Header
                       const Center(
-                        child: AgriEtechLogo.horizontal(
+                        child: EthioFarmLogo.horizontal(
                           size: 38,
                           showTagline: false,
                         ),
@@ -738,7 +771,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             // Full Name
-                            _buildFieldLabel('Full name', isDark),
+                            _buildFieldLabel('Full name', isDark, isRequired: true),
                             TextFormField(
                               controller: _fullNameController,
                               textInputAction: TextInputAction.next,
@@ -759,7 +792,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             const SizedBox(height: 14),
 
                             // Mobile Number
-                            _buildFieldLabel('Mobile phone number', isDark),
+                            _buildFieldLabel('Mobile phone number', isDark, isRequired: true),
                             TextFormField(
                               controller: _phoneController,
                               keyboardType: TextInputType.phone,
@@ -857,7 +890,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             const SizedBox(height: 14),
 
                             // Password
-                            _buildFieldLabel('Password', isDark),
+                            _buildFieldLabel('Password', isDark, isRequired: true),
                             TextFormField(
                               controller: _passwordController,
                               obscureText: _obscurePassword,
@@ -931,7 +964,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             const SizedBox(height: 14),
 
                             // Confirm Password
-                            _buildFieldLabel('Confirm password', isDark),
+                            _buildFieldLabel('Confirm password', isDark, isRequired: true),
                             TextFormField(
                               controller: _confirmPasswordController,
                               obscureText: _obscureConfirmPassword,
@@ -1030,14 +1063,14 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildFieldLabel('Role', isDark),
+                            _buildFieldLabel('Role', isDark, isRequired: true),
                             _buildRoleSelectorField(isDark),
 
                             // Dynamic Credential Fields (Only if non-farmer role is selected)
                             if (isNonFarmer) ...[
                               const SizedBox(height: 16),
                               // Organization Name
-                              _buildFieldLabel('Organization', isDark),
+                              _buildFieldLabel('Organization', isDark, isRequired: isNonFarmer),
                               TextFormField(
                                 controller: _organizationController,
                                 textInputAction: TextInputAction.next,
@@ -1058,7 +1091,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                               const SizedBox(height: 14),
 
                               // Official Staff ID / Badge Number
-                              _buildFieldLabel('Staff ID', isDark),
+                              _buildFieldLabel('Staff ID', isDark, isRequired: isNonFarmer),
                               TextFormField(
                                 controller: _staffIdController,
                                 textInputAction: TextInputAction.next,
@@ -1127,7 +1160,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             // Region
-                            _buildFieldLabel('Region', isDark),
+                            _buildFieldLabel('Region', isDark, isRequired: true),
                             DropdownButtonFormField<String>(
                               key: ValueKey('reg_$_selectedRegionId'),
                               initialValue: availableRegions.any((r) => r.id == _selectedRegionId) ? _selectedRegionId : null,
@@ -1157,8 +1190,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
                             // Zone
                             _buildFieldLabel(
-                              _selectedRole == 'REGIONAL_OFFICER' ? 'Zone (Regional authority)' : 'Zone',
+                              'Zone',
                               isDark,
+                              isRequired: _selectedRole != 'REGIONAL_OFFICER',
                             ),
                             DropdownButtonFormField<String>(
                               key: ValueKey('zone_${_selectedRegionId}_$_selectedZoneId'),
@@ -1200,10 +1234,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
                             // Woreda
                             _buildFieldLabel(
-                              (_selectedRole == 'REGIONAL_OFFICER' || _selectedRole == 'ZONAL_OFFICER')
-                                  ? 'Woreda (Optional)'
-                                  : 'Woreda',
+                              'Woreda',
                               isDark,
+                              isRequired: _selectedRole != 'REGIONAL_OFFICER' && _selectedRole != 'ZONAL_OFFICER',
                             ),
                             DropdownButtonFormField<String>(
                               key: ValueKey('woreda_${_selectedZoneId}_$_selectedWoredaId'),
@@ -1246,10 +1279,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
                             // Kebele
                             _buildFieldLabel(
-                              (_selectedRole == 'REGIONAL_OFFICER' || _selectedRole == 'ZONAL_OFFICER')
-                                  ? 'Kebele (Optional)'
-                                  : 'Kebele',
+                              'Kebele',
                               isDark,
+                              isRequired: false,
                             ),
                             TextFormField(
                               controller: _kebeleController,
@@ -1296,7 +1328,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildFieldLabel('Language', isDark),
+                            _buildFieldLabel('Language', isDark, isRequired: true),
                             _buildLanguageSelectorField(isDark),
                           ],
                         ),
@@ -1466,15 +1498,28 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     );
   }
 
-  Widget _buildFieldLabel(String label, bool isDark) {
+  Widget _buildFieldLabel(String label, bool isDark, {bool isRequired = false}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w500,
-          color: isDark ? const Color(0xFFD1D5DB) : const Color(0xFF374151),
+      child: RichText(
+        text: TextSpan(
+          text: label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: isDark ? const Color(0xFFD1D5DB) : const Color(0xFF374151),
+          ),
+          children: [
+            if (isRequired)
+              const TextSpan(
+                text: ' *',
+                style: TextStyle(
+                  color: Color(0xFFDC2626),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+          ],
         ),
       ),
     );

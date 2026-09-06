@@ -71,7 +71,7 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
       title: 'Development Agent (DA)',
       amharicTitle: 'የልማት ጣቢያ ባለሙያ',
       subtitle: 'Kebele farmer registries, field sensor deployment, and pest reports',
-      fullDescription: 'Authorizes field agents to register local smallholders, calibrate LoRaWAN IoT telemetry probes, and submit early warning pest reports.',
+      fullDescription: 'Authorizes field agents to register local smallholders, calibrate LoRaWAN IoT telemetry probes, and submit pest reports.',
       icon: Icons.support_agent_rounded,
       color: Color(0xFF0284C7),
       permissions: [
@@ -90,9 +90,9 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
       icon: Icons.admin_panel_settings_rounded,
       color: Color(0xFFD97706),
       permissions: [
-        'Issue authoritative early warning emergency alerts',
+        'Issue authoritative emergency smart alerts',
         'Trigger USSD *212# mass farmer broadcast',
-        'Access woreda multi-hazard spatial choropleth',
+        'Access woreda integrated spatial choropleth',
         'Manage woreda staff and field probe networks',
       ],
     ),
@@ -120,7 +120,7 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
       icon: Icons.account_balance_rounded,
       color: Color(0xFFDC2626),
       permissions: [
-        'Regional multi-hazard risk command center',
+        'Regional integrated risk command center',
         'USGS earthquake & volcano hazard monitoring',
         'Food security & yield prediction intelligence',
         'Authorize regional emergency relief protocols',
@@ -222,7 +222,7 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      drawer: const AgriEtechAppDrawer(),
+      drawer: const EthioFarmAppDrawer(),
       appBar: AppBar(
         title: const Text('Apply for Role', style: AppTypography.titleMedium),
         elevation: 0,
@@ -398,7 +398,13 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
                                   ? hierarchy.selectedRegion?.id
                                   : null,
                               decoration: InputDecoration(
-                                labelText: 'Region / ክልል *',
+                                label: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text('Region / ክልል'),
+                                    Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
+                                  ],
+                                ),
                                 prefixIcon: const Icon(Icons.public),
                                 border: const OutlineInputBorder(borderRadius: AppRadii.roundedMd),
                                 filled: true,
@@ -516,7 +522,13 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
                             TextFormField(
                               controller: _organizationController,
                               decoration: InputDecoration(
-                                labelText: 'Bureau / Institute *',
+                                label: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text('Bureau / Institute'),
+                                    Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
+                                  ],
+                                ),
                                 prefixIcon: const Icon(Icons.business_outlined),
                                 border: const OutlineInputBorder(borderRadius: AppRadii.roundedMd),
                                 filled: true,
@@ -540,7 +552,13 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
                               controller: _justificationController,
                               maxLines: 3,
                               decoration: InputDecoration(
-                                labelText: 'Role Scope *',
+                                label: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text('Role Scope'),
+                                    Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
+                                  ],
+                                ),
                                 prefixIcon: const Icon(Icons.description_outlined),
                                 border: const OutlineInputBorder(borderRadius: AppRadii.roundedMd),
                                 filled: true,

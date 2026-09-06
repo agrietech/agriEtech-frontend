@@ -148,7 +148,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     children: [
                       // Focused Brand Logo
                       const Center(
-                        child: AgriEtechLogo.stacked(
+                        child: EthioFarmLogo.stacked(
                           size: 80,
                           showTagline: false,
                         ),
@@ -242,7 +242,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             ],
 
                             // Mobile Number
-                            _buildFieldLabel('Mobile phone number', isDark),
+                            _buildFieldLabel('Mobile phone number', isDark, isRequired: true),
                             TextFormField(
                               controller: _phoneController,
                               keyboardType: TextInputType.phone,
@@ -320,7 +320,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             const SizedBox(height: 16),
 
                             // Password
-                            _buildFieldLabel('Password', isDark),
+                            _buildFieldLabel('Password', isDark, isRequired: true),
                             TextFormField(
                               controller: _passwordController,
                               obscureText: _obscurePassword,
@@ -538,15 +538,29 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
-  Widget _buildFieldLabel(String label, bool isDark) {
+  Widget _buildFieldLabel(String label, bool isDark, {bool isRequired = false}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w500,
-          color: isDark ? const Color(0xFFD1D5DB) : const Color(0xFF374151),
+      child: RichText(
+        text: TextSpan(
+          text: label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: isDark ? const Color(0xFFD1D5DB) : const Color(0xFF374151),
+          ),
+          children: isRequired
+              ? const [
+                  TextSpan(
+                    text: ' *',
+                    style: TextStyle(
+                      color: Color(0xFFDC2626),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                ]
+              : null,
         ),
       ),
     );

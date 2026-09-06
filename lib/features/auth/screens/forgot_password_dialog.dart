@@ -281,9 +281,15 @@ class _ForgotPasswordDialogState extends ConsumerState<ForgotPasswordDialog> {
                             fontWeight: FontWeight.bold,
                           ),
                           decoration: const InputDecoration(
-                            labelText: '6-Digit Reset Code (OTP)',
+                            label: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text('6-Digit Reset Code (OTP)'),
+                                Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
+                              ],
+                            ),
                             prefixIcon: Icon(Icons.pin_outlined),
-                            helperText: 'Enter the 6-digit number received in your email',
+                            helperText: 'Enter the 6-digit number received in your email or phone',
                           ),
                           validator: (val) {
                             if (val == null || val.trim().isEmpty) {
@@ -301,7 +307,13 @@ class _ForgotPasswordDialogState extends ConsumerState<ForgotPasswordDialog> {
                         TextFormField(
                           controller: _newPasswordController,
                           decoration: InputDecoration(
-                            labelText: 'New Password',
+                            label: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text('New Password'),
+                                Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
+                              ],
+                            ),
                             prefixIcon: const Icon(Icons.lock_outline),
                             suffixIcon: IconButton(
                               icon: Icon(
@@ -333,7 +345,13 @@ class _ForgotPasswordDialogState extends ConsumerState<ForgotPasswordDialog> {
                         TextFormField(
                           controller: _identifierController,
                           decoration: const InputDecoration(
-                            labelText: 'Email Address or Phone Number',
+                            label: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text('Email Address or Phone Number'),
+                                Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
+                              ],
+                            ),
                             prefixIcon: Icon(Icons.mail_outline),
                           ),
                           keyboardType: TextInputType.emailAddress,

@@ -96,10 +96,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                 opacity: _fadeAnimation,
                 child: ScaleTransition(
                   scale: _scaleAnimation,
-                  child: const AgriEtechLogo.hero(
+                  child: const EthioFarmLogo.hero(
                     size: 92,
                     showTagline: true,
-                    customTagline: 'EARLY WARNING & ADVISORY SYSTEM',
+                    customTagline: 'SMART FARMING & ADVISORY SYSTEM',
                   ),
                 ),
               ),

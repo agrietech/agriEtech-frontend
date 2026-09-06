@@ -23,7 +23,7 @@ class ProfileScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: isDark ? AppTheme.surfaceDark : AppTheme.surfaceLight,
-      drawer: const AgriEtechAppDrawer(),
+      drawer: const EthioFarmAppDrawer(),
       appBar: AppBar(
         title: Text(
           AppStrings.tr('profile', lang: currentLang),
@@ -369,7 +369,7 @@ class ProfileScreen extends ConsumerWidget {
         final roles = [
           {'id': 'FARMER', 'name': 'Farmer / አርሶ አደር', 'desc': 'Smallholder crop producer and livestock farmer'},
           {'id': 'DEVELOPMENT_AGENT', 'name': 'Development Agent (DA)', 'desc': 'Frontline kebele extension advisor'},
-          {'id': 'WOREDA_OFFICER', 'name': 'Woreda Agricultural Officer', 'desc': 'Woreda early warning desk officer'},
+          {'id': 'WOREDA_OFFICER', 'name': 'Woreda Agricultural Officer', 'desc': 'Woreda agricultural desk officer'},
           {'id': 'ZONAL_OFFICER', 'name': 'Zonal Agricultural Officer', 'desc': 'Zonal directorate officer coordinating woredas'},
           {'id': 'REGIONAL_OFFICER', 'name': 'Regional Agricultural Officer', 'desc': 'Regional agricultural bureau directorate officer'},
           {'id': 'RESEARCHER', 'name': 'Agronomist / Researcher', 'desc': 'Soil and agro-climatic researcher'},

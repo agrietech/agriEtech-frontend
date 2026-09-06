@@ -512,6 +512,39 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  /// Verify Sign-Up Phone Ownership OTP
+  Future<void> verifyPhoneOtp({required String phone, required String code}) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      AppLogger.info('Verifying phone OTP in AuthNotifier for: $phone');
+      final response = await _authRepository.verifyPhoneOtp(phone: phone, code: code);
+      state = state.copyWith(
+        user: response.user,
+        isAuthenticated: true,
+        isLoading: false,
+      );
+      AppLogger.info('Phone OTP verified and authenticated successfully');
+    } on AppError catch (e) {
+      state = state.copyWith(isLoading: false, error: e);
+      rethrow;
+    } catch (e) {
+      final error = UnknownError(message: 'Verification failed: ${e.toString()}', details: e);
+      state = state.copyWith(isLoading: false, error: error);
+      throw error;
+    }
+  }
+
+  /// Resend Sign-Up Phone Verification OTP
+  Future<Map<String, dynamic>> resendPhoneOtp(String phone) async {
+    try {
+      AppLogger.info('Resending phone OTP in AuthNotifier for: $phone');
+      return await _authRepository.resendPhoneOtp(phone);
+    } catch (e) {
+      AppLogger.error('Failed to resend phone OTP', e);
+      rethrow;
+    }
+  }
+
   /// Clear error state
   void clearError() {
     state = state.copyWith(clearError: true);
