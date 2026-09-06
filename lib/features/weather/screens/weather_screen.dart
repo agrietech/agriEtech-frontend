@@ -136,10 +136,19 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
                           icon: Icons.calendar_today_rounded,
                         ),
                         const SizedBox(height: AppSpacing.itemGap),
-                        if (weatherState.days.isNotEmpty)
-                          ...weatherState.days
-                              .take(7)
-                              .map((day) => ForecastDayItem(day: day)),
+                        if (weatherState.days.isNotEmpty) ...() {
+                          final sevenDays = weatherState.days.take(7).toList();
+                          final weeklyMin = sevenDays.map((d) => d.temperatureMin).reduce((a, b) => a < b ? a : b);
+                          final weeklyMax = sevenDays.map((d) => d.temperatureMax).reduce((a, b) => a > b ? a : b);
+                          return sevenDays.asMap().entries.map(
+                                (entry) => ForecastDayItem(
+                                  day: entry.value,
+                                  weeklyMinTemp: weeklyMin,
+                                  weeklyMaxTemp: weeklyMax,
+                                  isToday: entry.key == 0,
+                                ),
+                              );
+                        }(),
                         const SizedBox(height: AppSpacing.sectionGap),
 
                         // Temperature trend chart

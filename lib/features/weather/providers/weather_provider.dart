@@ -38,8 +38,12 @@ class WeatherState {
         temperatureMax: forecast.map((f) => f.maxTempC).toList(),
         temperatureMin: forecast.map((f) => f.minTempC).toList(),
         precipitationSum: forecast.map((f) => f.precipitationMm).toList(),
-        relativeHumidity: forecast.map((f) => 0.0).toList(),
+        relativeHumidity: forecast.map((f) => f.relativeHumidity).toList(),
         windspeedMax: forecast.map((f) => f.windSpeedKmh).toList(),
+        precipitationProbabilityMax: forecast.map((f) => f.precipitationProbability).toList(),
+        uvIndexMax: forecast.map((f) => f.uvIndex).toList(),
+        windDirectionDominant: forecast.map((f) => f.windDirectionDeg).toList(),
+        weatherCodes: forecast.map((f) => f.weatherCode).toList(),
       ),
     );
   }

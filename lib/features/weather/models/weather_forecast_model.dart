@@ -56,6 +56,10 @@ class DailyWeatherModel {
   final List<double> precipitationSum;
   final List<double> relativeHumidity;
   final List<double>? windspeedMax;
+  final List<double>? precipitationProbabilityMax;
+  final List<double>? uvIndexMax;
+  final List<double>? windDirectionDominant;
+  final List<String>? weatherCodes;
 
   const DailyWeatherModel({
     required this.time,
@@ -64,6 +68,10 @@ class DailyWeatherModel {
     required this.precipitationSum,
     required this.relativeHumidity,
     this.windspeedMax,
+    this.precipitationProbabilityMax,
+    this.uvIndexMax,
+    this.windDirectionDominant,
+    this.weatherCodes,
   });
 
   factory DailyWeatherModel.fromJson(Map<String, dynamic> json) {
@@ -90,6 +98,24 @@ class DailyWeatherModel {
       windspeedMax: json['windspeed_10m_max'] != null
           ? parseDoubleList(json['windspeed_10m_max'])
           : (json['windspeedMax'] != null ? parseDoubleList(json['windspeedMax']) : null),
+      precipitationProbabilityMax: json['precipitation_probability_max'] != null
+          ? parseDoubleList(json['precipitation_probability_max'])
+          : (json['precipitationProbabilityMax'] != null
+              ? parseDoubleList(json['precipitationProbabilityMax'])
+              : null),
+      uvIndexMax: json['uv_index_max'] != null
+          ? parseDoubleList(json['uv_index_max'])
+          : (json['uvIndexMax'] != null ? parseDoubleList(json['uvIndexMax']) : null),
+      windDirectionDominant: json['wind_direction_10m_dominant'] != null
+          ? parseDoubleList(json['wind_direction_10m_dominant'])
+          : (json['windDirectionDominant'] != null
+              ? parseDoubleList(json['windDirectionDominant'])
+              : null),
+      weatherCodes: json['weather_code'] != null
+          ? parseStringList(json['weather_code'])
+          : (json['weatherCode'] != null
+              ? parseStringList(json['weatherCode'])
+              : null),
     );
   }
 
@@ -100,5 +126,11 @@ class DailyWeatherModel {
     'precipitation_sum': precipitationSum,
     'relative_humidity_2m_mean': relativeHumidity,
     if (windspeedMax != null) 'windspeed_10m_max': windspeedMax,
+    if (precipitationProbabilityMax != null)
+      'precipitation_probability_max': precipitationProbabilityMax,
+    if (uvIndexMax != null) 'uv_index_max': uvIndexMax,
+    if (windDirectionDominant != null)
+      'wind_direction_10m_dominant': windDirectionDominant,
+    if (weatherCodes != null) 'weather_code': weatherCodes,
   };
 }
