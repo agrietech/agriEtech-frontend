@@ -609,17 +609,41 @@ class _SensorDetailScreenState extends ConsumerState<SensorDetailScreen> {
           children: [
             TextField(
               controller: moistureCtrl,
-              decoration: const InputDecoration(labelText: 'Soil Moisture (%)'),
+              decoration: const InputDecoration(
+                label: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('Soil Moisture (%)'),
+                    Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
+                  ],
+                ),
+              ),
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
             ),
             TextField(
               controller: tempCtrl,
-              decoration: const InputDecoration(labelText: 'Temperature (°C)'),
+              decoration: const InputDecoration(
+                label: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('Temperature (°C)'),
+                    Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
+                  ],
+                ),
+              ),
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
             ),
             TextField(
               controller: humCtrl,
-              decoration: const InputDecoration(labelText: 'Humidity (%)'),
+              decoration: const InputDecoration(
+                label: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('Humidity (%)'),
+                    Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
+                  ],
+                ),
+              ),
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
             ),
           ],

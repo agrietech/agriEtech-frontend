@@ -57,7 +57,13 @@ class _RegisterSensorScreenState extends ConsumerState<RegisterSensorScreen> {
                     TextFormField(
                       controller: _hardwareIdController,
                       decoration: const InputDecoration(
-                        labelText: 'Hardware ID',
+                        label: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text('Hardware ID'),
+                            Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
+                          ],
+                        ),
                         prefixIcon: Icon(Icons.qr_code),
                         border: OutlineInputBorder(),
                         helperText: 'Unique identifier from the sensor device',
@@ -73,7 +79,13 @@ class _RegisterSensorScreenState extends ConsumerState<RegisterSensorScreen> {
                     DropdownButtonFormField<String>(
                       initialValue: _selectedSensorType,
                       decoration: const InputDecoration(
-                        labelText: 'Sensor Type',
+                        label: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text('Sensor Type'),
+                            Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
+                          ],
+                        ),
                         prefixIcon: Icon(Icons.category),
                         border: OutlineInputBorder(),
                       ),
@@ -158,7 +170,13 @@ class _RegisterSensorScreenState extends ConsumerState<RegisterSensorScreen> {
                         return DropdownButtonFormField<String>(
                           initialValue: _selectedFarmId,
                           decoration: const InputDecoration(
-                            labelText: 'Select Farm',
+                            label: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text('Select Farm'),
+                                Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
+                              ],
+                            ),
                             prefixIcon: Icon(Icons.agriculture),
                             border: OutlineInputBorder(),
                           ),
