@@ -4,7 +4,7 @@ import '../config/env.dart';
 
 /// Application logging utility
 class AppLogger {
-  static const String _tag = 'AgriEtech';
+  static const String _tag = 'EthioFarm';
 
   /// Log info message
   static void info(String message, [Object? data]) {

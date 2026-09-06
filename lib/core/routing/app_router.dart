@@ -172,7 +172,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/role-application',
-        builder: (context, state) => const RoleApplicationScreen(),
+        redirect: (context, state) => '/apply-role',
       ),
 
       // Farms routes
@@ -202,14 +202,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const CreateAlertScreen(),
       ),
 
-      // Risk map & Multi-Hazard Disaster Intelligence routes
+      // Risk map & Natural Disaster Intelligence routes
       GoRoute(
         path: '/risks',
         builder: (context, state) => const RiskMapScreen(),
       ),
       GoRoute(
         path: '/risk-map',
-        builder: (context, state) => const RiskMapScreen(),
+        redirect: (context, state) => '/risks',
       ),
       GoRoute(
         path: '/disasters',
@@ -241,7 +241,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/volcanic-hazard',
-        builder: (context, state) => const VolcanicHazardScreen(),
+        redirect: (context, state) => '/volcanic-hazards',
       ),
       GoRoute(
         path: '/ussd-console',
@@ -260,7 +260,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/create-diagnosis',
-        builder: (context, state) => const CreateDiagnosisScreen(),
+        redirect: (context, state) => '/diagnosis/create',
       ),
 
 

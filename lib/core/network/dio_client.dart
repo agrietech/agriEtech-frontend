@@ -318,7 +318,6 @@ class DioClient {
     final multipartFile = await MultipartFile.fromFile(filePath, filename: fileName);
     final formData = FormData.fromMap({
       fieldName: multipartFile,
-      if (fieldName != 'file') 'file': await MultipartFile.fromFile(filePath, filename: fileName),
       ...?data,
     });
 
@@ -344,7 +343,6 @@ class DioClient {
     final multipartFile = MultipartFile.fromBytes(bytes, filename: fileName);
     final formData = FormData.fromMap({
       fieldName: multipartFile,
-      if (fieldName != 'file') 'file': MultipartFile.fromBytes(bytes, filename: fileName),
       ...?data,
     });
 

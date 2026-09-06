@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Standardized 8-Point Spatial Grid Tokens for AgriEtech UI System
+/// Standardized 8-Point Spatial Grid Tokens for EthioFarm UI System
 class AppSpacing {
   AppSpacing._();
 

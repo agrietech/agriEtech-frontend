@@ -1,0 +1,8 @@
+# Android Keystore Signing Configuration Example
+# Copy this file to `key.properties` in the android/ directory.
+# NEVER commit your real key.properties or .jks keystore to version control!
+
+keyAlias=upload
+keyPassword=your_keystore_key_password_here
+storeFile=../upload-keystore.jks
+storePassword=your_keystore_password_here

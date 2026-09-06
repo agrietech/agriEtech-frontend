@@ -3,7 +3,7 @@ import '../theme/app_theme.dart';
 
 enum AppLoadingSize { small, medium, large }
 
-/// Standardized enterprise loading indicator for AgriEtech Platform
+/// Standardized enterprise loading indicator for EthioFarm Platform
 class AppLoadingIndicator extends StatelessWidget {
   final AppLoadingSize size;
   final String? message;

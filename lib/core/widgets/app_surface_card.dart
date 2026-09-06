@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../theme/app_theme.dart';
 
-/// Enterprise standardized surface card widget for AgriEtech UI
+/// Enterprise standardized surface card widget for EthioFarm UI
 class AppSurfaceCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry padding;

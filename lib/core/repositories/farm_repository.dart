@@ -142,7 +142,24 @@ class FarmRepository {
         ApiConstants.farmById(farmId), data: request.toJson(),
       );
       
-      final farm = FarmModel.fromJson(response.data as Map<String, dynamic>);
+      dynamic raw = response.data;
+      Map<String, dynamic> farmJson = {};
+      
+      if (raw is Map) {
+        final rawMap = Map<String, dynamic>.from(raw);
+        if (rawMap['data'] is Map) {
+          final dataMap = Map<String, dynamic>.from(rawMap['data'] as Map);
+          farmJson = dataMap['farm'] is Map
+              ? Map<String, dynamic>.from(dataMap['farm'] as Map)
+              : dataMap;
+        } else if (rawMap['farm'] is Map) {
+          farmJson = Map<String, dynamic>.from(rawMap['farm'] as Map);
+        } else {
+          farmJson = rawMap;
+        }
+      }
+      
+      final farm = FarmModel.fromJson(farmJson);
       
       AppLogger.info('Farm updated successfully');
       
@@ -160,6 +177,7 @@ class FarmRepository {
       
       throw NetworkError.fromDioException(e);
     } catch (e, stackTrace) {
+      if (e is AppError) rethrow;
       AppLogger.error('Unexpected farm update error', e, stackTrace);
       throw UnknownError(message: 'Failed to update farm: ${e.toString()}');
     }

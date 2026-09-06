@@ -20,6 +20,10 @@ class ApiConstants {
   static const String updatePassword = '$auth/update-password';
   static const String forgotPassword = '$auth/forgot-password';
   static const String resetPassword = '$auth/reset-password';
+  static const String requestLoginOtp = '$auth/request-login-otp';
+  static const String verifyLoginOtp = '$auth/verify-login-otp';
+  static const String verifyPhoneOtp = '$auth/verify-phone-otp';
+  static const String resendPhoneOtp = '$auth/resend-phone-otp';
   static const String verifyEmail = '$auth/verify-email';
   static const String resendVerification = '$auth/resend-verification';
   static const String roleRequests = '$auth/role-requests';
@@ -52,17 +56,27 @@ class ApiConstants {
   static String satelliteWoreda(String woredaId) => '$satelliteObservations/woreda/$woredaId';
   static const String satelliteIngest = '$satelliteObservations/ingest';
 
-  // 6. Multi-Hazard Risk Assessment Endpoints (/risk-assessments)
+  // 6. Integrated Risk Assessment Endpoints (/risk-assessments)
   static const String riskAssessments = '/risk-assessments';
   static const String evaluateRisk = '$riskAssessments/evaluate';
   static String riskByWoreda(String woredaId) => '$riskAssessments/woreda/$woredaId';
   static const String riskStatistics = '$riskAssessments/statistics';
   static String riskStats([String? period]) => '$riskAssessments/statistics';
 
-  // 7. Early Warning Alert Endpoints (/alerts)
+  // 7. Smart Alert Endpoints (/alerts)
   static const String alerts = '/alerts';
   static String alertById(String id) => '$alerts/$id';
   static String alertMarkRead(String id) => '$alerts/$id/read';
+
+  // 7A. Notification Endpoints (/notifications)
+  static const String notifications = '/notifications';
+  static String notificationById(String id) => '$notifications/$id';
+  static String notificationMarkRead(String id) => '$notifications/$id/read';
+  static const String notificationsReadAll = '$notifications/read-all';
+
+  // 7B. Advisories Endpoints (/advisories)
+  static const String advisories = '/advisories';
+  static String advisoryById(String id) => '$advisories/$id';
 
   // 8. AI Crop Disease Diagnosis Endpoints (/disease-diagnosis)
   static const String diseaseDiagnosis = '/disease-diagnosis';

@@ -74,7 +74,7 @@ class _SlidingGradientTransform extends GradientTransform {
   }
 }
 
-/// Standard Skeleton Card Component matching AgriEtech card geometry
+/// Standard Skeleton Card Component matching EthioFarm card geometry
 class SkeletonCard extends StatelessWidget {
   final double height;
   final double? width;

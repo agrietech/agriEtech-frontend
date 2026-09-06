@@ -84,7 +84,7 @@ class AppTheme {
   static const Color warningColor = Color(0xFFF57C00);
   static const Color successColor = Color(0xFF15803D);
 
-  // Risk Level Colors (Early Warning Standards)
+  // Risk Level Colors (Smart Alert Standards)
   static const Color lowRiskColor = Color(0xFF16A34A);
   static const Color moderateRiskColor = Color(0xFFF59E0B);
   static const Color highRiskColor = Color(0xFFEA580C);

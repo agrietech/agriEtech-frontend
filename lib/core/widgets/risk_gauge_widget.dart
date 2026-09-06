@@ -2,7 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
-/// High-tech animated radial sweep risk & telemetry gauge for AgriEtech
+/// High-tech animated radial sweep risk & telemetry gauge for EthioFarm
 class AppRiskGauge extends StatelessWidget {
   final double value;
   final double maxValue;

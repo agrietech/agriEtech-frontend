@@ -73,7 +73,7 @@ dev_dependencies:
   flutter_native_splash: ^2.4.0
 
 flutter_launcher_icons:
-  android: "launcher_icon"
+  android: true
   ios: true
   image_path: "web/icons/Icon-512.png"
   min_sdk_android: 21
@@ -89,6 +89,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/
+    - assets/images/weather/
     - assets/icons/
     - assets/fonts/
     - .env

@@ -2,7 +2,7 @@ import '../models/user_model.dart';
 
 /// Utility class for role-based access control across 1 National Admin + 6 Roles
 class RoleUtils {
-  /// Check if user can create early warning alerts
+  /// Check if user can create smart alerts
   static bool canCreateAlerts(UserRole? role) {
     return role == UserRole.admin ||
         role == UserRole.regionalOfficer ||
@@ -123,7 +123,7 @@ class RoleUtils {
       case UserRole.zonalOfficer:
         return 'Zonal administrative oversight & woreda hazard monitoring';
       case UserRole.woredaOfficer:
-        return 'Woreda early warning, kebele oversight, DA management';
+        return 'Woreda smart alert, kebele oversight, DA management';
       case UserRole.developmentAgent:
         return 'Kebele FTC extension worker, farmer management, field disease scouting';
       case UserRole.researcher:

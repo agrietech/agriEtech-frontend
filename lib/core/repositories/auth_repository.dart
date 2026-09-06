@@ -220,8 +220,24 @@ class AuthRepository {
         ApiConstants.profile,
         data: updates,
       );
-      final userData = response.data['user'] ?? response.data;
-      final updatedUser = UserModel.fromJson(userData as Map<String, dynamic>);
+
+      dynamic raw = response.data;
+      Map<String, dynamic> userData = {};
+      if (raw is Map) {
+        final rawMap = Map<String, dynamic>.from(raw);
+        if (rawMap['data'] is Map) {
+          final dataMap = Map<String, dynamic>.from(rawMap['data'] as Map);
+          userData = dataMap['user'] is Map
+              ? Map<String, dynamic>.from(dataMap['user'] as Map)
+              : dataMap;
+        } else if (rawMap['user'] is Map) {
+          userData = Map<String, dynamic>.from(rawMap['user'] as Map);
+        } else {
+          userData = rawMap;
+        }
+      }
+
+      final updatedUser = UserModel.fromJson(userData);
       await _storage.saveUserData(jsonEncode(updatedUser.toJson()));
       return updatedUser;
     } on DioException catch (e) {
@@ -268,6 +284,7 @@ class AuthRepository {
       
       throw NetworkError.fromDioException(e);
     } catch (e, stackTrace) {
+      if (e is AppError) rethrow;
       AppLogger.error('Unexpected password update error', e, stackTrace);
       throw UnknownError(message: 'Failed to update password: ${e.toString()}');
     }
@@ -288,8 +305,19 @@ class AuthRepository {
         ApiConstants.refreshToken, data: {'refreshToken': refreshToken},
       );
 
-      final newAccessToken = response.data['accessToken'] as String;
-      final newRefreshToken = response.data['refreshToken'] as String?;
+      dynamic raw = response.data;
+      Map<String, dynamic> dataMap = {};
+      if (raw is Map) {
+        final rawMap = Map<String, dynamic>.from(raw);
+        if (rawMap['data'] is Map) {
+          dataMap = Map<String, dynamic>.from(rawMap['data'] as Map);
+        } else {
+          dataMap = rawMap;
+        }
+      }
+
+      final newAccessToken = (dataMap['accessToken'] ?? dataMap['token']) as String;
+      final newRefreshToken = dataMap['refreshToken'] as String?;
 
       await _storage.saveAccessToken(newAccessToken);
       if (newRefreshToken != null) {
@@ -317,8 +345,9 @@ class AuthRepository {
     try {
       AppLogger.info('Updating device token', {'token': token});
 
-      await _dioClient.post(
-        '/auth/device-token',
+      // Update via PUT /auth/me which handles deviceToken cleanly
+      await _dioClient.put(
+        ApiConstants.profile,
         data: {'deviceToken': token},
       );
 
@@ -379,6 +408,184 @@ class AuthRepository {
     } catch (e, stackTrace) {
       AppLogger.error('Unexpected password reset error', e, stackTrace);
       throw const UnknownError(message: 'Failed to reset password');
+    }
+  }
+
+  /// Request passwordless login OTP sent via SMS to Ethiopian mobile
+  Future<Map<String, dynamic>> requestLoginOtp(String phone) async {
+    try {
+      final formattedPhone = _normalizePhone(phone);
+      AppLogger.info('Requesting login OTP for phone: $formattedPhone');
+      final response = await _dioClient.post(
+        ApiConstants.requestLoginOtp,
+        data: {
+          'phone': formattedPhone,
+          'phoneNumber': formattedPhone,
+        },
+      );
+      final data = response.data is Map && response.data['data'] != null
+          ? response.data['data'] as Map<String, dynamic>
+          : response.data as Map<String, dynamic>;
+      AppLogger.info('Login OTP requested successfully');
+      return data;
+    } on DioException catch (e) {
+      AppLogger.error('Request login OTP failed', e);
+      throw _handleAuthError(e);
+    } catch (e, stackTrace) {
+      AppLogger.error('Unexpected error requesting login OTP', e, stackTrace);
+      throw const UnknownError(message: 'Failed to request login code');
+    }
+  }
+
+  /// Verify passwordless login OTP and store JWT credentials
+  Future<LoginResponse> verifyLoginOtp({required String phone, required String code}) async {
+    try {
+      final formattedPhone = _normalizePhone(phone);
+      final cleanCode = code.trim();
+      AppLogger.info('Verifying login OTP for phone: $formattedPhone');
+      final response = await _dioClient.post(
+        ApiConstants.verifyLoginOtp,
+        data: {
+          'phone': formattedPhone,
+          'phoneNumber': formattedPhone,
+          'code': cleanCode,
+          'otp': cleanCode,
+        },
+      );
+
+      final rawData = response.data is Map && response.data['data'] != null
+          ? response.data['data'] as Map<String, dynamic>
+          : response.data as Map<String, dynamic>;
+
+      final accessToken = (rawData['accessToken'] ?? rawData['token'] ?? rawData['tokens']?['accessToken'] ?? '').toString();
+      final refreshToken = (rawData['refreshToken'] ?? rawData['tokens']?['refreshToken'] ?? '').toString();
+      final userData = rawData['user'] is Map ? rawData['user'] as Map<String, dynamic> : rawData;
+
+      final normalizedUser = Map<String, dynamic>.from(userData);
+      if (!normalizedUser.containsKey('phone') && normalizedUser.containsKey('phoneNumber')) {
+        normalizedUser['phone'] = normalizedUser['phoneNumber'];
+      }
+      if (!normalizedUser.containsKey('role') || normalizedUser['role'] == null) {
+        normalizedUser['role'] = 'FARMER';
+      }
+      if (!normalizedUser.containsKey('fullName') || normalizedUser['fullName'] == null) {
+        normalizedUser['fullName'] = normalizedUser['name'] ?? 'Farmer';
+      }
+      if (!normalizedUser.containsKey('id') || normalizedUser['id'] == null) {
+        normalizedUser['id'] = normalizedUser['_id'] ?? '';
+      }
+
+      final user = UserModel.fromJson(normalizedUser);
+
+      if (accessToken.isNotEmpty) {
+        await _storage.saveAccessToken(accessToken);
+      }
+      if (refreshToken.isNotEmpty) {
+        await _storage.saveRefreshToken(refreshToken);
+      }
+      await _storage.saveUserId(user.id);
+      await _storage.saveUserData(jsonEncode(user.toJson()));
+
+      return LoginResponse(
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+        user: user,
+      );
+    } on DioException catch (e) {
+      AppLogger.error('Verify login OTP failed', e);
+      throw _handleAuthError(e);
+    } catch (e, stackTrace) {
+      AppLogger.error('Unexpected error verifying login OTP', e, stackTrace);
+      throw const UnknownError(message: 'Failed to verify login code');
+    }
+  }
+
+  /// Verify Sign-Up Phone Ownership OTP and activate session
+  Future<LoginResponse> verifyPhoneOtp({required String phone, required String code}) async {
+    try {
+      final formattedPhone = _normalizePhone(phone);
+      final cleanCode = code.trim();
+      AppLogger.info('Verifying sign-up phone OTP for: $formattedPhone');
+      final response = await _dioClient.post(
+        ApiConstants.verifyPhoneOtp,
+        data: {
+          'phone': formattedPhone,
+          'phoneNumber': formattedPhone,
+          'code': cleanCode,
+          'otp': cleanCode,
+        },
+      );
+
+      final rawData = response.data is Map && response.data['data'] != null
+          ? response.data['data'] as Map<String, dynamic>
+          : response.data as Map<String, dynamic>;
+
+      final accessToken = (rawData['accessToken'] ?? rawData['token'] ?? '').toString();
+      final refreshToken = (rawData['refreshToken'] ?? '').toString();
+      final userData = rawData['user'] is Map ? rawData['user'] as Map<String, dynamic> : rawData;
+
+      final normalizedUser = Map<String, dynamic>.from(userData);
+      if (!normalizedUser.containsKey('phone') && normalizedUser.containsKey('phoneNumber')) {
+        normalizedUser['phone'] = normalizedUser['phoneNumber'];
+      }
+      if (!normalizedUser.containsKey('role') || normalizedUser['role'] == null) {
+        normalizedUser['role'] = 'FARMER';
+      }
+      if (!normalizedUser.containsKey('fullName') || normalizedUser['fullName'] == null) {
+        normalizedUser['fullName'] = normalizedUser['name'] ?? 'User';
+      }
+      if (!normalizedUser.containsKey('id') || normalizedUser['id'] == null) {
+        normalizedUser['id'] = normalizedUser['_id'] ?? '';
+      }
+
+      final user = UserModel.fromJson(normalizedUser);
+
+      if (accessToken.isNotEmpty) {
+        await _storage.saveAccessToken(accessToken);
+      }
+      if (refreshToken.isNotEmpty) {
+        await _storage.saveRefreshToken(refreshToken);
+      }
+      await _storage.saveUserId(user.id);
+      await _storage.saveUserData(jsonEncode(user.toJson()));
+
+      return LoginResponse(
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+        user: user,
+      );
+    } on DioException catch (e) {
+      AppLogger.error('Verify sign-up phone OTP failed', e);
+      throw _handleAuthError(e);
+    } catch (e, stackTrace) {
+      AppLogger.error('Unexpected error verifying sign-up phone OTP', e, stackTrace);
+      throw const UnknownError(message: 'Failed to verify phone verification code');
+    }
+  }
+
+  /// Resend Sign-Up Phone Verification OTP with cooldown
+  Future<Map<String, dynamic>> resendPhoneOtp(String phone) async {
+    try {
+      final formattedPhone = _normalizePhone(phone);
+      AppLogger.info('Resending sign-up phone OTP for: $formattedPhone');
+      final response = await _dioClient.post(
+        ApiConstants.resendPhoneOtp,
+        data: {
+          'phone': formattedPhone,
+          'phoneNumber': formattedPhone,
+        },
+      );
+      final data = response.data is Map && response.data['data'] != null
+          ? response.data['data'] as Map<String, dynamic>
+          : response.data as Map<String, dynamic>;
+      AppLogger.info('Sign-up phone OTP resent successfully');
+      return data;
+    } on DioException catch (e) {
+      AppLogger.error('Resend sign-up phone OTP failed', e);
+      throw _handleAuthError(e);
+    } catch (e, stackTrace) {
+      AppLogger.error('Unexpected error resending sign-up phone OTP', e, stackTrace);
+      throw const UnknownError(message: 'Failed to resend phone verification code');
     }
   }
 

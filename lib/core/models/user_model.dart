@@ -66,6 +66,7 @@ class UserModel {
   final String? preferredLang;
   final String? deviceToken;
   final bool isActive;
+  final bool isPhoneVerified;
   final DateTime? lastLoginAt;
   final DateTime? createdAt;
   final DateTime? updatedAt;
@@ -88,6 +89,7 @@ class UserModel {
     this.preferredLang,
     this.deviceToken,
     this.isActive = true,
+    this.isPhoneVerified = false,
     this.lastLoginAt,
     this.createdAt,
     this.updatedAt,
@@ -125,6 +127,7 @@ class UserModel {
       preferredLang: json['preferredLang'] as String?,
       deviceToken: json['deviceToken'] as String?,
       isActive: json['isActive'] is bool ? json['isActive'] as bool : true,
+      isPhoneVerified: json['isPhoneVerified'] is bool ? json['isPhoneVerified'] as bool : false,
       lastLoginAt: json['lastLoginAt'] != null
           ? DateTime.tryParse(json['lastLoginAt'].toString())
           : null,
@@ -155,6 +158,7 @@ class UserModel {
     if (preferredLang != null) 'preferredLang': preferredLang,
     if (deviceToken != null) 'deviceToken': deviceToken,
     'isActive': isActive,
+    'isPhoneVerified': isPhoneVerified,
     if (lastLoginAt != null) 'lastLoginAt': lastLoginAt!.toIso8601String(),
     if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
     if (updatedAt != null) 'updatedAt': updatedAt!.toIso8601String(),
@@ -178,6 +182,7 @@ class UserModel {
     String? preferredLang,
     String? deviceToken,
     bool? isActive,
+    bool? isPhoneVerified,
     DateTime? lastLoginAt,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -200,6 +205,7 @@ class UserModel {
       preferredLang: preferredLang ?? this.preferredLang,
       deviceToken: deviceToken ?? this.deviceToken,
       isActive: isActive ?? this.isActive,
+      isPhoneVerified: isPhoneVerified ?? this.isPhoneVerified,
       lastLoginAt: lastLoginAt ?? this.lastLoginAt,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
