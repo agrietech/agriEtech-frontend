@@ -1,7 +1,7 @@
 /// Alert and emergency warning models (pure Dart without Freezed)
 library alert_models;
 
-/// Alert model representing early warning notifications
+/// Alert model representing smart alert notifications
 class AlertModel {
   final String id;
   final String woredaId;
@@ -46,7 +46,7 @@ class AlertModel {
   DateTime get sentDate => sentAt ?? (DateTime.tryParse(createdAt) ?? DateTime.now());
 
   factory AlertModel.fromJson(Map<String, dynamic> json) {
-    final title = (json['title'] ?? json['titleEn'] ?? json['headline'] ?? json['titleAm'] ?? 'Early Warning Alert').toString();
+    final title = (json['title'] ?? json['titleEn'] ?? json['headline'] ?? json['titleAm'] ?? 'Smart Alert').toString();
     final message = (json['message'] ?? json['messageEn'] ?? json['messageAm'] ?? json['headline'] ?? '').toString();
 
     final actionItemsList = json['actionItems'] is List

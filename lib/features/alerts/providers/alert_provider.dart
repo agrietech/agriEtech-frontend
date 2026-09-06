@@ -309,3 +309,9 @@ final createAlertProvider =
   },
 );
 
+/// Consolidated alerts list provider for widgets and GIS map
+final alertsProvider = FutureProvider<List<AlertModel>>((ref) async {
+  final alertRepository = ref.watch(alertRepositoryProvider);
+  return await alertRepository.getAlerts(limit: 50);
+});
+

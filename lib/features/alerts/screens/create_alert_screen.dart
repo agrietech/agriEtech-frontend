@@ -81,7 +81,13 @@ class _CreateAlertScreenState extends ConsumerState<CreateAlertScreen> {
                     DropdownButtonFormField<String>(
                       initialValue: _selectedHazardType,
                       decoration: const InputDecoration(
-                        labelText: 'Hazard Type',
+                        label: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text('Hazard Type'),
+                            Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
+                          ],
+                        ),
                         prefixIcon: Icon(Icons.warning_amber),
                         border: OutlineInputBorder(),
                       ),
@@ -101,7 +107,13 @@ class _CreateAlertScreenState extends ConsumerState<CreateAlertScreen> {
                     DropdownButtonFormField<String>(
                       initialValue: _selectedSeverity,
                       decoration: InputDecoration(
-                        labelText: 'Severity Level',
+                        label: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text('Severity Level'),
+                            Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
+                          ],
+                        ),
                         prefixIcon: Icon(
                           Icons.signal_cellular_alt,
                           color: _getSeverityColor(_selectedSeverity),
@@ -137,7 +149,13 @@ class _CreateAlertScreenState extends ConsumerState<CreateAlertScreen> {
                     DropdownButtonFormField<int>(
                       initialValue: _priority,
                       decoration: const InputDecoration(
-                        labelText: 'Priority',
+                        label: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text('Priority'),
+                            Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
+                          ],
+                        ),
                         prefixIcon: Icon(Icons.priority_high),
                         border: OutlineInputBorder(),
                         helperText: '1 = Highest, 5 = Lowest',
@@ -176,7 +194,13 @@ class _CreateAlertScreenState extends ConsumerState<CreateAlertScreen> {
                     TextFormField(
                       controller: _titleController,
                       decoration: const InputDecoration(
-                        labelText: 'Alert Title',
+                        label: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text('Alert Title'),
+                            Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
+                          ],
+                        ),
                         prefixIcon: Icon(Icons.title),
                         border: OutlineInputBorder(),
                         helperText: 'Brief headline for the alert',
@@ -193,7 +217,13 @@ class _CreateAlertScreenState extends ConsumerState<CreateAlertScreen> {
                     TextFormField(
                       controller: _messageController,
                       decoration: const InputDecoration(
-                        labelText: 'Alert Message',
+                        label: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text('Alert Message'),
+                            Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
+                          ],
+                        ),
                         prefixIcon: Icon(Icons.message),
                         border: OutlineInputBorder(),
                         helperText: 'Detailed warning message',
@@ -256,7 +286,13 @@ class _CreateAlertScreenState extends ConsumerState<CreateAlertScreen> {
                           key: ValueKey('alert_woreda_$validWoredaId'),
                           initialValue: validWoredaId,
                           decoration: const InputDecoration(
-                            labelText: 'Target Woreda Jurisdiction',
+                            label: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text('Target Woreda Jurisdiction'),
+                                Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
+                              ],
+                            ),
                             prefixIcon: Icon(Icons.location_on),
                             border: OutlineInputBorder(),
                             helperText: 'Jurisdiction receiving broadcast emergency telemetry',
@@ -289,7 +325,13 @@ class _CreateAlertScreenState extends ConsumerState<CreateAlertScreen> {
                       error: (_, __) => TextFormField(
                         controller: _woredaNameController,
                         decoration: const InputDecoration(
-                          labelText: 'Woreda Name',
+                          label: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text('Woreda Name'),
+                              Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
+                            ],
+                          ),
                           prefixIcon: Icon(Icons.location_on),
                           border: OutlineInputBorder(),
                         ),
