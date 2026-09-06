@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import '../../../core/constants/api_endpoints.dart';
+import '../../../core/constants/api_constants.dart';
 import '../../../core/error/app_error.dart';
 import '../../../core/error/error_handler.dart';
 import '../../../core/network/dio_client.dart';
@@ -23,7 +23,7 @@ class DiagnosisRepository {
       try {
         if (request.imageBytes != null && request.imageBytes!.isNotEmpty) {
           response = await _dioClient.uploadBytes(
-            ApiEndpoints.diagnose,
+            ApiConstants.diagnose,
             request.imageBytes!,
             fileName: 'plantscan_${DateTime.now().millisecondsSinceEpoch}.jpg',
             fieldName: 'image',
@@ -35,7 +35,7 @@ class DiagnosisRepository {
           );
         } else if (request.imagePath != null && request.imagePath!.isNotEmpty) {
           response = await _dioClient.uploadFile(
-            ApiEndpoints.diagnose,
+            ApiConstants.diagnose,
             request.imagePath!,
             fieldName: 'image',
             data: {
@@ -46,14 +46,14 @@ class DiagnosisRepository {
           );
         } else {
           response = await _dioClient.post(
-            ApiEndpoints.diagnose,
+            ApiConstants.diagnose,
             data: request.toJson(),
           );
         }
       } catch (uploadError) {
         AppLogger.warning('Multipart upload failed, falling back to JSON base64 upload', uploadError);
         response = await _dioClient.post(
-          ApiEndpoints.diagnose,
+          ApiConstants.diagnose,
           data: {
             'farmId': request.farmId,
             if (request.imageBase64.isNotEmpty) 'imageBase64': request.imageBase64,
@@ -91,7 +91,7 @@ class DiagnosisRepository {
       AppLogger.info('Fetching diagnoses for farm', {'farmId': farmId});
 
       final response = await _dioClient.get(
-        ApiEndpoints.farmDiagnoses(farmId),
+        ApiConstants.farmDiagnoses(farmId),
       );
 
       final raw = response.data is Map ? (response.data['data'] ?? response.data) : response.data;
@@ -123,7 +123,7 @@ class DiagnosisRepository {
     try {
       AppLogger.info('Fetching all diagnoses');
 
-      final response = await _dioClient.get(ApiEndpoints.diseaseDiagnosis);
+      final response = await _dioClient.get(ApiConstants.diseaseDiagnosis);
 
       final raw = response.data is Map ? (response.data['data'] ?? response.data) : response.data;
       final list = raw is List ? raw : [];

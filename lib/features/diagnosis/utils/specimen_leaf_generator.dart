@@ -133,7 +133,7 @@ class CropLeafSpecimen {
     // 5. Specimen HUD Stamp
     final textPainter = TextPainter(
       text: TextSpan(
-        text: 'AGRIETECH AI PATHOLOGY SPECIMEN\n$cropName • $diseaseName',
+        text: 'ETHIOFARM AI PATHOLOGY SPECIMEN\n$cropName • $diseaseName',
         style: const TextStyle(
           color: Colors.white70,
           fontSize: 10,

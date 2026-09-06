@@ -634,7 +634,13 @@ class _CreateDiagnosisScreenState extends ConsumerState<CreateDiagnosisScreen> {
               DropdownButtonFormField<String>(
                 initialValue: _selectedCropType,
                 decoration: InputDecoration(
-                  labelText: isAmharic ? 'የታለመው ሰብል አይነት' : 'Target Crop Type',
+                  label: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(isAmharic ? 'የታለመው ሰብል አይነት' : 'Target Crop Type'),
+                      const Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
+                    ],
+                  ),
                   prefixIcon: const Icon(Icons.grass_outlined),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 ),
@@ -657,7 +663,13 @@ class _CreateDiagnosisScreenState extends ConsumerState<CreateDiagnosisScreen> {
                 TextFormField(
                   controller: _customCropController,
                   decoration: InputDecoration(
-                    labelText: isAmharic ? 'የሰብሉ ዝርያ ስም' : 'Custom Crop Variety Name',
+                    label: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(isAmharic ? 'የሰብሉ ዝርያ ስም' : 'Custom Crop Variety Name'),
+                        const Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
+                      ],
+                    ),
                     prefixIcon: const Icon(Icons.eco_outlined, color: AppTheme.primaryColor),
                     border: const OutlineInputBorder(borderRadius: AppRadii.roundedMd),
                   ),
