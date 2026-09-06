@@ -447,7 +447,13 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
                   TextFormField(
                     controller: _nameController,
                     decoration: InputDecoration(
-                      labelText: 'Farm Plot Name',
+                      label: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('Farm Plot Name'),
+                          Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
+                        ],
+                      ),
                       prefixIcon: const Icon(Icons.label_outline),
                       border: const OutlineInputBorder(borderRadius: AppRadii.roundedMd),
                       filled: true,
@@ -462,7 +468,13 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
                   DropdownButtonFormField<String>(
                     initialValue: _selectedCrop,
                     decoration: InputDecoration(
-                      labelText: 'Primary Crop',
+                      label: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('Primary Crop'),
+                          Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
+                        ],
+                      ),
                       prefixIcon: const Icon(Icons.grass),
                       border: const OutlineInputBorder(borderRadius: AppRadii.roundedMd),
                       filled: true,
@@ -482,7 +494,13 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
                     TextFormField(
                       controller: _customCropController,
                       decoration: InputDecoration(
-                        labelText: 'Custom Crop Name',
+                        label: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text('Custom Crop Name'),
+                            Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
+                          ],
+                        ),
                         prefixIcon: const Icon(Icons.eco_outlined, color: AppTheme.primaryColor),
                         border: const OutlineInputBorder(borderRadius: AppRadii.roundedMd),
                         filled: true,
@@ -498,7 +516,13 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
                   TextFormField(
                     controller: _sizeController,
                     decoration: InputDecoration(
-                      labelText: 'Farm Size (Hectares)',
+                      label: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('Farm Size (Hectares)'),
+                          Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
+                        ],
+                      ),
                       prefixIcon: const Icon(Icons.square_foot),
                       suffixText: 'ha',
                       border: const OutlineInputBorder(borderRadius: AppRadii.roundedMd),
@@ -525,7 +549,13 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
                   DropdownButtonFormField<String>(
                     initialValue: _selectedSoil,
                     decoration: InputDecoration(
-                      labelText: 'EthioSIS Soil Type',
+                      label: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('EthioSIS Soil Type'),
+                          Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
+                        ],
+                      ),
                       prefixIcon: const Icon(Icons.terrain),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       filled: true,
@@ -557,7 +587,13 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
                   DropdownButtonFormField<String>(
                     initialValue: _selectedIrrigation,
                     decoration: InputDecoration(
-                      labelText: 'Water Source / Irrigation Mode',
+                      label: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('Water Source / Irrigation Mode'),
+                          Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
+                        ],
+                      ),
                       prefixIcon: const Icon(Icons.water_drop),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       filled: true,
@@ -589,7 +625,13 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
                   DropdownButtonFormField<String>(
                     initialValue: _selectedSlope,
                     decoration: InputDecoration(
-                      labelText: 'Topography / Slope',
+                      label: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('Topography / Slope'),
+                          Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
+                        ],
+                      ),
                       prefixIcon: const Icon(Icons.landscape_outlined),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       filled: true,
@@ -712,7 +754,7 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
                           children: [
                             TileLayer(
                               urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                              userAgentPackageName: 'com.agrietech.app',
+                              userAgentPackageName: 'com.ethiofarm.app',
                             ),
                             MarkerLayer(
                               markers: [
@@ -751,7 +793,13 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
                           key: ValueKey('woreda_picker_$validWoredaId'),
                           initialValue: validWoredaId,
                           decoration: InputDecoration(
-                            labelText: 'Woreda Centroid',
+                            label: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text('Woreda Centroid'),
+                                Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
+                              ],
+                            ),
                             prefixIcon: const Icon(Icons.location_city),
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                             filled: true,
@@ -793,7 +841,13 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
                           child: TextFormField(
                             controller: _latController,
                             decoration: InputDecoration(
-                              labelText: 'Latitude (°N)',
+                              label: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text('Latitude (°N)'),
+                                  Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
+                                ],
+                              ),
                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                               filled: true,
                               fillColor: isDark ? const Color(0xFF1B2E1E) : Colors.white,
@@ -807,7 +861,13 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
                           child: TextFormField(
                             controller: _lngController,
                             decoration: InputDecoration(
-                              labelText: 'Longitude (°E)',
+                              label: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text('Longitude (°E)'),
+                                  Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
+                                ],
+                              ),
                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                               filled: true,
                               fillColor: isDark ? const Color(0xFF1B2E1E) : Colors.white,

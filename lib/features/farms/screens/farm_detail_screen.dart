@@ -53,7 +53,7 @@ class FarmDetailScreen extends ConsumerWidget {
                       TileLayer(
                         urlTemplate:
                             'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                        userAgentPackageName: 'com.agrietech.app',
+                        userAgentPackageName: 'com.ethiofarm.app',
                       ),
                       MarkerLayer(
                         markers: [
