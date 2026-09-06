@@ -6,13 +6,13 @@ import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../farms/providers/farms_provider.dart';
-import '../../alerts/providers/alerts_provider.dart';
+import '../../alerts/providers/alert_provider.dart';
 import '../../risk/models/spatial_risk_model.dart';
 import '../../risk/providers/gis_spatial_risk_provider.dart';
 
 export '../../risk/models/spatial_risk_model.dart';
 
-/// Master National GIS Map of Ethiopia for Multi-Hazard Disaster Intelligence
+/// Master National GIS Map of Ethiopia for Natural Disaster Intelligence
 class EthiopiaGisMapWidget extends ConsumerStatefulWidget {
   final double? height;
   final bool isFullScreen;
@@ -741,7 +741,7 @@ class _EthiopiaGisMapWidgetState extends ConsumerState<EthiopiaGisMapWidget> {
         // 1. Base Cartographic Tile Layer
         TileLayer(
           urlTemplate: _getBaseMapUrl(),
-          userAgentPackageName: 'com.agrietech.app',
+          userAgentPackageName: 'com.ethiofarm.app',
           errorTileCallback: (tile, error, stackTrace) {
             // Graceful offline / network tile recovery
           },

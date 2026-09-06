@@ -14,7 +14,7 @@ import '../../alerts/providers/alert_provider.dart';
 import '../../ai_voice/widgets/ai_assistant_sheet.dart';
 import 'main_navigation_shell.dart';
 
-/// Unified Executive Command Center for AgriEtech Platform
+/// Unified Executive Command Center for EthioFarm Platform
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
@@ -34,10 +34,10 @@ class HomeScreen extends ConsumerWidget {
     );
 
     return Scaffold(
-      drawer: const AgriEtechAppDrawer(),
+      drawer: const EthioFarmAppDrawer(),
       appBar: AppBar(
         elevation: 0,
-        title: const AgriEtechLogo.horizontal(size: 28, showTagline: false),
+        title: const EthioFarmLogo.horizontal(size: 28, showTagline: false),
         actions: [
           // Instant Language Switcher Pill (EN | አማ)
           InkWell(
@@ -200,7 +200,7 @@ class HomeScreen extends ConsumerWidget {
             // ─── 1. Obsidian Glassmorphic Operations Hero ─────────────
             _buildCommandCenterHero(context, ref, authState, userName, userRole, currentLang, isDark),
 
-            // ─── 2. Active Hazard Early Warning Ribbon (if active) ────
+            // ─── 2. Active Hazard Smart Alert Ribbon (if active) ────
             if (activeAlerts.isNotEmpty)
               _buildHazardBanner(context, ref, activeAlerts.first.title, activeAlerts.length, isDark),
 

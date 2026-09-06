@@ -234,7 +234,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
             children: [
               _buildKpiItem('Monitored Farms', totalFarms.toString(), Icons.agriculture, const Color(0xFF86EFAC)),
               _buildKpiItem('Active Woredas', totalWoredas.toString(), Icons.public, const Color(0xFF93C5FD)),
-              _buildKpiItem('Early Warnings', activeAlerts.toString(), Icons.warning_amber, const Color(0xFFFDE047)),
+              _buildKpiItem('Smart Alerts', activeAlerts.toString(), Icons.warning_amber, const Color(0xFFFDE047)),
               _buildKpiItem('Critical Risk', criticalWoredas.toString(), Icons.crisis_alert, const Color(0xFFFCA5A5)),
             ],
           ),
@@ -350,7 +350,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
     final aiInsights = data['aiInsights'] as String?;
     final defaultInsight = _selectedPeriod == 'SEASONAL' || _selectedPeriod == 'YEARLY'
         ? 'National seasonal satellite metrics indicate optimal vegetative vigor in central and western highlands. Watch for decadal rainfall anomalies in south-eastern pastoral woredas.'
-        : 'Current temporal data indicates stable moisture conditions with low multi-hazard risk across 85% of registered zones.';
+        : 'Current temporal data indicates stable moisture conditions with low integrated risk across 85% of registered zones.';
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -424,7 +424,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Multi-Hazard Risk Level Trends',
+                  'Risk Level Trends',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),

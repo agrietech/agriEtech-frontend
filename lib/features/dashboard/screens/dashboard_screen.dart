@@ -42,7 +42,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final dashboardState = ref.watch(dashboardProvider);
 
     return Scaffold(
-      drawer: const AgriEtechAppDrawer(),
+      drawer: const EthioFarmAppDrawer(),
       appBar: AppBar(
         title: Text(_getDashboardTitle(authState)),
         elevation: 0,
@@ -415,7 +415,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   String _getRoleDescription(AuthState authState) {
     if (authState.isFarmer) {
-      return 'Monitor your farms and receive early warnings';
+      return 'Monitor your farms and receive smart alerts';
     } else if (authState.isDevelopmentAgent) {
       return 'Support farmers in your kebele and manage field operations';
     } else if (authState.isWoredaOfficer) {

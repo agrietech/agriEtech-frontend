@@ -48,7 +48,7 @@ class _BoundariesScreenState extends ConsumerState<BoundariesScreen> {
     final selectedWoreda = hierarchy.selectedWoreda;
 
     return Scaffold(
-      drawer: const AgriEtechAppDrawer(),
+      drawer: const EthioFarmAppDrawer(),
       appBar: AppBar(
         title: const Text('Boundaries', style: TextStyle(fontWeight: FontWeight.bold)),
         elevation: 0,
@@ -121,7 +121,7 @@ class _BoundariesScreenState extends ConsumerState<BoundariesScreen> {
                     children: [
                       TileLayer(
                         urlTemplate: 'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
-                        userAgentPackageName: 'com.agrietech.ewa_app',
+                        userAgentPackageName: 'com.ethiofarm.ewa_app',
                       ),
                       MarkerLayer(
                         markers: _buildMapMarkers(hierarchy),

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/network/dio_client.dart';
-import '../../../core/constants/api_endpoints.dart';
+import '../../../core/constants/api_constants.dart';
 
 class UssdAlertConsoleScreen extends ConsumerStatefulWidget {
   const UssdAlertConsoleScreen({super.key});
@@ -84,7 +84,7 @@ class _UssdAlertConsoleScreenState extends ConsumerState<UssdAlertConsoleScreen>
 
     try {
       final response = await client.dio.post<String>(
-        ApiEndpoints.ussdGateway,
+        ApiConstants.ussdGateway,
         data: {
           'sessionId': 'flutter_sim_${DateTime.now().millisecondsSinceEpoch}',
           'phoneNumber': '+251911223344',
@@ -123,7 +123,7 @@ class _UssdAlertConsoleScreenState extends ConsumerState<UssdAlertConsoleScreen>
 
     try {
       final response = await client.dio.post<String>(
-        ApiEndpoints.ussdGateway,
+        ApiConstants.ussdGateway,
         data: {
           'sessionId': 'flutter_sim_active',
           'phoneNumber': '+251911223344',
@@ -405,6 +405,13 @@ class _UssdAlertConsoleScreenState extends ConsumerState<UssdAlertConsoleScreen>
                     controller: _smsTextController,
                     maxLines: 5,
                     decoration: InputDecoration(
+                      label: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('Broadcast Message'),
+                          Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
+                        ],
+                      ),
                       hintText: 'Compose emergency SMS broadcast to farmers...',
                       filled: true,
                       fillColor: isDark ? Colors.white10 : Colors.grey.shade100,
