@@ -71,11 +71,11 @@ void main() async {
       );
     }
 
-    AppLogger.info('AgriEtech app starting...');
+    AppLogger.info('EthioFarm app starting...');
 
     runApp(
       const ProviderScope(
-        child: AgriEtechApp(),
+        child: EthioFarmApp(),
       ),
     );
   } catch (e, stackTrace) {

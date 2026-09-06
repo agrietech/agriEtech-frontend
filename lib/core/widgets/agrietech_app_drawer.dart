@@ -12,8 +12,8 @@ import '../../features/home/screens/main_navigation_shell.dart';
 
 /// Enterprise-grade navigation drawer with structured international-standard hierarchy.
 /// Follows Material 3 navigation drawer guidelines with role-adaptive modules.
-class AgriEtechAppDrawer extends ConsumerWidget {
-  const AgriEtechAppDrawer({super.key});
+class EthioFarmAppDrawer extends ConsumerWidget {
+  const EthioFarmAppDrawer({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

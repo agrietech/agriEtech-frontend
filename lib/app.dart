@@ -6,8 +6,8 @@ import 'core/routing/app_router.dart';
 import 'core/theme/app_theme.dart';
 
 /// Main application widget
-class AgriEtechApp extends ConsumerWidget {
-  const AgriEtechApp({super.key});
+class EthioFarmApp extends ConsumerWidget {
+  const EthioFarmApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -18,7 +18,7 @@ class AgriEtechApp extends ConsumerWidget {
       title: 'EthioFarm',
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.light,
+      themeMode: ThemeMode.system,
       locale: Locale(currentLang),
       routerConfig: router,
       debugShowCheckedModeBanner: false,

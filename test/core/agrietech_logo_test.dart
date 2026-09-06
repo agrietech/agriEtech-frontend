@@ -3,12 +3,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:agrietech/core/widgets/agrietech_logo.dart';
 
 void main() {
-  group('AgriEtechLogo Widget Tests', () {
+  group('EthioFarmLogo Widget Tests', () {
     testWidgets('renders stacked hero logo variant with 3-segment wordmark and tagline', (tester) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(
-            body: AgriEtechLogo.stacked(
+            body: EthioFarmLogo.stacked(
               size: 80,
               showTagline: true,
             ),
@@ -16,16 +16,16 @@ void main() {
         ),
       );
 
-      expect(find.byType(AgriEtechLogo), findsOneWidget);
+      expect(find.byType(EthioFarmLogo), findsOneWidget);
       expect(find.byType(RichText), findsWidgets);
-      expect(find.text('SMART FARMING & EARLY WARNING'), findsOneWidget);
+      expect(find.text('SMART FARMING SYSTEM'), findsOneWidget);
     });
 
     testWidgets('renders horizontal variant for app bar with 3-segment wordmark', (tester) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(
-            body: AgriEtechLogo.horizontal(
+            body: EthioFarmLogo.horizontal(
               size: 32,
               showTagline: false,
             ),
@@ -33,7 +33,7 @@ void main() {
         ),
       );
 
-      expect(find.byType(AgriEtechLogo), findsOneWidget);
+      expect(find.byType(EthioFarmLogo), findsOneWidget);
       expect(find.byType(RichText), findsWidgets);
     });
 
@@ -41,14 +41,14 @@ void main() {
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(
-            body: AgriEtechLogo.wordmark(
+            body: EthioFarmLogo.wordmark(
               size: 36,
             ),
           ),
         ),
       );
 
-      expect(find.byType(AgriEtechLogo), findsOneWidget);
+      expect(find.byType(EthioFarmLogo), findsOneWidget);
       expect(find.byType(RichText), findsOneWidget);
       expect(find.byIcon(Icons.eco), findsNothing);
     });
@@ -57,14 +57,14 @@ void main() {
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(
-            body: AgriEtechLogo.iconOnly(
+            body: EthioFarmLogo.iconOnly(
               size: 48,
             ),
           ),
         ),
       );
 
-      expect(find.byType(AgriEtechLogo), findsOneWidget);
+      expect(find.byType(EthioFarmLogo), findsOneWidget);
       expect(find.byType(CustomPaint), findsWidgets);
       expect(find.byIcon(Icons.eco), findsNothing);
     });

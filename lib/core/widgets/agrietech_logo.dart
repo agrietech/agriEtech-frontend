@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
-/// Display variant for the AgriEtech logo
+/// Display variant for the EthioFarm logo
 enum LogoVariant {
   /// Vertical layout with hero icon badge and 3-segment wordmark below
   stacked,
@@ -16,9 +16,9 @@ enum LogoVariant {
   iconOnly,
 }
 
-/// A bounded, branded logo widget for AgriEtech featuring a 3-segment signature:
-/// "agri" (nature/agriculture) + "E" (early warning/innovation) + "tech" (technology)
-class AgriEtechLogo extends StatelessWidget {
+/// A bounded, branded logo widget for EthioFarm featuring a 3-segment signature:
+/// "agri" (nature/agriculture) + "E" (smart alert/innovation) + "tech" (technology)
+class EthioFarmLogo extends StatelessWidget {
   final LogoVariant variant;
   final double size;
   final bool showTagline;
@@ -26,7 +26,7 @@ class AgriEtechLogo extends StatelessWidget {
   final Color? customEColor;
   final String? customTagline;
 
-  const AgriEtechLogo({
+  const EthioFarmLogo({
     super.key,
     this.variant = LogoVariant.stacked,
     this.size = 72,
@@ -37,7 +37,7 @@ class AgriEtechLogo extends StatelessWidget {
   });
 
   /// Factory constructor for hero stacked logo (Hero splash / Auth / Onboarding)
-  const AgriEtechLogo.hero({
+  const EthioFarmLogo.hero({
     super.key,
     this.size = 96,
     this.showTagline = true,
@@ -47,7 +47,7 @@ class AgriEtechLogo extends StatelessWidget {
   }) : variant = LogoVariant.stacked;
 
   /// Factory constructor for standard cards and dialogs
-  const AgriEtechLogo.standard({
+  const EthioFarmLogo.standard({
     super.key,
     this.size = 64,
     this.showTagline = true,
@@ -57,7 +57,7 @@ class AgriEtechLogo extends StatelessWidget {
   }) : variant = LogoVariant.stacked;
 
   /// Factory constructor for hero stacked logo
-  const AgriEtechLogo.stacked({
+  const EthioFarmLogo.stacked({
     super.key,
     this.size = 72,
     this.showTagline = true,
@@ -67,7 +67,7 @@ class AgriEtechLogo extends StatelessWidget {
   }) : variant = LogoVariant.stacked;
 
   /// Factory constructor for horizontal app bar logo
-  const AgriEtechLogo.horizontal({
+  const EthioFarmLogo.horizontal({
     super.key,
     this.size = 48,
     this.showTagline = false,
@@ -77,7 +77,7 @@ class AgriEtechLogo extends StatelessWidget {
   }) : variant = LogoVariant.horizontal;
 
   /// Factory constructor for compact navbar / header branding
-  const AgriEtechLogo.appBar({
+  const EthioFarmLogo.appBar({
     super.key,
     this.size = 38,
     this.showTagline = false,
@@ -87,7 +87,7 @@ class AgriEtechLogo extends StatelessWidget {
   }) : variant = LogoVariant.horizontal;
 
   /// Factory constructor for wordmark-only (pure 3-segment design)
-  const AgriEtechLogo.wordmark({
+  const EthioFarmLogo.wordmark({
     super.key,
     this.size = 32,
     this.showTagline = false,
@@ -97,7 +97,7 @@ class AgriEtechLogo extends StatelessWidget {
   }) : variant = LogoVariant.wordmark;
 
   /// Factory constructor for compact icon badge
-  const AgriEtechLogo.iconOnly({
+  const EthioFarmLogo.iconOnly({
     super.key,
     this.size = 48,
   })  : variant = LogoVariant.iconOnly,
@@ -107,7 +107,7 @@ class AgriEtechLogo extends StatelessWidget {
         customTagline = null;
 
   /// Factory constructor for micro favicon / badge
-  const AgriEtechLogo.compact({
+  const EthioFarmLogo.compact({
     super.key,
     this.size = 28,
   })  : variant = LogoVariant.iconOnly,
@@ -138,36 +138,37 @@ class AgriEtechLogo extends StatelessWidget {
       width: badgeSize,
       height: badgeSize,
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: isDark
-              ? const [Color(0xFF14532D), Color(0xFF15803D), Color(0xFF166534)]
-              : const [Color(0xFF15803D), Color(0xFF16A34A), Color(0xFF22C55E)],
-        ),
         borderRadius: BorderRadius.circular(badgeSize * 0.28),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1B5E20).withValues(alpha: isDark ? 0.4 : 0.28),
-            blurRadius: badgeSize * 0.25,
-            offset: Offset(0, badgeSize * 0.1),
-          ),
-          BoxShadow(
-            color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
-            blurRadius: badgeSize * 0.15,
-            offset: Offset(0, -badgeSize * 0.02),
+            color: const Color(0xFF1B5E20).withValues(alpha: isDark ? 0.45 : 0.25),
+            blurRadius: badgeSize * 0.22,
+            offset: Offset(0, badgeSize * 0.08),
           ),
         ],
-        border: Border.all(
-          color: const Color(0xFFF59E0B).withValues(alpha: 0.4),
-          width: 1.5,
-        ),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(badgeSize * 0.26),
-        child: CustomPaint(
-          size: Size(badgeSize, badgeSize),
-          painter: _EthiopianAgriEmblemPainter(),
+        child: Image.asset(
+          'assets/icons/app_icon.png',
+          width: badgeSize,
+          height: badgeSize,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: isDark
+                    ? const [Color(0xFF14532D), Color(0xFF15803D), Color(0xFF166534)]
+                    : const [Color(0xFF15803D), Color(0xFF16A34A), Color(0xFF22C55E)],
+              ),
+            ),
+            child: CustomPaint(
+              size: Size(badgeSize, badgeSize),
+              painter: _EthiopianAgriEmblemPainter(),
+            ),
+          ),
         ),
       ),
     );
@@ -214,7 +215,7 @@ class AgriEtechLogo extends StatelessWidget {
 
   /// Builds the subtitle tagline badge
   Widget _buildTaglineBadge(bool isDark) {
-    final tagline = customTagline ?? 'SMART FARMING & EARLY WARNING';
+    final tagline = customTagline ?? 'SMART FARMING SYSTEM';
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
       decoration: BoxDecoration(
@@ -281,7 +282,7 @@ class AgriEtechLogo extends StatelessWidget {
             if (showTagline) ...[
               const SizedBox(height: 2),
               Text(
-                customTagline ?? 'Early Warning Platform',
+                customTagline ?? 'Smart Farming System',
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w500,
@@ -500,7 +501,7 @@ class _EthiopianAgriEmblemPainter extends CustomPainter {
     canvas.drawCircle(Offset(w * 0.52, h * 0.64), w * 0.038, cherryPaint);
     canvas.drawCircle(Offset(w * 0.57, h * 0.68), w * 0.034, cherryPaint);
 
-    // 7. AgTech Telemetry & Satellite Orbital Waves (Early Warning)
+    // 7. AgTech Telemetry & Satellite Orbital Waves (Smart Alert)
     final telemetryPaint = Paint()
       ..color = const Color(0xFF38BDF8).withValues(alpha: 0.85)
       ..strokeWidth = w * 0.03
