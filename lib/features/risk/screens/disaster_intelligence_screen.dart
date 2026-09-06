@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/network/dio_client.dart';
-import '../../../core/constants/api_endpoints.dart';
+import '../../../core/constants/api_constants.dart';
 import '../../../core/widgets/error_view.dart';
 import '../../../core/widgets/loading_indicator.dart';
 import '../../boundaries/providers/boundary_provider.dart';
@@ -37,12 +37,12 @@ final woredaPresetsProvider = FutureProvider<List<EthiopiaWoredaPreset>>((ref) a
   )).toList();
 });
 
-// Async provider for Multi-Hazard Disaster Predictions — backend only, no hardcoded fallback
+// Async provider for Natural Disaster Predictions — backend only, no hardcoded fallback
 final disasterPredictionProvider = FutureProvider.family<Map<String, dynamic>, EthiopiaWoredaPreset>((ref, preset) async {
   final client = ref.watch(dioClientProvider);
 
   final response = await client.dio.get<Map<String, dynamic>>(
-    ApiEndpoints.naturalDisasters,
+    ApiConstants.naturalDisasters,
     queryParameters: {
       'lat': preset.lat,
       'lng': preset.lng,
@@ -267,7 +267,7 @@ class _DisasterIntelligenceScreenState extends ConsumerState<DisasterIntelligenc
                   Icon(badgeIcon, color: Colors.white, size: 24),
                   const SizedBox(width: 8),
                   const Text(
-                    'MULTI-HAZARD RISK STATUS',
+                    'INTEGRATED RISK STATUS',
                     style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 0.8),
                   ),
                 ],

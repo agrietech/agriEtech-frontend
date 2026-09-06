@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/network/dio_client.dart';
-import '../../../core/constants/api_endpoints.dart';
+import '../../../core/constants/api_constants.dart';
 import '../../../core/widgets/error_view.dart';
 import '../../../core/widgets/loading_indicator.dart';
 import 'disaster_intelligence_screen.dart';
@@ -12,7 +12,7 @@ final seismologyDetailProvider = FutureProvider.family<Map<String, dynamic>, Eth
   final client = ref.watch(dioClientProvider);
 
   final response = await client.dio.get<Map<String, dynamic>>(
-    ApiEndpoints.seismology,
+    ApiConstants.seismology,
     queryParameters: {
       'lat': preset.lat,
       'lng': preset.lng,

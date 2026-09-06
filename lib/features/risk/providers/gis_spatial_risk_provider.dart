@@ -1,16 +1,16 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
-import '../../../core/constants/api_endpoints.dart';
+import '../../../core/constants/api_constants.dart';
 import '../../../core/network/dio_client.dart';
 import '../../alerts/models/alert_models.dart';
-import '../../alerts/providers/alerts_provider.dart';
+import '../../alerts/providers/alert_provider.dart';
 import '../../boundaries/providers/boundary_provider.dart';
 import '../models/spatial_risk_model.dart';
 
 /// Backward-compatible empty baseline (no hardcoded woredas)
 const List<WoredaSpatialProfile> defaultWoredaSpatialProfiles = [];
 
-/// Live Dynamic Spatial Risk Provider that connects to Backend Multi-Hazard Telemetry
+/// Live Dynamic Spatial Risk Provider that connects to Backend Risk Telemetry
 final liveSpatialRiskProfilesProvider = FutureProvider<List<WoredaSpatialProfile>>((ref) async {
   final dioClient = ref.watch(dioClientProvider);
   final alertsAsync = ref.watch(alertsProvider);
@@ -22,7 +22,7 @@ final liveSpatialRiskProfilesProvider = FutureProvider<List<WoredaSpatialProfile
   for (final w in woredas) {
     try {
       final response = await dioClient.get(
-        ApiEndpoints.naturalDisasters,
+        ApiConstants.naturalDisasters,
         queryParameters: {
           'lat': w.centerLat,
           'lng': w.centerLng,

@@ -13,14 +13,14 @@ class RiskMapScreen extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      drawer: const AgriEtechAppDrawer(),
+      drawer: const EthioFarmAppDrawer(),
       appBar: AppBar(
         title: const Text('Ethiopia Spatial Risk GIS Hub'),
         elevation: 0,
         actions: [
           IconButton(
             icon: const Icon(Icons.crisis_alert_rounded),
-            tooltip: 'Multi-Hazard Intelligence',
+            tooltip: 'Risk Intelligence',
             onPressed: () => context.push('/disasters'),
           ),
           IconButton(
@@ -115,7 +115,7 @@ class RiskMapScreen extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'This GIS platform is constrained to the sovereign territory of Ethiopia (3.2°N - 15.2°N, 32.8°E - 48.2°E) and provides real-time multi-hazard spatial shading based on:',
+                'This GIS platform is constrained to the sovereign territory of Ethiopia (3.2°N - 15.2°N, 32.8°E - 48.2°E) and provides real-time integrated spatial shading based on:',
                 style: TextStyle(fontSize: 12),
               ),
               SizedBox(height: 12),
