@@ -138,7 +138,7 @@ class _AiAssistantSheetState extends ConsumerState<AiAssistantSheet>
     final sample = clean.length > 220 ? clean.substring(0, 220) : clean;
     final encodedSample = Uri.encodeComponent(sample);
     final streamUrl = audioUrl ??
-        'https://agrietech.onrender.com/api/v1/ai/tts-stream?text=$encodedSample&lang=$lang';
+        'https://ethiofarm.onrender.com/api/v1/ai/tts-stream?text=$encodedSample&lang=$lang';
 
     setState(() => _currentlyPlayingKey = messageKey);
 

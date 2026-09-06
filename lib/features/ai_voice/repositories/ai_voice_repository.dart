@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
 import '../../../core/network/dio_client.dart';
-import '../../../core/constants/api_endpoints.dart';
+import '../../../core/constants/api_constants.dart';
 import '../../../core/utils/logger.dart';
 
 /// Repository for bilingual AI voice inquiries (Amharic & English)
@@ -19,7 +19,7 @@ class AiVoiceRepository {
     try {
       AppLogger.info('AI text inquiry: $question');
       final response = await _dioClient.post(
-        ApiEndpoints.aiVoiceInquiry,
+        ApiConstants.aiVoiceInquiry,
         data: {'userQuestion': question, 'question': question, 'language': language},
       );
       final raw = response.data is Map && response.data['data'] != null
@@ -56,7 +56,7 @@ class AiVoiceRepository {
         'language': language,
       });
       final response = await _dioClient.post(
-        ApiEndpoints.aiVoiceInquiry,
+        ApiConstants.aiVoiceInquiry,
         data: formData,
       );
       final raw = response.data is Map && response.data['data'] != null
@@ -85,7 +85,7 @@ class AiVoiceRepository {
     try {
       AppLogger.info('Synthesizing text to speech: $text');
       final response = await _dioClient.post(
-        ApiEndpoints.aiSpeakResponse,
+        ApiConstants.aiSpeakResponse,
         data: {'text': text, 'language': language},
       );
       final raw = response.data is Map && response.data['data'] != null
