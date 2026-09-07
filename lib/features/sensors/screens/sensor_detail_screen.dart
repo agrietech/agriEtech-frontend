@@ -5,7 +5,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../models/sensor_models.dart';
 import '../providers/sensor_provider.dart';
-import '../services/firebase_sensor_service.dart';
+import '../services/hardware_sensor_service.dart';
 
 class SensorDetailScreen extends ConsumerStatefulWidget {
   final SensorModel sensor;
