@@ -38,6 +38,82 @@ class BoundaryLocalCache {
     RegionModel(id: 'ET99', code: 'ET99', name: 'Contested Area', createdAt: '2026-08-17T00:00:00.000Z', updatedAt: '2026-08-17T00:00:00.000Z'),
   ];
 
+  /// Baseline fallback zones by region for zero-latency offline loading
+  static const Map<String, List<ZoneModel>> defaultZonesByRegion = {
+    'ET04': [
+      ZoneModel(id: 'ET0401', regionId: 'ET04', name: 'West Wellega'),
+      ZoneModel(id: 'ET0402', regionId: 'ET04', name: 'East Wellega'),
+      ZoneModel(id: 'ET0403', regionId: 'ET04', name: 'Ilu Aba Bora'),
+      ZoneModel(id: 'ET0404', regionId: 'ET04', name: 'Jimma'),
+      ZoneModel(id: 'ET0405', regionId: 'ET04', name: 'West Shewa'),
+      ZoneModel(id: 'ET0406', regionId: 'ET04', name: 'North Shewa (OR)'),
+      ZoneModel(id: 'ET0407', regionId: 'ET04', name: 'East Shewa'),
+      ZoneModel(id: 'ET0408', regionId: 'ET04', name: 'Arsi'),
+      ZoneModel(id: 'ET0409', regionId: 'ET04', name: 'West Hararge'),
+      ZoneModel(id: 'ET0410', regionId: 'ET04', name: 'East Hararge'),
+      ZoneModel(id: 'ET0411', regionId: 'ET04', name: 'Bale'),
+      ZoneModel(id: 'ET0412', regionId: 'ET04', name: 'Borena'),
+      ZoneModel(id: 'ET0413', regionId: 'ET04', name: 'Guji'),
+    ],
+    'ET03': [
+      ZoneModel(id: 'ET0301', regionId: 'ET03', name: 'North Gondar'),
+      ZoneModel(id: 'ET0302', regionId: 'ET03', name: 'South Gondar'),
+      ZoneModel(id: 'ET0303', regionId: 'ET03', name: 'North Wello'),
+      ZoneModel(id: 'ET0304', regionId: 'ET03', name: 'South Wello'),
+      ZoneModel(id: 'ET0305', regionId: 'ET03', name: 'North Shewa (AM)'),
+      ZoneModel(id: 'ET0306', regionId: 'ET03', name: 'East Gojam'),
+      ZoneModel(id: 'ET0307', regionId: 'ET03', name: 'West Gojam'),
+      ZoneModel(id: 'ET0308', regionId: 'ET03', name: 'Wag Hamra'),
+      ZoneModel(id: 'ET0309', regionId: 'ET03', name: 'Awi'),
+      ZoneModel(id: 'ET0314', regionId: 'ET03', name: 'Bahir Dar town Admin'),
+    ],
+    'ET01': [
+      ZoneModel(id: 'ET0101', regionId: 'ET01', name: 'North Western'),
+      ZoneModel(id: 'ET0102', regionId: 'ET01', name: 'Central'),
+      ZoneModel(id: 'ET0103', regionId: 'ET01', name: 'Eastern'),
+      ZoneModel(id: 'ET0104', regionId: 'ET01', name: 'Southern'),
+      ZoneModel(id: 'ET0106', regionId: 'ET01', name: 'South Eastern'),
+      ZoneModel(id: 'ET0107', regionId: 'ET01', name: 'Mekelle'),
+    ],
+    'ET14': [
+      ZoneModel(id: 'ET1401', regionId: 'ET14', name: 'Addis Ababa Zone 1'),
+      ZoneModel(id: 'ET1402', regionId: 'ET14', name: 'Addis Ababa Zone 2'),
+    ],
+    'ET10': [
+      ZoneModel(id: 'ET1001', regionId: 'ET10', name: 'Hawassa City'),
+      ZoneModel(id: 'ET1002', regionId: 'ET10', name: 'Sidama Zone'),
+    ],
+    'ET05': [
+      ZoneModel(id: 'ET0501', regionId: 'ET05', name: 'Sitti'),
+      ZoneModel(id: 'ET0502', regionId: 'ET05', name: 'Fafan /Jigjiga'),
+      ZoneModel(id: 'ET0503', regionId: 'ET05', name: 'Jarar'),
+    ],
+  };
+
+  /// Baseline fallback woredas by zone for zero-latency offline loading
+  static const Map<String, List<WoredaModel>> defaultWoredasByZone = {
+    'ET0407': [
+      WoredaModel(id: 'ET040101', zoneId: 'ET0407', name: 'Adama Zuria', centerLat: 8.54, centerLng: 39.27),
+      WoredaModel(id: 'ET040102', zoneId: 'ET0407', name: 'Bishoftu /Ada\'a', centerLat: 8.75, centerLng: 38.98),
+      WoredaModel(id: 'ET040103', zoneId: 'ET0407', name: 'Lome', centerLat: 8.60, centerLng: 39.12),
+      WoredaModel(id: 'ET040104', zoneId: 'ET0407', name: 'Bora', centerLat: 8.35, centerLng: 38.75),
+      WoredaModel(id: 'ET040105', zoneId: 'ET0407', name: 'Dugda', centerLat: 8.20, centerLng: 38.80),
+      WoredaModel(id: 'ET040106', zoneId: 'ET0407', name: 'Gimbichu', centerLat: 8.90, centerLng: 39.15),
+    ],
+    'ET0405': [
+      WoredaModel(id: 'ET040501', zoneId: 'ET0405', name: 'Ambo Zuria', centerLat: 8.98, centerLng: 37.85),
+      WoredaModel(id: 'ET040502', zoneId: 'ET0405', name: 'Dendi', centerLat: 9.02, centerLng: 38.15),
+      WoredaModel(id: 'ET040503', zoneId: 'ET0405', name: 'Walmara', centerLat: 9.07, centerLng: 38.52),
+    ],
+    'ET0306': [
+      WoredaModel(id: 'ET030601', zoneId: 'ET0306', name: 'Debre Markos', centerLat: 10.33, centerLng: 37.73),
+      WoredaModel(id: 'ET030602', zoneId: 'ET0306', name: 'Machakel', centerLat: 10.45, centerLng: 37.60),
+    ],
+    'ET0107': [
+      WoredaModel(id: 'ET010701', zoneId: 'ET0107', name: 'Mekelle Central', centerLat: 13.50, centerLng: 39.47),
+    ],
+  };
+
   // --------------------------------------------------------------------------
   // REGIONS
   // --------------------------------------------------------------------------
@@ -95,7 +171,7 @@ class BoundaryLocalCache {
         }
       }
     } catch (_) {}
-    return [];
+    return defaultZonesByRegion[regionId] ?? [];
   }
 
   /// Persist zones for a specific region
@@ -130,7 +206,7 @@ class BoundaryLocalCache {
         }
       }
     } catch (_) {}
-    return [];
+    return defaultWoredasByZone[zoneId] ?? [];
   }
 
   /// Persist woredas for a specific zone
