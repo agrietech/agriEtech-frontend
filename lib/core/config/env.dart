@@ -28,9 +28,7 @@ class AppEnv {
     if (_compileTimeApiUrl.isNotEmpty) {
       return _compileTimeApiUrl;
     }
-    const defaultUrl = kReleaseMode 
-        ? 'https://agrietech.onrender.com/api/v1' 
-        : 'http://localhost:5000/api/v1';
+    const defaultUrl = 'https://agrietech.onrender.com/api/v1';
     final raw = _get('API_BASE_URL', defaultUrl);
     if (!kIsWeb && Platform.isAndroid) {
       if (raw.contains('localhost')) return raw.replaceAll('localhost', '10.0.2.2');
@@ -43,9 +41,7 @@ class AppEnv {
     if (_compileTimeSocketUrl.isNotEmpty) {
       return _compileTimeSocketUrl;
     }
-    const defaultUrl = kReleaseMode 
-        ? 'https://agrietech.onrender.com' 
-        : 'http://localhost:5000';
+    const defaultUrl = 'https://agrietech.onrender.com';
     final raw = _get('SOCKET_BASE_URL', defaultUrl);
     if (!kIsWeb && Platform.isAndroid) {
       if (raw.contains('localhost')) return raw.replaceAll('localhost', '10.0.2.2');
