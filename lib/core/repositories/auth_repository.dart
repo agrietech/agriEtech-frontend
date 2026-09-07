@@ -115,6 +115,9 @@ class AuthRepository {
         if (request.woredaId != null && request.woredaId!.isNotEmpty) 'woredaId': request.woredaId,
         if (request.kebeleId != null && request.kebeleId!.isNotEmpty) 'kebeleId': request.kebeleId,
         if (request.kebeleName != null && request.kebeleName!.isNotEmpty) 'kebeleName': request.kebeleName,
+        if (request.organizationName != null && request.organizationName!.isNotEmpty) 'organizationName': request.organizationName,
+        if (request.staffIdNumber != null && request.staffIdNumber!.isNotEmpty) 'staffIdNumber': request.staffIdNumber,
+        if (request.justification != null && request.justification!.isNotEmpty) 'justification': request.justification,
         if (request.preferredLang != null && request.preferredLang!.isNotEmpty) 'preferredLang': request.preferredLang,
         if (request.deviceToken != null && request.deviceToken!.isNotEmpty) 'deviceToken': request.deviceToken,
       };
