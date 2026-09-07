@@ -18,7 +18,7 @@ class AuthRepository {
   /// Login user with email or phone and password
   Future<LoginResponse> login(LoginRequest request) async {
     try {
-      final identifier = (request.email ?? request.phone ?? request.identifier ?? '').trim();
+      final identifier = (request.phone ?? request.identifier ?? request.email ?? '').trim();
       final isEmail = identifier.contains('@');
       final formattedPhone = !isEmail ? _normalizePhone(identifier) : null;
       AppLogger.info('Attempting login for: ${isEmail ? identifier : formattedPhone}');
@@ -27,7 +27,7 @@ class AuthRepository {
         if (isEmail) 'email': identifier,
         if (!isEmail) 'phoneNumber': formattedPhone,
         if (!isEmail) 'phone': formattedPhone,
-        'identifier': identifier,
+        'identifier': formattedPhone ?? identifier,
         if (request.deviceToken != null) 'deviceToken': request.deviceToken,
       };
       final response = await _dioClient.post(
@@ -87,12 +87,18 @@ class AuthRepository {
   }
 
   String _normalizePhone(String phone) {
-    final clean = phone.trim().replaceAll(RegExp(r'[\s\-]'), '');
+    final clean = phone.trim().replaceAll(RegExp(r'[\s\-()]'), '');
     if ((clean.startsWith('09') || clean.startsWith('07')) && clean.length == 10) {
       return '+251${clean.substring(1)}';
     }
+    if ((clean.startsWith('9') || clean.startsWith('7')) && clean.length == 9) {
+      return '+251$clean';
+    }
     if (clean.startsWith('251') && clean.length == 12) {
       return '+$clean';
+    }
+    if (clean.startsWith('+251') && clean.length == 13) {
+      return clean;
     }
     return clean;
   }
@@ -676,15 +682,19 @@ class AuthRepository {
       if (responseData is Map && responseData['code'] == 'ACCOUNT_LOCKED') {
         return AuthError.accountLocked();
       }
+      var cleanMessage = backendMessage;
+      if (cleanMessage != null && cleanMessage.toLowerCase().contains('invalid email or password')) {
+        cleanMessage = 'Invalid phone number or password.';
+      }
       return AuthError(
-        message: backendMessage ?? 'Invalid phone/email or password.',
+        message: cleanMessage ?? 'Invalid phone number or password.',
         code: 'INVALID_CREDENTIALS',
       );
     }
 
     if (statusCode == 403) {
       return AuthError(
-        message: backendMessage ?? 'Access denied. Please verify your email or contact support.',
+        message: backendMessage ?? 'Access denied. Please verify your phone number or contact support.',
         code: 'FORBIDDEN',
       );
     }

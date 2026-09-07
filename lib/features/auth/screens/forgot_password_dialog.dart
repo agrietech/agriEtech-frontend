@@ -289,7 +289,7 @@ class _ForgotPasswordDialogState extends ConsumerState<ForgotPasswordDialog> {
                               ],
                             ),
                             prefixIcon: Icon(Icons.pin_outlined),
-                            helperText: 'Enter the 6-digit number received in your email or phone',
+                            helperText: 'Enter the 6-digit code received via SMS or email',
                           ),
                           validator: (val) {
                             if (val == null || val.trim().isEmpty) {
@@ -336,7 +336,7 @@ class _ForgotPasswordDialogState extends ConsumerState<ForgotPasswordDialog> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Enter your Email Address or Phone Number to receive a 6-digit password reset code.',
+                          'Enter your Phone Number (or Email) to receive a 6-digit password reset code via SMS.',
                           style: AppTypography.bodySmall.copyWith(
                             color: Colors.grey.shade700,
                           ),
@@ -348,16 +348,17 @@ class _ForgotPasswordDialogState extends ConsumerState<ForgotPasswordDialog> {
                             label: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Text('Email Address or Phone Number'),
+                                Text('Phone Number (or Email)'),
                                 Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
                               ],
                             ),
-                            prefixIcon: Icon(Icons.mail_outline),
+                            hintText: '0911 234 567',
+                            prefixIcon: Icon(Icons.phone_outlined),
                           ),
-                          keyboardType: TextInputType.emailAddress,
+                          keyboardType: TextInputType.phone,
                           textInputAction: TextInputAction.done,
                           onFieldSubmitted: (_) => _sendResetCode(),
-                          validator: (val) => (val == null || val.trim().isEmpty) ? 'Please enter email or phone' : null,
+                          validator: (val) => (val == null || val.trim().isEmpty) ? 'Please enter phone number or email' : null,
                           enabled: !_isLoading,
                         ),
                         const SizedBox(height: AppSpacing.sm),
