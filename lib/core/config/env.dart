@@ -29,7 +29,7 @@ class AppEnv {
       return _compileTimeApiUrl;
     }
     const defaultUrl = kReleaseMode 
-        ? 'https://ethiofarm.onrender.com/api/v1' 
+        ? 'https://agrietech.onrender.com/api/v1' 
         : 'http://localhost:5000/api/v1';
     final raw = _get('API_BASE_URL', defaultUrl);
     if (!kIsWeb && Platform.isAndroid) {
@@ -44,7 +44,7 @@ class AppEnv {
       return _compileTimeSocketUrl;
     }
     const defaultUrl = kReleaseMode 
-        ? 'https://ethiofarm.onrender.com' 
+        ? 'https://agrietech.onrender.com' 
         : 'http://localhost:5000';
     final raw = _get('SOCKET_BASE_URL', defaultUrl);
     if (!kIsWeb && Platform.isAndroid) {

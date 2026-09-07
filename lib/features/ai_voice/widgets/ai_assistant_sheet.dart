@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/constants/api_constants.dart';
 import '../../../core/utils/in_app_audio.dart';
 import '../../../core/l10n/app_localizations.dart';
 import '../providers/ai_voice_provider.dart';
@@ -138,7 +139,7 @@ class _AiAssistantSheetState extends ConsumerState<AiAssistantSheet>
     final sample = clean.length > 220 ? clean.substring(0, 220) : clean;
     final encodedSample = Uri.encodeComponent(sample);
     final streamUrl = audioUrl ??
-        'https://ethiofarm.onrender.com/api/v1/ai/tts-stream?text=$encodedSample&lang=$lang';
+        '${ApiConstants.baseApiUrl}/ai/tts-stream?text=$encodedSample&lang=$lang';
 
     setState(() => _currentlyPlayingKey = messageKey);
 
