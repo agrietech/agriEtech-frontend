@@ -114,6 +114,19 @@ class AuthState {
   bool get hasWoredaAccess => user?.woredaId != null;
 }
 
+/// Result of a registration attempt indicating whether phone OTP verification is required
+class RegisterResult {
+  final bool requiresPhoneVerification;
+  final String phone;
+  final UserModel user;
+
+  const RegisterResult({
+    required this.requiresPhoneVerification,
+    required this.phone,
+    required this.user,
+  });
+}
+
 /// Authentication state notifier
 class AuthNotifier extends StateNotifier<AuthState> {
   final AuthRepository _authRepository;
@@ -272,7 +285,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   /// Register new user
-  Future<void> register({
+  Future<RegisterResult> register({
     required String phone,
     required String password,
     required String fullName,
@@ -313,8 +326,27 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
       
       final response = await _authRepository.register(request);
+      final requiresVerification = response.requiresPhoneVerification;
+      final user = response.user;
+
+      if (requiresVerification) {
+        // Phone ownership verification OTP is strictly required before activating session.
+        // We set isAuthenticated to false so GoRouter does not prematurely redirect.
+        state = state.copyWith(
+          user: user,
+          isAuthenticated: false,
+          isLoading: false,
+        );
+        AppLogger.info('Registration created. Phone OTP verification required for: $phone');
+        return RegisterResult(
+          requiresPhoneVerification: true,
+          phone: phone,
+          user: user,
+        );
+      }
+
       var hasToken = response.accessToken.isNotEmpty;
-      UserModel user = response.user;
+      UserModel finalUser = user;
 
       // If registration succeeded on server but didn't return an auth token directly, auto-login seamlessly
       if (!hasToken) {
@@ -327,7 +359,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
               deviceToken: deviceToken,
             ),
           );
-          user = loginResponse.user;
+          finalUser = loginResponse.user;
           hasToken = loginResponse.accessToken.isNotEmpty;
         } catch (loginErr) {
           AppLogger.warning('Auto-login after register did not complete: $loginErr');
@@ -335,12 +367,17 @@ class AuthNotifier extends StateNotifier<AuthState> {
       }
       
       state = state.copyWith(
-        user: user,
+        user: finalUser,
         isAuthenticated: hasToken,
         isLoading: false,
       );
       
       AppLogger.info('Registration successful (authenticated: $hasToken)');
+      return RegisterResult(
+        requiresPhoneVerification: false,
+        phone: phone,
+        user: finalUser,
+      );
     } on AuthError catch (e) {
       // If user already exists (e.g. created during a timeout or earlier attempt), attempt auto-login with provided credentials
       if (e.code == 'CONFLICT') {
@@ -354,13 +391,31 @@ class AuthNotifier extends StateNotifier<AuthState> {
               deviceToken: deviceToken,
             ),
           );
+          final isPhoneUnverified = !loginResponse.user.isPhoneVerified && loginResponse.user.phone.isNotEmpty;
+          if (isPhoneUnverified) {
+            state = state.copyWith(
+              user: loginResponse.user,
+              isAuthenticated: false,
+              isLoading: false,
+            );
+            return RegisterResult(
+              requiresPhoneVerification: true,
+              phone: phone,
+              user: loginResponse.user,
+            );
+          }
+
           state = state.copyWith(
             user: loginResponse.user,
             isAuthenticated: true,
             isLoading: false,
           );
           AppLogger.info('Auto-login succeeded after conflict recovery');
-          return;
+          return RegisterResult(
+            requiresPhoneVerification: false,
+            phone: phone,
+            user: loginResponse.user,
+          );
         } catch (loginErr) {
           AppLogger.warning('Auto-login failed after conflict, showing error: $loginErr');
         }

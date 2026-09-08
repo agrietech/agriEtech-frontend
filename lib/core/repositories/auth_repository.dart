@@ -156,24 +156,34 @@ class AuthRepository {
       }
 
       final user = UserModel.fromJson(normalizedUser);
+      final reqPhoneVerify = rawData['requiresPhoneVerification'] == true ||
+          (!user.isPhoneVerified && user.phone.isNotEmpty);
+
       final loginResponse = LoginResponse(
         accessToken: accessToken,
         refreshToken: refreshToken,
         user: user,
+        requiresPhoneVerification: reqPhoneVerify,
       );
 
-      // Save authentication tokens & user profile locally for offline persistence
-      if (accessToken.isNotEmpty) {
-        await _storage.saveAccessToken(accessToken);
+      // Only commit authentication tokens locally if phone verification is NOT required.
+      // For phone-based sign-ups, tokens will only be saved upon successful OTP verification.
+      if (!reqPhoneVerify) {
+        if (accessToken.isNotEmpty) {
+          await _storage.saveAccessToken(accessToken);
+        }
+        if (refreshToken.isNotEmpty) {
+          await _storage.saveRefreshToken(refreshToken);
+        }
+        await _storage.saveUserId(user.id);
+        await _storage.saveUserData(jsonEncode(user.toJson()));
       }
-      if (refreshToken.isNotEmpty) {
-        await _storage.saveRefreshToken(refreshToken);
-      }
-      await _storage.saveUserId(user.id);
-      await _storage.saveUserData(jsonEncode(user.toJson()));
 
-      AppLogger.info('Registration successful for user: ${user.id}');
-      
+      AppLogger.info(
+        'Registration API succeeded for user: ${user.id} '
+        '(requiresPhoneVerification: $reqPhoneVerify)',
+      );
+
       return loginResponse;
     } on DioException catch (e) {
       AppLogger.error('Registration failed', e);

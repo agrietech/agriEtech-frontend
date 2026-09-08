@@ -381,22 +381,30 @@ class LoginResponse {
   final String accessToken;
   final String refreshToken;
   final UserModel user;
+  final bool requiresPhoneVerification;
 
   const LoginResponse({
     required this.accessToken,
     required this.refreshToken,
     required this.user,
+    this.requiresPhoneVerification = false,
   });
 
   factory LoginResponse.fromJson(Map<String, dynamic> json) {
+    final user = UserModel.fromJson(
+      json['user'] is Map<String, dynamic>
+          ? json['user'] as Map<String, dynamic>
+          : (json['data'] is Map<String, dynamic> ? json['data'] as Map<String, dynamic> : json),
+    );
+    final reqPhoneVerify = json['requiresPhoneVerification'] == true ||
+        (json['data'] is Map && (json['data'] as Map)['requiresPhoneVerification'] == true) ||
+        (!user.isPhoneVerified && user.phone.isNotEmpty);
+
     return LoginResponse(
       accessToken: (json['accessToken'] ?? json['token'] ?? '').toString(),
       refreshToken: (json['refreshToken'] ?? '').toString(),
-      user: UserModel.fromJson(
-        json['user'] is Map<String, dynamic>
-            ? json['user'] as Map<String, dynamic>
-            : (json['data'] is Map<String, dynamic> ? json['data'] as Map<String, dynamic> : json),
-      ),
+      user: user,
+      requiresPhoneVerification: reqPhoneVerify,
     );
   }
 
@@ -404,6 +412,7 @@ class LoginResponse {
     'accessToken': accessToken,
     'refreshToken': refreshToken,
     'user': user.toJson(),
+    'requiresPhoneVerification': requiresPhoneVerification,
   };
 }
 

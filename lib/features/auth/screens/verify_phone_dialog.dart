@@ -39,6 +39,8 @@ class _VerifyPhoneDialogState extends ConsumerState<VerifyPhoneDialog> {
 
   bool _isLoading = false;
   bool _isResending = false;
+  String? _errorMessage;
+  String? _successMessage;
   int _cooldownSeconds = 60;
   Timer? _cooldownTimer;
 
@@ -47,10 +49,35 @@ class _VerifyPhoneDialogState extends ConsumerState<VerifyPhoneDialog> {
     return '00:$s';
   }
 
+  String get _displayPhone {
+    final raw = widget.phone.trim();
+    if (raw.startsWith('+251') && raw.length == 13) {
+      return '+251 ${raw.substring(4, 6)} ${raw.substring(6, 9)} ${raw.substring(9)}';
+    }
+    if (raw.startsWith('09') && raw.length == 10) {
+      return '09${raw.substring(2, 4)} ${raw.substring(4, 7)} ${raw.substring(7)}';
+    }
+    if (raw.startsWith('07') && raw.length == 10) {
+      return '07${raw.substring(2, 4)} ${raw.substring(4, 7)} ${raw.substring(7)}';
+    }
+    return raw;
+  }
+
   @override
   void initState() {
     super.initState();
     _startCooldown();
+    _otpController.addListener(_onOtpChanged);
+  }
+
+  void _onOtpChanged() {
+    if (_errorMessage != null) {
+      setState(() => _errorMessage = null);
+    }
+    final text = _otpController.text.trim();
+    if (text.length == 6 && !_isLoading) {
+      _verifyCode();
+    }
   }
 
   void _startCooldown() {
@@ -68,13 +95,19 @@ class _VerifyPhoneDialogState extends ConsumerState<VerifyPhoneDialog> {
   @override
   void dispose() {
     _cooldownTimer?.cancel();
+    _otpController.removeListener(_onOtpChanged);
     _otpController.dispose();
     super.dispose();
   }
 
   Future<void> _verifyCode() async {
+    if (_isLoading) return;
     if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+
       try {
         final code = _otpController.text.trim();
         await ref.read(authProvider.notifier).verifyPhoneOtp(
@@ -89,18 +122,17 @@ class _VerifyPhoneDialogState extends ConsumerState<VerifyPhoneDialog> {
         }
       } on AppError catch (e) {
         if (mounted) {
-          setState(() => _isLoading = false);
-          ErrorHandler.showErrorSnackBar(context, e);
+          setState(() {
+            _isLoading = false;
+            _errorMessage = ErrorHandler.getUserMessage(e);
+          });
         }
       } catch (e) {
         if (mounted) {
-          setState(() => _isLoading = false);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Verification failed: ${e.toString()}'),
-              backgroundColor: Colors.red,
-            ),
-          );
+          setState(() {
+            _isLoading = false;
+            _errorMessage = 'Verification failed: ${e.toString().replaceAll("Exception: ", "")}';
+          });
         }
       }
     }
@@ -109,56 +141,54 @@ class _VerifyPhoneDialogState extends ConsumerState<VerifyPhoneDialog> {
   Future<void> _resendCode() async {
     if (_cooldownSeconds > 0 || _isResending) return;
 
-    setState(() => _isResending = true);
+    setState(() {
+      _isResending = true;
+      _errorMessage = null;
+      _successMessage = null;
+    });
+
     try {
       await ref.read(authProvider.notifier).resendPhoneOtp(widget.phone);
 
       if (mounted) {
-        setState(() => _isResending = false);
+        setState(() {
+          _isResending = false;
+          _successMessage = 'A new 6-digit verification code has been sent via SMS.';
+        });
         _startCooldown();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Row(
-              children: [
-                Icon(Icons.mark_email_read_outlined, color: Colors.white, size: 18),
-                SizedBox(width: 8),
-                Expanded(child: Text('A new 6-digit verification code has been sent via SMS.')),
-              ],
-            ),
-            backgroundColor: Color(0xFF1B5E20),
-          ),
-        );
       }
     } on AppError catch (e) {
       if (mounted) {
-        setState(() => _isResending = false);
-        ErrorHandler.showErrorSnackBar(context, e);
+        setState(() {
+          _isResending = false;
+          _errorMessage = ErrorHandler.getUserMessage(e);
+        });
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _isResending = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to resend code: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        setState(() {
+          _isResending = false;
+          _errorMessage = 'Failed to resend code: ${e.toString().replaceAll("Exception: ", "")}';
+        });
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-      contentPadding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+      backgroundColor: isDark ? const Color(0xFF132116) : Colors.white,
+      titlePadding: const EdgeInsets.fromLTRB(20, 18, 14, 0),
+      contentPadding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
       title: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const Color(0xFF1B5E20).withValues(alpha: 0.1),
+              color: const Color(0xFF1B5E20).withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(
@@ -183,6 +213,11 @@ class _VerifyPhoneDialogState extends ConsumerState<VerifyPhoneDialog> {
               ],
             ),
           ),
+          IconButton(
+            icon: const Icon(Icons.close, size: 20, color: Colors.grey),
+            tooltip: 'Cancel',
+            onPressed: _isLoading ? null : () => Navigator.of(context).pop(false),
+          ),
         ],
       ),
       content: SingleChildScrollView(
@@ -192,68 +227,142 @@ class _VerifyPhoneDialogState extends ConsumerState<VerifyPhoneDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Notice Banner
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF10B981).withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
+                  color: isDark ? const Color(0xFF0F291E) : const Color(0xFFE8F5E9),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: isDark ? const Color(0xFF1B5E20) : const Color(0xFFA5D6A7),
+                  ),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.sms_outlined, color: Color(0xFF059669), size: 20),
+                    const Icon(Icons.sms_outlined, color: Color(0xFF2E7D32), size: 20),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: Text(
-                        'A 6-digit verification code has been sent via SMS to ${widget.phone}. Enter the code below to prove ownership and activate your account.',
-                        style: const TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w500,
-                          color: Color(0xFF065F46),
-                          height: 1.35,
+                      child: RichText(
+                        text: TextSpan(
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            color: isDark ? const Color(0xFFA7F3D0) : const Color(0xFF1B5E20),
+                            height: 1.4,
+                          ),
+                          children: [
+                            const TextSpan(text: 'A 6-digit code has been sent via SMS to '),
+                            TextSpan(
+                              text: _displayPhone,
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            const TextSpan(text: '. Enter the code to verify ownership and activate your account.'),
+                          ],
                         ),
                       ),
                     ),
                   ],
                 ),
               ),
+
+              // Inline Error Banner
+              if (_errorMessage != null) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFEF2F2),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFFCA5A5)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.error_outline, color: Color(0xFFDC2626), size: 18),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _errorMessage!,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFFB91C1C),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
+              // Inline Success Banner
+              if (_successMessage != null) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF0FDF4),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFF86EFAC)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.check_circle_outline, color: Color(0xFF16A34A), size: 18),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _successMessage!,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF15803D),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
               const SizedBox(height: 16),
+
+              // OTP Input Field
               TextFormField(
                 controller: _otpController,
                 keyboardType: TextInputType.number,
                 autofocus: true,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 22,
+                enabled: !_isLoading,
+                style: TextStyle(
+                  fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  letterSpacing: 6,
+                  letterSpacing: 8,
+                  color: isDark ? Colors.white : const Color(0xFF111827),
                 ),
                 inputFormatters: [
                   FilteringTextInputFormatter.digitsOnly,
                   LengthLimitingTextInputFormatter(6),
                 ],
                 decoration: InputDecoration(
-                  label: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text('6-Digit Verification Code'),
-                      Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
-                    ],
-                  ),
+                  labelText: '6-Digit Verification Code',
                   hintText: '• • • • • •',
                   alignLabelWithHint: true,
                   floatingLabelAlignment: FloatingLabelAlignment.center,
                   prefixIcon: const Icon(Icons.pin, color: Color(0xFF1B5E20)),
                   filled: true,
-                  fillColor: const Color(0xFFF9FAFB),
+                  fillColor: isDark ? const Color(0xFF0E1A11) : const Color(0xFFF9FAFB),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                    borderSide: BorderSide(
+                      color: isDark ? const Color(0xFF2E4D33) : const Color(0xFFE5E7EB),
+                    ),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                     borderSide: const BorderSide(color: Color(0xFF1B5E20), width: 2),
+                  ),
+                  errorBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Color(0xFFDC2626)),
                   ),
                 ),
                 validator: (val) {
@@ -261,12 +370,15 @@ class _VerifyPhoneDialogState extends ConsumerState<VerifyPhoneDialog> {
                     return 'Verification code is required';
                   }
                   if (val.trim().length != 6) {
-                    return 'Must be a 6-digit code';
+                    return 'Must be exactly 6 digits';
                   }
                   return null;
                 },
               ),
-              const SizedBox(height: 16),
+
+              const SizedBox(height: 18),
+
+              // Verify Button
               SizedBox(
                 width: double.infinity,
                 height: 48,
@@ -290,10 +402,13 @@ class _VerifyPhoneDialogState extends ConsumerState<VerifyPhoneDialog> {
                         ),
                 ),
               ),
+
               const SizedBox(height: 12),
+
+              // Resend Code Button
               Center(
                 child: TextButton.icon(
-                  onPressed: _cooldownSeconds > 0 || _isResending ? null : _resendCode,
+                  onPressed: _cooldownSeconds > 0 || _isResending || _isLoading ? null : _resendCode,
                   icon: _isResending
                       ? const SizedBox(
                           height: 14,
@@ -309,6 +424,19 @@ class _VerifyPhoneDialogState extends ConsumerState<VerifyPhoneDialog> {
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                       color: _cooldownSeconds > 0 ? Colors.grey : const Color(0xFF1B5E20),
+                    ),
+                  ),
+                ),
+              ),
+
+              Center(
+                child: TextButton(
+                  onPressed: _isLoading ? null : () => Navigator.of(context).pop(false),
+                  child: Text(
+                    'Cancel / Change details',
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      color: isDark ? Colors.grey[400] : Colors.grey[600],
                     ),
                   ),
                 ),

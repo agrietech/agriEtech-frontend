@@ -105,7 +105,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       try {
         final isNonFarmer = _selectedRole != 'FARMER';
 
-        await ref.read(authProvider.notifier).register(
+        final regResult = await ref.read(authProvider.notifier).register(
               phone: _phoneController.text.trim(),
               password: _passwordController.text,
               fullName: _fullNameController.text.trim(),
@@ -122,36 +122,73 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             );
 
         if (mounted) {
-          final phoneInput = _phoneController.text.trim();
-          if (phoneInput.isNotEmpty) {
+          if (regResult.requiresPhoneVerification) {
             // Enterprise Out-of-Band Phone Ownership Verification Flow
-            await VerifyPhoneDialog.show(
+            final verified = await VerifyPhoneDialog.show(
               context,
-              phone: phoneInput,
-              onSuccess: () {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Row(
-                        children: [
-                          Icon(Icons.verified, color: Colors.white, size: 18),
-                          SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              'Phone verified! Welcome to EthioFarm.',
-                              style: TextStyle(fontWeight: FontWeight.w500),
-                            ),
-                          ),
-                        ],
-                      ),
-                      backgroundColor: Color(0xFF1B5E20),
-                      duration: Duration(seconds: 3),
-                    ),
-                  );
-                  context.go('/home');
-                }
-              },
+              phone: regResult.phone,
             );
+
+            if (mounted) {
+              if (verified == true) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Row(
+                      children: [
+                        Icon(Icons.verified, color: Colors.white, size: 18),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'Phone verified! Welcome to EthioFarm.',
+                            style: TextStyle(fontWeight: FontWeight.w500),
+                          ),
+                        ),
+                      ],
+                    ),
+                    backgroundColor: Color(0xFF1B5E20),
+                    duration: Duration(seconds: 3),
+                  ),
+                );
+                context.go('/home');
+              } else {
+                // User dismissed or cancelled OTP verification dialog
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Row(
+                      children: [
+                        Icon(Icons.info_outline, color: Colors.white, size: 18),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'Account created. Please verify your phone number with the SMS code to activate.',
+                            style: TextStyle(fontWeight: FontWeight.w500),
+                          ),
+                        ),
+                      ],
+                    ),
+                    backgroundColor: const Color(0xFFD97706),
+                    duration: const Duration(seconds: 5),
+                    action: SnackBarAction(
+                      label: 'Verify Now',
+                      textColor: Colors.white,
+                      onPressed: () {
+                        if (mounted) {
+                          VerifyPhoneDialog.show(
+                            context,
+                            phone: regResult.phone,
+                            onSuccess: () {
+                              if (mounted) {
+                                context.go('/home');
+                              }
+                            },
+                          );
+                        }
+                      },
+                    ),
+                  ),
+                );
+              }
+            }
           } else {
             final isAuth = ref.read(authProvider).isAuthenticated;
             if (isAuth) {
