@@ -53,7 +53,10 @@ class FarmDetailScreen extends ConsumerWidget {
                       TileLayer(
                         urlTemplate:
                             'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        fallbackUrl:
+                            'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
                         userAgentPackageName: 'com.ethiofarm.app',
+                        maxZoom: 19,
                       ),
                       MarkerLayer(
                         markers: [
@@ -197,10 +200,10 @@ class FarmDetailScreen extends ConsumerWidget {
                       Container(
                         padding: const EdgeInsets.all(AppSpacing.cardPadding),
                         decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF231F14) : const Color(0xFFFFFBEB),
+                          color: isDark ? const Color(0xFF132317) : const Color(0xFFF1F8F1),
                           borderRadius: AppRadii.roundedLg,
                           border: Border.all(
-                            color: const Color(0xFFF59E0B).withValues(alpha: isDark ? 0.3 : 0.4),
+                            color: const Color(0xFF2E7D32).withValues(alpha: isDark ? 0.35 : 0.25),
                           ),
                           boxShadow: AppShadows.soft(isDark: isDark),
                         ),
@@ -209,14 +212,14 @@ class FarmDetailScreen extends ConsumerWidget {
                           children: [
                             Row(
                               children: [
-                                const Icon(Icons.science_outlined, size: 18, color: Color(0xFFB45309)),
+                                const Icon(Icons.science_outlined, size: 18, color: Color(0xFF2E7D32)),
                                 const SizedBox(width: 8),
                                 Text(
                                   'EthioSIS Soil & Fertilizer Prescription',
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 13,
-                                    color: isDark ? const Color(0xFFFDE68A) : const Color(0xFF92400E),
+                                    color: isDark ? const Color(0xFFA7F3D0) : const Color(0xFF1B5E20),
                                   ),
                                 ),
                               ],
@@ -227,7 +230,7 @@ class FarmDetailScreen extends ConsumerWidget {
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
-                                color: isDark ? Colors.grey.shade300 : const Color(0xFF78350F),
+                                color: isDark ? Colors.grey.shade300 : const Color(0xFF1E293B),
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -235,7 +238,7 @@ class FarmDetailScreen extends ConsumerWidget {
                               'Prescription: NPSB (100 kg/ha) at basal + Urea (100 kg/ha split-applied at tillering)',
                               style: TextStyle(
                                 fontSize: 12,
-                                color: isDark ? Colors.grey.shade400 : const Color(0xFF92400E),
+                                color: isDark ? Colors.grey.shade400 : const Color(0xFF475569),
                               ),
                             ),
                           ],

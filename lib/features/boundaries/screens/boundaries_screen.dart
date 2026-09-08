@@ -120,8 +120,10 @@ class _BoundariesScreenState extends ConsumerState<BoundariesScreen> {
                     ),
                     children: [
                       TileLayer(
-                        urlTemplate: 'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
+                        urlTemplate: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
+                        fallbackUrl: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                         userAgentPackageName: 'com.ethiofarm.ewa_app',
+                        maxZoom: 18,
                       ),
                       MarkerLayer(
                         markers: _buildMapMarkers(hierarchy),

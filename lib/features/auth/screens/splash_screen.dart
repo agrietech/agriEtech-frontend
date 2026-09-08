@@ -117,7 +117,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                       child: CircularProgressIndicator(
                         strokeWidth: 2.8,
                         valueColor: AlwaysStoppedAnimation<Color>(
-                          isDark ? const Color(0xFFF59E0B) : const Color(0xFF2E7D32),
+                          isDark ? const Color(0xFF81C784) : const Color(0xFF2E7D32),
                         ),
                       ),
                     ),

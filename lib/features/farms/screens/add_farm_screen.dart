@@ -754,7 +754,9 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
                           children: [
                             TileLayer(
                               urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                              fallbackUrl: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
                               userAgentPackageName: 'com.ethiofarm.app',
+                              maxZoom: 19,
                             ),
                             MarkerLayer(
                               markers: [

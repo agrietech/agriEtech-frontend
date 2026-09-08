@@ -469,7 +469,7 @@ class EthioFarmAppDrawer extends ConsumerWidget {
                   height: 36,
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+                      colors: [Color(0xFF2E7D32), Color(0xFF1B5E20)],
                     ),
                     borderRadius: AppRadius.radiusSm + const BorderRadius.all(Radius.circular(2)),
                   ),
@@ -488,13 +488,15 @@ class EthioFarmAppDrawer extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
+                    color: const Color(0xFF2E7D32).withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(6),
                   ),
-                  child: Text(
+                  child: const Text(
                     'AI',
-                    style: AppTypography.overline.copyWith(
-                      color: const Color(0xFFD97706),
+                    style: TextStyle(
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF2E7D32),
                     ),
                   ),
                 ),

@@ -633,7 +633,7 @@ class HomeScreen extends ConsumerWidget {
               context,
               icon: Icons.mic_rounded,
               label: AppStrings.tr('voiceAi', lang: currentLang),
-              color: const Color(0xFFD97706),
+              color: const Color(0xFF059669),
               onTap: () {
                 HapticFeedback.lightImpact();
                 AiAssistantSheet.show(context);

@@ -67,7 +67,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         backgroundColor: const Color(0xFF1B5E20),
         foregroundColor: Colors.white,
         tooltip: 'Agri-AI Assistant',
-        child: const Icon(Icons.psychology, color: Color(0xFFF59E0B)),
+        child: const Icon(Icons.psychology, color: Colors.white),
       ),
     );
   }
