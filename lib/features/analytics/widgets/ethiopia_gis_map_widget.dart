@@ -32,7 +32,7 @@ class EthiopiaGisMapWidget extends ConsumerStatefulWidget {
 class _EthiopiaGisMapWidgetState extends ConsumerState<EthiopiaGisMapWidget> {
   final MapController _mapController = MapController();
   late DisasterMapLayer _activeLayer;
-  BaseMapType _baseMapType = BaseMapType.voyager;
+  BaseMapType _baseMapType = BaseMapType.satellite;
   bool _showFaultLines = true;
   bool _showVolcanoes = true;
   bool _showRivers = true;
@@ -217,14 +217,16 @@ class _EthiopiaGisMapWidgetState extends ConsumerState<EthiopiaGisMapWidget> {
 
   String _getBaseMapUrl() {
     switch (_baseMapType) {
-      case BaseMapType.voyager:
-        return 'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png';
+      case BaseMapType.satellite:
+        return 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
       case BaseMapType.topographic:
-        return 'https://tile.opentopomap.org/{z}/{x}/{y}.png';
+        return 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}';
       case BaseMapType.osm:
         return 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-      case BaseMapType.dark:
-        return 'https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png';
+      case BaseMapType.canvasDark:
+        return 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}';
+      case BaseMapType.street:
+        return 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}';
     }
   }
 
@@ -326,34 +328,39 @@ class _EthiopiaGisMapWidgetState extends ConsumerState<EthiopiaGisMapWidget> {
       backgroundColor: Colors.transparent,
       builder: (context) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
-        return Container(
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF132213) : Colors.white,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.25),
-                blurRadius: 20,
-                offset: const Offset(0, -4),
-              ),
-            ],
-          ),
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Handle bar
-              Center(
-                child: Container(
-                  width: 44,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade400,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
+        return SafeArea(
+          child: Container(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.85,
+            ),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF132213) : Colors.white,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.25),
+                  blurRadius: 20,
+                  offset: const Offset(0, -4),
                 ),
-              ),
+              ],
+            ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Handle bar
+                  Center(
+                    child: Container(
+                      width: 44,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade400,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
               const SizedBox(height: 14),
 
               // Title Ribbon
@@ -478,10 +485,12 @@ class _EthiopiaGisMapWidgetState extends ConsumerState<EthiopiaGisMapWidget> {
               ),
             ],
           ),
-        );
-      },
+        ),
+      ),
     );
-  }
+  },
+);
+}
 
   void _showVolcanoDetails(VolcanoProfile volcano) {
     showDialog(
@@ -599,87 +608,103 @@ class _EthiopiaGisMapWidgetState extends ConsumerState<EthiopiaGisMapWidget> {
   void _showLayersBottomSheet() {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) => StatefulBuilder(
-        builder: (context, setSheetState) => Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('GIS Map Layers & Basemap Provider', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-              const SizedBox(height: 14),
-              const Text('Cartographic Basemap:', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
+        builder: (context, setSheetState) => SafeArea(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.85,
+            ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  ChoiceChip(
-                    label: const Text('Voyager (Clean GIS)'),
-                    selected: _baseMapType == BaseMapType.voyager,
-                    onSelected: (_) {
-                      setState(() => _baseMapType = BaseMapType.voyager);
+                  const Text('GIS Map Layers & Basemap Provider', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  const SizedBox(height: 14),
+                  const Text('Cartographic Basemap:', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    children: [
+                      ChoiceChip(
+                        label: const Text('Satellite (High-Res)'),
+                        selected: _baseMapType == BaseMapType.satellite,
+                        onSelected: (_) {
+                          setState(() => _baseMapType = BaseMapType.satellite);
+                          setSheetState(() {});
+                        },
+                      ),
+                      ChoiceChip(
+                        label: const Text('Topographic (Relief)'),
+                        selected: _baseMapType == BaseMapType.topographic,
+                        onSelected: (_) {
+                          setState(() => _baseMapType = BaseMapType.topographic);
+                          setSheetState(() {});
+                        },
+                      ),
+                      ChoiceChip(
+                        label: const Text('OpenStreetMap'),
+                        selected: _baseMapType == BaseMapType.osm,
+                        onSelected: (_) {
+                          setState(() => _baseMapType = BaseMapType.osm);
+                          setSheetState(() {});
+                        },
+                      ),
+                      ChoiceChip(
+                        label: const Text('Dark Canvas (Thematic)'),
+                        selected: _baseMapType == BaseMapType.canvasDark,
+                        onSelected: (_) {
+                          setState(() => _baseMapType = BaseMapType.canvasDark);
+                          setSheetState(() {});
+                        },
+                      ),
+                      ChoiceChip(
+                        label: const Text('World Street Map'),
+                        selected: _baseMapType == BaseMapType.street,
+                        onSelected: (_) {
+                          setState(() => _baseMapType = BaseMapType.street);
+                          setSheetState(() {});
+                        },
+                      ),
+                    ],
+                  ),
+                  const Divider(height: 24),
+                  SwitchListTile(
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Tectonic Fault Lines (Wonji Rift & Afar)'),
+                    value: _showFaultLines,
+                    onChanged: (val) {
+                      setState(() => _showFaultLines = val);
                       setSheetState(() {});
                     },
                   ),
-                  ChoiceChip(
-                    label: const Text('Topographic (Relief)'),
-                    selected: _baseMapType == BaseMapType.topographic,
-                    onSelected: (_) {
-                      setState(() => _baseMapType = BaseMapType.topographic);
+                  SwitchListTile(
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Active Volcanic Centers & Calderas'),
+                    value: _showVolcanoes,
+                    onChanged: (val) {
+                      setState(() => _showVolcanoes = val);
                       setSheetState(() {});
                     },
                   ),
-                  ChoiceChip(
-                    label: const Text('OpenStreetMap'),
-                    selected: _baseMapType == BaseMapType.osm,
-                    onSelected: (_) {
-                      setState(() => _baseMapType = BaseMapType.osm);
-                      setSheetState(() {});
-                    },
-                  ),
-                  ChoiceChip(
-                    label: const Text('Dark Matter'),
-                    selected: _baseMapType == BaseMapType.dark,
-                    onSelected: (_) {
-                      setState(() => _baseMapType = BaseMapType.dark);
+                  SwitchListTile(
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Major River Flood Corridors (Awash, Abbay, Baro)'),
+                    value: _showRivers,
+                    onChanged: (val) {
+                      setState(() => _showRivers = val);
                       setSheetState(() {});
                     },
                   ),
                 ],
               ),
-              const Divider(height: 24),
-              SwitchListTile(
-                dense: true,
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Tectonic Fault Lines (Wonji Rift & Afar)'),
-                value: _showFaultLines,
-                onChanged: (val) {
-                  setState(() => _showFaultLines = val);
-                  setSheetState(() {});
-                },
-              ),
-              SwitchListTile(
-                dense: true,
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Active Volcanic Centers & Calderas'),
-                value: _showVolcanoes,
-                onChanged: (val) {
-                  setState(() => _showVolcanoes = val);
-                  setSheetState(() {});
-                },
-              ),
-              SwitchListTile(
-                dense: true,
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Major River Flood Corridors (Awash, Abbay, Baro)'),
-                value: _showRivers,
-                onChanged: (val) {
-                  setState(() => _showRivers = val);
-                  setSheetState(() {});
-                },
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -741,7 +766,9 @@ class _EthiopiaGisMapWidgetState extends ConsumerState<EthiopiaGisMapWidget> {
         // 1. Base Cartographic Tile Layer
         TileLayer(
           urlTemplate: _getBaseMapUrl(),
+          fallbackUrl: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
           userAgentPackageName: 'com.ethiofarm.app',
+          maxZoom: 18,
           errorTileCallback: (tile, error, stackTrace) {
             // Graceful offline / network tile recovery
           },
@@ -955,11 +982,11 @@ class _EthiopiaGisMapWidgetState extends ConsumerState<EthiopiaGisMapWidget> {
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
                         color: isLiveSyncing
-                            ? Colors.amber.withValues(alpha: 0.15)
+                            ? const Color(0xFF0284C7).withValues(alpha: 0.15)
                             : const Color(0xFF2E7D32).withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                          color: isLiveSyncing ? Colors.amber.shade800 : const Color(0xFF2E7D32),
+                          color: isLiveSyncing ? const Color(0xFF0284C7) : const Color(0xFF2E7D32),
                           width: 0.8,
                         ),
                       ),
@@ -970,17 +997,17 @@ class _EthiopiaGisMapWidgetState extends ConsumerState<EthiopiaGisMapWidget> {
                             width: 6,
                             height: 6,
                             decoration: BoxDecoration(
-                              color: isLiveSyncing ? Colors.amber.shade800 : const Color(0xFF2E7D32),
+                              color: isLiveSyncing ? const Color(0xFF0284C7) : const Color(0xFF2E7D32),
                               shape: BoxShape.circle,
                             ),
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            isLiveSyncing ? 'Syncing...' : 'Live Telemetry',
+                            isLiveSyncing ? 'Syncing...' : 'Live Telemetry • Sentinel/USGS/GloFAS',
                             style: TextStyle(
                               fontSize: 9.5,
                               fontWeight: FontWeight.bold,
-                              color: isLiveSyncing ? Colors.amber.shade900 : const Color(0xFF1B5E20),
+                              color: isLiveSyncing ? const Color(0xFF0369A1) : const Color(0xFF1B5E20),
                             ),
                           ),
                         ],

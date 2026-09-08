@@ -13,10 +13,11 @@ enum DisasterMapLayer {
 }
 
 enum BaseMapType {
-  voyager,
+  satellite,
   topographic,
   osm,
-  dark,
+  canvasDark,
+  street,
 }
 
 class WoredaSpatialProfile {
