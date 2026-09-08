@@ -9,12 +9,32 @@ final diagnosisRepositoryProvider = Provider<DiagnosisRepository>((ref) {
   return DiagnosisRepository(dioClient);
 });
 
+/// Tracks the timestamp when the diagnoses list was last fetched from live API
+final diagnosisLastFetchedProvider = StateProvider<DateTime?>((ref) => null);
+
+/// Live telemetry metadata provider for diagnosis feed
+final diagnosisTelemetryMetaProvider = Provider<Map<String, dynamic>>((ref) {
+  final lastFetched = ref.watch(diagnosisLastFetchedProvider);
+  return {
+    'sources': 'Plant.id Botanical Engine, Pl@ntNet API, Perenual DB, OpenRouter AI Specialist',
+    'engines': [
+      'Plant.id Botanical Engine',
+      'Pl@ntNet Global Flora API',
+      'Perenual Botanical DB',
+      'OpenRouter AI Specialist',
+    ],
+    'lastFetched': lastFetched,
+    'isLive': true,
+  };
+});
+
 /// Diagnosis list state notifier
 class DiagnosisNotifier extends StateNotifier<AsyncValue<List<DiagnosisModel>>> {
   final DiagnosisRepository _repository;
+  final Ref _ref;
   DiagnosisFilters _filters = const DiagnosisFilters();
 
-  DiagnosisNotifier(this._repository) : super(const AsyncValue.loading()) {
+  DiagnosisNotifier(this._repository, this._ref) : super(const AsyncValue.loading()) {
     fetchDiagnoses();
   }
 
@@ -22,10 +42,14 @@ class DiagnosisNotifier extends StateNotifier<AsyncValue<List<DiagnosisModel>>> 
   Future<void> fetchDiagnoses() async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
+      List<DiagnosisModel> results;
       if (_filters.farmId != null) {
-        return await _repository.getFarmDiagnoses(_filters.farmId!);
+        results = await _repository.getFarmDiagnoses(_filters.farmId!);
+      } else {
+        results = await _repository.getAllDiagnoses();
       }
-      return await _repository.getAllDiagnoses();
+      _ref.read(diagnosisLastFetchedProvider.notifier).state = DateTime.now();
+      return results;
     });
   }
 
@@ -61,7 +85,7 @@ final diagnosisListProvider =
     StateNotifierProvider<DiagnosisNotifier, AsyncValue<List<DiagnosisModel>>>(
         (ref) {
   final repository = ref.watch(diagnosisRepositoryProvider);
-  return DiagnosisNotifier(repository);
+  return DiagnosisNotifier(repository, ref);
 });
 
 /// Diagnosis statistics provider

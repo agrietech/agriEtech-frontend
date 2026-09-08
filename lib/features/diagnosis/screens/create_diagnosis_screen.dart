@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/l10n/app_localizations.dart';
+import '../../../core/utils/date_formatter.dart';
 import '../../offline_sync/domain/sync_service.dart';
 import '../../farms/providers/farms_provider.dart';
 import '../models/diagnosis_models.dart';
@@ -173,8 +174,7 @@ class _CreateDiagnosisScreenState extends ConsumerState<CreateDiagnosisScreen> {
     final base64Image = _selectedImageBytes != null ? base64Encode(_selectedImageBytes!) : '';
 
     final farmsState = ref.read(farmsProvider);
-    final fallbackFarmId = farmsState.hasFarms ? farmsState.farms.first.id : 'farm_demo_01';
-    final targetFarmId = _selectedFarmId ?? fallbackFarmId;
+    final String? targetFarmId = _selectedFarmId ?? (farmsState.hasFarms ? farmsState.farms.first.id : null);
 
     try {
       final request = CreateDiagnosisRequest(
@@ -187,12 +187,15 @@ class _CreateDiagnosisScreenState extends ConsumerState<CreateDiagnosisScreen> {
       final repository = ref.read(diagnosisRepositoryProvider);
       final diagnosis = await repository.createDiagnosis(request);
 
+      ref.invalidate(diagnosisListProvider);
+      ref.invalidate(diagnosisStatisticsProvider);
+
       if (mounted) {
         _showDiagnosisResultDialog(diagnosis);
       }
     } catch (e) {
       final payload = {
-        'farmId': targetFarmId,
+        if (targetFarmId != null) 'farmId': targetFarmId,
         'imageBase64': base64Image,
         'cropType': effectiveCrop,
       };
@@ -335,7 +338,47 @@ class _CreateDiagnosisScreenState extends ConsumerState<CreateDiagnosisScreen> {
                     diagnosis.preventionEn ?? diagnosis.preventionTips!,
                     style: const TextStyle(fontSize: 12),
                   ),
+                  const SizedBox(height: 8),
                 ],
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(Icons.hub_outlined, size: 14, color: Color(0xFF2E7D32)),
+                          SizedBox(width: 6),
+                          Text(
+                            'Live Data Sources & Attribution:',
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF1B5E20)),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        diagnosis.dataSources ?? 'Plant.id Botanical Engine, Pl@ntNet API, Perenual DB, OpenRouter AI Specialist',
+                        style: TextStyle(fontSize: 11, color: Colors.grey.shade800),
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          Icon(Icons.schedule, size: 12, color: Colors.grey.shade600),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Fetched: ${DateFormatter.formatDateTime(DateTime.tryParse(diagnosis.fetchedAt ?? diagnosis.createdAt) ?? DateTime.now())}',
+                            style: TextStyle(fontSize: 10.5, color: Colors.grey.shade600),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
@@ -343,6 +386,7 @@ class _CreateDiagnosisScreenState extends ConsumerState<CreateDiagnosisScreen> {
         actions: [
           TextButton(
             onPressed: () {
+              ref.read(diagnosisListProvider.notifier).refresh();
               Navigator.pop(context); // Close dialog
               Navigator.pop(context); // Return to diagnosis list
             },
@@ -595,13 +639,13 @@ class _CreateDiagnosisScreenState extends ConsumerState<CreateDiagnosisScreen> {
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        side: BorderSide(color: Colors.amber.shade700),
+                        side: const BorderSide(color: Color(0xFF2E7D32)),
                       ),
                       onPressed: _openScannerModal,
-                      icon: Icon(Icons.biotech, size: 16, color: Colors.amber.shade800),
+                      icon: const Icon(Icons.biotech, size: 16, color: Color(0xFF2E7D32)),
                       label: Text(
                         isAmharic ? 'የናሙና ቅጠል' : 'Specimen',
-                        style: TextStyle(fontSize: 12, color: Colors.amber.shade900, fontWeight: FontWeight.bold),
+                        style: const TextStyle(fontSize: 12, color: Color(0xFF1B5E20), fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),

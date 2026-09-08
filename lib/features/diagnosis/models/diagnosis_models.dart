@@ -4,7 +4,7 @@ library diagnosis_models;
 /// Disease diagnosis model
 class DiagnosisModel {
   final String id;
-  final String farmId;
+  final String? farmId;
   final String imageUrl;
   final String? cropIdentified;
   final String? cropIdentifiedAm;
@@ -23,6 +23,9 @@ class DiagnosisModel {
   final String? symptomsEn;
   final String? symptomsAm;
   final String? aiModel;
+  final String? dataSources;
+  final List<String> enginesUsed;
+  final String? fetchedAt;
   final Map<String, dynamic>? rawResponse;
   final String diagnosisStatus;
   final String createdAt;
@@ -30,7 +33,7 @@ class DiagnosisModel {
 
   const DiagnosisModel({
     required this.id,
-    required this.farmId,
+    this.farmId,
     required this.imageUrl,
     this.cropIdentified,
     this.cropIdentifiedAm,
@@ -49,6 +52,9 @@ class DiagnosisModel {
     this.symptomsEn,
     this.symptomsAm,
     this.aiModel,
+    this.dataSources,
+    this.enginesUsed = const [],
+    this.fetchedAt,
     this.rawResponse,
     this.diagnosisStatus = 'PENDING',
     required this.createdAt,
@@ -73,11 +79,19 @@ class DiagnosisModel {
     final prevAm = json['preventionAm'] ?? geminiDiag?['prevention']?['am'];
     final sympEn = json['symptomsEn'] ?? geminiDiag?['symptoms']?['en'];
     final sympAm = json['symptomsAm'] ?? geminiDiag?['symptoms']?['am'];
-    final modelName = json['aiModel'] ?? 'Plant.id Botanical + Google Gemini 2.5 Flash';
+    final modelName = json['aiModel'] ?? (rawResp != null && rawResp['aiModel'] != null ? rawResp['aiModel'] : 'Plant.id Botanical + OpenRouter AI Specialist');
+
+    final sources = json['dataSources'] ?? (rawResp != null && rawResp['dataSources'] != null ? rawResp['dataSources'] : null);
+    final enginesRaw = json['enginesUsed'] ?? (rawResp != null ? rawResp['enginesUsed'] : null);
+    final List<String> parsedEngines = enginesRaw is List
+        ? enginesRaw.map((e) => e.toString()).toList()
+        : const ['Plant.id Botanical Engine', 'Pl@ntNet API', 'Perenual Database', 'OpenRouter AI'];
+
+    final fetched = json['fetchedAt'] ?? (rawResp != null ? rawResp['fetchedAt'] : null) ?? json['createdAt'];
 
     return DiagnosisModel(
       id: (json['id'] ?? '').toString(),
-      farmId: (json['farmId'] ?? '').toString(),
+      farmId: json['farmId']?.toString(),
       imageUrl: (json['imageUrl'] ?? json['image'] ?? '').toString(),
       cropIdentified: cropEn as String?,
       cropIdentifiedAm: cropAm as String?,
@@ -98,6 +112,9 @@ class DiagnosisModel {
       symptomsEn: sympEn as String?,
       symptomsAm: sympAm as String?,
       aiModel: modelName as String?,
+      dataSources: (sources ?? 'Plant.id Botanical Engine, Pl@ntNet API, Perenual Database, OpenRouter AI Specialist') as String?,
+      enginesUsed: parsedEngines,
+      fetchedAt: fetched?.toString(),
       rawResponse: rawResp,
       diagnosisStatus: (json['diagnosisStatus'] ?? json['status'] ?? 'SUCCESS').toString(),
       createdAt: (json['createdAt'] ?? DateTime.now().toIso8601String()).toString(),
@@ -109,7 +126,7 @@ class DiagnosisModel {
 
   Map<String, dynamic> toJson() => {
     'id': id,
-    'farmId': farmId,
+    if (farmId != null) 'farmId': farmId,
     'imageUrl': imageUrl,
     if (cropIdentified != null) 'cropIdentified': cropIdentified,
     if (cropIdentifiedAm != null) 'cropIdentifiedAm': cropIdentifiedAm,
@@ -128,6 +145,9 @@ class DiagnosisModel {
     if (symptomsEn != null) 'symptomsEn': symptomsEn,
     if (symptomsAm != null) 'symptomsAm': symptomsAm,
     if (aiModel != null) 'aiModel': aiModel,
+    if (dataSources != null) 'dataSources': dataSources,
+    'enginesUsed': enginesUsed,
+    if (fetchedAt != null) 'fetchedAt': fetchedAt,
     if (rawResponse != null) 'rawResponse': rawResponse,
     'diagnosisStatus': diagnosisStatus,
     'createdAt': createdAt,
@@ -164,7 +184,7 @@ class FarmBasicInfo {
 
 /// Request model for creating diagnosis
 class CreateDiagnosisRequest {
-  final String farmId;
+  final String? farmId;
   final String imageBase64;
   final String? imagePath;
   final List<int>? imageBytes;
@@ -172,7 +192,7 @@ class CreateDiagnosisRequest {
   final String language;
 
   const CreateDiagnosisRequest({
-    required this.farmId,
+    this.farmId,
     this.imageBase64 = '',
     this.imagePath,
     this.imageBytes,
@@ -182,7 +202,7 @@ class CreateDiagnosisRequest {
 
   factory CreateDiagnosisRequest.fromJson(Map<String, dynamic> json) {
     return CreateDiagnosisRequest(
-      farmId: (json['farmId'] ?? '').toString(),
+      farmId: json['farmId']?.toString(),
       imageBase64: (json['imageBase64'] ?? '').toString(),
       imagePath: json['imagePath'] as String?,
       cropType: json['cropType'] as String?,
@@ -191,7 +211,7 @@ class CreateDiagnosisRequest {
   }
 
   Map<String, dynamic> toJson() => {
-    'farmId': farmId,
+    if (farmId != null && farmId!.isNotEmpty) 'farmId': farmId,
     if (imageBase64.isNotEmpty) 'imageBase64': imageBase64,
     if (imagePath != null) 'imagePath': imagePath,
     if (cropType != null) 'cropType': cropType,

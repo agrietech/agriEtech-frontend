@@ -28,7 +28,7 @@ class DiagnosisRepository {
             fileName: 'plantscan_${DateTime.now().millisecondsSinceEpoch}.jpg',
             fieldName: 'image',
             data: {
-              'farmId': request.farmId,
+              if (request.farmId != null && request.farmId!.isNotEmpty) 'farmId': request.farmId,
               if (request.cropType != null) 'cropType': request.cropType,
               'language': request.language,
             },
@@ -39,7 +39,7 @@ class DiagnosisRepository {
             request.imagePath!,
             fieldName: 'image',
             data: {
-              'farmId': request.farmId,
+              if (request.farmId != null && request.farmId!.isNotEmpty) 'farmId': request.farmId,
               if (request.cropType != null) 'cropType': request.cropType,
               'language': request.language,
             },
@@ -55,7 +55,7 @@ class DiagnosisRepository {
         response = await _dioClient.post(
           ApiConstants.diagnose,
           data: {
-            'farmId': request.farmId,
+            if (request.farmId != null && request.farmId!.isNotEmpty) 'farmId': request.farmId,
             if (request.imageBase64.isNotEmpty) 'imageBase64': request.imageBase64,
             if (request.imageBase64.isNotEmpty) 'image': 'data:image/jpeg;base64,${request.imageBase64}',
             if (request.cropType != null) 'cropType': request.cropType,
@@ -70,7 +70,9 @@ class DiagnosisRepository {
       final map = Map<String, dynamic>.from(raw);
       map['imageUrl'] = map['imageUrl'] ?? map['image'] ?? '';
       map['createdAt'] = map['createdAt'] ?? DateTime.now().toIso8601String();
-      map['farmId'] = map['farmId'] ?? request.farmId;
+      if (map['farmId'] == null && request.farmId != null) {
+        map['farmId'] = request.farmId;
+      }
       final diagnosis = DiagnosisModel.fromJson(map);
       AppLogger.success('Diagnosis created successfully', {'diagnosisId': diagnosis.id});
       return diagnosis;
@@ -132,7 +134,7 @@ class DiagnosisRepository {
         final map = Map<String, dynamic>.from(json as Map);
         map['imageUrl'] = map['imageUrl'] ?? map['image'] ?? '';
         map['createdAt'] = map['createdAt'] ?? DateTime.now().toIso8601String();
-        map['farmId'] = map['farmId'] ?? '';
+        map['farmId'] = map['farmId']?.toString();
         return DiagnosisModel.fromJson(map);
       }).toList();
 
