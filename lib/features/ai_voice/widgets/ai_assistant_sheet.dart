@@ -187,14 +187,18 @@ class _AiAssistantSheetState extends ConsumerState<AiAssistantSheet>
             '💧 Soil moisture & irrigation',
           ];
 
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.90,
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF141F14) : Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      child: Column(
-        children: [
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.88,
+        ),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF141F14) : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        child: Column(
+          children: [
           // Header
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
@@ -290,7 +294,7 @@ class _AiAssistantSheetState extends ConsumerState<AiAssistantSheet>
                   label: Text(chipText, style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600)),
                   backgroundColor: isDark ? const Color(0xFF263826) : const Color(0xFFF1F8F1),
                   side: const BorderSide(color: Color(0xFFC8E6C9)),
-                  onPressed: () => _submitQuestion(chipText.replaceFirst(RegExp(r'^[^s]+s'), '')),
+                  onPressed: () => _submitQuestion(chipText.replaceFirst(RegExp(r'^[^\p{L}\p{N}]+\s*', unicode: true), '')),
                 );
               },
             ),
@@ -382,74 +386,167 @@ class _AiAssistantSheetState extends ConsumerState<AiAssistantSheet>
                             ),
                           ),
                         );
-                      } else {
-                        return Align(
-                          alignment: Alignment.centerLeft,
-                          child: Container(
-                            margin: const EdgeInsets.only(bottom: 12, right: 32),
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              color: isDark ? const Color(0xFF223522) : const Color(0xFFF1F8F1),
-                              borderRadius: const BorderRadius.only(
-                                topLeft: Radius.circular(16),
-                                topRight: Radius.circular(16),
-                                bottomRight: Radius.circular(16),
-                                bottomLeft: Radius.circular(4),
-                              ),
-                              border: Border.all(
-                                color: isPlaying ? const Color(0xFF2E7D32) : const Color(0xFFC8E6C9),
-                                width: isPlaying ? 2 : 1,
-                              ),
+                      }
+                      if (msg.isError) {
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 12, right: 32),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: isDark ? const Color(0xFF2A1414) : const Color(0xFFFEF2F2),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: isDark ? const Color(0xFF7F1D1D) : const Color(0xFFFCA5A5),
                             ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        const Icon(Icons.auto_awesome, color: Color(0xFF2E7D32), size: 16),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          isAmharic ? 'የግብርና ባለሙያ AI ምላሽ' : 'Agronomic Advisory',
-                                          style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1B5E20), fontSize: 13),
-                                        ),
-                                      ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(Icons.cloud_off_rounded, color: Color(0xFFDC2626), size: 16),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    isAmharic ? 'የቀጥታ አገልግሎት ማስታወቂያ' : 'Live Service Notice',
+                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFFDC2626)),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                msg.text,
+                                style: TextStyle(fontSize: 12.5, color: isDark ? Colors.grey.shade300 : const Color(0xFF991B1B)),
+                              ),
+                              if (msg.failedQuestion != null) ...[
+                                const SizedBox(height: 8),
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: TextButton.icon(
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: const Color(0xFFDC2626),
+                                      backgroundColor: const Color(0xFFDC2626).withValues(alpha: 0.1),
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                     ),
-                                    ElevatedButton.icon(
-                                      icon: Icon(isPlaying ? Icons.stop_circle_rounded : Icons.volume_up_rounded, size: 16),
-                                      label: Text(
-                                        isPlaying
-                                            ? (isAmharic ? 'አቁም' : 'Stop')
-                                            : (isAmharic ? 'ድምፅ አዳምጥ' : 'Listen In-App'),
-                                        style: const TextStyle(fontSize: 11),
-                                      ),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: isPlaying ? const Color(0xFFEF4444) : const Color(0xFF2E7D32),
-                                        foregroundColor: Colors.white,
-                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                        minimumSize: Size.zero,
-                                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                      ),
-                                      onPressed: () => _playInAppAudio(audioUrl, msg.text, msgKey),
+                                    icon: const Icon(Icons.refresh_rounded, size: 14),
+                                    label: Text(
+                                      isAmharic ? 'እንደገና ሞክር' : 'Retry',
+                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
                                     ),
-                                  ],
-                                ),
-                                const SizedBox(height: 10),
-                                Text(
-                                  msg.text,
-                                  style: TextStyle(
-                                    fontSize: 13.5,
-                                    height: 1.5,
-                                    color: isDark ? Colors.white : const Color(0xFF1F2937),
+                                    onPressed: () => ref.read(aiVoiceProvider.notifier).retryQuestion(msg.failedQuestion!),
                                   ),
                                 ),
                               ],
-                            ),
+                            ],
                           ),
                         );
                       }
+
+                      return Align(
+                        alignment: Alignment.centerLeft,
+                        child: Container(
+                          margin: const EdgeInsets.only(bottom: 12, right: 32),
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: isDark ? const Color(0xFF223522) : const Color(0xFFF1F8F1),
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(16),
+                              topRight: Radius.circular(16),
+                              bottomRight: Radius.circular(16),
+                              bottomLeft: Radius.circular(4),
+                            ),
+                            border: Border.all(
+                              color: isPlaying ? const Color(0xFF2E7D32) : const Color(0xFFC8E6C9),
+                              width: isPlaying ? 2 : 1,
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: Wrap(
+                                      spacing: 6,
+                                      runSpacing: 4,
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFF2E7D32).withValues(alpha: 0.15),
+                                            borderRadius: BorderRadius.circular(6),
+                                          ),
+                                          child: Text(
+                                            msg.aiResponse?.aiModel ?? 'OpenRouter Live AI',
+                                            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF2E7D32)),
+                                          ),
+                                        ),
+                                        if (msg.aiResponse?.isAiOffline == true)
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: Colors.orange.withValues(alpha: 0.2),
+                                              borderRadius: BorderRadius.circular(6),
+                                            ),
+                                            child: const Text('OFFLINE CACHE', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.deepOrange)),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                  ElevatedButton.icon(
+                                    icon: Icon(isPlaying ? Icons.stop_circle_rounded : Icons.volume_up_rounded, size: 16),
+                                    label: Text(
+                                      isPlaying
+                                          ? (isAmharic ? 'አቁም' : 'Stop')
+                                          : (isAmharic ? 'ድምፅ አዳምጥ' : 'Listen In-App'),
+                                      style: const TextStyle(fontSize: 11),
+                                    ),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: isPlaying ? const Color(0xFFEF4444) : const Color(0xFF2E7D32),
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                      minimumSize: Size.zero,
+                                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                    ),
+                                    onPressed: () => _playInAppAudio(audioUrl, msg.text, msgKey),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+                              Text(
+                                msg.text,
+                                style: TextStyle(
+                                  fontSize: 13.5,
+                                  height: 1.5,
+                                  color: isDark ? Colors.white : const Color(0xFF1F2937),
+                                ),
+                              ),
+                              if (msg.aiResponse?.recommendedAction != null && msg.aiResponse!.recommendedAction!.isNotEmpty) ...[
+                                const SizedBox(height: 8),
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF2E7D32).withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: const Color(0xFF2E7D32).withValues(alpha: 0.25)),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.task_alt, size: 14, color: Color(0xFF2E7D32)),
+                                      const SizedBox(width: 6),
+                                      Expanded(
+                                        child: Text(
+                                          'Action: ${msg.aiResponse!.recommendedAction}',
+                                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF2E7D32)),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      );
                     },
                   ),
           ),
@@ -487,19 +584,14 @@ class _AiAssistantSheetState extends ConsumerState<AiAssistantSheet>
                       ],
                     ),
                   ),
-                  const Icon(Icons.graphic_eq, color: Color(0xFFF59E0B), size: 28),
+                  const Icon(Icons.graphic_eq, color: Color(0xFF81C784), size: 28),
                 ],
               ),
             ),
 
-          // Bottom Input Bar with Multi-line Protection & Keyboard Inset
+          // Bottom Input Bar with Safe Keyboard Padding
           Container(
-            padding: EdgeInsets.only(
-              left: 16,
-              right: 16,
-              top: 12,
-              bottom: MediaQuery.of(context).viewInsets.bottom > 0 ? 8 : 16,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
               color: isDark ? const Color(0xFF1B281B) : Colors.white,
               border: Border(top: BorderSide(color: Colors.grey.shade200)),
@@ -562,12 +654,12 @@ class _AiAssistantSheetState extends ConsumerState<AiAssistantSheet>
                   child: Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: _isRecording ? const Color(0xFFEF4444) : const Color(0xFFF59E0B),
+                      color: _isRecording ? const Color(0xFFEF4444) : const Color(0xFF2E7D32),
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: (_isRecording ? Colors.red : Colors.amber).withValues(alpha: 0.4),
-                          blurRadius: 10,
+                          color: (_isRecording ? Colors.red : const Color(0xFF2E7D32)).withValues(alpha: 0.35),
+                          blurRadius: 8,
                           offset: const Offset(0, 3),
                         ),
                       ],
@@ -580,8 +672,9 @@ class _AiAssistantSheetState extends ConsumerState<AiAssistantSheet>
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildLangButton(String langCode, String label) {
     final currentLang = ref.watch(aiVoiceProvider).language;

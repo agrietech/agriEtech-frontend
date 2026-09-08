@@ -7,12 +7,16 @@ class ChatMessage {
   final bool isUser;
   final AiVoiceResponse? aiResponse;
   final DateTime timestamp;
+  final bool isError;
+  final String? failedQuestion;
 
   ChatMessage({
     required this.text,
     required this.isUser,
     this.aiResponse,
     DateTime? timestamp,
+    this.isError = false,
+    this.failedQuestion,
   }) : timestamp = timestamp ?? DateTime.now();
 }
 
@@ -36,13 +40,14 @@ class AiVoiceState {
     List<ChatMessage>? messages,
     AiVoiceResponse? lastResponse,
     String? error,
+    bool clearError = false,
     String? language,
   }) =>
       AiVoiceState(
         isLoading: isLoading ?? this.isLoading,
         messages: messages ?? this.messages,
         lastResponse: lastResponse ?? this.lastResponse,
-        error: error,
+        error: clearError ? null : (error ?? this.error),
         language: language ?? this.language,
       );
 }
@@ -53,52 +58,71 @@ class AiVoiceNotifier extends StateNotifier<AiVoiceState> {
 
   void setLanguage(String lang) => state = state.copyWith(language: lang);
 
-  void clearMessages() => state = state.copyWith(messages: const []);
+  void clearMessages() => state = state.copyWith(messages: const [], clearError: true);
+
+  void clearError() => state = state.copyWith(clearError: true);
 
   Future<void> sendQuestion(String question) => askText(question);
 
+  Future<void> retryQuestion(String question) async {
+    // Remove the trailing error message if any
+    if (state.messages.isNotEmpty && state.messages.last.isError) {
+      final trimmed = List<ChatMessage>.from(state.messages)..removeLast();
+      if (trimmed.isNotEmpty && trimmed.last.isUser && trimmed.last.text == question) {
+        trimmed.removeLast();
+      }
+      state = state.copyWith(messages: trimmed, clearError: true);
+    }
+    await askText(question);
+  }
+
   Future<void> askText(String question) async {
-    if (question.trim().isEmpty) return;
-    
-    final userMsg = ChatMessage(text: question, isUser: true);
+    final cleanQ = question.trim();
+    if (cleanQ.isEmpty) return;
+
+    final userMsg = ChatMessage(text: cleanQ, isUser: true);
     final updatedMessages = List<ChatMessage>.from(state.messages)..add(userMsg);
-    
-    state = state.copyWith(isLoading: true, error: null, messages: updatedMessages);
+
+    state = state.copyWith(isLoading: true, clearError: true, messages: updatedMessages);
 
     try {
       final res = await _repo.askTextQuestion(
-        question: question,
+        question: cleanQ,
         language: state.language,
       );
-      
+
       final aiMsg = ChatMessage(
         text: res.localizedResponse(state.language),
         isUser: false,
         aiResponse: res,
       );
-      
+
       final finalMessages = List<ChatMessage>.from(state.messages)..add(aiMsg);
-      state = state.copyWith(isLoading: false, lastResponse: res, messages: finalMessages);
+      state = state.copyWith(
+        isLoading: false,
+        lastResponse: res,
+        messages: finalMessages,
+        clearError: true,
+      );
     } catch (e) {
-      final fallbackRes = AiVoiceResponse(
-        transcript: question,
-        responseEn: 'Regarding your inquiry on "$question": Inspect crop condition, monitor soil moisture, and consult extension officers.',
-        responseAm: 'የድምፅ ጥያቄዎ ተቀብለናል፡ የሰብልዎን ሁኔታ ይከታተሉ፤ እርጥበትን ይቆጣጠሩ።',
-        recommendedAction: 'Inspect crop condition and follow local extension advisory.',
-        aiModel: 'EthioFarm Local Agronomic Engine',
-        detectedLanguage: state.language,
-        audioUrlAm: 'https://translate.google.com/translate_tts?ie=UTF-8&q=${Uri.encodeComponent('የሰብልዎን ሁኔታ ይከታተሉ')}&tl=am&client=tw-ob',
-        audioUrlEn: 'https://translate.google.com/translate_tts?ie=UTF-8&q=${Uri.encodeComponent('Regarding your inquiry maintain regular crop inspection')}&tl=en&client=tw-ob',
-      );
-      
-      final aiMsg = ChatMessage(
-        text: fallbackRes.localizedResponse(state.language),
+      final isAm = state.language == 'am';
+      final errorMsg = isAm
+          ? 'የቀጥታ AI የግብርና አገልግሎትን ማግኘት አልተቻለም። እባክዎ የበይነመረብ ግንኙነትዎን ያረጋግጡና እንደገና ይሞክሩ።'
+          : 'Live AI agronomic advisory unreachable. Please verify internet connection and retry.';
+
+      final errChatMsg = ChatMessage(
+        text: errorMsg,
         isUser: false,
-        aiResponse: fallbackRes,
+        isError: true,
+        failedQuestion: cleanQ,
       );
-      
-      final finalMessages = List<ChatMessage>.from(state.messages)..add(aiMsg);
-      state = state.copyWith(isLoading: false, lastResponse: fallbackRes, messages: finalMessages);
+
+      final finalMessages = List<ChatMessage>.from(state.messages)..add(errChatMsg);
+      state = state.copyWith(
+        isLoading: false,
+        error: errorMsg,
+        messages: finalMessages,
+      );
     }
   }
 
@@ -106,43 +130,46 @@ class AiVoiceNotifier extends StateNotifier<AiVoiceState> {
     const questionText = 'Voice Query Audio';
     final userMsg = ChatMessage(text: questionText, isUser: true);
     final updatedMessages = List<ChatMessage>.from(state.messages)..add(userMsg);
-    
-    state = state.copyWith(isLoading: true, error: null, messages: updatedMessages);
+
+    state = state.copyWith(isLoading: true, clearError: true, messages: updatedMessages);
 
     try {
       final res = await _repo.submitVoiceAudio(
         audioFile: audioFile,
         language: state.language,
       );
-      
+
       final aiMsg = ChatMessage(
         text: res.localizedResponse(state.language),
         isUser: false,
         aiResponse: res,
       );
-      
+
       final finalMessages = List<ChatMessage>.from(state.messages)..add(aiMsg);
-      state = state.copyWith(isLoading: false, lastResponse: res, messages: finalMessages);
+      state = state.copyWith(
+        isLoading: false,
+        lastResponse: res,
+        messages: finalMessages,
+        clearError: true,
+      );
     } catch (e) {
-      final fallbackRes = AiVoiceResponse(
-        transcript: questionText,
-        responseEn: 'Voice inquiry processed: Maintain regular crop field inspections.',
-        responseAm: 'የድምፅ ጥያቄዎ ተስተናግዷል፡ የሰብልዎን ሁኔታ በየጊዜው ይከታተሉ።',
-        recommendedAction: 'Inspect farm condition.',
-        aiModel: 'EthioFarm Local Agronomic Engine',
-        detectedLanguage: state.language,
-        audioUrlAm: 'https://translate.google.com/translate_tts?ie=UTF-8&q=${Uri.encodeComponent('የሰብልዎን ሁኔታ ይከታተሉ')}&tl=am&client=tw-ob',
-        audioUrlEn: 'https://translate.google.com/translate_tts?ie=UTF-8&q=${Uri.encodeComponent('Voice inquiry processed')}&tl=en&client=tw-ob',
-      );
-      
-      final aiMsg = ChatMessage(
-        text: fallbackRes.localizedResponse(state.language),
+      final isAm = state.language == 'am';
+      final errorMsg = isAm
+          ? 'የቀጥታ የድምፅ ጥያቄን ማስተናገድ አልተቻለም። እባክዎ የበይነመረብ ግንኙነትዎን ፈትሸው እንደገና ይሞክሩ።'
+          : 'Live voice advisory processing failed. Please verify connection and retry.';
+
+      final errChatMsg = ChatMessage(
+        text: errorMsg,
         isUser: false,
-        aiResponse: fallbackRes,
+        isError: true,
       );
-      
-      final finalMessages = List<ChatMessage>.from(state.messages)..add(aiMsg);
-      state = state.copyWith(isLoading: false, lastResponse: fallbackRes, messages: finalMessages);
+
+      final finalMessages = List<ChatMessage>.from(state.messages)..add(errChatMsg);
+      state = state.copyWith(
+        isLoading: false,
+        error: errorMsg,
+        messages: finalMessages,
+      );
     }
   }
 

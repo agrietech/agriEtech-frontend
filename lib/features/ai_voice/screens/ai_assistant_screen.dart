@@ -329,7 +329,7 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
                     ),
                     backgroundColor: isDark ? const Color(0xFF1F331F) : Colors.white,
                     side: BorderSide(color: const Color(0xFF2E7D32).withValues(alpha: 0.3)),
-                    onPressed: () => _submitQuery(chip.replaceFirst(RegExp(r'^[^s]+s'), '')),
+                    onPressed: () => _submitQuery(chip.replaceFirst(RegExp(r'^[^\p{L}\p{N}]+\s*', unicode: true), '')),
                   );
                 },
               ),
@@ -388,7 +388,7 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
                                 ),
                                 const SizedBox(width: 12),
                                 Text(
-                                  isAmharic ? 'የግብርና AI መልስ በማዘጋጀት ላይ ነው...' : 'Generating agronomic advisory...',
+                                  isAmharic ? 'የቀጥታ የግብርና AI መልስ በማዘጋጀት ላይ ነው...' : 'Querying live AI agronomic intelligence...',
                                   style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: Colors.grey),
                                 ),
                               ],
@@ -425,6 +425,66 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
                           );
                         }
 
+                        if (msg.isError) {
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 16, right: 24),
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: isDark ? const Color(0xFF2A1414) : const Color(0xFFFEF2F2),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: isDark ? const Color(0xFF7F1D1D) : const Color(0xFFFCA5A5),
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    const Icon(Icons.cloud_off_rounded, color: Color(0xFFDC2626), size: 18),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      isAmharic ? 'የቀጥታ አገልግሎት ማስታወቂያ' : 'Live Service Notice',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 13,
+                                        color: Color(0xFFDC2626),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  msg.text,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: isDark ? Colors.grey.shade300 : const Color(0xFF991B1B),
+                                  ),
+                                ),
+                                if (msg.failedQuestion != null) ...[
+                                  const SizedBox(height: 10),
+                                  Align(
+                                    alignment: Alignment.centerRight,
+                                    child: TextButton.icon(
+                                      style: TextButton.styleFrom(
+                                        foregroundColor: const Color(0xFFDC2626),
+                                        backgroundColor: const Color(0xFFDC2626).withValues(alpha: 0.1),
+                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                      ),
+                                      icon: const Icon(Icons.refresh_rounded, size: 16),
+                                      label: Text(
+                                        isAmharic ? 'እንደገና ሞክር' : 'Retry Inquiry',
+                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                                      ),
+                                      onPressed: () => ref.read(aiVoiceProvider.notifier).retryQuestion(msg.failedQuestion!),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          );
+                        }
+
                         return Container(
                           margin: const EdgeInsets.only(bottom: 16, right: 24),
                           padding: const EdgeInsets.all(16),
@@ -447,17 +507,49 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.auto_awesome, color: Color(0xFF2E7D32), size: 16),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        isAmharic ? 'የግብርና መመሪያ' : 'Agronomic Guidance',
-                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5, color: Color(0xFF2E7D32)),
-                                      ),
-                                    ],
+                                  Expanded(
+                                    child: Wrap(
+                                      spacing: 6,
+                                      runSpacing: 4,
+                                      crossAxisAlignment: WrapCrossAlignment.center,
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFF2E7D32).withValues(alpha: 0.15),
+                                            borderRadius: BorderRadius.circular(6),
+                                            border: Border.all(color: const Color(0xFF2E7D32).withValues(alpha: 0.3)),
+                                          ),
+                                          child: Text(
+                                            msg.aiResponse?.aiModel ?? 'OpenRouter Live AI',
+                                            style: const TextStyle(
+                                              fontSize: 10.5,
+                                              fontWeight: FontWeight.w700,
+                                              color: Color(0xFF2E7D32),
+                                            ),
+                                          ),
+                                        ),
+                                        if (msg.aiResponse?.isAiOffline == true)
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: Colors.orange.withValues(alpha: 0.2),
+                                              borderRadius: BorderRadius.circular(6),
+                                            ),
+                                            child: const Text(
+                                              'OFFLINE CACHE',
+                                              style: TextStyle(
+                                                fontSize: 9.5,
+                                                fontWeight: FontWeight.w700,
+                                                color: Colors.deepOrange,
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
                                   ),
                                   Row(
+                                    mainAxisSize: MainAxisSize.min,
                                     children: [
                                       IconButton(
                                         icon: Icon(
