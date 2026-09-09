@@ -19,7 +19,7 @@ class AiVoiceRepository {
     try {
       AppLogger.info('AI text inquiry: $question (lang=$language)');
       final response = await _dioClient.post(
-        ApiConstants.aiVoiceInquiry,
+        ApiConstants.aiTextInquiry,
         data: {'userQuestion': question, 'question': question, 'language': language},
       );
       final raw = response.data is Map && response.data['data'] != null

@@ -6,14 +6,17 @@ import '../../../core/widgets/app_surface_card.dart';
 import '../../../core/widgets/error_view.dart';
 import '../../../core/widgets/shimmer_loading.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../boundaries/models/boundary_models.dart';
+import '../../boundaries/providers/boundary_provider.dart';
 import '../providers/weather_provider.dart';
 import '../widgets/current_weather_hero_card.dart';
 import '../widgets/evapotranspiration_card.dart';
 import '../widgets/forecast_day_item.dart';
+import '../widgets/hourly_forecast_slider.dart';
 import '../widgets/rainfall_chart.dart';
 import '../widgets/temperature_trend_chart.dart';
 
-/// Clean Architecture Weather Forecast Screen
+/// World-Standard Real Live Weather & Meteorological Forecast Screen
 class WeatherScreen extends ConsumerStatefulWidget {
   final String? woredaId;
   final double? latitude;
@@ -40,10 +43,7 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
   void _loadWeatherData() {
     final user = ref.read(currentUserProvider);
     final targetWoredaId = widget.woredaId ?? user?.woredaId;
-    if (targetWoredaId == null || targetWoredaId.isEmpty) {
-      ref.read(weatherProvider.notifier).setMissingWoredaError();
-      return;
-    }
+
     ref.read(weatherProvider.notifier).loadForecast(
           woredaId: targetWoredaId,
           latitude: widget.latitude,
@@ -51,19 +51,82 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
         );
   }
 
+  void _showWoredaPicker(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => _WoredaPickerBottomSheet(
+        currentWoredaId: ref.read(weatherProvider).selectedWoredaId,
+        onSelected: (woreda) {
+          Navigator.pop(ctx);
+          ref.read(weatherProvider.notifier).selectWoreda(
+                woreda.id,
+                woredaName: woreda.name,
+              );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final weatherState = ref.watch(weatherProvider);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.translate('weather_forecast')),
         elevation: 0,
+        actions: [
+          // Location Selector Action Chip
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: InkWell(
+              onTap: () => _showWoredaPicker(context),
+              borderRadius: AppRadii.roundedPill,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withValues(alpha: isDark ? 0.25 : 0.1),
+                  borderRadius: AppRadii.roundedPill,
+                  border: Border.all(
+                    color: AppTheme.primaryColor.withValues(alpha: 0.35),
+                    width: 1.2,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.location_on_rounded, size: 14, color: AppTheme.primaryColor),
+                    const SizedBox(width: 4),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 120),
+                      child: Text(
+                        weatherState.selectedWoredaName ?? 'Addis Ababa',
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                        style: const TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.primaryColor,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 2),
+                    const Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: AppTheme.primaryColor),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
-      body: weatherState.isLoading
+      body: weatherState.isLoading && weatherState.days.isEmpty
           ? const WeatherSkeleton()
-          : weatherState.error != null
+          : weatherState.error != null && weatherState.days.isEmpty
               ? ErrorView(
                   message: weatherState.error!,
                   onRetry: _loadWeatherData,
@@ -76,16 +139,19 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // Current weather hero card
-                        if (weatherState.days.isNotEmpty)
-                          CurrentWeatherHeroCard(forecast: weatherState.days.first),
+                        // Real-Time Live Weather Hero Card
+                        if (weatherState.current != null || weatherState.days.isNotEmpty)
+                          CurrentWeatherHeroCard(
+                            forecast: weatherState.current ?? weatherState.days.first,
+                            locationName: weatherState.selectedWoredaName,
+                          ),
                         const SizedBox(height: AppSpacing.sm),
 
-                        // Sentinel-1 SAR Radar All-Weather Telemetry Banner
+                        // Live Multi-Provider Met Telemetry Banner
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF0284C7).withValues(alpha: 0.08),
+                            color: const Color(0xFF0284C7).withValues(alpha: isDark ? 0.2 : 0.08),
                             borderRadius: AppRadii.roundedMd,
                             border: Border.all(
                               color: const Color(0xFF0284C7).withValues(alpha: 0.3),
@@ -95,14 +161,14 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Icon(Icons.radar_rounded, color: Color(0xFF0284C7), size: 20),
+                              const Icon(Icons.satellite_alt_rounded, color: Color(0xFF0284C7), size: 20),
                               const SizedBox(width: 10),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      l10n.translate('sar_radar_active'),
+                                      l10n.translate('live_met_telemetry'),
                                       style: const TextStyle(
                                         fontSize: 12.5,
                                         fontWeight: FontWeight.bold,
@@ -111,11 +177,13 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
-                                      l10n.translate('sar_radar_desc'),
+                                      weatherState.dataSources != null && weatherState.dataSources!.isNotEmpty
+                                          ? weatherState.dataSources!
+                                          : 'Open-Meteo High-Res WMO • OpenWeatherMap Live • World Bank Climate Normals',
                                       style: TextStyle(
                                         fontSize: 11,
                                         height: 1.35,
-                                        color: Colors.grey.shade700,
+                                        color: isDark ? Colors.grey.shade300 : Colors.grey.shade700,
                                       ),
                                     ),
                                   ],
@@ -126,11 +194,17 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
                         ),
                         const SizedBox(height: AppSpacing.sectionGap),
 
+                        // 24-Hour Meteorological Hourly Slider
+                        if (weatherState.hourly.isNotEmpty) ...[
+                          HourlyForecastSlider(hourlyForecasts: weatherState.hourly),
+                          const SizedBox(height: AppSpacing.sectionGap),
+                        ],
+
                         // Agronomic Evapotranspiration (ET₀) & Irrigation Card
                         const EvapotranspirationCard(),
                         const SizedBox(height: AppSpacing.sectionGap),
 
-                        // 7-day forecast
+                        // Real True 7-Day Future Forecast (Starting from Today)
                         _buildSectionHeader(
                           title: l10n.translate('7_day_forecast'),
                           icon: Icons.calendar_today_rounded,
@@ -202,6 +276,149 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Interactive Bottom Sheet for selecting any Woreda in Ethiopia
+class _WoredaPickerBottomSheet extends ConsumerStatefulWidget {
+  final String? currentWoredaId;
+  final ValueChanged<WoredaModel> onSelected;
+
+  const _WoredaPickerBottomSheet({
+    required this.currentWoredaId,
+    required this.onSelected,
+  });
+
+  @override
+  ConsumerState<_WoredaPickerBottomSheet> createState() => _WoredaPickerBottomSheetState();
+}
+
+class _WoredaPickerBottomSheetState extends ConsumerState<_WoredaPickerBottomSheet> {
+  final _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final woredasAsync = ref.watch(allWoredasProvider);
+
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.72,
+      decoration: BoxDecoration(
+        color: theme.scaffoldBackgroundColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
+        children: [
+          // Drag handle
+          Container(
+            width: 40,
+            height: 4,
+            margin: const EdgeInsets.only(top: 10, bottom: 8),
+            decoration: const BoxDecoration(
+              color: Colors.grey,
+              borderRadius: BorderRadius.all(Radius.circular(2)),
+            ),
+          ),
+          // Title
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  l10n.translate('select_woreda_weather'),
+                  style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close_rounded),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+          ),
+          // Search box
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: TextField(
+              controller: _searchController,
+              onChanged: (val) => setState(() => _searchQuery = val.trim().toLowerCase()),
+              decoration: InputDecoration(
+                hintText: l10n.translate('search_woreda'),
+                prefixIcon: const Icon(Icons.search_rounded),
+                filled: true,
+                fillColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                border: const OutlineInputBorder(
+                  borderRadius: AppRadii.roundedMd,
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          // List of woredas
+          Expanded(
+            child: woredasAsync.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (err, _) => Center(child: Text('Failed to load woredas: $err')),
+              data: (woredas) {
+                final filtered = _searchQuery.isEmpty
+                    ? woredas
+                    : woredas.where((w) {
+                        final nameLower = w.name.toLowerCase();
+                        return nameLower.contains(_searchQuery);
+                      }).toList();
+
+                if (filtered.isEmpty) {
+                  return Center(
+                    child: Text(
+                      l10n.translate('no_woredas_found'),
+                      style: TextStyle(color: Colors.grey.shade600),
+                    ),
+                  );
+                }
+
+                return ListView.separated(
+                  itemCount: filtered.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1, indent: 16, endIndent: 16),
+                  itemBuilder: (ctx, idx) {
+                    final item = filtered[idx];
+                    final isSelected = item.id == widget.currentWoredaId;
+
+                    return ListTile(
+                      leading: Icon(
+                        Icons.location_city_rounded,
+                        color: isSelected ? AppTheme.primaryColor : Colors.grey.shade500,
+                      ),
+                      title: Text(
+                        item.name,
+                        style: TextStyle(
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                          color: isSelected ? AppTheme.primaryColor : null,
+                        ),
+                      ),
+                      trailing: isSelected
+                          ? const Icon(Icons.check_circle_rounded, color: AppTheme.primaryColor)
+                          : const Icon(Icons.chevron_right_rounded, size: 18),
+                      onTap: () => widget.onSelected(item),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

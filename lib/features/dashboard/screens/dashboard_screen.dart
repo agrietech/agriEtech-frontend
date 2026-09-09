@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/role_utils.dart';
+import '../../../core/utils/responsive.dart';
 import '../../../core/widgets/agrietech_app_drawer.dart';
 import '../models/dashboard_models.dart';
 import '../providers/dashboard_provider.dart';
@@ -583,8 +584,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: context.responsive(compact: 3, medium: 4, expanded: 6),
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
             childAspectRatio: 1,
@@ -673,13 +674,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   child: const Icon(Icons.groups_outlined, color: Color(0xFF0D9488), size: 20),
                 ),
                 const SizedBox(width: 10),
-                Text(
-                  'Kebele Overview',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
+                Expanded(
+                  child: Text(
+                    'Kebele Overview',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const Spacer(),
+                const SizedBox(width: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
@@ -770,13 +775,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   child: Icon(scopeIcon, color: scopeColor, size: 20),
                 ),
                 const SizedBox(width: 10),
-                Text(
-                  scopeTitle,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
+                Expanded(
+                  child: Text(
+                    scopeTitle,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const Spacer(),
+                const SizedBox(width: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
@@ -848,13 +857,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   child: const Icon(Icons.science_outlined, color: Color(0xFF4338CA), size: 20),
                 ),
                 const SizedBox(width: 10),
-                Text(
-                  'Research Data Insights',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
+                Expanded(
+                  child: Text(
+                    'Research Data Insights',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const Spacer(),
+                const SizedBox(width: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(

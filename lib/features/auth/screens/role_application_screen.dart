@@ -1,7 +1,9 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/error/app_error.dart';
 import '../../../core/models/user_model.dart';
 import '../../../core/utils/role_utils.dart';
 import '../../../core/widgets/agrietech_app_drawer.dart';
@@ -52,26 +54,11 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
 
   static const List<RoleProfileOption> _availableRoles = [
     RoleProfileOption(
-      roleKey: 'FARMER',
-      title: 'Farmer / Producer',
-      amharicTitle: 'አርሶ / አርብቶ አደር',
-      subtitle: 'Field parcels, hyper-local weather, and AI plant health diagnosis',
-      fullDescription: 'Enables GPS plot boundary mapping, soil moisture alerts, Penman-Monteith crop water balance calculations, and leaf pathology scanning.',
-      icon: Icons.agriculture_rounded,
-      color: Color(0xFF2E7D32),
-      permissions: [
-        'Register & map farm parcel boundaries',
-        'Receive CHIRPS rainfall & frost alerts',
-        'AI Crop Disease Computer Vision',
-        'Voice AI agronomic advisory in Amharic/Oromo',
-      ],
-    ),
-    RoleProfileOption(
       roleKey: 'DEVELOPMENT_AGENT',
       title: 'Development Agent (DA)',
       amharicTitle: 'የልማት ጣቢያ ባለሙያ',
       subtitle: 'Kebele farmer registries, field sensor deployment, and pest reports',
-      fullDescription: 'Authorizes field agents to register local smallholders, calibrate LoRaWAN IoT telemetry probes, and submit pest reports.',
+      fullDescription: 'Authorizes field agents to register local smallholders, calibrate LoRaWAN IoT telemetry sensors, and submit pest reports.',
       icon: Icons.support_agent_rounded,
       color: Color(0xFF0284C7),
       permissions: [
@@ -93,7 +80,7 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
         'Issue authoritative emergency smart alerts',
         'Trigger USSD *212# mass farmer broadcast',
         'Access woreda integrated spatial choropleth',
-        'Manage woreda staff and field probe networks',
+        'Manage woreda staff and field sensor networks',
       ],
     ),
     RoleProfileOption(
@@ -178,17 +165,21 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
 
     try {
       final client = ref.read(dioClientProvider);
+      // Region, zone and woreda are all required by the form validators above
+      // and are NOT NULL on the server, which also scopes reviewers by them.
+      // Sending them unconditionally means a missing one surfaces as a clear
+      // validation error instead of a silent omission.
       final payload = {
         'requestedRole': _selectedRole,
         'regionId': hierarchy.selectedRegion?.id,
         'regionName': hierarchy.selectedRegion?.name,
-        if (hierarchy.selectedZone != null) 'zoneId': hierarchy.selectedZone?.id,
-        if (hierarchy.selectedZone != null) 'zoneName': hierarchy.selectedZone?.name,
-        if (hierarchy.selectedWoreda != null) 'woredaId': hierarchy.selectedWoreda?.id,
-        if (hierarchy.selectedWoreda != null) 'woredaName': hierarchy.selectedWoreda?.name,
+        'zoneId': hierarchy.selectedZone?.id,
+        'zoneName': hierarchy.selectedZone?.name,
+        'woredaId': hierarchy.selectedWoreda?.id,
+        'woredaName': hierarchy.selectedWoreda?.name,
         if (_kebeleController.text.trim().isNotEmpty) 'kebeleName': _kebeleController.text.trim(),
         'organizationName': _organizationController.text.trim(),
-        if (_staffIdController.text.trim().isNotEmpty) 'staffIdNumber': _staffIdController.text.trim(),
+        'staffIdNumber': _staffIdController.text.trim(),
         'justification': _justificationController.text.trim(),
       };
 
@@ -203,9 +194,15 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isSubmitting = false);
+        // DioClient does not normalize errors, so map here to surface the
+        // server's own message (e.g. which boundary is missing) instead of a
+        // raw DioException dump.
+        final String message = e is DioException
+            ? NetworkError.fromDioException(e).message
+            : e.toString();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to submit application: ${e.toString()}'),
+            content: Text('Failed to submit application: $message'),
             backgroundColor: AppTheme.errorColor,
           ),
         );
@@ -390,114 +387,146 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
                             color: isDark ? const Color(0xFF243B27) : Colors.grey.shade200,
                           ),
                         ),
-                        child: Column(
-                          children: [
-                            // Region
-                            DropdownButtonFormField<String>(
-                              initialValue: hierarchy.regions.any((r) => r.id == hierarchy.selectedRegion?.id)
-                                  ? hierarchy.selectedRegion?.id
-                                  : null,
-                              decoration: InputDecoration(
-                                label: const Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text('Region / ክልል'),
-                                    Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
-                                  ],
+                        child: Builder(
+                          builder: (context) {
+                            final uniqueRegions = {for (final r in hierarchy.regions) r.id: r}.values.toList();
+                            final uniqueZones = {for (final z in hierarchy.zones) z.id: z}.values.toList();
+                            final uniqueWoredas = {for (final w in hierarchy.woredas) w.id: w}.values.toList();
+
+                            return Column(
+                              children: [
+                                // Region
+                                DropdownButtonFormField<String>(
+                                  key: ValueKey('region_${hierarchy.selectedRegion?.id}'),
+                                  isExpanded: true,
+                                  initialValue: uniqueRegions.any((r) => r.id == hierarchy.selectedRegion?.id)
+                                      ? hierarchy.selectedRegion?.id
+                                      : null,
+                                  decoration: InputDecoration(
+                                    labelText: 'Region / ክልል *',
+                                    prefixIcon: const Icon(Icons.public),
+                                    border: const OutlineInputBorder(borderRadius: AppRadii.roundedMd),
+                                    filled: true,
+                                    fillColor: isDark ? const Color(0xFF1B2E1E) : Colors.white,
+                                  ),
+                                  items: uniqueRegions.map((region) {
+                                    return DropdownMenuItem<String>(
+                                      value: region.id,
+                                      child: Text(
+                                        region.name,
+                                        overflow: TextOverflow.ellipsis,
+                                        maxLines: 1,
+                                      ),
+                                    );
+                                  }).toList(),
+                                  validator: (v) => v == null || v.isEmpty ? 'Please select target Region' : null,
+                                  onChanged: (regionId) {
+                                    if (regionId != null) {
+                                      final region = uniqueRegions.firstWhere((r) => r.id == regionId);
+                                      hierarchyNotifier.selectRegion(region);
+                                    }
+                                  },
                                 ),
-                                prefixIcon: const Icon(Icons.public),
-                                border: const OutlineInputBorder(borderRadius: AppRadii.roundedMd),
-                                filled: true,
-                                fillColor: isDark ? const Color(0xFF1B2E1E) : Colors.white,
-                              ),
-                              items: hierarchy.regions.map((region) {
-                                return DropdownMenuItem<String>(
-                                  value: region.id,
-                                  child: Text(region.name),
-                                );
-                              }).toList(),
-                              validator: (v) => v == null || v.isEmpty ? 'Please select target Region' : null,
-                              onChanged: (regionId) {
-                                if (regionId != null) {
-                                  final region = hierarchy.regions.firstWhere((r) => r.id == regionId);
-                                  hierarchyNotifier.selectRegion(region);
-                                }
-                              },
-                            ),
-                            const SizedBox(height: 12),
+                                const SizedBox(height: 12),
 
-                            // Zone
-                            DropdownButtonFormField<String>(
-                              initialValue: hierarchy.zones.any((z) => z.id == hierarchy.selectedZone?.id)
-                                  ? hierarchy.selectedZone?.id
-                                  : null,
-                              hint: Text(hierarchy.selectedRegion == null ? 'Select Region first' : 'Select Zone'),
-                              decoration: InputDecoration(
-                                labelText: 'Zone / ዞን',
-                                prefixIcon: const Icon(Icons.map_outlined),
-                                border: const OutlineInputBorder(borderRadius: AppRadii.roundedMd),
-                                filled: true,
-                                fillColor: isDark ? const Color(0xFF1B2E1E) : Colors.white,
-                              ),
-                              items: hierarchy.zones.map((zone) {
-                                return DropdownMenuItem<String>(
-                                  value: zone.id,
-                                  child: Text(zone.name),
-                                );
-                              }).toList(),
-                              onChanged: hierarchy.selectedRegion == null
-                                  ? null
-                                  : (zoneId) {
-                                      if (zoneId != null) {
-                                        final zone = hierarchy.zones.firstWhere((z) => z.id == zoneId);
-                                        hierarchyNotifier.selectZone(zone);
-                                      }
-                                    },
-                            ),
-                            const SizedBox(height: 12),
+                                // Zone
+                                DropdownButtonFormField<String>(
+                                  key: ValueKey('zone_${hierarchy.selectedRegion?.id}_${hierarchy.selectedZone?.id}'),
+                                  isExpanded: true,
+                                  initialValue: uniqueZones.any((z) => z.id == hierarchy.selectedZone?.id)
+                                      ? hierarchy.selectedZone?.id
+                                      : null,
+                                  hint: Text(
+                                    hierarchy.selectedRegion == null ? 'Select Region first' : 'Select Zone',
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
+                                  ),
+                                  decoration: InputDecoration(
+                                    labelText: 'Zone / ዞን',
+                                    prefixIcon: const Icon(Icons.map_outlined),
+                                    border: const OutlineInputBorder(borderRadius: AppRadii.roundedMd),
+                                    filled: true,
+                                    fillColor: isDark ? const Color(0xFF1B2E1E) : Colors.white,
+                                  ),
+                                  items: uniqueZones.map((zone) {
+                                    return DropdownMenuItem<String>(
+                                      value: zone.id,
+                                      child: Text(
+                                        zone.name,
+                                        overflow: TextOverflow.ellipsis,
+                                        maxLines: 1,
+                                      ),
+                                    );
+                                  }).toList(),
+                                  onChanged: hierarchy.selectedRegion == null
+                                      ? null
+                                      : (zoneId) {
+                                          if (zoneId != null) {
+                                            final zone = uniqueZones.firstWhere((z) => z.id == zoneId);
+                                            hierarchyNotifier.selectZone(zone);
+                                          }
+                                        },
+                                  validator: (v) =>
+                                      (v == null || v.isEmpty) ? 'Please select target Zone' : null,
+                                ),
+                                const SizedBox(height: 12),
 
-                            // Woreda
-                            DropdownButtonFormField<String>(
-                              initialValue: hierarchy.woredas.any((w) => w.id == hierarchy.selectedWoreda?.id)
-                                  ? hierarchy.selectedWoreda?.id
-                                  : null,
-                              hint: Text(hierarchy.selectedZone == null ? 'Select Zone first' : 'Select Woreda'),
-                              decoration: InputDecoration(
-                                labelText: 'Woreda / ወረዳ',
-                                prefixIcon: const Icon(Icons.holiday_village_outlined),
-                                border: const OutlineInputBorder(borderRadius: AppRadii.roundedMd),
-                                filled: true,
-                                fillColor: isDark ? const Color(0xFF1B2E1E) : Colors.white,
-                              ),
-                              items: hierarchy.woredas.map((woreda) {
-                                return DropdownMenuItem<String>(
-                                  value: woreda.id,
-                                  child: Text(woreda.name),
-                                );
-                              }).toList(),
-                              onChanged: hierarchy.selectedZone == null
-                                  ? null
-                                  : (woredaId) {
-                                      if (woredaId != null) {
-                                        final woreda = hierarchy.woredas.firstWhere((w) => w.id == woredaId);
-                                        hierarchyNotifier.selectWoreda(woreda);
-                                      }
-                                    },
-                            ),
-                            const SizedBox(height: 12),
+                                // Woreda
+                                DropdownButtonFormField<String>(
+                                  key: ValueKey('woreda_${hierarchy.selectedZone?.id}_${hierarchy.selectedWoreda?.id}'),
+                                  isExpanded: true,
+                                  initialValue: uniqueWoredas.any((w) => w.id == hierarchy.selectedWoreda?.id)
+                                      ? hierarchy.selectedWoreda?.id
+                                      : null,
+                                  hint: Text(
+                                    hierarchy.selectedZone == null ? 'Select Zone first' : 'Select Woreda',
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
+                                  ),
+                                  decoration: InputDecoration(
+                                    labelText: 'Woreda / ወረዳ',
+                                    prefixIcon: const Icon(Icons.holiday_village_outlined),
+                                    border: const OutlineInputBorder(borderRadius: AppRadii.roundedMd),
+                                    filled: true,
+                                    fillColor: isDark ? const Color(0xFF1B2E1E) : Colors.white,
+                                  ),
+                                  items: uniqueWoredas.map((woreda) {
+                                    return DropdownMenuItem<String>(
+                                      value: woreda.id,
+                                      child: Text(
+                                        woreda.name,
+                                        overflow: TextOverflow.ellipsis,
+                                        maxLines: 1,
+                                      ),
+                                    );
+                                  }).toList(),
+                                  onChanged: hierarchy.selectedZone == null
+                                      ? null
+                                      : (woredaId) {
+                                          if (woredaId != null) {
+                                            final woreda = uniqueWoredas.firstWhere((w) => w.id == woredaId);
+                                            hierarchyNotifier.selectWoreda(woreda);
+                                          }
+                                        },
+                                  validator: (v) =>
+                                      (v == null || v.isEmpty) ? 'Please select target Woreda' : null,
+                                ),
+                                const SizedBox(height: 12),
 
-                            // Kebele
-                            TextFormField(
-                              controller: _kebeleController,
-                              decoration: InputDecoration(
-                                labelText: 'Kebele/ቀበሌ',
-                                prefixIcon: const Icon(Icons.signpost_outlined),
-                                border: const OutlineInputBorder(borderRadius: AppRadii.roundedMd),
-                                filled: true,
-                                fillColor: isDark ? AppTheme.surfaceDark : const Color(0xFFF8FAF8),
-                              ),
-                            ),
-                          ],
+                                // Kebele
+                                TextFormField(
+                                  controller: _kebeleController,
+                                  decoration: InputDecoration(
+                                    labelText: 'Kebele/ቀበሌ',
+                                    prefixIcon: const Icon(Icons.signpost_outlined),
+                                    border: const OutlineInputBorder(borderRadius: AppRadii.roundedMd),
+                                    filled: true,
+                                    fillColor: isDark ? AppTheme.surfaceDark : const Color(0xFFF8FAF8),
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
                         ),
                       ),
                       const SizedBox(height: AppSpacing.screenPadding),
@@ -546,6 +575,12 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
                                 filled: true,
                                 fillColor: isDark ? AppTheme.surfaceDark : const Color(0xFFF8FAF8),
                               ),
+                              // The server rejects a blank staff ID, so catch it
+                              // here rather than surfacing a confusing 400 that
+                              // also blames the organization name.
+                              validator: (v) => (v == null || v.trim().isEmpty)
+                                  ? 'Please enter your staff / badge ID'
+                                  : null,
                             ),
                             const SizedBox(height: 12),
                             TextFormField(

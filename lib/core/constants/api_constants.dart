@@ -72,7 +72,8 @@ class ApiConstants {
   static const String notifications = '/notifications';
   static String notificationById(String id) => '$notifications/$id';
   static String notificationMarkRead(String id) => '$notifications/$id/read';
-  static const String notificationsReadAll = '$notifications/read-all';
+  static const String notificationsReadAll = '$notifications/mark-all-read';
+  static const String notificationsUnreadCount = '$notifications/unread-count';
 
   // 7B. Advisories Endpoints (/advisories)
   static const String advisories = '/advisories';
@@ -133,6 +134,11 @@ class ApiConstants {
   static const String adminOverview = '/admin/overview';
   static const String adminUsers = '/admin/users';
   static String adminUserById(String id) => '/admin/users/$id';
+
+  // 14. Dedicated Weather & Climatology (/weather)
+  static const String weather = '/weather';
+  static const String weatherForecast = '$weather/forecast';
+  static const String weatherCurrent = '$weather/current';
   static String adminUserRole(String id) => '/admin/users/$id/role';
   static String adminUserStatus(String id) => '/admin/users/$id/status';
   static const String adminFarms = '/admin/farms';

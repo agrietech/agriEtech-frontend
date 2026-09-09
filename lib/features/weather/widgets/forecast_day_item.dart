@@ -76,27 +76,45 @@ class ForecastDayItem extends StatelessWidget {
           ),
           const SizedBox(width: 8),
 
-          // Rain Probability / Precipitation Badge
+          // Rain Probability & Volume / Condition Badge
           SizedBox(
-            width: 58,
+            width: 66,
             child: (day.precipitationProbability >= 15.0 || day.rainfall > 0.2)
-                ? Row(
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(
-                        Icons.water_drop_rounded,
-                        size: 13,
-                        color: Color(0xFF0284C7),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.water_drop_rounded,
+                            size: 13,
+                            color: Color(0xFF0284C7),
+                          ),
+                          const SizedBox(width: 2),
+                          Text(
+                            '${day.precipitationProbability.toStringAsFixed(0)}%',
+                            style: const TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF0284C7),
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 2),
-                      Text(
-                        '${day.precipitationProbability.toStringAsFixed(0)}%',
-                        style: const TextStyle(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF0284C7),
+                      if (day.rainfall > 0.4)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 15),
+                          child: Text(
+                            '${day.rainfall.toStringAsFixed(1)} mm',
+                            style: TextStyle(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w500,
+                              color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                            ),
+                          ),
                         ),
-                      ),
                     ],
                   )
                 : Text(

@@ -4,7 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../theme/app_theme.dart';
 import '../utils/role_utils.dart';
-import '../l10n/app_localizations.dart';
+import '../l10n/l10n_extension.dart';
+import 'language_selector.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/ai_voice/widgets/ai_assistant_sheet.dart';
 import '../../features/alerts/providers/alert_provider.dart';
@@ -19,7 +20,6 @@ class EthioFarmAppDrawer extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
     final authState = ref.watch(authProvider);
-    final currentLang = ref.watch(appLocaleProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final userName = user?.fullName ?? 'User';
     final userRole = RoleUtils.getRoleDisplayName(user?.role);
@@ -157,134 +157,53 @@ class EthioFarmAppDrawer extends ConsumerWidget {
               children: [
                 // ── Operations ──
                 _buildSectionLabel(context, 'OPERATIONS'),
-                _buildNavTile(context, ref, icon: Icons.dashboard_rounded, label: AppStrings.tr('dashboard', lang: currentLang), route: '/dashboard', color: const Color(0xFF16A34A)),
+                _buildNavTile(context, ref, icon: Icons.dashboard_rounded, label: context.tr('dashboard'), route: '/dashboard', color: const Color(0xFF16A34A)),
                 if (RoleUtils.canManageFarms(user?.role))
-                  _buildNavTile(context, ref, icon: Icons.agriculture_rounded, label: AppStrings.tr('farms', lang: currentLang), route: '/farms', color: const Color(0xFF15803D)),
-                _buildNavTile(context, ref, icon: Icons.biotech_rounded, label: AppStrings.tr('diagnosis', lang: currentLang), route: '/diagnosis', color: const Color(0xFF0D9488)),
-                _buildNavTile(context, ref, icon: Icons.wb_cloudy_rounded, label: AppStrings.tr('weather', lang: currentLang), route: '/weather', color: const Color(0xFF0284C7)),
+                  _buildNavTile(context, ref, icon: Icons.agriculture_rounded, label: context.tr('farms'), route: '/farms', color: const Color(0xFF15803D)),
+                _buildNavTile(context, ref, icon: Icons.biotech_rounded, label: context.tr('diagnosis'), route: '/diagnosis', color: const Color(0xFF0D9488)),
+                _buildNavTile(context, ref, icon: Icons.wb_cloudy_rounded, label: context.tr('weather'), route: '/weather', color: const Color(0xFF0284C7)),
 
                 _buildDivider(isDark),
 
                 // ── Intelligence ──
                 _buildSectionLabel(context, 'INTELLIGENCE'),
-                _buildNavTile(context, ref, icon: Icons.map_rounded, label: AppStrings.tr('risks', lang: currentLang), route: '/risks', color: const Color(0xFFDC2626)),
-                _buildNavTile(context, ref, icon: Icons.thunderstorm_rounded, label: AppStrings.tr('disasters', lang: currentLang), route: '/disasters', color: const Color(0xFFEA580C)),
+                _buildNavTile(context, ref, icon: Icons.map_rounded, label: context.tr('risks'), route: '/risks', color: const Color(0xFFDC2626)),
+                _buildNavTile(context, ref, icon: Icons.thunderstorm_rounded, label: context.tr('disasters'), route: '/disasters', color: const Color(0xFFEA580C)),
                 if (authState.canManageSensors)
-                  _buildNavTile(context, ref, icon: Icons.sensors_rounded, label: AppStrings.tr('sensors', lang: currentLang), route: '/sensors', color: const Color(0xFF7C3AED)),
-                _buildNavTile(context, ref, icon: Icons.public_rounded, label: AppStrings.tr('boundaries', lang: currentLang), route: '/boundaries', color: const Color(0xFF059669)),
+                  _buildNavTile(context, ref, icon: Icons.sensors_rounded, label: context.tr('sensors'), route: '/sensors', color: const Color(0xFF7C3AED)),
+                _buildNavTile(context, ref, icon: Icons.public_rounded, label: context.tr('boundaries'), route: '/boundaries', color: const Color(0xFF059669)),
 
                 _buildDivider(isDark),
 
                 // ── Channels ──
                 _buildSectionLabel(context, 'CHANNELS'),
                 if (RoleUtils.canViewAnalytics(user?.role))
-                  _buildNavTile(context, ref, icon: Icons.insights_rounded, label: AppStrings.tr('analytics', lang: currentLang), route: '/analytics', color: const Color(0xFF4338CA)),
+                  _buildNavTile(context, ref, icon: Icons.insights_rounded, label: context.tr('analytics'), route: '/analytics', color: const Color(0xFF4338CA)),
                 _buildNavTile(
                   context,
                   ref,
                   icon: Icons.notifications_active_rounded,
-                  label: AppStrings.tr('alerts', lang: currentLang),
+                  label: context.tr('alerts'),
                   route: '/alerts',
                   color: const Color(0xFFD97706),
                   badge: activeAlertsCount,
                 ),
                 if (authState.canAccessUssdConsole)
-                  _buildNavTile(context, ref, icon: Icons.dialpad_rounded, label: AppStrings.tr('ussd', lang: currentLang), route: '/ussd-console', color: const Color(0xFF0D9488)),
-                _buildAssistantTile(context, currentLang),
+                  _buildNavTile(context, ref, icon: Icons.dialpad_rounded, label: context.tr('ussd'), route: '/ussd-console', color: const Color(0xFF0D9488)),
+                _buildAssistantTile(context),
 
                 _buildDivider(isDark),
 
                 // ── Account ──
                 _buildSectionLabel(context, 'ACCOUNT'),
-                _buildNavTile(context, ref, icon: Icons.person_outline_rounded, label: AppStrings.tr('profile', lang: currentLang), route: '/profile', color: const Color(0xFF14532D)),
-                _buildNavTile(context, ref, icon: Icons.assignment_ind_rounded, label: AppStrings.tr('role', lang: currentLang), route: '/apply-role', color: const Color(0xFF2563EB)),
-                _buildNavTile(context, ref, icon: Icons.lock_outline_rounded, label: AppStrings.tr('security', lang: currentLang), route: '/change-password', color: const Color(0xFF64748B)),
+                _buildNavTile(context, ref, icon: Icons.person_outline_rounded, label: context.tr('profile'), route: '/profile', color: const Color(0xFF14532D)),
+                _buildNavTile(context, ref, icon: Icons.assignment_ind_rounded, label: context.tr('role'), route: '/apply-role', color: const Color(0xFF2563EB)),
+                _buildNavTile(context, ref, icon: Icons.lock_outline_rounded, label: context.tr('security'), route: '/change-password', color: const Color(0xFF64748B)),
 
                 const SizedBox(height: AppSpacing.xs),
 
-                // ── Quick Language Switcher (Amharic / English) ──
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.xxs),
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.shade100,
-                      borderRadius: AppRadius.radiusMd,
-                      border: Border.all(
-                        color: isDark ? Colors.white12 : Colors.grey.shade300,
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: InkWell(
-                            onTap: () {
-                              HapticFeedback.lightImpact();
-                              ref.read(appLocaleProvider.notifier).state = 'en';
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 8),
-                              decoration: BoxDecoration(
-                                color: currentLang == 'en'
-                                    ? (isDark ? AppTheme.primaryColor : Colors.white)
-                                    : Colors.transparent,
-                                borderRadius: AppRadius.radiusSm,
-                                boxShadow: currentLang == 'en'
-                                    ? [const BoxShadow(color: Colors.black12, blurRadius: 4)]
-                                    : null,
-                              ),
-                              child: Center(
-                                child: Text(
-                                  'English',
-                                  style: TextStyle(
-                                    fontWeight: currentLang == 'en' ? FontWeight.bold : FontWeight.w500,
-                                    fontSize: 12,
-                                    color: currentLang == 'en'
-                                        ? (isDark ? Colors.white : const Color(0xFF14532D))
-                                        : Colors.grey,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          child: InkWell(
-                            onTap: () {
-                              HapticFeedback.lightImpact();
-                              ref.read(appLocaleProvider.notifier).state = 'am';
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 8),
-                              decoration: BoxDecoration(
-                                color: currentLang == 'am'
-                                    ? (isDark ? AppTheme.primaryColor : Colors.white)
-                                    : Colors.transparent,
-                                borderRadius: AppRadius.radiusSm,
-                                boxShadow: currentLang == 'am'
-                                    ? [const BoxShadow(color: Colors.black12, blurRadius: 4)]
-                                    : null,
-                              ),
-                              child: Center(
-                                child: Text(
-                                  'አማርኛ',
-                                  style: TextStyle(
-                                    fontWeight: currentLang == 'am' ? FontWeight.bold : FontWeight.w500,
-                                    fontSize: 12,
-                                    color: currentLang == 'am'
-                                        ? (isDark ? Colors.white : const Color(0xFF14532D))
-                                        : Colors.grey,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+                // ── Language Switcher (all shipped languages) ──
+                const LanguageDrawerTile(),
 
                 const SizedBox(height: AppSpacing.xs),
 
@@ -301,7 +220,7 @@ class EthioFarmAppDrawer extends ConsumerWidget {
                       }
                     },
                     icon: const Icon(Icons.logout_rounded, size: 18),
-                    label: Text(AppStrings.tr('signOut', lang: currentLang)),
+                    label: Text(context.tr('signOut')),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppTheme.errorColor,
                       side: BorderSide(color: AppTheme.errorColor.withValues(alpha: 0.4)),
@@ -327,7 +246,7 @@ class EthioFarmAppDrawer extends ConsumerWidget {
                 Icon(Icons.eco_rounded, size: 14, color: isDark ? Colors.grey.shade600 : Colors.grey.shade400),
                 const SizedBox(width: 6),
                 Text(
-                  AppStrings.tr('appVersion', lang: currentLang),
+                  context.tr('appVersion'),
                     style: AppTypography.caption.copyWith(
                       color: isDark ? Colors.grey.shade600 : Colors.grey.shade400,
                       fontWeight: FontWeight.w500,
@@ -446,7 +365,7 @@ class EthioFarmAppDrawer extends ConsumerWidget {
     );
   }
 
-  Widget _buildAssistantTile(BuildContext context, String currentLang) {
+  Widget _buildAssistantTile(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 1),
@@ -478,7 +397,7 @@ class EthioFarmAppDrawer extends ConsumerWidget {
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Text(
-                    AppStrings.tr('assistant', lang: currentLang),
+                    context.tr('assistant'),
                     style: AppTypography.bodySmall.copyWith(
                       fontWeight: FontWeight.w500,
                       color: isDark ? Colors.grey.shade300 : const Color(0xFF334155),

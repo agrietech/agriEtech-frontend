@@ -1,15 +1,22 @@
-/// Weather state management
+/// Weather state management — clean architecture Riverpod provider
 library weather_provider;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/historical_weather_model.dart';
 import '../models/forecast_model.dart';
+import '../models/hourly_forecast_model.dart';
 import '../models/weather_forecast_model.dart';
 import '../repositories/weather_repository.dart';
 
 class WeatherState {
   final List<HistoricalWeatherModel> historical;
   final List<ForecastModel> forecast;
+  final List<HourlyForecastModel> hourly;
+  final ForecastModel? current;
+  final Map<String, dynamic>? location;
+  final String? selectedWoredaId;
+  final String? selectedWoredaName;
+  final String? dataSources;
   final bool isLoading;
   final String? error;
   final double? latitude;
@@ -18,6 +25,12 @@ class WeatherState {
   const WeatherState({
     this.historical = const [],
     this.forecast = const [],
+    this.hourly = const [],
+    this.current,
+    this.location,
+    this.selectedWoredaId,
+    this.selectedWoredaName,
+    this.dataSources,
     this.isLoading = false,
     this.error,
     this.latitude,
@@ -29,7 +42,7 @@ class WeatherState {
   WeatherForecastModel? get forecastModel {
     if (forecast.isEmpty) return null;
     return WeatherForecastModel(
-      source: 'Open-Meteo',
+      source: dataSources ?? 'Open-Meteo & OpenWeather',
       latitude: latitude ?? 0.0,
       longitude: longitude ?? 0.0,
       generatedAt: DateTime.now().toIso8601String(),
@@ -51,6 +64,12 @@ class WeatherState {
   WeatherState copyWith({
     List<HistoricalWeatherModel>? historical,
     List<ForecastModel>? forecast,
+    List<HourlyForecastModel>? hourly,
+    ForecastModel? current,
+    Map<String, dynamic>? location,
+    String? selectedWoredaId,
+    String? selectedWoredaName,
+    String? dataSources,
     bool? isLoading,
     String? error,
     double? latitude,
@@ -59,6 +78,12 @@ class WeatherState {
       WeatherState(
         historical: historical ?? this.historical,
         forecast: forecast ?? this.forecast,
+        hourly: hourly ?? this.hourly,
+        current: current ?? this.current,
+        location: location ?? this.location,
+        selectedWoredaId: selectedWoredaId ?? this.selectedWoredaId,
+        selectedWoredaName: selectedWoredaName ?? this.selectedWoredaName,
+        dataSources: dataSources ?? this.dataSources,
         isLoading: isLoading ?? this.isLoading,
         error: error,
         latitude: latitude ?? this.latitude,
@@ -70,38 +95,58 @@ class WeatherNotifier extends StateNotifier<WeatherState> {
   final WeatherRepository _repo;
   WeatherNotifier(this._repo) : super(const WeatherState());
 
-  void setMissingWoredaError() {
-    state = state.copyWith(
-      isLoading: false,
-      error: 'No woreda assigned. Please select a woreda to view weather forecasts.',
-    );
-  }
-
-  Future<void> load(String woredaId, {double? lat, double? lng}) async {
-    if (woredaId.isEmpty) {
-      setMissingWoredaError();
-      return;
-    }
-    state = state.copyWith(isLoading: true, error: null, latitude: lat, longitude: lng);
-    try {
-      final hist = await _repo.getHistorical(woredaId);
-      final fcast = await _repo.getForecast(woredaId, lat: lat, lng: lng);
-      state = state.copyWith(historical: hist, forecast: fcast, isLoading: false);
-    } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
-    }
-  }
-
   Future<void> loadForecast({
     String? woredaId,
     double? latitude,
     double? longitude,
   }) async {
-    if (woredaId == null || woredaId.isEmpty) {
-      setMissingWoredaError();
-      return;
+    state = state.copyWith(
+      isLoading: true,
+      error: null,
+      latitude: latitude,
+      longitude: longitude,
+    );
+
+    try {
+      final result = await _repo.getWeatherForecast(
+        woredaId: woredaId,
+        lat: latitude,
+        lng: longitude,
+        days: 7,
+      );
+
+      final loc = result.location;
+      final resolvedWoredaId = loc?['woredaId']?.toString() ?? woredaId ?? 'ET_ADDIS';
+      final resolvedWoredaName = loc?['nameEn']?.toString() ?? 'Addis Ababa';
+
+      // Load historical CHIRPS data in parallel for trend charts
+      List<HistoricalWeatherModel> hist = [];
+      try {
+        hist = await _repo.getHistorical(resolvedWoredaId);
+      } catch (_) {}
+
+      state = state.copyWith(
+        forecast: result.daily,
+        hourly: result.hourly,
+        current: result.current ?? (result.daily.isNotEmpty ? result.daily.first : null),
+        historical: hist,
+        location: loc,
+        selectedWoredaId: resolvedWoredaId,
+        selectedWoredaName: resolvedWoredaName,
+        dataSources: result.dataSources,
+        isLoading: false,
+      );
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
     }
-    await load(woredaId, lat: latitude, lng: longitude);
+  }
+
+  /// Select a new woreda interactively from the UI
+  Future<void> selectWoreda(String woredaId, {String? woredaName}) async {
+    if (woredaName != null) {
+      state = state.copyWith(selectedWoredaId: woredaId, selectedWoredaName: woredaName);
+    }
+    await loadForecast(woredaId: woredaId);
   }
 }
 

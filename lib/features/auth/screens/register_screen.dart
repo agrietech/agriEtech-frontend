@@ -1200,6 +1200,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             _buildFieldLabel('Region', isDark, isRequired: true),
                             DropdownButtonFormField<String>(
                               key: ValueKey('reg_$_selectedRegionId'),
+                              isExpanded: true,
                               initialValue: availableRegions.any((r) => r.id == _selectedRegionId) ? _selectedRegionId : null,
                               decoration: _buildInputDecoration(
                                 hint: 'Select administrative region',
@@ -1209,7 +1210,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                               items: availableRegions.map((region) {
                                 return DropdownMenuItem<String>(
                                   value: region.id,
-                                  child: Text(region.name, style: const TextStyle(fontSize: 13.5)),
+                                  child: Text(
+                                    region.name,
+                                    style: const TextStyle(fontSize: 13.5),
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
+                                  ),
                                 );
                               }).toList(),
                               validator: (v) => v == null || v.isEmpty ? 'Please select your administrative region' : null,
@@ -1233,6 +1239,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             ),
                             DropdownButtonFormField<String>(
                               key: ValueKey('zone_${_selectedRegionId}_$_selectedZoneId'),
+                              isExpanded: true,
                               initialValue: hasRegion && availableZones.any((z) => z.id == _selectedZoneId) ? _selectedZoneId : null,
                               decoration: _buildInputDecoration(
                                 hint: !hasRegion
@@ -1248,7 +1255,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                   ? availableZones.map((zone) {
                                       return DropdownMenuItem<String>(
                                         value: zone.id,
-                                        child: Text(zone.name, style: const TextStyle(fontSize: 13.5)),
+                                        child: Text(
+                                          zone.name,
+                                          style: const TextStyle(fontSize: 13.5),
+                                          overflow: TextOverflow.ellipsis,
+                                          maxLines: 1,
+                                        ),
                                       );
                                     }).toList()
                                   : null,
@@ -1277,6 +1289,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             ),
                             DropdownButtonFormField<String>(
                               key: ValueKey('woreda_${_selectedZoneId}_$_selectedWoredaId'),
+                              isExpanded: true,
                               initialValue: hasZone && availableWoredas.any((w) => w.id == _selectedWoredaId) ? _selectedWoredaId : null,
                               decoration: _buildInputDecoration(
                                 hint: !hasZone
@@ -1292,7 +1305,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                   ? availableWoredas.map((woreda) {
                                       return DropdownMenuItem<String>(
                                         value: woreda.id,
-                                        child: Text(woreda.name, style: const TextStyle(fontSize: 13.5)),
+                                        child: Text(
+                                          woreda.name,
+                                          style: const TextStyle(fontSize: 13.5),
+                                          overflow: TextOverflow.ellipsis,
+                                          maxLines: 1,
+                                        ),
                                       );
                                     }).toList()
                                   : null,

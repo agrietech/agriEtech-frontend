@@ -44,7 +44,7 @@ class HardwareSensorService {
     AppLogger.info('Subscribed to woreda hardware sensor grid', {'woredaId': woredaId});
   }
 
-  /// Submit live sensor telemetry probe reading directly by hardware ID
+  /// Submit live sensor telemetry reading directly by hardware ID
   Future<void> submitReading({
     required String hardwareId,
     required double? soilMoisture,

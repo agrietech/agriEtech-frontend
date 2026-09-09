@@ -466,6 +466,7 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
                   const SizedBox(height: 14),
 
                   DropdownButtonFormField<String>(
+                    isExpanded: true,
                     initialValue: _selectedCrop,
                     decoration: InputDecoration(
                       label: const Row(
@@ -483,7 +484,11 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
                     items: EthiopianCrops.allCrops.map((crop) {
                       return DropdownMenuItem(
                         value: crop.nameEn,
-                        child: Text('${crop.nameEn} (${crop.nameAm})'),
+                        child: Text(
+                          '${crop.nameEn} (${crop.nameAm})',
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
                       );
                     }).toList(),
                     onChanged: _isLoading ? null : (v) => setState(() => _selectedCrop = v),
@@ -547,6 +552,7 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   DropdownButtonFormField<String>(
+                    isExpanded: true,
                     initialValue: _selectedSoil,
                     decoration: InputDecoration(
                       label: const Row(
@@ -564,19 +570,35 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
                     items: const [
                       DropdownMenuItem(
                         value: 'Vertisol (Black Cotton - ጥቁር አፈር)',
-                        child: Text('Vertisol (Black Cotton - ጥቁር አፈር)'),
+                        child: Text(
+                          'Vertisol (Black Cotton - ጥቁር አፈር)',
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
                       ),
                       DropdownMenuItem(
                         value: 'Nitisol (Red Basaltic - ቀይ አፈር)',
-                        child: Text('Nitisol (Red Basaltic - ቀይ አፈር)'),
+                        child: Text(
+                          'Nitisol (Red Basaltic - ቀይ አፈር)',
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
                       ),
                       DropdownMenuItem(
                         value: 'Cambisol (Brown Loam - ቡናማ አፈር)',
-                        child: Text('Cambisol (Brown Loam - ቡናማ አፈር)'),
+                        child: Text(
+                          'Cambisol (Brown Loam - ቡናማ አፈር)',
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
                       ),
                       DropdownMenuItem(
                         value: 'Fluvisol (Alluvial - ወንዝ ዳርቻ አፈር)',
-                        child: Text('Fluvisol (Alluvial - ወንዝ ዳርቻ አፈር)'),
+                        child: Text(
+                          'Fluvisol (Alluvial - ወንዝ ዳርቻ አፈር)',
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
                       ),
                     ],
                     onChanged: _isLoading ? null : (v) => setState(() => _selectedSoil = v),
@@ -585,6 +607,7 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
                   const SizedBox(height: 14),
 
                   DropdownButtonFormField<String>(
+                    isExpanded: true,
                     initialValue: _selectedIrrigation,
                     decoration: InputDecoration(
                       label: const Row(
@@ -602,19 +625,35 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
                     items: const [
                       DropdownMenuItem(
                         value: 'Rainfed (የዝናብ እርሻ)',
-                        child: Text('Rainfed (የዝናብ እርሻ)'),
+                        child: Text(
+                          'Rainfed (የዝናብ እርሻ)',
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
                       ),
                       DropdownMenuItem(
                         value: 'Furrow Irrigation (የቦይ መስኖ)',
-                        child: Text('Furrow Irrigation (የቦይ መስኖ)'),
+                        child: Text(
+                          'Furrow Irrigation (የቦይ መስኖ)',
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
                       ),
                       DropdownMenuItem(
                         value: 'Drip Irrigation (የጠብታ መስኖ)',
-                        child: Text('Drip Irrigation (የጠብታ መስኖ)'),
+                        child: Text(
+                          'Drip Irrigation (የጠብታ መስኖ)',
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
                       ),
                       DropdownMenuItem(
                         value: 'Groundwater / Solar Pump (የከርሰ ምድር ውሀ)',
-                        child: Text('Groundwater / Solar Pump (የከርሰ ምድር ውሀ)'),
+                        child: Text(
+                          'Groundwater / Solar Pump (የከርሰ ምድር ውሀ)',
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
                       ),
                     ],
                     onChanged: _isLoading ? null : (v) => setState(() => _selectedIrrigation = v),
@@ -623,6 +662,7 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
                   const SizedBox(height: 14),
 
                   DropdownButtonFormField<String>(
+                    isExpanded: true,
                     initialValue: _selectedSlope,
                     decoration: InputDecoration(
                       label: const Row(
@@ -638,10 +678,22 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
                       fillColor: isDark ? const Color(0xFF1B2E1E) : const Color(0xFFF9FAF9),
                     ),
                     items: const [
-                      DropdownMenuItem(value: 'Flat / Plain (0-2% Slope)', child: Text('Flat / Plain (0-2% Slope)')),
-                      DropdownMenuItem(value: 'Gentle Slope (2-8% Slope)', child: Text('Gentle Slope (2-8% Slope)')),
-                      DropdownMenuItem(value: 'Highland Hillside (8-15% Slope)', child: Text('Highland Hillside (8-15% Slope)')),
-                      DropdownMenuItem(value: 'Valley Bottom / River Basin', child: Text('Valley Bottom / River Basin')),
+                      DropdownMenuItem(
+                        value: 'Flat / Plain (0-2% Slope)',
+                        child: Text('Flat / Plain (0-2% Slope)', overflow: TextOverflow.ellipsis, maxLines: 1),
+                      ),
+                      DropdownMenuItem(
+                        value: 'Gentle Slope (2-8% Slope)',
+                        child: Text('Gentle Slope (2-8% Slope)', overflow: TextOverflow.ellipsis, maxLines: 1),
+                      ),
+                      DropdownMenuItem(
+                        value: 'Highland Hillside (8-15% Slope)',
+                        child: Text('Highland Hillside (8-15% Slope)', overflow: TextOverflow.ellipsis, maxLines: 1),
+                      ),
+                      DropdownMenuItem(
+                        value: 'Valley Bottom / River Basin',
+                        child: Text('Valley Bottom / River Basin', overflow: TextOverflow.ellipsis, maxLines: 1),
+                      ),
                     ],
                     onChanged: _isLoading ? null : (v) => setState(() => _selectedSlope = v ?? _selectedSlope),
                   ),
@@ -793,6 +845,7 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
                             : (woredas.isNotEmpty ? woredas.first.id : null);
                         return DropdownButtonFormField<String>(
                           key: ValueKey('woreda_picker_$validWoredaId'),
+                          isExpanded: true,
                           initialValue: validWoredaId,
                           decoration: InputDecoration(
                             label: const Row(
@@ -812,7 +865,11 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
                             final subtitle = regionName.isNotEmpty ? ' ($regionName)' : '';
                             return DropdownMenuItem(
                               value: w.id,
-                              child: Text('${w.name}$subtitle'),
+                              child: Text(
+                                '${w.name}$subtitle',
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                              ),
                             );
                           }).toList(),
                           onChanged: _isLoading ? null : (v) {

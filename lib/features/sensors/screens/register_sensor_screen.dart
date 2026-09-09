@@ -77,6 +77,7 @@ class _RegisterSensorScreenState extends ConsumerState<RegisterSensorScreen> {
 
                     // Sensor Type
                     DropdownButtonFormField<String>(
+                      isExpanded: true,
                       initialValue: _selectedSensorType,
                       decoration: const InputDecoration(
                         label: Row(
@@ -100,7 +101,13 @@ class _RegisterSensorScreenState extends ConsumerState<RegisterSensorScreen> {
                                 color: _getSensorColor(type),
                               ),
                               const SizedBox(width: 12),
-                              Text(SensorTypes.getDisplayName(type)),
+                              Expanded(
+                                child: Text(
+                                  SensorTypes.getDisplayName(type),
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                ),
+                              ),
                             ],
                           ),
                         );
@@ -168,6 +175,7 @@ class _RegisterSensorScreenState extends ConsumerState<RegisterSensorScreen> {
                         }
 
                         return DropdownButtonFormField<String>(
+                          isExpanded: true,
                           initialValue: _selectedFarmId,
                           decoration: const InputDecoration(
                             label: Row(
@@ -183,7 +191,11 @@ class _RegisterSensorScreenState extends ConsumerState<RegisterSensorScreen> {
                           items: farms.map((farm) {
                             return DropdownMenuItem(
                               value: farm.id,
-                              child: Text(farm.farmName),
+                              child: Text(
+                                farm.farmName,
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                              ),
                             );
                           }).toList(),
                           onChanged: (value) {

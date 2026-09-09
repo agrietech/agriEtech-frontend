@@ -8,10 +8,12 @@ import 'weather_metrics_grid.dart';
 /// World-Standard Hero Weather Card with dynamic atmospheric imagery and metrics
 class CurrentWeatherHeroCard extends StatefulWidget {
   final ForecastModel forecast;
+  final String? locationName;
 
   const CurrentWeatherHeroCard({
     super.key,
     required this.forecast,
+    this.locationName,
   });
 
   @override
@@ -135,6 +137,25 @@ class _CurrentWeatherHeroCardState extends State<CurrentWeatherHeroCard> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            if (widget.locationName != null && widget.locationName!.isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 2),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.location_on_rounded, size: 13, color: Colors.white70),
+                                    const SizedBox(width: 3),
+                                    Text(
+                                      widget.locationName!,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 13.5,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             Text(
                               l10n.translate('today'),
                               style: const TextStyle(

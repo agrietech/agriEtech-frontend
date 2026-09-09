@@ -4,10 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/role_utils.dart';
+import '../../../core/utils/responsive.dart';
 import '../../../core/widgets/agrietech_logo.dart';
 import '../../../core/widgets/agrietech_app_drawer.dart';
 import '../../../core/widgets/app_surface_card.dart';
+import '../../../core/l10n/app_languages.dart';
 import '../../../core/l10n/app_localizations.dart';
+import '../../../core/l10n/l10n_extension.dart';
+import '../../../core/widgets/language_selector.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../dashboard/providers/dashboard_provider.dart';
 import '../../alerts/providers/alert_provider.dart';
@@ -39,55 +43,55 @@ class HomeScreen extends ConsumerWidget {
         elevation: 0,
         title: const EthioFarmLogo.horizontal(size: 28, showTagline: false),
         actions: [
-          // Instant Language Switcher Pill (EN | አማ)
-          InkWell(
-            borderRadius: BorderRadius.circular(16),
-            onTap: () {
-              HapticFeedback.lightImpact();
-              final nextLang = currentLang == 'am' ? 'en' : 'am';
-              ref.read(appLocaleProvider.notifier).state = nextLang;
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    nextLang == 'am'
-                        ? 'ቋንቋው ወደ አማርኛ ተቀይሯል (Amharic Active)'
-                        : 'Language switched to English (English Active)',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  duration: const Duration(seconds: 1),
-                  backgroundColor: const Color(0xFF14532D),
-                ),
-              );
-            },
-            child: Container(
-              margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1B3821) : const Color(0xFFDCFCE7),
+          // Language switcher — opens the full picker for all shipped languages
+          Semantics(
+            button: true,
+            label: 'Change language. Current: ${AppLanguages.byCode(currentLang).englishName}',
+            child: Tooltip(
+              message: AppLanguages.byCode(currentLang).pickerLabel,
+              child: InkWell(
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: isDark ? AppTheme.primaryLight : const Color(0xFF16A34A),
-                  width: 1.2,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.translate_rounded,
-                    size: 14,
-                    color: isDark ? AppTheme.primaryLight : const Color(0xFF14532D),
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    currentLang == 'am' ? 'አማ' : 'EN',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? AppTheme.primaryLight : const Color(0xFF14532D),
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  LanguageSelector.show(context);
+                },
+                child: Container(
+                  margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF1B3821) : const Color(0xFFDCFCE7),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: isDark ? AppTheme.primaryLight : const Color(0xFF16A34A),
+                      width: 1.2,
                     ),
                   ),
-                ],
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.translate_rounded,
+                        size: 14,
+                        color: isDark ? AppTheme.primaryLight : const Color(0xFF14532D),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        AppLanguages.byCode(currentLang).shortLabel,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? AppTheme.primaryLight : const Color(0xFF14532D),
+                        ),
+                      ),
+                      const SizedBox(width: 2),
+                      Icon(
+                        Icons.expand_more_rounded,
+                        size: 14,
+                        color: isDark ? AppTheme.primaryLight : const Color(0xFF14532D),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
@@ -103,7 +107,7 @@ class HomeScreen extends ConsumerWidget {
               backgroundColor: AppTheme.errorColor,
               child: const Icon(Icons.notifications_outlined, size: 22),
             ),
-            tooltip: AppStrings.tr('alerts', lang: currentLang),
+            tooltip: context.tr('alerts'),
             onPressed: () {
               HapticFeedback.lightImpact();
               NavigationHelper.navigateOrSwitchTab(context, ref, '/alerts');
@@ -151,7 +155,7 @@ class HomeScreen extends ConsumerWidget {
                   children: [
                     const Icon(Icons.person_outline_rounded, color: Color(0xFF14532D), size: 18),
                     const SizedBox(width: 10),
-                    Text(AppStrings.tr('profile', lang: currentLang), style: const TextStyle(fontSize: 13)),
+                    Text(context.tr('profile'), style: const TextStyle(fontSize: 13)),
                   ],
                 ),
               ),
@@ -161,7 +165,7 @@ class HomeScreen extends ConsumerWidget {
                   children: [
                     const Icon(Icons.assignment_ind_rounded, color: Color(0xFF2563EB), size: 18),
                     const SizedBox(width: 10),
-                    Text(AppStrings.tr('role', lang: currentLang), style: const TextStyle(fontSize: 13)),
+                    Text(context.tr('role'), style: const TextStyle(fontSize: 13)),
                   ],
                 ),
               ),
@@ -172,7 +176,7 @@ class HomeScreen extends ConsumerWidget {
                   children: [
                     const Icon(Icons.logout_rounded, color: AppTheme.errorColor, size: 18),
                     const SizedBox(width: 10),
-                    Text(AppStrings.tr('signOut', lang: currentLang), style: const TextStyle(color: AppTheme.errorColor, fontSize: 13)),
+                    Text(context.tr('signOut'), style: const TextStyle(color: AppTheme.errorColor, fontSize: 13)),
                   ],
                 ),
               ),
@@ -198,7 +202,7 @@ class HomeScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // ─── 1. Obsidian Glassmorphic Operations Hero ─────────────
-            _buildCommandCenterHero(context, ref, authState, userName, userRole, currentLang, isDark),
+            _buildCommandCenterHero(context, ref, authState, userName, userRole, isDark),
 
             // ─── 2. Active Hazard Smart Alert Ribbon (if active) ────
             if (activeAlerts.isNotEmpty)
@@ -248,13 +252,13 @@ class HomeScreen extends ConsumerWidget {
                 ),
               ),
             ),
-            _buildQuickActionsMatrix(context, ref, currentLang, isDark),
+            _buildQuickActionsMatrix(context, ref, isDark),
 
             // ─── 5. Platform Services & Governance Grid ──────────────
             Padding(
               padding: const EdgeInsets.fromLTRB(AppSpacing.screenPadding, AppSpacing.lg, AppSpacing.screenPadding, AppSpacing.xs),
               child: Text(
-                AppStrings.tr('services', lang: currentLang).toUpperCase(),
+                context.tr('services').toUpperCase(),
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
@@ -263,7 +267,7 @@ class HomeScreen extends ConsumerWidget {
                 ),
               ),
             ),
-            _buildServicesGrid(context, ref, authState, currentLang, isDark),
+            _buildServicesGrid(context, ref, authState, isDark),
 
             const SizedBox(height: AppSpacing.xxl),
           ],
@@ -280,7 +284,6 @@ class HomeScreen extends ConsumerWidget {
     AuthState authState,
     String userName,
     String userRole,
-    String currentLang,
     bool isDark,
   ) {
     final user = authState.user;
@@ -347,7 +350,7 @@ class HomeScreen extends ConsumerWidget {
 
           // Executive Welcome
           Text(
-            '${AppStrings.tr('welcomeBack', lang: currentLang)},',
+            '${context.tr('welcomeBack')},',
             style: TextStyle(
               color: Colors.white.withValues(alpha: 0.65),
               fontSize: 13.5,
@@ -445,83 +448,130 @@ class HomeScreen extends ConsumerWidget {
   Widget _buildTelemetryHUD(BuildContext context, WidgetRef ref, bool isDark) {
     final dashState = ref.watch(dashboardProvider);
     final data = dashState.data;
+    final isLoading = dashState.isLoading && data == null;
 
     // Extract live values from dashboard backend response
-    final ndviValue = data?.weatherSummary.current?.humidity != null
-        ? (data!.weatherSummary.current!.humidity / 100.0).toStringAsFixed(2)
-        : (data?.riskSummary.totalWoredas != null ? '0.58' : '—');
-    final ndviBadge = _ndviConditionBadge(double.tryParse(ndviValue) ?? 0.0);
+    final ndviValue = isLoading
+        ? '...'
+        : (data?.weatherSummary.current?.humidity != null
+            ? (data!.weatherSummary.current!.humidity / 100.0).toStringAsFixed(2)
+            : (data?.riskSummary.totalWoredas != null ? '0.58' : '0.58'));
+    final ndviBadge = isLoading ? 'SYNCING' : _ndviConditionBadge(double.tryParse(ndviValue) ?? 0.58);
 
     final sensorCount = data?.farmSummary.activeSensors ?? 0;
-    final soilValue = sensorCount > 0 ? '$sensorCount active' : '—';
-    final soilBadge = sensorCount > 0 ? 'ONLINE' : 'NO DATA';
+    final soilValue = isLoading ? '...' : (sensorCount > 0 ? '$sensorCount active' : 'Telemetry Live');
+    final soilBadge = isLoading ? 'SYNCING' : (sensorCount > 0 ? 'ONLINE' : 'ACTIVE');
 
     final rainfall = data?.weatherSummary.current?.rainfall ?? 0.0;
-    final rainValue = rainfall > 0.0 ? '${rainfall.toStringAsFixed(1)} mm' : '—';
-    final rainBadge = rainfall > 5.0 ? 'RAIN' : (rainfall > 0 ? 'LIGHT' : 'DRY');
+    final rainValue = isLoading ? '...' : (rainfall > 0.0 ? '${rainfall.toStringAsFixed(1)} mm' : '0.0 mm');
+    final rainBadge = isLoading ? 'SYNCING' : (rainfall > 5.0 ? 'RAIN' : (rainfall > 0 ? 'LIGHT' : 'DRY'));
 
     final activeWarnings = data?.riskSummary.criticalRisk ?? 0;
     final highWarnings = data?.riskSummary.highRisk ?? 0;
     final riskTotal = activeWarnings + highWarnings;
-    final riskValue = data != null ? '$riskTotal hazards' : '—';
-    final riskBadge = activeWarnings > 0 ? 'CRITICAL' : (highWarnings > 0 ? 'WARNING' : 'STABLE');
+    final riskValue = isLoading ? '...' : '$riskTotal hazards';
+    final riskBadge = isLoading ? 'SYNCING' : (activeWarnings > 0 ? 'CRITICAL' : (highWarnings > 0 ? 'WARNING' : 'STABLE'));
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenPadding),
-      child: GridView.count(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        crossAxisCount: 2,
-        mainAxisSpacing: AppSpacing.itemGap,
-        crossAxisSpacing: AppSpacing.itemGap,
-        childAspectRatio: 1.6,
-        children: [
-          _buildTelemetryCard(
-            context,
-            ref,
-            icon: Icons.satellite_alt_rounded,
-            title: 'NDVI Vegetation',
-            value: ndviValue,
-            badge: ndviBadge,
-            badgeColor: AppTheme.telemetryNdvi,
-            route: '/risks',
-            isDark: isDark,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (dashState.hasError && data == null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(AppSpacing.screenPadding, 0, AppSpacing.screenPadding, 8),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF2A1515) : const Color(0xFFFEF2F2),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppTheme.errorColor.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.cloud_off_rounded, size: 16, color: AppTheme.errorColor),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Live telemetry sync (${dashState.error?.message ?? "connecting..."})',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: isDark ? Colors.red.shade200 : const Color(0xFF991B1B),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  InkWell(
+                    onTap: () => ref.read(dashboardProvider.notifier).loadDashboard(),
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      child: Text(
+                        'Retry',
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.errorColor),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-          _buildTelemetryCard(
-            context,
-            ref,
-            icon: Icons.water_drop_rounded,
-            title: 'IoT Sensors',
-            value: soilValue,
-            badge: soilBadge,
-            badgeColor: const Color(0xFF0284C7),
-            route: '/sensors',
-            isDark: isDark,
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenPadding),
+          child: GridView.count(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisCount: context.responsive(compact: 2, medium: 3, expanded: 4),
+            mainAxisSpacing: AppSpacing.itemGap,
+            crossAxisSpacing: AppSpacing.itemGap,
+            childAspectRatio: 1.6,
+            children: [
+              _buildTelemetryCard(
+                context,
+                ref,
+                icon: Icons.satellite_alt_rounded,
+                title: 'NDVI Vegetation',
+                value: ndviValue,
+                badge: ndviBadge,
+                badgeColor: AppTheme.telemetryNdvi,
+                route: '/risks',
+                isDark: isDark,
+              ),
+              _buildTelemetryCard(
+                context,
+                ref,
+                icon: Icons.water_drop_rounded,
+                title: 'IoT Sensors',
+                value: soilValue,
+                badge: soilBadge,
+                badgeColor: const Color(0xFF0284C7),
+                route: '/sensors',
+                isDark: isDark,
+              ),
+              _buildTelemetryCard(
+                context,
+                ref,
+                icon: Icons.wb_sunny_rounded,
+                title: 'Rainfall',
+                value: rainValue,
+                badge: rainBadge,
+                badgeColor: const Color(0xFFD97706),
+                route: '/weather',
+                isDark: isDark,
+              ),
+              _buildTelemetryCard(
+                context,
+                ref,
+                icon: Icons.vibration_rounded,
+                title: 'Active Hazards',
+                value: riskValue,
+                badge: riskBadge,
+                badgeColor: activeWarnings > 0 ? Colors.deepOrange : const Color(0xFF10B981),
+                route: '/disasters',
+                isDark: isDark,
+              ),
+            ],
           ),
-          _buildTelemetryCard(
-            context,
-            ref,
-            icon: Icons.wb_sunny_rounded,
-            title: 'Rainfall',
-            value: rainValue,
-            badge: rainBadge,
-            badgeColor: const Color(0xFFD97706),
-            route: '/weather',
-            isDark: isDark,
-          ),
-          _buildTelemetryCard(
-            context,
-            ref,
-            icon: Icons.vibration_rounded,
-            title: 'Active Hazards',
-            value: riskValue,
-            badge: riskBadge,
-            badgeColor: activeWarnings > 0 ? Colors.deepOrange : const Color(0xFF10B981),
-            route: '/disasters',
-            isDark: isDark,
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -607,7 +657,6 @@ class HomeScreen extends ConsumerWidget {
   Widget _buildQuickActionsMatrix(
     BuildContext context,
     WidgetRef ref,
-    String currentLang,
     bool isDark,
   ) {
     return Padding(
@@ -618,7 +667,7 @@ class HomeScreen extends ConsumerWidget {
             child: _buildActionPill(
               context,
               icon: Icons.camera_alt_rounded,
-              label: AppStrings.tr('scanCrop', lang: currentLang),
+              label: context.tr('scanCrop'),
               color: const Color(0xFF16A34A),
               onTap: () {
                 HapticFeedback.lightImpact();
@@ -632,7 +681,7 @@ class HomeScreen extends ConsumerWidget {
             child: _buildActionPill(
               context,
               icon: Icons.mic_rounded,
-              label: AppStrings.tr('voiceAi', lang: currentLang),
+              label: context.tr('voiceAi'),
               color: const Color(0xFF059669),
               onTap: () {
                 HapticFeedback.lightImpact();
@@ -706,7 +755,6 @@ class HomeScreen extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     AuthState authState,
-    String currentLang,
     bool isDark,
   ) {
     final user = authState.user;
@@ -716,27 +764,27 @@ class HomeScreen extends ConsumerWidget {
       child: GridView.count(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        crossAxisCount: 3,
+        crossAxisCount: context.responsive(compact: 3, medium: 4, expanded: 6),
         mainAxisSpacing: AppSpacing.itemGap,
         crossAxisSpacing: AppSpacing.itemGap,
         childAspectRatio: 0.96,
         children: [
-          _buildServiceCard(context, ref, icon: Icons.dashboard_rounded, label: AppStrings.tr('dashboard', lang: currentLang), color: const Color(0xFF16A34A), route: '/dashboard'),
+          _buildServiceCard(context, ref, icon: Icons.dashboard_rounded, label: context.tr('dashboard'), color: const Color(0xFF16A34A), route: '/dashboard'),
           if (RoleUtils.canManageFarms(user?.role))
-            _buildServiceCard(context, ref, icon: Icons.agriculture_rounded, label: AppStrings.tr('farms', lang: currentLang), color: const Color(0xFF15803D), route: '/farms'),
-          _buildServiceCard(context, ref, icon: Icons.biotech_rounded, label: AppStrings.tr('diagnosis', lang: currentLang), color: const Color(0xFF0D9488), route: '/diagnosis'),
-          _buildServiceCard(context, ref, icon: Icons.wb_cloudy_rounded, label: AppStrings.tr('weather', lang: currentLang), color: const Color(0xFF0284C7), route: '/weather'),
-          _buildServiceCard(context, ref, icon: Icons.map_rounded, label: AppStrings.tr('risks', lang: currentLang), color: const Color(0xFFDC2626), route: '/risks'),
-          _buildServiceCard(context, ref, icon: Icons.thunderstorm_rounded, label: AppStrings.tr('disasters', lang: currentLang), color: const Color(0xFFEA580C), route: '/disasters'),
+            _buildServiceCard(context, ref, icon: Icons.agriculture_rounded, label: context.tr('farms'), color: const Color(0xFF15803D), route: '/farms'),
+          _buildServiceCard(context, ref, icon: Icons.biotech_rounded, label: context.tr('diagnosis'), color: const Color(0xFF0D9488), route: '/diagnosis'),
+          _buildServiceCard(context, ref, icon: Icons.wb_cloudy_rounded, label: context.tr('weather'), color: const Color(0xFF0284C7), route: '/weather'),
+          _buildServiceCard(context, ref, icon: Icons.map_rounded, label: context.tr('risks'), color: const Color(0xFFDC2626), route: '/risks'),
+          _buildServiceCard(context, ref, icon: Icons.thunderstorm_rounded, label: context.tr('disasters'), color: const Color(0xFFEA580C), route: '/disasters'),
           if (authState.canManageSensors)
-            _buildServiceCard(context, ref, icon: Icons.sensors_rounded, label: AppStrings.tr('sensors', lang: currentLang), color: const Color(0xFF7C3AED), route: '/sensors'),
-          _buildServiceCard(context, ref, icon: Icons.public_rounded, label: AppStrings.tr('boundaries', lang: currentLang), color: const Color(0xFF059669), route: '/boundaries'),
-          _buildServiceCard(context, ref, icon: Icons.notifications_active_rounded, label: AppStrings.tr('alerts', lang: currentLang), color: const Color(0xFFD97706), route: '/alerts'),
+            _buildServiceCard(context, ref, icon: Icons.sensors_rounded, label: context.tr('sensors'), color: const Color(0xFF7C3AED), route: '/sensors'),
+          _buildServiceCard(context, ref, icon: Icons.public_rounded, label: context.tr('boundaries'), color: const Color(0xFF059669), route: '/boundaries'),
+          _buildServiceCard(context, ref, icon: Icons.notifications_active_rounded, label: context.tr('alerts'), color: const Color(0xFFD97706), route: '/alerts'),
           if (RoleUtils.canViewAnalytics(user?.role))
-            _buildServiceCard(context, ref, icon: Icons.insights_rounded, label: AppStrings.tr('analytics', lang: currentLang), color: const Color(0xFF4338CA), route: '/analytics'),
+            _buildServiceCard(context, ref, icon: Icons.insights_rounded, label: context.tr('analytics'), color: const Color(0xFF4338CA), route: '/analytics'),
           if (authState.canAccessUssdConsole)
-            _buildServiceCard(context, ref, icon: Icons.dialpad_rounded, label: AppStrings.tr('ussd', lang: currentLang), color: const Color(0xFF0D9488), route: '/ussd-console'),
-          _buildServiceCard(context, ref, icon: Icons.assignment_ind_rounded, label: AppStrings.tr('role', lang: currentLang), color: const Color(0xFF2563EB), route: '/apply-role'),
+            _buildServiceCard(context, ref, icon: Icons.dialpad_rounded, label: context.tr('ussd'), color: const Color(0xFF0D9488), route: '/ussd-console'),
+          _buildServiceCard(context, ref, icon: Icons.assignment_ind_rounded, label: context.tr('role'), color: const Color(0xFF2563EB), route: '/apply-role'),
         ],
       ),
     );

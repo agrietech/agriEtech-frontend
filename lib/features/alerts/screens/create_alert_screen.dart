@@ -79,6 +79,7 @@ class _CreateAlertScreenState extends ConsumerState<CreateAlertScreen> {
 
                     // Hazard Type
                     DropdownButtonFormField<String>(
+                      isExpanded: true,
                       initialValue: _selectedHazardType,
                       decoration: const InputDecoration(
                         label: Row(
@@ -94,7 +95,11 @@ class _CreateAlertScreenState extends ConsumerState<CreateAlertScreen> {
                       items: _hazardTypes.map((type) {
                         return DropdownMenuItem(
                           value: type,
-                          child: Text(_formatHazardType(type)),
+                          child: Text(
+                            _formatHazardType(type),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                          ),
                         );
                       }).toList(),
                       onChanged: (value) {
@@ -105,6 +110,7 @@ class _CreateAlertScreenState extends ConsumerState<CreateAlertScreen> {
 
                     // Severity Level
                     DropdownButtonFormField<String>(
+                      isExpanded: true,
                       initialValue: _selectedSeverity,
                       decoration: InputDecoration(
                         label: const Row(
@@ -134,7 +140,13 @@ class _CreateAlertScreenState extends ConsumerState<CreateAlertScreen> {
                                 ),
                               ),
                               const SizedBox(width: 8),
-                              Text(_formatSeverity(severity)),
+                              Expanded(
+                                child: Text(
+                                  _formatSeverity(severity),
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                ),
+                              ),
                             ],
                           ),
                         );
@@ -147,6 +159,7 @@ class _CreateAlertScreenState extends ConsumerState<CreateAlertScreen> {
 
                     // Priority
                     DropdownButtonFormField<int>(
+                      isExpanded: true,
                       initialValue: _priority,
                       decoration: const InputDecoration(
                         label: Row(
@@ -284,6 +297,7 @@ class _CreateAlertScreenState extends ConsumerState<CreateAlertScreen> {
                         }
                         return DropdownButtonFormField<String>(
                           key: ValueKey('alert_woreda_$validWoredaId'),
+                          isExpanded: true,
                           initialValue: validWoredaId,
                           decoration: const InputDecoration(
                             label: Row(
@@ -302,7 +316,11 @@ class _CreateAlertScreenState extends ConsumerState<CreateAlertScreen> {
                             final subtitle = regionName.isNotEmpty ? ' ($regionName)' : '';
                             return DropdownMenuItem(
                               value: w.id,
-                              child: Text('${w.name}$subtitle'),
+                              child: Text(
+                                '${w.name}$subtitle',
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                              ),
                             );
                           }).toList(),
                           onChanged: _isSubmitting

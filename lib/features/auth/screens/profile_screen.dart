@@ -3,7 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/role_utils.dart';
+import '../../../core/l10n/app_languages.dart';
 import '../../../core/l10n/app_localizations.dart';
+import '../../../core/l10n/l10n_extension.dart';
+import '../../../core/storage/app_preferences.dart';
 import '../../../core/widgets/agrietech_app_drawer.dart';
 import '../providers/auth_provider.dart';
 
@@ -26,7 +29,7 @@ class ProfileScreen extends ConsumerWidget {
       drawer: const EthioFarmAppDrawer(),
       appBar: AppBar(
         title: Text(
-          AppStrings.tr('profile', lang: currentLang),
+          context.tr('profile'),
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         elevation: 0,
@@ -118,14 +121,14 @@ class ProfileScreen extends ConsumerWidget {
               children: [
                 _buildInfoRow(
                   icon: Icons.phone_android_rounded,
-                  label: AppStrings.tr('phoneNumber', lang: currentLang),
+                  label: context.tr('phoneNumber'),
                   value: userPhone,
                   isDark: isDark,
                 ),
                 const Divider(height: 20),
                 _buildInfoRow(
                   icon: Icons.email_outlined,
-                  label: AppStrings.tr('emailAddress', lang: currentLang),
+                  label: context.tr('emailAddress'),
                   value: userEmail,
                   isDark: isDark,
                 ),
@@ -136,7 +139,7 @@ class ProfileScreen extends ConsumerWidget {
             // ─── Administrative Jurisdiction ────────────────────────────
             _buildSection(
               context,
-              title: AppStrings.tr('jurisdiction', lang: currentLang),
+              title: context.tr('jurisdiction'),
               icon: Icons.location_on_outlined,
               isDark: isDark,
               children: [
@@ -171,12 +174,13 @@ class ProfileScreen extends ConsumerWidget {
             // ─── Language & Localization ────────────────────────────────
             _buildSection(
               context,
-              title: AppStrings.tr('language', lang: currentLang),
+              title: context.tr('language'),
               icon: Icons.language_rounded,
               isDark: isDark,
               children: [
                 DropdownButtonFormField<String>(
                   key: ValueKey('lang_$currentLang'),
+                  isExpanded: true,
                   initialValue: currentLang,
                   decoration: InputDecoration(
                     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -184,12 +188,16 @@ class ProfileScreen extends ConsumerWidget {
                     filled: true,
                     fillColor: isDark ? AppTheme.cardDark : Colors.grey.shade50,
                   ),
-                  items: const [
-                    DropdownMenuItem(value: 'en', child: Text('English (International)')),
-                    DropdownMenuItem(value: 'am', child: Text('አማርኛ (Amharic)')),
-                    DropdownMenuItem(value: 'om', child: Text('Afaan Oromoo (Oromo)')),
-                    DropdownMenuItem(value: 'ti', child: Text('ትግርኛ (Tigrinya)')),
-                    DropdownMenuItem(value: 'so', child: Text('Soomaali (Somali)')),
+                  items: [
+                    for (final language in AppLanguages.all)
+                      DropdownMenuItem(
+                        value: language.code,
+                        child: Text(
+                          language.pickerLabel,
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      ),
                   ],
                   onChanged: (val) {
                     if (val != null) {
@@ -201,10 +209,45 @@ class ProfileScreen extends ConsumerWidget {
             ),
             const SizedBox(height: AppSpacing.md),
 
+            // ─── Appearance ─────────────────────────────────────────────
+            _buildSection(
+              context,
+              title: context.tr('appearance'),
+              icon: Icons.brightness_6_rounded,
+              isDark: isDark,
+              children: [
+                SegmentedButton<ThemeMode>(
+                  showSelectedIcon: false,
+                  segments: [
+                    ButtonSegment(
+                      value: ThemeMode.system,
+                      icon: const Icon(Icons.brightness_auto_rounded, size: 18),
+                      label: Text(context.tr('theme_system')),
+                    ),
+                    ButtonSegment(
+                      value: ThemeMode.light,
+                      icon: const Icon(Icons.light_mode_rounded, size: 18),
+                      label: Text(context.tr('theme_light')),
+                    ),
+                    ButtonSegment(
+                      value: ThemeMode.dark,
+                      icon: const Icon(Icons.dark_mode_rounded, size: 18),
+                      label: Text(context.tr('theme_dark')),
+                    ),
+                  ],
+                  selected: <ThemeMode>{ref.watch(themeModeProvider)},
+                  onSelectionChanged: (Set<ThemeMode> selection) {
+                    ref.read(themeModeProvider.notifier).state = selection.first;
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.md),
+
             // ─── Security & Role Upgrades ───────────────────────────────
             _buildSection(
               context,
-              title: AppStrings.tr('security', lang: currentLang),
+              title: context.tr('security'),
               icon: Icons.security_rounded,
               isDark: isDark,
               children: [
@@ -219,7 +262,7 @@ class ProfileScreen extends ConsumerWidget {
                     child: const Icon(Icons.assignment_ind_rounded, color: Color(0xFF2563EB), size: 20),
                   ),
                   title: Text(
-                    AppStrings.tr('applyForRole', lang: currentLang),
+                    context.tr('applyForRole'),
                     style: AppTypography.subtitle,
                   ),
                   subtitle: Text('Upgrade jurisdictional administrative scope', style: AppTypography.caption.copyWith(color: Colors.grey)),
@@ -238,7 +281,7 @@ class ProfileScreen extends ConsumerWidget {
                     child: const Icon(Icons.lock_outline_rounded, color: Color(0xFF64748B), size: 20),
                   ),
                   title: Text(
-                    AppStrings.tr('changePassword', lang: currentLang),
+                    context.tr('changePassword'),
                     style: AppTypography.subtitle,
                   ),
                   subtitle: Text('Update login authentication credentials', style: AppTypography.caption.copyWith(color: Colors.grey)),
@@ -262,7 +305,7 @@ class ProfileScreen extends ConsumerWidget {
                 },
                 icon: const Icon(Icons.logout_rounded, color: AppTheme.errorColor),
                 label: Text(
-                  AppStrings.tr('signOut', lang: currentLang),
+                  context.tr('signOut'),
                   style: AppTypography.subtitle.copyWith(
                     color: AppTheme.errorColor,
                   ),

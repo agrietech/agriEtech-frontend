@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/l10n/app_localizations.dart';
+import '../../../core/l10n/l10n_extension.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/offline_telemetry_bar.dart';
 import '../../alerts/providers/alert_provider.dart';
@@ -102,7 +102,6 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
     final currentIndex = ref.watch(navigationIndexProvider);
-    final currentLang = ref.watch(appLocaleProvider);
     final alertsState = ref.watch(alertListProvider);
     final activeAlertsCount = alertsState.maybeWhen(
       data: (list) => list.where((a) => a.isActive && !a.isRead).length,
@@ -151,7 +150,7 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: List.generate(tabs.length, (index) {
                 final tab = tabs[index];
-                final localizedLabel = AppStrings.tr(tab.labelKey, lang: currentLang);
+                final localizedLabel = context.tr(tab.labelKey);
                 return _buildNavItem(
                   context,
                   index: index,

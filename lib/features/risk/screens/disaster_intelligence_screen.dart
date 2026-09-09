@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/responsive.dart';
 import '../../../core/network/dio_client.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/widgets/error_view.dart';
@@ -325,7 +326,7 @@ class _DisasterIntelligenceScreenState extends ConsumerState<DisasterIntelligenc
         GridView.count(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          crossAxisCount: 3,
+          crossAxisCount: context.responsive(compact: 3, medium: 4, expanded: 6),
           mainAxisSpacing: 10,
           crossAxisSpacing: 10,
           childAspectRatio: 0.95,

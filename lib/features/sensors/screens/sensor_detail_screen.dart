@@ -288,20 +288,28 @@ class _SensorDetailScreenState extends ConsumerState<SensorDetailScreen> {
         children: [
           Icon(icon, size: 20, color: Colors.grey[600]),
           const SizedBox(width: 12),
-          Text(
-            label,
-            style: Theme.of(context)
-                .textTheme
-                .bodyMedium
-                ?.copyWith(color: Colors.grey[600]),
+          Expanded(
+            child: Text(
+              label,
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.copyWith(color: Colors.grey[600]),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
-          const Spacer(),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: valueColor,
-                ),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              value,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: valueColor,
+                  ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ],
       ),
@@ -551,28 +559,27 @@ class _SensorDetailScreenState extends ConsumerState<SensorDetailScreen> {
           Row(
             children: [
               Container(
-                width: 10,
-                height: 10,
+                width: 8,
+                height: 8,
                 decoration: const BoxDecoration(
                   color: AppTheme.telemetryNdvi,
                   shape: BoxShape.circle,
                 ),
               ),
-              const SizedBox(width: 8),
-              Text(
-                'Firebase & Realtime IoT Stream: Ready',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                  color: isDark ? Colors.white : AppTheme.primaryDark,
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  'IoT Realtime Stream: Ready',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12.5,
+                    color: isDark ? Colors.white : AppTheme.primaryDark,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const Spacer(),
-              TextButton.icon(
-                onPressed: () => _showRecordProbeDialog(context),
-                icon: const Icon(Icons.add_chart, size: 16, color: AppTheme.primaryColor),
-                label: const Text('Probe Sample', style: TextStyle(fontSize: 12, color: AppTheme.primaryColor, fontWeight: FontWeight.bold)),
-              ),
+
             ],
           ),
           const SizedBox(height: 6),
@@ -595,99 +602,4 @@ class _SensorDetailScreenState extends ConsumerState<SensorDetailScreen> {
     );
   }
 
-  void _showRecordProbeDialog(BuildContext context) {
-    final moistureCtrl = TextEditingController(text: '42.5');
-    final tempCtrl = TextEditingController(text: '22.0');
-    final humCtrl = TextEditingController(text: '65.0');
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Submit Field Probe Sample'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: moistureCtrl,
-              decoration: const InputDecoration(
-                label: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text('Soil Moisture (%)'),
-                    Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
-                  ],
-                ),
-              ),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            ),
-            TextField(
-              controller: tempCtrl,
-              decoration: const InputDecoration(
-                label: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text('Temperature (°C)'),
-                    Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
-                  ],
-                ),
-              ),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            ),
-            TextField(
-              controller: humCtrl,
-              decoration: const InputDecoration(
-                label: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text('Humidity (%)'),
-                    Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
-                  ],
-                ),
-              ),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              try {
-                await ref.read(firebaseSensorServiceProvider).submitReading(
-                      hardwareId: widget.sensor.hardwareId,
-                      soilMoisture: double.tryParse(moistureCtrl.text),
-                      temperature: double.tryParse(tempCtrl.text),
-                      humidity: double.tryParse(humCtrl.text),
-                      batteryLevel: widget.sensor.batteryLevel,
-                    );
-                ref.invalidate(sensorTelemetryProvider);
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Field sensor probe telemetry submitted successfully!'),
-                      backgroundColor: Color(0xFF15803D),
-                    ),
-                  );
-                }
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Failed to submit probe reading: $e'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              }
-            },
-            child: const Text('Submit Reading'),
-          ),
-        ],
-      ),
-    );
-  }
 }

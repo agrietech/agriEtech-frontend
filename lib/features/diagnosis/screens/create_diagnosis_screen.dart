@@ -657,6 +657,7 @@ class _CreateDiagnosisScreenState extends ConsumerState<CreateDiagnosisScreen> {
               // Farm Selector
               if (farmsState.hasFarms) ...[
                 DropdownButtonFormField<String>(
+                  isExpanded: true,
                   initialValue: _selectedFarmId,
                   decoration: InputDecoration(
                     labelText: isAmharic ? 'የታለመው እርሻ' : 'Target Farm Plot',
@@ -666,7 +667,11 @@ class _CreateDiagnosisScreenState extends ConsumerState<CreateDiagnosisScreen> {
                   items: farmsState.farms.map((f) {
                     return DropdownMenuItem<String>(
                       value: f.id,
-                      child: Text('${f.farmName} (${f.primaryCrop})'),
+                      child: Text(
+                        '${f.farmName} (${f.primaryCrop})',
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
                     );
                   }).toList(),
                   onChanged: (val) => setState(() => _selectedFarmId = val),
@@ -676,6 +681,7 @@ class _CreateDiagnosisScreenState extends ConsumerState<CreateDiagnosisScreen> {
 
               // Crop Selector Dropdown
               DropdownButtonFormField<String>(
+                isExpanded: true,
                 initialValue: _selectedCropType,
                 decoration: InputDecoration(
                   label: Row(
@@ -691,7 +697,11 @@ class _CreateDiagnosisScreenState extends ConsumerState<CreateDiagnosisScreen> {
                 items: _cropOptions.map((c) {
                   return DropdownMenuItem<String>(
                     value: c,
-                    child: Text(c),
+                    child: Text(
+                      c,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
                   );
                 }).toList(),
                 onChanged: (val) {
