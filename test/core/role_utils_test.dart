@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:agrietech/core/models/user_model.dart';
-import 'package:agrietech/core/utils/role_utils.dart';
+import 'package:EthioFarm/core/models/user_model.dart';
+import 'package:EthioFarm/core/utils/role_utils.dart';
 
 void main() {
   group('RoleUtils - Alert Permissions', () {

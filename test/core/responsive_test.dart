@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:agrietech/core/utils/responsive.dart';
+import 'package:EthioFarm/core/utils/responsive.dart';
 
 void main() {
   group('WindowSize.fromWidth', () {

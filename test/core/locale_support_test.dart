@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:agrietech/core/l10n/app_languages.dart';
-import 'package:agrietech/core/l10n/app_localizations.dart';
-import 'package:agrietech/core/l10n/fallback_localizations.dart';
+import 'package:EthioFarm/core/l10n/app_languages.dart';
+import 'package:EthioFarm/core/l10n/app_localizations.dart';
+import 'package:EthioFarm/core/l10n/fallback_localizations.dart';
 
 void main() {
   // Mirrors the delegate stack configured in lib/app.dart.

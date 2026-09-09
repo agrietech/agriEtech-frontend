@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:agrietech/core/constants/api_constants.dart';
+import 'package:EthioFarm/core/constants/api_constants.dart';
 
 void main() {
   group('Network & API Constants Tests', () {

@@ -7,7 +7,6 @@ import '../utils/role_utils.dart';
 import '../l10n/l10n_extension.dart';
 import 'language_selector.dart';
 import '../../features/auth/providers/auth_provider.dart';
-import '../../features/ai_voice/widgets/ai_assistant_sheet.dart';
 import '../../features/alerts/providers/alert_provider.dart';
 import '../../features/home/screens/main_navigation_shell.dart';
 
@@ -376,7 +375,7 @@ class EthioFarmAppDrawer extends ConsumerWidget {
           onTap: () {
             HapticFeedback.lightImpact();
             Navigator.pop(context);
-            AiAssistantSheet.show(context);
+            context.push('/ai-assistant');
           },
           borderRadius: AppRadius.radiusMd,
           child: Padding(
@@ -392,15 +391,15 @@ class EthioFarmAppDrawer extends ConsumerWidget {
                     ),
                     borderRadius: AppRadius.radiusSm + const BorderRadius.all(Radius.circular(2)),
                   ),
-                  child: const Icon(Icons.mic_rounded, color: Colors.white, size: 19),
+                  child: const Icon(Icons.psychology_alt_rounded, color: Colors.white, size: 20),
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Text(
-                    context.tr('assistant'),
+                    context.tr('voiceAi'),
                     style: AppTypography.bodySmall.copyWith(
-                      fontWeight: FontWeight.w500,
-                      color: isDark ? Colors.grey.shade300 : const Color(0xFF334155),
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? Colors.grey.shade200 : const Color(0xFF1E293B),
                     ),
                   ),
                 ),
