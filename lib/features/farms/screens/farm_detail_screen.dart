@@ -48,6 +48,14 @@ class FarmDetailScreen extends ConsumerWidget {
                     options: MapOptions(
                       initialCenter: LatLng(farm.latitude, farm.longitude),
                       initialZoom: 15,
+                      minZoom: 5.6,
+                      maxZoom: 18.0,
+                      cameraConstraint: CameraConstraint.containCenter(
+                        bounds: LatLngBounds(
+                          const LatLng(3.2, 32.8),
+                          const LatLng(15.2, 48.2),
+                        ),
+                      ),
                     ),
                     children: [
                       TileLayer(

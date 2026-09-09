@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:agrietech/core/network/dio_client.dart';
-import 'package:agrietech/core/storage/secure_storage_service.dart';
-import 'package:agrietech/features/sensors/models/sensor_models.dart';
-import 'package:agrietech/features/sensors/repositories/sensor_repository.dart';
+import 'package:EthioFarm/core/network/dio_client.dart';
+import 'package:EthioFarm/core/storage/secure_storage_service.dart';
+import 'package:EthioFarm/features/sensors/models/sensor_models.dart';
+import 'package:EthioFarm/features/sensors/repositories/sensor_repository.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 void main() {

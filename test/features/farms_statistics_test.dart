@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:agrietech/core/models/farm_model.dart';
-import 'package:agrietech/features/farms/providers/farms_provider.dart';
+import 'package:EthioFarm/core/models/farm_model.dart';
+import 'package:EthioFarm/features/farms/providers/farms_provider.dart';
 
 void main() {
   group('FarmStatistics Calculation', () {

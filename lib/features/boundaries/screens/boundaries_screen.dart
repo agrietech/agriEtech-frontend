@@ -115,8 +115,14 @@ class _BoundariesScreenState extends ConsumerState<BoundariesScreen> {
                           ? LatLng(selectedWoreda.centerLat, selectedWoreda.centerLng)
                           : _ethiopiaCenter,
                       initialZoom: selectedWoreda != null ? 10.0 : 5.8,
-                      minZoom: 4.5,
+                      minZoom: 5.6,
                       maxZoom: 16.0,
+                      cameraConstraint: CameraConstraint.containCenter(
+                        bounds: LatLngBounds(
+                          const LatLng(3.2, 32.8),
+                          const LatLng(15.2, 48.2),
+                        ),
+                      ),
                     ),
                     children: [
                       TileLayer(

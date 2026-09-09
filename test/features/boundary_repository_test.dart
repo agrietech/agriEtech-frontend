@@ -1,11 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:agrietech/core/network/dio_client.dart';
-import 'package:agrietech/core/storage/secure_storage_service.dart';
-import 'package:agrietech/features/boundaries/models/boundary_models.dart';
-import 'package:agrietech/features/boundaries/repositories/boundary_local_cache.dart';
-import 'package:agrietech/features/boundaries/repositories/boundary_repository.dart';
+import 'package:EthioFarm/core/network/dio_client.dart';
+import 'package:EthioFarm/core/storage/secure_storage_service.dart';
+import 'package:EthioFarm/features/boundaries/models/boundary_models.dart';
+import 'package:EthioFarm/features/boundaries/repositories/boundary_local_cache.dart';
+import 'package:EthioFarm/features/boundaries/repositories/boundary_repository.dart';
 
 void main() {
   late BoundaryRepository boundaryRepository;
