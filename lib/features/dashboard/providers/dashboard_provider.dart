@@ -51,14 +51,22 @@ class DashboardNotifier extends StateNotifier<DashboardState> {
     loadDashboard();
   }
 
-  /// Load dashboard data
-  Future<void> loadDashboard() async {
+  /// Load dashboard data with optional jurisdiction filtering
+  Future<void> loadDashboard({
+    String? woredaId,
+    String? zoneId,
+    String? regionId,
+  }) async {
     state = state.copyWith(isLoading: true, clearError: true);
     
     try {
       AppLogger.info('Loading dashboard');
       
-      final data = await _repository.getDashboardData();
+      final data = await _repository.getDashboardData(
+        woredaId: woredaId,
+        zoneId: zoneId,
+        regionId: regionId,
+      );
       
       state = state.copyWith(
         data: data,
@@ -89,8 +97,12 @@ class DashboardNotifier extends StateNotifier<DashboardState> {
     }
   }
 
-  /// Refresh dashboard data
-  Future<void> refreshDashboard() async {
+  /// Refresh dashboard data with optional jurisdiction filtering
+  Future<void> refreshDashboard({
+    String? woredaId,
+    String? zoneId,
+    String? regionId,
+  }) async {
     if (state.isLoading || state.isRefreshing) return;
     
     state = state.copyWith(isRefreshing: true, clearError: true);
@@ -98,7 +110,12 @@ class DashboardNotifier extends StateNotifier<DashboardState> {
     try {
       AppLogger.info('Refreshing dashboard');
       
-      final data = await _repository.getDashboardData();
+      final data = await _repository.getDashboardData(
+        woredaId: woredaId,
+        zoneId: zoneId,
+        regionId: regionId,
+        forceRefresh: true,
+      );
       
       state = state.copyWith(
         data: data,

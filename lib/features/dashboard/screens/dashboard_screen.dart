@@ -1,22 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/models/user_model.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/role_utils.dart';
 import '../../../core/utils/responsive.dart';
+import '../../../core/utils/date_formatter.dart';
 import '../../../core/widgets/agrietech_app_drawer.dart';
+import '../../../core/widgets/shimmer_loading.dart';
+import '../../../core/widgets/error_view.dart';
+import '../../../core/widgets/loading_indicator.dart';
+import '../../auth/providers/auth_provider.dart';
+import '../../ai_voice/widgets/ai_assistant_sheet.dart';
 import '../models/dashboard_models.dart';
 import '../providers/dashboard_provider.dart';
 import '../widgets/risk_summary_card.dart';
 import '../widgets/weather_summary_card.dart';
 import '../widgets/recent_alerts_card.dart';
-import '../../../core/utils/date_formatter.dart';
-import '../../../core/widgets/shimmer_loading.dart';
-import '../../auth/providers/auth_provider.dart';
-import '../../ai_voice/widgets/ai_assistant_sheet.dart';
-
-import '../../../core/widgets/error_view.dart';
-import '../../../core/widgets/loading_indicator.dart';
+import '../widgets/dashboard_trend_chart.dart';
+import '../widgets/crop_distribution_card.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -25,12 +27,29 @@ class DashboardScreen extends ConsumerStatefulWidget {
   ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends ConsumerState<DashboardScreen> {
+class _DashboardScreenState extends ConsumerState<DashboardScreen> with SingleTickerProviderStateMixin {
+  late AnimationController _pulseController;
+  late Animation<double> _pulseAnimation;
+
   @override
   void initState() {
     super.initState();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat(reverse: true);
+    _pulseAnimation = Tween<double>(begin: 0.4, end: 1.0).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+
     // Load dashboard data on init
     Future.microtask(() => ref.read(dashboardProvider.notifier).loadDashboard());
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    super.dispose();
   }
 
   Future<void> _refreshDashboard() async {
@@ -45,15 +64,21 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     return Scaffold(
       drawer: const EthioFarmAppDrawer(),
       appBar: AppBar(
-        title: Text(_getDashboardTitle(authState)),
+        title: Text(
+          _getDashboardTitle(authState),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications),
+            icon: const Icon(Icons.notifications_outlined),
+            tooltip: 'Early Warning Alerts',
             onPressed: () => context.push('/alerts'),
           ),
           IconButton(
             icon: const Icon(Icons.refresh),
+            tooltip: 'Refresh Telemetry',
             onPressed: dashboardState.isLoading ? null : _refreshDashboard,
           ),
         ],
@@ -62,13 +87,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         onRefresh: _refreshDashboard,
         child: _buildBody(context, dashboardState, authState),
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         heroTag: 'fab_dashboard_ai',
         onPressed: () => AiAssistantSheet.show(context),
         backgroundColor: const Color(0xFF1B5E20),
         foregroundColor: Colors.white,
-        tooltip: 'Agri-AI Assistant',
-        child: const Icon(Icons.psychology, color: Colors.white),
+        icon: const Icon(Icons.psychology, color: Colors.white),
+        label: const Text(
+          'EthioFarm AI',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+        ),
       ),
     );
   }
@@ -101,31 +129,42 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Welcome header with high-tech badge
+          // 1. Executive Welcome Header
           _buildWelcomeHeader(context, authState),
           const SizedBox(height: AppSpacing.md),
 
-          // Agro-Intelligence Real-Time Telemetry Bar
+          // 2. Real-Time Agro-Intelligence Telemetry Bar
           _buildAgroTelemetryStrip(context, data),
-          const SizedBox(height: AppSpacing.md),
+          const SizedBox(height: 12),
 
-          // Last updated info
+          // 3. Telemetry Sync Status Row
           if (state.lastUpdated != null)
             Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+              padding: const EdgeInsets.only(bottom: AppSpacing.sm, left: 4),
               child: Row(
                 children: [
-                  const Icon(
-                    Icons.sensors_outlined,
-                    size: 14,
-                    color: AppTheme.telemetrySensor,
+                  FadeTransition(
+                    opacity: _pulseAnimation,
+                    child: Container(
+                      width: 8,
+                      height: 8,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF16A34A),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
                   ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Telemetry Sync: ${DateFormatter.formatRelativeTime(state.lastUpdated!)}',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: Colors.grey.shade700,
-                      fontWeight: FontWeight.w500,
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Live Satellite & IoT Sync: ${DateFormatter.formatRelativeTime(state.lastUpdated!)}',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: Colors.grey.shade600,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 11,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   if (state.isRefreshing) ...[
@@ -136,85 +175,187 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               ),
             ),
 
-          // Risk Summary Card
+          // 4. Multi-Hazard Early Warning Overview Card
           RiskSummaryCard(
             riskSummary: data.riskSummary,
             onTap: () => context.push('/risk-map'),
           ),
           const SizedBox(height: 16),
 
-          // Weather Summary Card
+          // 5. Weather & Climatology Forecast Card
           if (data.weatherSummary.current != null || 
-              (data.weatherSummary.forecast?.isNotEmpty ?? false))
-            Column(
-              children: [
-                WeatherSummaryCard(
-                  weatherSummary: data.weatherSummary,
-                  onTap: () => context.push('/risk-map'),
-                ),
-                const SizedBox(height: 16),
-              ],
+              (data.weatherSummary.forecast?.isNotEmpty ?? false)) ...[
+            WeatherSummaryCard(
+              weatherSummary: data.weatherSummary,
+              onTap: () => context.push('/weather'),
             ),
+            const SizedBox(height: 16),
+          ],
 
-          // Farm Summary — Farmers and DAs
-          if (authState.isFarmer || authState.isDevelopmentAgent)
-            Column(
-              children: [
-                _buildFarmSummaryCard(context, data.farmSummary),
-                const SizedBox(height: 16),
-              ],
-            ),
+          // 6. Interactive 7-Day Trend Chart
+          DashboardTrendChart(dashboardData: data),
+          const SizedBox(height: 16),
 
-          // DA-specific: Supervised Kebele Overview
-          if (authState.isDevelopmentAgent)
-            Column(
-              children: [
-                _buildDaKebeleOverviewCard(context),
-                const SizedBox(height: 16),
-              ],
-            ),
+          // 7. Role-Adaptive Operational KPI Cards (Zero Broken Dashes)
+          if (authState.isFarmer) ...[
+            _buildFarmSummaryCard(context, data.farmSummary),
+            const SizedBox(height: 16),
+          ],
 
-          // Officer-specific: Jurisdiction Aggregate Panel
-          if (authState.isOfficer)
-            Column(
-              children: [
-                _buildJurisdictionAggregateCard(context, authState),
-                const SizedBox(height: 16),
-              ],
-            ),
+          if (authState.isDevelopmentAgent) ...[
+            _buildDaKebeleOverviewCard(context, data),
+            const SizedBox(height: 16),
+          ],
 
-          // Researcher-specific: Data Insights Panel
-          if (authState.isResearcher)
-            Column(
-              children: [
-                _buildResearcherInsightsCard(context),
-                const SizedBox(height: 16),
-              ],
-            ),
+          if (authState.isOfficer) ...[
+            _buildJurisdictionAggregateCard(context, authState, data),
+            const SizedBox(height: 16),
+          ],
 
-          // Recent Alerts
+          if (authState.isResearcher) ...[
+            _buildResearcherInsightsCard(context, data),
+            const SizedBox(height: 16),
+          ],
+
+          // 8. Active Crop Distribution Card
+          CropDistributionCard(farmSummary: data.farmSummary),
+          const SizedBox(height: 16),
+
+          // 9. Recent Smart Alerts Feed
           RecentAlertsCard(
             alerts: data.recentAlerts,
             onViewAll: () => context.push('/alerts'),
-            onAlertTap: (alert) {
-              context.push('/alerts');
-            },
+            onAlertTap: (alert) => context.push('/alerts/${alert.id}'),
           ),
           const SizedBox(height: 16),
 
-          // Quick Actions
+          // 10. Role-Tailored Quick Actions Grid
           _buildQuickActions(context, authState),
           const SizedBox(height: 16),
 
-          // System Health (for all officer tiers and admin)
-          if (authState.canViewSystemHealth)
+          // 11. System Health & Platform Integrity (for Officers and Admin)
+          if (authState.canViewSystemHealth || authState.isOfficer || authState.isAdmin) ...[
             _buildSystemHealthCard(context, data.systemHealth),
+            const SizedBox(height: 24),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWelcomeHeader(BuildContext context, AuthState authState) {
+    final theme = Theme.of(context);
+    final user = authState.user;
+    final greeting = _getGreeting();
+    final roleColor = _getRoleColor(user?.role);
+    final isDark = theme.brightness == Brightness.dark;
+
+    // Build administrative location breadcrumb
+    final List<String> locationParts = [];
+    final reg = user?.region?.name ?? user?.regionId;
+    final zon = user?.zone?.name ?? user?.zoneId;
+    final wor = user?.woreda?.name ?? user?.woredaId;
+    final keb = user?.kebeleName ?? user?.kebele?.name ?? user?.kebeleId;
+    if (reg != null && reg.isNotEmpty) locationParts.add(reg);
+    if (zon != null && zon.isNotEmpty) locationParts.add(zon);
+    if (wor != null && wor.isNotEmpty) locationParts.add(wor);
+    if (keb != null && keb.isNotEmpty) locationParts.add(keb);
+
+    final locationText = locationParts.isNotEmpty
+        ? locationParts.join(' • ')
+        : 'National Agronomic Network • Ethiopia';
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1B2E1B) : const Color(0xFFF1F8F1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? Colors.white12 : const Color(0xFFE2EFE2),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '$greeting, ${user?.fullName ?? 'User'}',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.white : const Color(0xFF1E2E1E),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      _getRoleDescription(authState),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: isDark ? Colors.grey.shade400 : Colors.grey.shade700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: roleColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: roleColor.withValues(alpha: 0.3)),
+                ),
+                child: Text(
+                  RoleUtils.getRoleDisplayName(user?.role),
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: roleColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Icon(
+                Icons.location_on_outlined,
+                size: 14,
+                color: isDark ? const Color(0xFF4ADE80) : AppTheme.primaryDark,
+              ),
+              const SizedBox(width: 5),
+              Expanded(
+                child: Text(
+                  locationText,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? const Color(0xFF4ADE80) : AppTheme.primaryDark,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
   }
 
   Widget _buildAgroTelemetryStrip(BuildContext context, DashboardData data) {
+    final telemetry = data.telemetry;
+    final isStressed = telemetry.status == 'ELEVATED RISK';
+    final statusColor = isStressed ? const Color(0xFFEF4444) : AppTheme.telemetryNdvi;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
@@ -241,44 +382,51 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: AppTheme.telemetryNdvi.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(6),
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: AppTheme.telemetryNdvi.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Icon(Icons.satellite_outlined, color: AppTheme.telemetryNdvi, size: 14),
                     ),
-                    child: const Icon(Icons.satellite_outlined, color: AppTheme.telemetryNdvi, size: 14),
-                  ),
-                  const SizedBox(width: 8),
-                  const Text(
-                    'SATELLITE & IOT TELEMETRY',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.8,
+                    const SizedBox(width: 8),
+                    const Flexible(
+                      child: Text(
+                        'SATELLITE & IOT TELEMETRY',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.8,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: AppTheme.telemetryNdvi.withValues(alpha: 0.15),
+                  color: statusColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AppTheme.telemetryNdvi.withValues(alpha: 0.4)),
+                  border: Border.all(color: statusColor.withValues(alpha: 0.4)),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.circle, color: AppTheme.telemetryNdvi, size: 6),
-                    SizedBox(width: 4),
+                    Icon(Icons.circle, color: statusColor, size: 6),
+                    const SizedBox(width: 4),
                     Text(
-                      'HEALTHY',
+                      telemetry.status,
                       style: TextStyle(
-                        color: AppTheme.telemetryNdvi,
+                        color: statusColor,
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
                       ),
@@ -294,7 +442,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             children: [
               _buildTelemetryMetric(
                 label: 'NDVI Health',
-                value: '0.74',
+                value: telemetry.averageNdvi.toStringAsFixed(2),
                 unit: 'Index',
                 icon: Icons.eco,
                 color: AppTheme.telemetryNdvi,
@@ -302,7 +450,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               Container(height: 32, width: 1, color: Colors.white12),
               _buildTelemetryMetric(
                 label: 'Soil Moisture',
-                value: '38.5',
+                value: telemetry.soilMoisture.toStringAsFixed(1),
                 unit: '% Vol',
                 icon: Icons.water_drop,
                 color: const Color(0xFF38BDF8),
@@ -310,10 +458,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               Container(height: 32, width: 1, color: Colors.white12),
               _buildTelemetryMetric(
                 label: 'Drought Risk',
-                value: 'Low',
+                value: telemetry.droughtRisk,
                 unit: 'Status',
                 icon: Icons.wb_sunny_outlined,
-                color: AppTheme.lowRiskColor,
+                color: _getRiskColor(telemetry.droughtRisk),
               ),
             ],
           ),
@@ -358,89 +506,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
-  Widget _buildWelcomeHeader(BuildContext context, AuthState authState) {
-    final theme = Theme.of(context);
-    final user = authState.user;
-    final greeting = _getGreeting();
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '$greeting, ${user?.fullName ?? 'User'}',
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFF1E2E1E),
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                _getRoleDescription(authState),
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: Colors.grey.shade600,
-                ),
-              ),
-            ],
-          ),
-        ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          decoration: BoxDecoration(
-            color: AppTheme.primaryColor.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.2)),
-          ),
-          child: Text(
-            RoleUtils.getRoleDisplayName(user?.role),
-            style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.primaryDark,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  String _getGreeting() {
-    final hour = DateTime.now().hour;
-    if (hour < 12) return 'Good morning';
-    if (hour < 17) return 'Good afternoon';
-    return 'Good evening';
-  }
-
-  String _getRoleDescription(AuthState authState) {
-    if (authState.isFarmer) {
-      return 'Monitor your farms and receive smart alerts';
-    } else if (authState.isDevelopmentAgent) {
-      return 'Support farmers in your kebele and manage field operations';
-    } else if (authState.isWoredaOfficer) {
-      return 'Manage alerts and monitor risks across your woreda';
-    } else if (authState.isZonalOfficer) {
-      return 'Oversee woredas and coordinate zonal disaster response';
-    } else if (authState.isRegionalOfficer) {
-      return 'Regional oversight across zones with strategic intelligence';
-    } else if (authState.isResearcher) {
-      return 'Analyze agricultural data, climate trends, and crop models';
-    } else if (authState.isAdmin) {
-      return 'National platform administration and system oversight';
-    }
-    return 'Welcome to EthioFarm';
-  }
-
+  /// Farm summary card for Farmers
   Widget _buildFarmSummaryCard(BuildContext context, FarmSummary farmSummary) {
     final theme = Theme.of(context);
 
     return Card(
       elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
         onTap: () => context.push('/farms'),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -449,15 +524,28 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'My Farms',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF16A34A).withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(Icons.agriculture, color: Color(0xFF16A34A), size: 18),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'My Farm Plots',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
                   Icon(
                     Icons.arrow_forward_ios,
-                    size: 16,
+                    size: 14,
                     color: theme.textTheme.bodySmall?.color,
                   ),
                 ],
@@ -477,7 +565,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     value: '${farmSummary.totalArea.toStringAsFixed(1)} ha',
                   ),
                   _StatItem(
-                    icon: Icons.warning,
+                    icon: Icons.sensors,
+                    label: 'IoT Sensors',
+                    value: farmSummary.activeSensors.toString(),
+                  ),
+                  _StatItem(
+                    icon: Icons.warning_amber,
                     label: 'At Risk',
                     value: farmSummary.farmsAtRisk.toString(),
                     valueColor: farmSummary.farmsAtRisk > 0 ? Colors.red : Colors.green,
@@ -491,12 +584,288 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
+  /// DA-specific: Supervised Kebele Overview Card
+  Widget _buildDaKebeleOverviewCard(BuildContext context, DashboardData data) {
+    final theme = Theme.of(context);
+    final metrics = data.jurisdictionMetrics;
+
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0D9488).withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.groups_outlined, color: Color(0xFF0D9488), size: 18),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Kebele Extension Overview',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0D9488).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Text(
+                    'Extension',
+                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF0D9488)),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _StatItem(
+                  icon: Icons.person_outline,
+                  label: 'Supervised\nFarmers',
+                  value: metrics.totalFarmers.toString(),
+                ),
+                _StatItem(
+                  icon: Icons.warning_amber,
+                  label: 'Farms\nAt Risk',
+                  value: metrics.farmsAtRisk.toString(),
+                  valueColor: metrics.farmsAtRisk > 0 ? AppTheme.warningColor : Colors.green,
+                ),
+                _StatItem(
+                  icon: Icons.assignment_outlined,
+                  label: 'Field Visits\nThis Week',
+                  value: metrics.fieldVisitsThisWeek.toString(),
+                ),
+                _StatItem(
+                  icon: Icons.sensors,
+                  label: 'Supervised\nSensors',
+                  value: metrics.activeSensors.toString(),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Officer-specific: Jurisdiction Aggregate Card
+  Widget _buildJurisdictionAggregateCard(BuildContext context, AuthState authState, DashboardData data) {
+    final theme = Theme.of(context);
+    final scopeLabel = authState.jurisdictionLevel;
+    final metrics = data.jurisdictionMetrics;
+
+    String scopeTitle;
+    IconData scopeIcon;
+    Color scopeColor;
+
+    switch (scopeLabel) {
+      case 'WOREDA':
+        scopeTitle = 'Woreda Command Overview';
+        scopeIcon = Icons.location_city_outlined;
+        scopeColor = const Color(0xFF1E40AF);
+        break;
+      case 'ZONE':
+        scopeTitle = 'Zonal Operational Aggregate';
+        scopeIcon = Icons.account_balance_outlined;
+        scopeColor = const Color(0xFF7C3AED);
+        break;
+      case 'REGION':
+        scopeTitle = 'Regional Operations Hub';
+        scopeIcon = Icons.flag_outlined;
+        scopeColor = const Color(0xFFBE185D);
+        break;
+      default:
+        scopeTitle = 'National Operations Hub';
+        scopeIcon = Icons.public;
+        scopeColor = const Color(0xFFD97706);
+    }
+
+    final activeAlertsCount = data.riskSummary.highRisk + data.riskSummary.criticalRisk;
+
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: scopeColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(scopeIcon, color: scopeColor, size: 18),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    scopeTitle,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: scopeColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    scopeLabel,
+                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: scopeColor),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _StatItem(
+                  icon: Icons.people_outline,
+                  label: 'Registered\nFarmers',
+                  value: metrics.totalFarmers.toString(),
+                ),
+                _StatItem(
+                  icon: Icons.notifications_active,
+                  label: 'Active\nEarly Warnings',
+                  value: activeAlertsCount.toString(),
+                  valueColor: activeAlertsCount > 0 ? AppTheme.warningColor : Colors.green,
+                ),
+                _StatItem(
+                  icon: Icons.sensors,
+                  label: 'Active\nSensors',
+                  value: metrics.activeSensors.toString(),
+                ),
+                _StatItem(
+                  icon: Icons.square_foot,
+                  label: 'Monitored\nLand',
+                  value: '${metrics.monitoredHectares.toStringAsFixed(0)} ha',
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Researcher-specific: Data Insights Card
+  Widget _buildResearcherInsightsCard(BuildContext context, DashboardData data) {
+    final theme = Theme.of(context);
+    final metrics = data.jurisdictionMetrics;
+
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF4338CA).withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.science_outlined, color: Color(0xFF4338CA), size: 18),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Earth Engine & Research Insights',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF4338CA).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Text(
+                    'Science',
+                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF4338CA)),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                const _StatItem(
+                  icon: Icons.satellite_alt,
+                  label: 'GEE\nDatasets',
+                  value: '6',
+                ),
+                _StatItem(
+                  icon: Icons.cloud_sync,
+                  label: 'Ingested\nObservations',
+                  value: '${metrics.satelliteObservationsCount}+',
+                ),
+                const _StatItem(
+                  icon: Icons.timeline,
+                  label: 'Time Series\nHorizon',
+                  value: '5yr',
+                ),
+                const _StatItem(
+                  icon: Icons.download,
+                  label: 'Export\nFormats',
+                  value: '3',
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: () => context.push('/analytics'),
+              icon: const Icon(Icons.insights, size: 16),
+              label: const Text('Open Scientific Analytics & Data Export'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF4338CA),
+                side: const BorderSide(color: Color(0xFF4338CA)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildQuickActions(BuildContext context, AuthState authState) {
     final theme = Theme.of(context);
-
     final actions = <Map<String, dynamic>>[];
 
-    // Common actions
     actions.add({
       'icon': Icons.map,
       'label': 'Risk Map',
@@ -505,7 +874,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
     if (authState.isFarmer) {
       actions.add({
-        'icon': Icons.add_location,
+        'icon': Icons.add_location_alt,
         'label': 'Add Farm',
         'onTap': () => context.push('/farms/add'),
       });
@@ -516,7 +885,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       });
       actions.add({
         'icon': Icons.wb_cloudy,
-        'label': 'Weather',
+        'label': 'Weather Forecast',
         'onTap': () => context.push('/weather'),
       });
     }
@@ -542,7 +911,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     if (authState.canCreateAlerts) {
       actions.add({
         'icon': Icons.add_alert,
-        'label': 'Create Alert',
+        'label': 'Broadcast Alert',
         'onTap': () => context.push('/alerts/create'),
       });
     }
@@ -558,7 +927,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     if (authState.canExportData) {
       actions.add({
         'icon': Icons.analytics,
-        'label': 'Analytics',
+        'label': 'Analytics Hub',
         'onTap': () => context.push('/analytics'),
       });
     }
@@ -610,6 +979,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
     return Card(
       elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -620,12 +990,29 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 Icon(
                   isHealthy ? Icons.check_circle : Icons.error,
                   color: isHealthy ? Colors.green : Colors.red,
+                  size: 20,
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'System Health',
+                  'Platform System Integrity',
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: (isHealthy ? Colors.green : Colors.red).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    isHealthy ? 'HEALTHY' : 'DEGRADED',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: isHealthy ? Colors.green : Colors.red,
+                    ),
                   ),
                 ),
               ],
@@ -641,82 +1028,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 ),
                 _StatItem(
                   icon: Icons.data_usage,
-                  label: 'Data Points',
+                  label: 'Data Points Today',
                   value: health.dataPointsToday.toString(),
                 ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// DA-specific: Supervised Kebele Overview Card
-  Widget _buildDaKebeleOverviewCard(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Card(
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF0D9488).withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(Icons.groups_outlined, color: Color(0xFF0D9488), size: 20),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Kebele Overview',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF0D9488).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Text(
-                    'Extension',
-                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF0D9488)),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            const Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _StatItem(
-                  icon: Icons.person_outline,
-                  label: 'Supervised\nFarmers',
-                  value: '—',
-                ),
-                _StatItem(
-                  icon: Icons.warning_amber,
-                  label: 'Farms\nAt Risk',
-                  value: '—',
-                  valueColor: AppTheme.warningColor,
-                ),
-                _StatItem(
-                  icon: Icons.assignment_outlined,
-                  label: 'Field Visits\nThis Week',
-                  value: '—',
+                const _StatItem(
+                  icon: Icons.dns,
+                  label: 'API Gateway',
+                  value: '99.9%',
+                  valueColor: Colors.green,
                 ),
               ],
             ),
@@ -726,208 +1045,79 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
-  /// Officer-specific: Jurisdiction Aggregate Card
-  Widget _buildJurisdictionAggregateCard(BuildContext context, AuthState authState) {
-    final theme = Theme.of(context);
-    final scopeLabel = authState.jurisdictionLevel;
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening';
+  }
 
-    String scopeTitle;
-    IconData scopeIcon;
-    Color scopeColor;
-
-    switch (scopeLabel) {
-      case 'WOREDA':
-        scopeTitle = 'Woreda Aggregate';
-        scopeIcon = Icons.location_city_outlined;
-        scopeColor = const Color(0xFF1E40AF);
-        break;
-      case 'ZONE':
-        scopeTitle = 'Zonal Aggregate';
-        scopeIcon = Icons.account_balance_outlined;
-        scopeColor = const Color(0xFF7C3AED);
-        break;
-      case 'REGION':
-        scopeTitle = 'Regional Aggregate';
-        scopeIcon = Icons.flag_outlined;
-        scopeColor = const Color(0xFFBE185D);
-        break;
-      default:
-        scopeTitle = 'National Overview';
-        scopeIcon = Icons.public;
-        scopeColor = const Color(0xFFD97706);
+  String _getRoleDescription(AuthState authState) {
+    if (authState.isFarmer) {
+      return 'Monitor your farm plots and receive smart alerts';
+    } else if (authState.isDevelopmentAgent) {
+      return 'Support farmers in your kebele and manage field operations';
+    } else if (authState.isWoredaOfficer) {
+      return 'Manage alerts and monitor hazards across your woreda';
+    } else if (authState.isZonalOfficer) {
+      return 'Oversee woredas and coordinate zonal response';
+    } else if (authState.isRegionalOfficer) {
+      return 'Regional strategic early warning and hazard intelligence';
+    } else if (authState.isResearcher) {
+      return 'Analyze satellite observations, models, and crop trends';
+    } else if (authState.isAdmin) {
+      return 'National early warning system oversight and platform operations';
     }
-
-    return Card(
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: scopeColor.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(scopeIcon, color: scopeColor, size: 20),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    scopeTitle,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: scopeColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    scopeLabel,
-                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: scopeColor),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            const Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _StatItem(
-                  icon: Icons.people_outline,
-                  label: 'Total\nFarmers',
-                  value: '—',
-                ),
-                _StatItem(
-                  icon: Icons.notifications_active,
-                  label: 'Active\nAlerts',
-                  value: '—',
-                  valueColor: AppTheme.warningColor,
-                ),
-                _StatItem(
-                  icon: Icons.sensors,
-                  label: 'IoT\nDevices',
-                  value: '—',
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Aggregated data will populate when the backend returns jurisdiction-scoped metrics.',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: Colors.grey.shade500,
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+    return 'Welcome to EthioFarm Early Warning Platform';
   }
 
-  /// Researcher-specific: Data Insights Card
-  Widget _buildResearcherInsightsCard(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Card(
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF4338CA).withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(Icons.science_outlined, color: Color(0xFF4338CA), size: 20),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Research Data Insights',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF4338CA).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Text(
-                    'Science',
-                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF4338CA)),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            const Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _StatItem(
-                  icon: Icons.satellite_alt,
-                  label: 'GEE\nDatasets',
-                  value: '6',
-                ),
-                _StatItem(
-                  icon: Icons.timeline,
-                  label: 'Time Series\nAvailable',
-                  value: '5yr',
-                ),
-                _StatItem(
-                  icon: Icons.download,
-                  label: 'Export\nFormats',
-                  value: '3',
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            OutlinedButton.icon(
-              onPressed: () => context.push('/analytics'),
-              icon: const Icon(Icons.insights, size: 16),
-              label: const Text('Open Analytics & Export'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF4338CA),
-                side: const BorderSide(color: Color(0xFF4338CA)),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// Returns a role-adaptive dashboard title for the AppBar
   String _getDashboardTitle(AuthState authState) {
     if (authState.isFarmer) return 'My Farm Dashboard';
-    if (authState.isDevelopmentAgent) return 'Kebele Extension Dashboard';
+    if (authState.isDevelopmentAgent) return 'Kebele Extension Hub';
     if (authState.isWoredaOfficer) return 'Woreda Command Center';
-    if (authState.isZonalOfficer) return 'Zone Operations Dashboard';
-    if (authState.isRegionalOfficer) return 'Regional Operations Hub';
-    if (authState.isResearcher) return 'Research Analytics Hub';
+    if (authState.isZonalOfficer) return 'Zone Operations Hub';
+    if (authState.isRegionalOfficer) return 'Regional Operations Center';
+    if (authState.isResearcher) return 'Research Analytics Center';
     if (authState.isAdmin) return 'National Operations Dashboard';
     return 'Dashboard';
+  }
+
+  Color _getRoleColor(UserRole? role) {
+    switch (role) {
+      case UserRole.admin:
+        return const Color(0xFFD97706);
+      case UserRole.regionalOfficer:
+        return const Color(0xFFBE185D);
+      case UserRole.zonalOfficer:
+        return const Color(0xFF7C3AED);
+      case UserRole.woredaOfficer:
+        return const Color(0xFF1E40AF);
+      case UserRole.developmentAgent:
+        return const Color(0xFF0D9488);
+      case UserRole.researcher:
+        return const Color(0xFF4338CA);
+      case UserRole.farmer:
+      default:
+        return AppTheme.primaryDark;
+    }
+  }
+
+  Color _getRiskColor(String riskLevel) {
+    switch (riskLevel.toUpperCase()) {
+      case 'CRITICAL':
+      case 'RED':
+        return Colors.red;
+      case 'HIGH':
+      case 'ORANGE':
+        return Colors.deepOrange;
+      case 'MODERATE':
+      case 'YELLOW':
+        return Colors.amber.shade700;
+      case 'LOW':
+      case 'GREEN':
+      default:
+        return AppTheme.lowRiskColor;
+    }
   }
 }
 
@@ -948,23 +1138,30 @@ class _StatItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Column(
-      children: [
-        Icon(icon, size: 24, color: theme.primaryColor),
-        const SizedBox(height: 8),
-        Text(
-          value,
-          style: theme.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: valueColor,
+    return Expanded(
+      child: Column(
+        children: [
+          Icon(icon, size: 22, color: theme.primaryColor),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: valueColor,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-        ),
-        Text(
-          label,
-          style: theme.textTheme.bodySmall,
-          textAlign: TextAlign.center,
-        ),
-      ],
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: theme.textTheme.bodySmall?.copyWith(fontSize: 10),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
     );
   }
 }
@@ -986,6 +1183,7 @@ class _QuickActionButton extends StatelessWidget {
 
     return Card(
       elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
@@ -996,13 +1194,16 @@ class _QuickActionButton extends StatelessWidget {
             children: [
               Icon(
                 icon,
-                size: 32,
+                size: 28,
                 color: theme.primaryColor,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               Text(
                 label,
-                style: theme.textTheme.bodySmall,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 11,
+                ),
                 textAlign: TextAlign.center,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
