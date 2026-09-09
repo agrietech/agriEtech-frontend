@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:agrietech/core/models/user_model.dart';
-import 'package:agrietech/features/auth/providers/auth_provider.dart';
+import 'package:EthioFarm/core/models/user_model.dart';
+import 'package:EthioFarm/features/auth/providers/auth_provider.dart';
 
 void main() {
   group('AuthState & UserRole Permission Tests', () {

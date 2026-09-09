@@ -1,14 +1,10 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/error/app_error.dart';
 import '../../../core/models/user_model.dart';
 import '../../../core/utils/role_utils.dart';
 import '../../../core/widgets/agrietech_app_drawer.dart';
-import '../../../core/constants/api_constants.dart';
-import '../../../core/network/dio_client.dart';
 import '../providers/auth_provider.dart';
 import '../../boundaries/providers/boundary_provider.dart';
 
@@ -51,6 +47,9 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
   String _selectedRole = 'DEVELOPMENT_AGENT';
   bool _isSubmitting = false;
   bool _isSubmitted = false;
+
+  List<Map<String, dynamic>> _myRequests = [];
+  bool _loadingRequests = true;
 
   static const List<RoleProfileOption> _availableRoles = [
     RoleProfileOption(
@@ -135,7 +134,22 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
     super.initState();
     Future.microtask(() {
       ref.read(boundaryHierarchyProvider.notifier).loadRegions();
+      _loadExistingRequests();
     });
+  }
+
+  Future<void> _loadExistingRequests() async {
+    try {
+      final reqs = await ref.read(authProvider.notifier).getMyRoleRequests();
+      if (mounted) {
+        setState(() {
+          _myRequests = reqs;
+          _loadingRequests = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _loadingRequests = false);
+    }
   }
 
   @override
@@ -164,26 +178,17 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
     setState(() => _isSubmitting = true);
 
     try {
-      final client = ref.read(dioClientProvider);
-      // Region, zone and woreda are all required by the form validators above
-      // and are NOT NULL on the server, which also scopes reviewers by them.
-      // Sending them unconditionally means a missing one surfaces as a clear
-      // validation error instead of a silent omission.
-      final payload = {
-        'requestedRole': _selectedRole,
-        'regionId': hierarchy.selectedRegion?.id,
-        'regionName': hierarchy.selectedRegion?.name,
-        'zoneId': hierarchy.selectedZone?.id,
-        'zoneName': hierarchy.selectedZone?.name,
-        'woredaId': hierarchy.selectedWoreda?.id,
-        'woredaName': hierarchy.selectedWoreda?.name,
-        if (_kebeleController.text.trim().isNotEmpty) 'kebeleName': _kebeleController.text.trim(),
-        'organizationName': _organizationController.text.trim(),
-        'staffIdNumber': _staffIdController.text.trim(),
-        'justification': _justificationController.text.trim(),
-      };
+      await ref.read(authProvider.notifier).submitRoleRequest(
+            requestedRole: _selectedRole,
+            reason: _justificationController.text.trim(),
+            organizationName: _organizationController.text.trim(),
+            staffIdNumber: _staffIdController.text.trim(),
+            jurisdictionRegion: hierarchy.selectedRegion?.name,
+            jurisdictionZone: hierarchy.selectedZone?.name,
+            jurisdictionWoreda: hierarchy.selectedWoreda?.name,
+          );
 
-      await client.post(ApiConstants.roleRequests, data: payload);
+      await _loadExistingRequests();
 
       if (mounted) {
         setState(() {
@@ -194,15 +199,9 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isSubmitting = false);
-        // DioClient does not normalize errors, so map here to surface the
-        // server's own message (e.g. which boundary is missing) instead of a
-        // raw DioException dump.
-        final String message = e is DioException
-            ? NetworkError.fromDioException(e).message
-            : e.toString();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to submit application: $message'),
+            content: Text('Submission failed: ${e.toString()}'),
             backgroundColor: AppTheme.errorColor,
           ),
         );
@@ -218,15 +217,18 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
     final hierarchyNotifier = ref.read(boundaryHierarchyProvider.notifier);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    final hasPendingRequest = _myRequests.any((r) => r['status'] == 'PENDING');
+
     return Scaffold(
+      backgroundColor: isDark ? const Color(0xFF0B130E) : const Color(0xFFF7F9F7),
       drawer: const EthioFarmAppDrawer(),
       appBar: AppBar(
-        title: const Text('Apply for Role', style: AppTypography.titleMedium),
+        title: const Text('Role & Governance Elevation', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
         elevation: 0,
         actions: [
           IconButton(
             icon: const Icon(Icons.info_outline),
-            tooltip: 'Role Permissions & Access Guide',
+            tooltip: 'Role Guide',
             onPressed: () => _showRoleInfoDialog(context),
           ),
         ],
@@ -235,22 +237,22 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
         child: _isSubmitted
             ? _buildSuccessView(context)
             : SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenPadding, vertical: AppSpacing.md),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
                 child: Form(
                   key: _formKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Current User Status Card
+                      // Active Role Status Header Card
                       Container(
-                        padding: const EdgeInsets.all(AppSpacing.md),
+                        padding: const EdgeInsets.all(18),
                         decoration: BoxDecoration(
                           gradient: AppTheme.naturalHeroGradient,
-                          borderRadius: AppRadii.roundedLg,
+                          borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
                               color: AppTheme.primaryColor.withValues(alpha: 0.25),
-                              blurRadius: 10,
+                              blurRadius: 12,
                               offset: const Offset(0, 4),
                             ),
                           ],
@@ -258,9 +260,9 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
                         child: Row(
                           children: [
                             CircleAvatar(
-                              radius: 24,
+                              radius: 26,
                               backgroundColor: Colors.white.withValues(alpha: 0.2),
-                              child: const Icon(Icons.verified_user_rounded, color: Colors.white, size: 24),
+                              child: const Icon(Icons.verified_user_rounded, color: Colors.white, size: 28),
                             ),
                             const SizedBox(width: 14),
                             Expanded(
@@ -269,38 +271,82 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
                                 children: [
                                   Text(
                                     user?.fullName ?? 'Authenticated User',
-                                    style: AppTypography.titleMedium.copyWith(color: Colors.white),
+                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
-                                    'Current Role: ${RoleUtils.getRoleDisplayName(currentRole)}',
-                                    style: AppTypography.caption.copyWith(color: Colors.white.withValues(alpha: 0.8)),
+                                    'Active Role: ${RoleUtils.getRoleDisplayName(currentRole)}',
+                                    style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 12.5),
                                   ),
+                                  if (user?.region?.name != null)
+                                    Text(
+                                      'Jurisdiction: ${user?.region?.name ?? ""}${user?.woreda?.name != null ? " • ${user?.woreda?.name}" : ""}',
+                                      style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 11),
+                                    ),
                                 ],
                               ),
                             ),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs, vertical: 4),
-                              decoration: const BoxDecoration(
-                                color: AppTheme.telemetryNdvi,
-                                borderRadius: AppRadii.roundedSm,
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF4ADE80),
+                                borderRadius: BorderRadius.circular(8),
                               ),
                               child: const Text(
                                 'ACTIVE',
-                                style: TextStyle(color: Colors.black, fontSize: 10, fontWeight: FontWeight.bold),
+                                style: TextStyle(color: Colors.black, fontSize: 11, fontWeight: FontWeight.bold),
                               ),
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(height: AppSpacing.md),
+                      const SizedBox(height: 18),
 
-                      // Section 1: Choose Target Professional Role
+                      // Pending Request Alert (if any)
+                      if (hasPendingRequest) ...[
+                        Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFEF3C7),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFF59E0B)),
+                          ),
+                          child: const Row(
+                            children: [
+                              Icon(Icons.hourglass_top_rounded, color: Color(0xFFD97706), size: 22),
+                              SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Application Under Review',
+                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF92400E)),
+                                    ),
+                                    SizedBox(height: 2),
+                                    Text(
+                                      'You have an active role upgrade application pending approval by the woreda/regional administrator.',
+                                      style: TextStyle(fontSize: 11.5, color: Color(0xFFB45309)),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                      ],
+
+                      // Governance Hierarchy Matrix
+                      _buildGovernanceHierarchy(currentRole, isDark),
+                      const SizedBox(height: 22),
+
+                      // Section 1: Choose Target Role
                       const Text(
-                        '1. Select Desired Professional Role',
-                        style: AppTypography.subtitle,
+                        '1. Select Desired Institutional Role',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                       ),
-                      const SizedBox(height: AppSpacing.xs),
+                      const SizedBox(height: 10),
                       ListView.separated(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
@@ -311,16 +357,16 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
                           final isSelected = opt.roleKey == _selectedRole;
                           return InkWell(
                             onTap: () => setState(() => _selectedRole = opt.roleKey),
-                            borderRadius: AppRadii.roundedLg,
+                            borderRadius: BorderRadius.circular(14),
                             child: Container(
-                              padding: const EdgeInsets.all(AppSpacing.sm),
+                              padding: const EdgeInsets.all(14),
                               decoration: BoxDecoration(
                                 color: isSelected
-                                    ? opt.color.withValues(alpha: 0.08)
-                                    : (isDark ? const Color(0xFF162518) : Colors.white),
-                                borderRadius: AppRadii.roundedLg,
+                                    ? opt.color.withValues(alpha: isDark ? 0.15 : 0.06)
+                                    : (isDark ? const Color(0xFF132116) : Colors.white),
+                                borderRadius: BorderRadius.circular(14),
                                 border: Border.all(
-                                  color: isSelected ? opt.color : (isDark ? const Color(0xFF243B27) : Colors.grey.shade200),
+                                  color: isSelected ? opt.color : (isDark ? const Color(0xFF26382A) : const Color(0xFFE5E7EB)),
                                   width: isSelected ? 2.0 : 1.0,
                                 ),
                               ),
@@ -328,10 +374,10 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Container(
-                                    padding: const EdgeInsets.all(AppSpacing.xs),
+                                    padding: const EdgeInsets.all(10),
                                     decoration: BoxDecoration(
-                                      color: opt.color.withValues(alpha: 0.12),
-                                      borderRadius: AppRadii.roundedSm,
+                                      color: opt.color.withValues(alpha: 0.15),
+                                      borderRadius: BorderRadius.circular(10),
                                     ),
                                     child: Icon(opt.icon, color: opt.color, size: 22),
                                   ),
@@ -346,8 +392,9 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
                                             Expanded(
                                               child: Text(
                                                 '${opt.title} (${opt.amharicTitle})',
-                                                style: AppTypography.bodySmall.copyWith(
+                                                style: TextStyle(
                                                   fontWeight: FontWeight.bold,
+                                                  fontSize: 13.5,
                                                   color: isSelected ? opt.color : null,
                                                 ),
                                               ),
@@ -356,11 +403,35 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
                                               Icon(Icons.check_circle, color: opt.color, size: 18),
                                           ],
                                         ),
-                                        const SizedBox(height: AppSpacing.xs),
+                                        const SizedBox(height: 3),
                                         Text(
                                           opt.subtitle,
-                                          style: AppTypography.caption.copyWith(color: Colors.grey.shade600),
+                                          style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
                                         ),
+                                        if (isSelected) ...[
+                                          const SizedBox(height: 10),
+                                          Container(
+                                            padding: const EdgeInsets.all(10),
+                                            decoration: BoxDecoration(
+                                              color: opt.color.withValues(alpha: 0.08),
+                                              borderRadius: BorderRadius.circular(8),
+                                            ),
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                const Text('Granted Capabilities:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+                                                const SizedBox(height: 4),
+                                                ...opt.permissions.map((p) => Row(
+                                                      children: [
+                                                        Icon(Icons.check_circle_outline, size: 12, color: opt.color),
+                                                        const SizedBox(width: 6),
+                                                        Expanded(child: Text(p, style: const TextStyle(fontSize: 11))),
+                                                      ],
+                                                    )),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
                                       ],
                                     ),
                                   ),
@@ -370,271 +441,175 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
                           );
                         },
                       ),
-                      const SizedBox(height: AppSpacing.screenPadding),
+                      const SizedBox(height: 22),
 
-                      // Section 2: Administrative Jurisdiction Scope
+                      // Section 2: Target Jurisdiction
                       const Text(
-                        '2. Target Administrative Jurisdiction Scope',
-                        style: AppTypography.subtitle,
+                        '2. Target Operational Jurisdiction',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                       ),
-                      const SizedBox(height: AppSpacing.xs),
+                      const SizedBox(height: 10),
                       Container(
-                        padding: const EdgeInsets.all(AppSpacing.md),
+                        padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF162518) : Colors.white,
-                          borderRadius: AppRadii.roundedLg,
-                          border: Border.all(
-                            color: isDark ? const Color(0xFF243B27) : Colors.grey.shade200,
-                          ),
+                          color: isDark ? const Color(0xFF132116) : Colors.white,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: isDark ? const Color(0xFF26382A) : const Color(0xFFE5E7EB)),
                         ),
-                        child: Builder(
-                          builder: (context) {
-                            final uniqueRegions = {for (final r in hierarchy.regions) r.id: r}.values.toList();
-                            final uniqueZones = {for (final z in hierarchy.zones) z.id: z}.values.toList();
-                            final uniqueWoredas = {for (final w in hierarchy.woredas) w.id: w}.values.toList();
+                        child: Column(
+                          children: [
+                            // Region
+                            DropdownButtonFormField<String>(
+                              initialValue: hierarchy.selectedRegion?.id,
+                              isExpanded: true,
+                              decoration: _inputDecoration('Target Region', Icons.public_rounded, isDark),
+                              items: hierarchy.regions.map((r) => DropdownMenuItem(value: r.id, child: Text(r.name))).toList(),
+                              onChanged: (val) {
+                                if (val != null) {
+                                  final match = hierarchy.regions.where((r) => r.id == val).firstOrNull;
+                                  hierarchyNotifier.selectRegion(match);
+                                }
+                              },
+                              validator: (v) => v == null ? 'Please select target Region' : null,
+                            ),
+                            const SizedBox(height: 12),
 
-                            return Column(
-                              children: [
-                                // Region
-                                DropdownButtonFormField<String>(
-                                  key: ValueKey('region_${hierarchy.selectedRegion?.id}'),
-                                  isExpanded: true,
-                                  initialValue: uniqueRegions.any((r) => r.id == hierarchy.selectedRegion?.id)
-                                      ? hierarchy.selectedRegion?.id
-                                      : null,
-                                  decoration: InputDecoration(
-                                    labelText: 'Region / ክልል *',
-                                    prefixIcon: const Icon(Icons.public),
-                                    border: const OutlineInputBorder(borderRadius: AppRadii.roundedMd),
-                                    filled: true,
-                                    fillColor: isDark ? const Color(0xFF1B2E1E) : Colors.white,
-                                  ),
-                                  items: uniqueRegions.map((region) {
-                                    return DropdownMenuItem<String>(
-                                      value: region.id,
-                                      child: Text(
-                                        region.name,
-                                        overflow: TextOverflow.ellipsis,
-                                        maxLines: 1,
-                                      ),
-                                    );
-                                  }).toList(),
-                                  validator: (v) => v == null || v.isEmpty ? 'Please select target Region' : null,
-                                  onChanged: (regionId) {
-                                    if (regionId != null) {
-                                      final region = uniqueRegions.firstWhere((r) => r.id == regionId);
-                                      hierarchyNotifier.selectRegion(region);
-                                    }
-                                  },
-                                ),
-                                const SizedBox(height: 12),
+                            // Zone
+                            DropdownButtonFormField<String>(
+                              initialValue: hierarchy.selectedZone?.id,
+                              isExpanded: true,
+                              decoration: _inputDecoration('Target Zone', Icons.domain_rounded, isDark),
+                              items: hierarchy.zones.map((z) => DropdownMenuItem(value: z.id, child: Text(z.name))).toList(),
+                              onChanged: hierarchy.selectedRegion == null
+                                  ? null
+                                  : (val) {
+                                      if (val != null) {
+                                        final match = hierarchy.zones.where((z) => z.id == val).firstOrNull;
+                                        hierarchyNotifier.selectZone(match);
+                                      }
+                                    },
+                            ),
+                            const SizedBox(height: 12),
 
-                                // Zone
-                                DropdownButtonFormField<String>(
-                                  key: ValueKey('zone_${hierarchy.selectedRegion?.id}_${hierarchy.selectedZone?.id}'),
-                                  isExpanded: true,
-                                  initialValue: uniqueZones.any((z) => z.id == hierarchy.selectedZone?.id)
-                                      ? hierarchy.selectedZone?.id
-                                      : null,
-                                  hint: Text(
-                                    hierarchy.selectedRegion == null ? 'Select Region first' : 'Select Zone',
-                                    overflow: TextOverflow.ellipsis,
-                                    maxLines: 1,
-                                  ),
-                                  decoration: InputDecoration(
-                                    labelText: 'Zone / ዞን',
-                                    prefixIcon: const Icon(Icons.map_outlined),
-                                    border: const OutlineInputBorder(borderRadius: AppRadii.roundedMd),
-                                    filled: true,
-                                    fillColor: isDark ? const Color(0xFF1B2E1E) : Colors.white,
-                                  ),
-                                  items: uniqueZones.map((zone) {
-                                    return DropdownMenuItem<String>(
-                                      value: zone.id,
-                                      child: Text(
-                                        zone.name,
-                                        overflow: TextOverflow.ellipsis,
-                                        maxLines: 1,
-                                      ),
-                                    );
-                                  }).toList(),
-                                  onChanged: hierarchy.selectedRegion == null
-                                      ? null
-                                      : (zoneId) {
-                                          if (zoneId != null) {
-                                            final zone = uniqueZones.firstWhere((z) => z.id == zoneId);
-                                            hierarchyNotifier.selectZone(zone);
-                                          }
-                                        },
-                                  validator: (v) =>
-                                      (v == null || v.isEmpty) ? 'Please select target Zone' : null,
-                                ),
-                                const SizedBox(height: 12),
-
-                                // Woreda
-                                DropdownButtonFormField<String>(
-                                  key: ValueKey('woreda_${hierarchy.selectedZone?.id}_${hierarchy.selectedWoreda?.id}'),
-                                  isExpanded: true,
-                                  initialValue: uniqueWoredas.any((w) => w.id == hierarchy.selectedWoreda?.id)
-                                      ? hierarchy.selectedWoreda?.id
-                                      : null,
-                                  hint: Text(
-                                    hierarchy.selectedZone == null ? 'Select Zone first' : 'Select Woreda',
-                                    overflow: TextOverflow.ellipsis,
-                                    maxLines: 1,
-                                  ),
-                                  decoration: InputDecoration(
-                                    labelText: 'Woreda / ወረዳ',
-                                    prefixIcon: const Icon(Icons.holiday_village_outlined),
-                                    border: const OutlineInputBorder(borderRadius: AppRadii.roundedMd),
-                                    filled: true,
-                                    fillColor: isDark ? const Color(0xFF1B2E1E) : Colors.white,
-                                  ),
-                                  items: uniqueWoredas.map((woreda) {
-                                    return DropdownMenuItem<String>(
-                                      value: woreda.id,
-                                      child: Text(
-                                        woreda.name,
-                                        overflow: TextOverflow.ellipsis,
-                                        maxLines: 1,
-                                      ),
-                                    );
-                                  }).toList(),
-                                  onChanged: hierarchy.selectedZone == null
-                                      ? null
-                                      : (woredaId) {
-                                          if (woredaId != null) {
-                                            final woreda = uniqueWoredas.firstWhere((w) => w.id == woredaId);
-                                            hierarchyNotifier.selectWoreda(woreda);
-                                          }
-                                        },
-                                  validator: (v) =>
-                                      (v == null || v.isEmpty) ? 'Please select target Woreda' : null,
-                                ),
-                                const SizedBox(height: 12),
-
-                                // Kebele
-                                TextFormField(
-                                  controller: _kebeleController,
-                                  decoration: InputDecoration(
-                                    labelText: 'Kebele/ቀበሌ',
-                                    prefixIcon: const Icon(Icons.signpost_outlined),
-                                    border: const OutlineInputBorder(borderRadius: AppRadii.roundedMd),
-                                    filled: true,
-                                    fillColor: isDark ? AppTheme.surfaceDark : const Color(0xFFF8FAF8),
-                                  ),
-                                ),
-                              ],
-                            );
-                          },
+                            // Woreda
+                            DropdownButtonFormField<String>(
+                              initialValue: hierarchy.selectedWoreda?.id,
+                              isExpanded: true,
+                              decoration: _inputDecoration('Target Woreda', Icons.location_city_rounded, isDark),
+                              items: hierarchy.woredas.map((w) => DropdownMenuItem(value: w.id, child: Text(w.name))).toList(),
+                              onChanged: hierarchy.selectedZone == null
+                                  ? null
+                                  : (val) {
+                                      if (val != null) {
+                                        final match = hierarchy.woredas.where((w) => w.id == val).firstOrNull;
+                                        hierarchyNotifier.selectWoreda(match);
+                                      }
+                                    },
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: AppSpacing.screenPadding),
+                      const SizedBox(height: 22),
 
-                      // Section 3: Professional Affiliation & Verification
+                      // Section 3: Official Verification Credentials
                       const Text(
-                        '3. Professional Credentials',
-                        style: AppTypography.subtitle,
+                        '3. Official Verification Credentials',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                       ),
-                      const SizedBox(height: AppSpacing.xs),
+                      const SizedBox(height: 10),
                       Container(
-                        padding: const EdgeInsets.all(AppSpacing.md),
+                        padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: isDark ? AppTheme.cardDark : Colors.white,
-                          borderRadius: AppRadii.roundedLg,
-                          border: Border.all(
-                            color: isDark ? AppTheme.borderDark : AppTheme.borderLight,
-                          ),
+                          color: isDark ? const Color(0xFF132116) : Colors.white,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: isDark ? const Color(0xFF26382A) : const Color(0xFFE5E7EB)),
                         ),
                         child: Column(
                           children: [
                             TextFormField(
                               controller: _organizationController,
-                              decoration: InputDecoration(
-                                label: const Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text('Bureau / Institute'),
-                                    Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
-                                  ],
-                                ),
-                                prefixIcon: const Icon(Icons.business_outlined),
-                                border: const OutlineInputBorder(borderRadius: AppRadii.roundedMd),
-                                filled: true,
-                                fillColor: isDark ? AppTheme.surfaceDark : const Color(0xFFF8FAF8),
-                              ),
-                              validator: (v) => (v == null || v.trim().isEmpty) ? 'Please enter your organization name' : null,
+                              decoration: _inputDecoration('Bureau / Institute / University', Icons.business_rounded, isDark),
+                              validator: (v) => (v == null || v.trim().isEmpty) ? 'Organization name is required' : null,
                             ),
                             const SizedBox(height: 12),
                             TextFormField(
                               controller: _staffIdController,
-                              decoration: InputDecoration(
-                                labelText: 'Staff ID',
-                                prefixIcon: const Icon(Icons.badge_outlined),
-                                border: const OutlineInputBorder(borderRadius: AppRadii.roundedMd),
-                                filled: true,
-                                fillColor: isDark ? AppTheme.surfaceDark : const Color(0xFFF8FAF8),
-                              ),
-                              // The server rejects a blank staff ID, so catch it
-                              // here rather than surfacing a confusing 400 that
-                              // also blames the organization name.
-                              validator: (v) => (v == null || v.trim().isEmpty)
-                                  ? 'Please enter your staff / badge ID'
-                                  : null,
+                              decoration: _inputDecoration('Government Staff ID / Badge No.', Icons.badge_rounded, isDark),
+                              validator: (v) => (v == null || v.trim().isEmpty) ? 'Staff ID is required' : null,
                             ),
                             const SizedBox(height: 12),
                             TextFormField(
                               controller: _justificationController,
                               maxLines: 3,
-                              decoration: InputDecoration(
-                                label: const Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text('Role Scope'),
-                                    Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
-                                  ],
-                                ),
-                                prefixIcon: const Icon(Icons.description_outlined),
-                                border: const OutlineInputBorder(borderRadius: AppRadii.roundedMd),
-                                filled: true,
-                                fillColor: isDark ? AppTheme.surfaceDark : const Color(0xFFF8FAF8),
-                              ),
-                              validator: (v) => (v == null || v.trim().isEmpty) ? 'Please provide a brief description' : null,
+                              decoration: _inputDecoration('Operational mandate and justification...', Icons.description_rounded, isDark),
+                              validator: (v) => (v == null || v.trim().length < 10) ? 'Provide at least 10 characters' : null,
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 22),
 
                       // Submit Button
                       SizedBox(
-                        height: 52,
-                        child: ElevatedButton(
+                        height: 50,
+                        child: ElevatedButton.icon(
                           onPressed: _isSubmitting ? null : _submitApplication,
+                          icon: _isSubmitting
+                              ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                              : const Icon(Icons.send_rounded),
+                          label: const Text('Submit Role Elevation Application', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.primaryColor,
+                            backgroundColor: const Color(0xFF1B5E20),
                             foregroundColor: Colors.white,
-                            shape: const RoundedRectangleBorder(
-                              borderRadius: AppRadii.roundedMd,
-                            ),
-                            elevation: 2,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
-                          child: _isSubmitting
-                              ? const SizedBox(
-                                  width: 22,
-                                  height: 22,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2.5,
-                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                  ),
-                                )
-                              : const Text(
-                                  'Submit',
-                                  style: AppTypography.titleMedium,
-                                ),
                         ),
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 26),
+
+                      // Section 4: Application History
+                      if (!_loadingRequests && _myRequests.isNotEmpty) ...[
+                        const Text(
+                          'Application History & Status',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                        ),
+                        const SizedBox(height: 10),
+                        ..._myRequests.map((req) {
+                          final status = (req['status'] ?? 'PENDING').toString().toUpperCase();
+                          Color badgeColor = Colors.orange;
+                          if (status == 'APPROVED') badgeColor = Colors.green;
+                          if (status == 'REJECTED') badgeColor = Colors.red;
+
+                          return Card(
+                            margin: const EdgeInsets.only(bottom: 10),
+                            elevation: 0,
+                            color: isDark ? const Color(0xFF132116) : Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              side: BorderSide(color: isDark ? const Color(0xFF26382A) : const Color(0xFFE5E7EB)),
+                            ),
+                            child: ListTile(
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                              title: Text('Applied for: ${req['requestedRole'] ?? "N/A"}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5)),
+                              subtitle: Text(
+                                'Organization: ${req['organizationName'] ?? "None"}\nSubmitted: ${req['createdAt']?.toString().split("T").first ?? "Recent"}',
+                                style: TextStyle(fontSize: 11.5, color: Colors.grey.shade600),
+                              ),
+                              trailing: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: badgeColor.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  status,
+                                  style: TextStyle(color: badgeColor, fontWeight: FontWeight.bold, fontSize: 11),
+                                ),
+                              ),
+                            ),
+                          );
+                        }),
+                      ],
                     ],
                   ),
                 ),
@@ -643,44 +618,99 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
     );
   }
 
+  Widget _buildGovernanceHierarchy(UserRole currentRole, bool isDark) {
+    final steps = [
+      {'role': UserRole.farmer, 'label': 'Farmer'},
+      {'role': UserRole.developmentAgent, 'label': 'DA (Kebele)'},
+      {'role': UserRole.woredaOfficer, 'label': 'Woreda'},
+      {'role': UserRole.zonalOfficer, 'label': 'Zone'},
+      {'role': UserRole.regionalOfficer, 'label': 'Region'},
+      {'role': UserRole.researcher, 'label': 'EIAR'},
+    ];
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF132116) : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: isDark ? const Color(0xFF26382A) : const Color(0xFFE5E7EB)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('National Agricultural Governance Progression:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: steps.map((s) {
+              final isCurrent = s['role'] == currentRole;
+              return Column(
+                children: [
+                  Container(
+                    width: 26,
+                    height: 26,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: isCurrent ? const Color(0xFF1B5E20) : Colors.grey.shade300,
+                    ),
+                    child: Center(
+                      child: Icon(
+                        isCurrent ? Icons.check : Icons.circle,
+                        size: isCurrent ? 16 : 8,
+                        color: isCurrent ? Colors.white : Colors.grey.shade600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    s['label'] as String,
+                    style: TextStyle(
+                      fontSize: 9.5,
+                      fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
+                      color: isCurrent ? const Color(0xFF1B5E20) : Colors.grey.shade600,
+                    ),
+                  ),
+                ],
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSuccessView(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(28),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: const Color(0xFF2E7D32).withValues(alpha: 0.12),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.check_circle_rounded, color: Color(0xFF2E7D32), size: 64),
-            ),
-            const SizedBox(height: 20),
+            const Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 72),
+            const SizedBox(height: 16),
             const Text(
-              'Application Submitted Successfully',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              'Application Submitted Successfully!',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
-              'Your request for $_selectedRole has been registered. The administrative verification committee will review your credentials.',
-              style: const TextStyle(fontSize: 13, color: Colors.grey, height: 1.4),
+              'Your request for $_selectedRole has been registered. The administrative review board will inspect your official credentials and dispatch an SMS alert upon decision.',
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 28),
-            ElevatedButton.icon(
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () {
+                setState(() => _isSubmitted = false);
+                context.go('/profile');
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF1B5E20),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
-                shape: const RoundedRectangleBorder(borderRadius: AppRadii.roundedMd),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              icon: const Icon(Icons.home_rounded),
-              label: const Text('Return to Home'),
-              onPressed: () => context.go('/home'),
+              child: const Text('Return to Profile'),
             ),
           ],
         ),
@@ -692,43 +722,42 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: const RoundedRectangleBorder(borderRadius: AppRadii.roundedXl),
-        title: const Row(
-          children: [
-            Icon(Icons.shield_outlined, color: AppTheme.primaryColor),
-            SizedBox(width: 8),
-            Text('Role Hierarchy Guide', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          ],
-        ),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: ListView.separated(
-            shrinkWrap: true,
-            itemCount: _availableRoles.length,
-            separatorBuilder: (_, __) => const Divider(height: 16),
-            itemBuilder: (context, idx) {
-              final r = _availableRoles[idx];
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(r.icon, size: 18, color: r.color),
-                      const SizedBox(width: 8),
-                      Text(r.title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: r.color)),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(r.fullDescription, style: const TextStyle(fontSize: 11, color: Colors.grey)),
-                ],
-              );
-            },
+        title: const Text('Ethiopian Agricultural Governance Matrix'),
+        content: const SingleChildScrollView(
+          child: Text(
+            'The EthioFarm platform operates under hierarchical mandate levels aligned with the Ethiopian Ministry of Agriculture:\n\n'
+            '• Smallholder: Farm-level inputs, localized disease diagnosis, and micro-climate advisories.\n'
+            '• Development Agent: Kebele plots registry, IoT sensor calibration, and ground scouting.\n'
+            '• Woreda Officer: Woreda disaster broadcast, USSD *212# push, and spatial hazard management.\n'
+            '• Zonal Lead: Multi-woreda analytics, SPI drought indexing, and resource allocation.\n'
+            '• Regional Bureau: State command center, seismic hazard surveillance, and emergency relief.\n'
+            '• Researcher: Direct Sentinel-2/1 access, digital soil mapping, and downscaled climate modeling.',
+            style: TextStyle(fontSize: 12.5, height: 1.4),
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Got it')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Understood')),
         ],
       ),
+    );
+  }
+
+  InputDecoration _inputDecoration(String label, IconData icon, bool isDark) {
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: Icon(icon, size: 18, color: const Color(0xFF1B5E20)),
+      filled: true,
+      fillColor: isDark ? const Color(0xFF0E1A11) : const Color(0xFFF9FAFB),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(color: isDark ? const Color(0xFF26382A) : const Color(0xFFE5E7EB)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: Color(0xFF1B5E20), width: 1.5),
+      ),
+      contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
     );
   }
 }

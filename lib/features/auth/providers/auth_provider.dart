@@ -556,6 +556,87 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  /// Update user profile (authenticated)
+  Future<UserModel> updateProfile(Map<String, dynamic> data) async {
+    if (!state.isAuthenticated) {
+      throw const AuthError(message: 'Not authenticated', code: 'UNAUTHORIZED');
+    }
+    try {
+      state = state.copyWith(isLoading: true, clearError: true);
+      final updated = await _authRepository.updateProfile(data);
+      state = state.copyWith(user: updated, isLoading: false);
+      AppLogger.info('User profile updated successfully');
+      return updated;
+    } catch (e) {
+      state = state.copyWith(isLoading: false);
+      rethrow;
+    }
+  }
+
+  /// Request SMS OTP for passwordless login
+  Future<Map<String, dynamic>> requestLoginOtp(String phone) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      final res = await _authRepository.requestLoginOtp(phone);
+      state = state.copyWith(isLoading: false);
+      return res;
+    } catch (e) {
+      state = state.copyWith(isLoading: false);
+      rethrow;
+    }
+  }
+
+  /// Verify SMS OTP for passwordless login
+  Future<void> verifyLoginOtp({required String phone, required String code}) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      final response = await _authRepository.verifyLoginOtp(phone: phone, code: code);
+      state = state.copyWith(
+        user: response.user,
+        isAuthenticated: true,
+        isLoading: false,
+      );
+      AppLogger.info('Login OTP verified successfully for phone: $phone');
+    } catch (e) {
+      state = state.copyWith(isLoading: false);
+      rethrow;
+    }
+  }
+
+  /// Get role requests for the current user
+  Future<List<Map<String, dynamic>>> getMyRoleRequests() async {
+    return await _authRepository.getMyRoleRequests();
+  }
+
+  /// Submit a role upgrade request
+  Future<Map<String, dynamic>> submitRoleRequest({
+    required String requestedRole,
+    required String reason,
+    String? organizationName,
+    String? staffIdNumber,
+    String? jurisdictionRegion,
+    String? jurisdictionZone,
+    String? jurisdictionWoreda,
+  }) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      final res = await _authRepository.submitRoleRequest(
+        requestedRole: requestedRole,
+        reason: reason,
+        organizationName: organizationName,
+        staffIdNumber: staffIdNumber,
+        jurisdictionRegion: jurisdictionRegion,
+        jurisdictionZone: jurisdictionZone,
+        jurisdictionWoreda: jurisdictionWoreda,
+      );
+      state = state.copyWith(isLoading: false);
+      return res;
+    } catch (e) {
+      state = state.copyWith(isLoading: false);
+      rethrow;
+    }
+  }
+
   /// Save device token for push notifications
   Future<void> saveDeviceToken(String token) async {
     try {
