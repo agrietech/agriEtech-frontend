@@ -91,10 +91,11 @@ class AiVoiceResponse {
   final String? detectedLanguage;
   final String? audioUrlEn;
   final String? audioUrlAm;
+  final String? directAudioUrl;
   final Map<String, dynamic>? metadata;
   final bool isAiOffline;
   final String? timestamp;
-  String? get audioUrl => audioUrlAm ?? audioUrlEn;
+  String? get audioUrl => audioUrlAm ?? audioUrlEn ?? directAudioUrl;
 
   AiVoiceResponse({
     this.transcript,
@@ -105,6 +106,7 @@ class AiVoiceResponse {
     this.detectedLanguage,
     this.audioUrlEn,
     this.audioUrlAm,
+    this.directAudioUrl,
     this.metadata,
     this.isAiOffline = false,
     this.timestamp,
@@ -128,6 +130,7 @@ class AiVoiceResponse {
       detectedLanguage: rootData['detectedLanguage'] as String?,
       audioUrlEn: (rootData['audioUrlEn'] ?? rootData['audioSynthesis']?['audioUrl'] ?? rootData['audioUrl']) as String?,
       audioUrlAm: (rootData['audioUrlAm'] ?? rootData['audioSynthesis']?['audioUrl'] ?? rootData['audioUrl']) as String?,
+      directAudioUrl: (rootData['directAudioUrl'] ?? rootData['audioSynthesis']?['directAudioUrl']) as String?,
       metadata: rootData['metadata'] as Map<String, dynamic>?,
       isAiOffline: (rootData['isAiOffline'] ?? false) as bool,
       timestamp: rootData['timestamp'] as String?,
