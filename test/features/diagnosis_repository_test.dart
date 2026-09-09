@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:agrietech/core/network/dio_client.dart';
-import 'package:agrietech/core/storage/secure_storage_service.dart';
-import 'package:agrietech/features/diagnosis/models/diagnosis_models.dart';
-import 'package:agrietech/features/diagnosis/repositories/diagnosis_repository.dart';
+import 'package:EthioFarm/core/network/dio_client.dart';
+import 'package:EthioFarm/core/storage/secure_storage_service.dart';
+import 'package:EthioFarm/features/diagnosis/models/diagnosis_models.dart';
+import 'package:EthioFarm/features/diagnosis/repositories/diagnosis_repository.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 void main() {
@@ -106,6 +106,87 @@ void main() {
         cropType: 'Coffee',
       );
       expect(reqWithoutFarm.toJson().containsKey('farmId'), isFalse);
+    });
+
+    test('DiagnosisModel deserializes nested Gemini and multilingual fields correctly', () {
+      final json = {
+        'id': 'diag-complex-01',
+        'farmId': 'farm-eth-01',
+        'imageUrl': 'https://example.com/leaf.jpg',
+        'cropIdentified': 'Coffee',
+        'cropIdentifiedAm': 'ቡና',
+        'diseaseName': 'Coffee Berry Disease',
+        'diseaseNameAm': 'የቡና ፍሬ በሽታ',
+        'pathogen': 'Colletotrichum kahawae',
+        'severity': 'HIGH',
+        'confidenceScore': 96.5,
+        'treatment': 'Apply copper-based fungicide before rainy season.',
+        'treatmentEn': 'Apply copper-based fungicide before rainy season.',
+        'treatmentAm': 'የመዳብ ፈንገስ ማጥፊያ ዝናብ ከመግባቱ በፊት ይረጩ።',
+        'treatmentOm': 'Qoricha koopparii roobni dura biifuu.',
+        'preventionTips': 'Prune infested branches and ensure adequate canopy aeration.',
+        'preventionEn': 'Prune infested branches and ensure adequate canopy aeration.',
+        'preventionAm': 'የተጠቁ ቅርንጫፎችን መቁረጥ እና የአየር ዝውውርን ማረጋገጥ።',
+        'symptomsEn': 'Dark sunken lesions on expanding green berries.',
+        'symptomsAm': 'በአረንጓዴ ፍሬዎች ላይ ጥቁር የሰመጡ ቁስሎች።',
+        'aiModel': 'OpenRouter Gemini 2.5 Flash Vision + Plant.id Botanical Engine',
+        'dataSources': 'OpenRouter AI, Plant.id v3, Pl@ntNet API',
+        'enginesUsed': ['OpenRouter Gemini 2.5 Flash', 'Plant.id v3', 'Pl@ntNet API'],
+        'fetchedAt': '2026-09-09T10:30:00.000Z',
+        'diagnosisStatus': 'SUCCESS',
+        'createdAt': '2026-09-09T10:30:00.000Z',
+        'farm': {
+          'id': 'farm-eth-01',
+          'farmName': 'Jimma Highlands Specialty Plot',
+          'primaryCrop': 'Coffee Arabica',
+        },
+      };
+
+      final model = DiagnosisModel.fromJson(json);
+
+      expect(model.id, equals('diag-complex-01'));
+      expect(model.farmId, equals('farm-eth-01'));
+      expect(model.cropIdentified, equals('Coffee'));
+      expect(model.cropIdentifiedAm, equals('ቡና'));
+      expect(model.diseaseName, equals('Coffee Berry Disease'));
+      expect(model.diseaseNameAm, equals('የቡና ፍሬ በሽታ'));
+      expect(model.pathogen, equals('Colletotrichum kahawae'));
+      expect(model.severity, equals('HIGH'));
+      expect(model.confidenceScore, equals(96.5));
+      expect(model.treatmentAm, contains('የመዳብ'));
+      expect(model.treatmentOm, contains('Qoricha'));
+      expect(model.symptomsEn, contains('Dark sunken'));
+      expect(model.symptomsAm, contains('ጥቁር'));
+      expect(model.enginesUsed.length, equals(3));
+      expect(model.farm, isNotNull);
+      expect(model.farm!.farmName, equals('Jimma Highlands Specialty Plot'));
+      expect(model.farm!.primaryCrop, equals('Coffee Arabica'));
+
+      final serialized = model.toJson();
+      expect(serialized['cropIdentifiedAm'], equals('ቡና'));
+      expect(serialized['treatmentOm'], equals('Qoricha koopparii roobni dura biifuu.'));
+      expect(serialized['farm']['farmName'], equals('Jimma Highlands Specialty Plot'));
+    });
+
+    test('DiagnosisFilters copyWith and serialization work correctly', () {
+      const filters = DiagnosisFilters(
+        farmId: 'farm-1',
+        status: 'SUCCESS',
+        cropType: 'Wheat',
+        limit: 20,
+      );
+
+      final updated = filters.copyWith(status: 'PENDING', cropType: 'Teff');
+      expect(updated.farmId, equals('farm-1'));
+      expect(updated.status, equals('PENDING'));
+      expect(updated.cropType, equals('Teff'));
+      expect(updated.limit, equals(20));
+
+      final json = updated.toJson();
+      expect(json['farmId'], equals('farm-1'));
+      expect(json['status'], equals('PENDING'));
+      expect(json['cropType'], equals('Teff'));
+      expect(json['limit'], equals(20));
     });
   });
 }

@@ -337,8 +337,8 @@ class _AiLeafScannerModalState extends State<AiLeafScannerModal>
                           letterSpacing: 0.3,
                         ),
                       ),
-                      Text(
-                        'Dual-AI Optical Analysis (Plant.id & Gemini 2.5)',
+                      const Text(
+                        'High-Precision Optical Agronomic Diagnostic Model',
                         style: TextStyle(color: Colors.white60, fontSize: 11),
                       ),
                     ],

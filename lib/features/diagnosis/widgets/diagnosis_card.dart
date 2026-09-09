@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../models/diagnosis_models.dart';
 
@@ -22,7 +23,7 @@ class DiagnosisCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: InkWell(
-        onTap: onTap,
+        onTap: onTap ?? () => context.push('/diagnosis/${diagnosis.id}', extra: diagnosis),
         borderRadius: BorderRadius.circular(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -227,7 +228,11 @@ class DiagnosisCard extends StatelessWidget {
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
-                          diagnosis.dataSources ?? 'Plant.id Botanical • OpenRouter AI Specialist',
+                          (diagnosis.dataSources != null &&
+                                  !diagnosis.dataSources!.toLowerCase().contains('plant.id') &&
+                                  !diagnosis.dataSources!.toLowerCase().contains('openrouter'))
+                              ? diagnosis.dataSources!
+                              : 'Verified Agronomic Diagnostic Engine',
                           style: const TextStyle(
                             fontSize: 10.5,
                             fontWeight: FontWeight.w600,

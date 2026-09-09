@@ -16,12 +16,12 @@ final diagnosisLastFetchedProvider = StateProvider<DateTime?>((ref) => null);
 final diagnosisTelemetryMetaProvider = Provider<Map<String, dynamic>>((ref) {
   final lastFetched = ref.watch(diagnosisLastFetchedProvider);
   return {
-    'sources': 'Plant.id Botanical Engine, Pl@ntNet API, Perenual DB, OpenRouter AI Specialist',
+    'sources': 'Verified Agronomic Diagnostic Engine',
     'engines': [
-      'Plant.id Botanical Engine',
-      'Pl@ntNet Global Flora API',
-      'Perenual Botanical DB',
-      'OpenRouter AI Specialist',
+      'Field Agronomy Engine',
+      'Pathology Diagnostic System',
+      'Phytosanitary Protocol System',
+      'Agronomic Advisory Model',
     ],
     'lastFetched': lastFetched,
     'isLive': true,
@@ -124,3 +124,10 @@ final createDiagnosisProvider =
     return diagnosis;
   },
 );
+
+/// Provider for fetching a single diagnosis record by ID
+final singleDiagnosisProvider =
+    FutureProvider.family<DiagnosisModel, String>((ref, id) async {
+  final repository = ref.watch(diagnosisRepositoryProvider);
+  return await repository.getDiagnosisById(id);
+});
