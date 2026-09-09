@@ -53,6 +53,8 @@ class EvapotranspirationCard extends StatelessWidget {
                     Text(
                       l10n.translate('evapotranspiration_title'),
                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     Text(
                       l10n.translate('evapotranspiration_subtitle'),
@@ -60,10 +62,13 @@ class EvapotranspirationCard extends StatelessWidget {
                         fontSize: 11,
                         color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
@@ -77,6 +82,8 @@ class EvapotranspirationCard extends StatelessWidget {
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
@@ -187,6 +194,8 @@ class EvapotranspirationCard extends StatelessWidget {
                 fontWeight: FontWeight.bold,
                 color: color,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 2),
             Text(

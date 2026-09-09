@@ -9,12 +9,210 @@ import '../../../core/l10n/l10n_extension.dart';
 import '../../../core/storage/app_preferences.dart';
 import '../../../core/widgets/agrietech_app_drawer.dart';
 import '../providers/auth_provider.dart';
+import 'verify_phone_dialog.dart';
 
-class ProfileScreen extends ConsumerWidget {
+class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends ConsumerState<ProfileScreen> {
+  void _showEditProfileDialog(BuildContext context, dynamic user) {
+    final nameController = TextEditingController(text: user?.fullName ?? '');
+    final emailController = TextEditingController(text: user?.email ?? '');
+    final kebeleController = TextEditingController(text: user?.kebeleName ?? '');
+    bool isSaving = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setSheetState) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          return SafeArea(
+            child: Container(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+                top: 20,
+                left: 20,
+                right: 20,
+              ),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF132116) : Colors.white,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(Icons.edit_note_rounded, color: Color(0xFF1B5E20), size: 24),
+                          SizedBox(width: 8),
+                          Text('Edit Profile Information', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        ],
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, size: 20),
+                        onPressed: () => Navigator.pop(ctx),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Full Name
+                  const Text('Full Name', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12.5)),
+                  const SizedBox(height: 6),
+                  TextFormField(
+                    controller: nameController,
+                    decoration: InputDecoration(
+                      hintText: 'Your legal name',
+                      prefixIcon: const Icon(Icons.person_outline, size: 18),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Email
+                  const Text('Email Address', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12.5)),
+                  const SizedBox(height: 6),
+                  TextFormField(
+                    controller: emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: InputDecoration(
+                      hintText: 'officer@ethiofarm.et',
+                      prefixIcon: const Icon(Icons.email_outlined, size: 18),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Kebele
+                  const Text('Kebele Name (Village)', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12.5)),
+                  const SizedBox(height: 6),
+                  TextFormField(
+                    controller: kebeleController,
+                    decoration: InputDecoration(
+                      hintText: 'e.g. Kebele 01 / Dobi Korme',
+                      prefixIcon: const Icon(Icons.holiday_village_outlined, size: 18),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      key: const Key('save_profile_button'),
+                      onPressed: isSaving
+                          ? null
+                          : () async {
+                              setSheetState(() => isSaving = true);
+                              try {
+                                await ref.read(authProvider.notifier).updateProfile({
+                                  'fullName': nameController.text.trim(),
+                                  'email': emailController.text.trim().isEmpty ? null : emailController.text.trim(),
+                                  'kebeleName': kebeleController.text.trim().isEmpty ? null : kebeleController.text.trim(),
+                                });
+                                if (context.mounted) {
+                                  Navigator.pop(ctx);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Row(
+                                        children: [
+                                          Icon(Icons.check_circle, color: Colors.white, size: 18),
+                                          SizedBox(width: 8),
+                                          Text('Profile updated successfully!'),
+                                        ],
+                                      ),
+                                      backgroundColor: Color(0xFF1B5E20),
+                                    ),
+                                  );
+                                }
+                              } catch (e) {
+                                setSheetState(() => isSaving = false);
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Failed to update: ${e.toString()}'),
+                                      backgroundColor: const Color(0xFFDC2626),
+                                    ),
+                                  );
+                                }
+                              }
+                            },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF1B5E20),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      child: isSaving
+                          ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                          : const Text('Save Changes', style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _confirmSignOut(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.logout_rounded, color: Color(0xFFDC2626)),
+            SizedBox(width: 10),
+            Text('Sign Out', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          ],
+        ),
+        content: const Text(
+          'Are you sure you want to log out of your EthioFarm agricultural intelligence workspace?',
+          style: TextStyle(fontSize: 13.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFDC2626),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await ref.read(authProvider.notifier).logout();
+              if (context.mounted) {
+                context.go('/login');
+              }
+            },
+            child: const Text('Sign Out'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final user = ref.watch(currentUserProvider);
     final currentLang = ref.watch(appLocaleProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -22,7 +220,8 @@ class ProfileScreen extends ConsumerWidget {
     final userName = user?.fullName ?? 'Agricultural User';
     final userRole = RoleUtils.getRoleDisplayName(user?.role);
     final userPhone = user?.phone ?? 'Not registered';
-    final userEmail = user?.email ?? 'None';
+    final userEmail = user?.email ?? 'None registered';
+    final isPhoneVerified = user?.isPhoneVerified ?? false;
 
     return Scaffold(
       backgroundColor: isDark ? AppTheme.surfaceDark : AppTheme.surfaceLight,
@@ -33,12 +232,20 @@ class ProfileScreen extends ConsumerWidget {
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         elevation: 0,
+        actions: [
+          IconButton(
+            key: const Key('edit_profile_button'),
+            icon: const Icon(Icons.edit_outlined),
+            tooltip: 'Edit Profile Details',
+            onPressed: () => _showEditProfileDialog(context, user),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenPadding, vertical: AppSpacing.md),
         child: Column(
           children: [
-            // ─── User Profile Card ──────────────────────────────────────
+            // ─── User Profile Executive Card ─────────────────────────────
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(AppSpacing.lg),
@@ -48,51 +255,74 @@ class ProfileScreen extends ConsumerWidget {
                 boxShadow: [
                   BoxShadow(
                     color: AppTheme.primaryColor.withValues(alpha: 0.25),
-                    blurRadius: 12,
+                    blurRadius: 14,
                     offset: const Offset(0, 4),
                   ),
                 ],
               ),
               child: Column(
                 children: [
-                  Container(
-                    width: 72,
-                    height: 72,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.15),
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white30, width: 2),
-                    ),
-                    child: Center(
-                      child: Text(
-                        userName.isNotEmpty ? userName[0].toUpperCase() : 'U',
-                        style: AppTypography.display.copyWith(
-                          color: Colors.white,
+                  Stack(
+                    children: [
+                      Container(
+                        width: 76,
+                        height: 76,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.18),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
+                        child: Center(
+                          child: Text(
+                            userName.isNotEmpty ? userName[0].toUpperCase() : 'U',
+                            style: AppTypography.display.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: isPhoneVerified ? const Color(0xFF16A34A) : const Color(0xFFF59E0B),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 1.5),
+                          ),
+                          child: Icon(
+                            isPhoneVerified ? Icons.verified : Icons.warning_amber_rounded,
+                            size: 14,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   Text(
                     userName,
                     style: AppTypography.titleLarge.copyWith(
                       color: Colors.white,
+                      fontWeight: FontWeight.bold,
                     ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 6),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 5),
+                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 5),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.15),
                       borderRadius: AppRadii.roundedXl,
                     ),
                     child: InkWell(
-                      onTap: () => _showRoleSwitchDialog(context, ref, user?.role.name ?? 'FARMER'),
+                      onTap: () => context.push('/apply-role'),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.verified_user_rounded, color: Color(0xFF4ADE80), size: 14),
+                          const Icon(Icons.shield_rounded, color: Color(0xFF4ADE80), size: 14),
                           const SizedBox(width: 6),
                           Text(
                             userRole,
@@ -101,8 +331,8 @@ class ProfileScreen extends ConsumerWidget {
                               fontWeight: FontWeight.w600,
                             ),
                           ),
-                          const SizedBox(width: 4),
-                          const Icon(Icons.edit_outlined, color: Colors.white70, size: 12),
+                          const SizedBox(width: 6),
+                          const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white70, size: 10),
                         ],
                       ),
                     ),
@@ -115,15 +345,60 @@ class ProfileScreen extends ConsumerWidget {
             // ─── Contact Information ────────────────────────────────────
             _buildSection(
               context,
-              title: 'Account Information',
-              icon: Icons.person_outline_rounded,
+              title: 'Account & Verification',
+              icon: Icons.verified_user_outlined,
               isDark: isDark,
               children: [
-                _buildInfoRow(
-                  icon: Icons.phone_android_rounded,
-                  label: context.tr('phoneNumber'),
-                  value: userPhone,
-                  isDark: isDark,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: _buildInfoRow(
+                        icon: Icons.phone_android_rounded,
+                        label: context.tr('phoneNumber'),
+                        value: userPhone,
+                        isDark: isDark,
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: isPhoneVerified
+                            ? const Color(0xFF16A34A).withValues(alpha: 0.12)
+                            : const Color(0xFFD97706).withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: InkWell(
+                        onTap: isPhoneVerified
+                            ? null
+                            : () async {
+                                final verified = await VerifyPhoneDialog.show(context, phone: userPhone);
+                                if (verified == true) {
+                                  ref.read(authProvider.notifier).refreshProfile();
+                                }
+                              },
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              isPhoneVerified ? Icons.check_circle : Icons.sms_failed_rounded,
+                              size: 13,
+                              color: isPhoneVerified ? const Color(0xFF16A34A) : const Color(0xFFD97706),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              isPhoneVerified ? 'Verified' : 'Verify OTP',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: isPhoneVerified ? const Color(0xFF16A34A) : const Color(0xFFD97706),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const Divider(height: 20),
                 _buildInfoRow(
@@ -146,24 +421,33 @@ class ProfileScreen extends ConsumerWidget {
                 _buildInfoRow(
                   icon: Icons.public_rounded,
                   label: 'Region',
-                  value: user?.region?.name ?? 'National Scope',
+                  value: user?.region?.name ?? 'National Scope (ኢትዮጵያ)',
                   isDark: isDark,
                 ),
-                if (user?.zone != null) ...[
+                if (user?.zone != null || user?.zoneId != null) ...[
                   const Divider(height: 20),
                   _buildInfoRow(
                     icon: Icons.map_outlined,
-                    label: 'Zone',
-                    value: user!.zone!.name,
+                    label: 'Administrative Zone',
+                    value: user?.zone?.name ?? user?.zoneId ?? 'Regional Desk',
                     isDark: isDark,
                   ),
                 ],
-                if (user?.woreda != null) ...[
+                if (user?.woreda != null || user?.woredaId != null) ...[
                   const Divider(height: 20),
                   _buildInfoRow(
                     icon: Icons.holiday_village_outlined,
-                    label: 'Woreda',
-                    value: user!.woreda!.name,
+                    label: 'Woreda (District)',
+                    value: user?.woreda?.name ?? user?.woredaId ?? 'District Scope',
+                    isDark: isDark,
+                  ),
+                ],
+                if (user?.kebeleName != null && user!.kebeleName!.isNotEmpty) ...[
+                  const Divider(height: 20),
+                  _buildInfoRow(
+                    icon: Icons.home_work_outlined,
+                    label: 'Kebele (Village)',
+                    value: user.kebeleName!,
                     isDark: isDark,
                   ),
                 ],
@@ -202,6 +486,7 @@ class ProfileScreen extends ConsumerWidget {
                   onChanged: (val) {
                     if (val != null) {
                       ref.read(appLocaleProvider.notifier).state = val;
+                      ref.read(authProvider.notifier).updateProfile({'preferredLang': val});
                     }
                   },
                 ),
@@ -251,42 +536,74 @@ class ProfileScreen extends ConsumerWidget {
               icon: Icons.security_rounded,
               isDark: isDark,
               children: [
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF2563EB).withValues(alpha: 0.12),
-                      borderRadius: AppRadii.roundedSm,
-                    ),
-                    child: const Icon(Icons.assignment_ind_rounded, color: Color(0xFF2563EB), size: 20),
-                  ),
-                  title: Text(
-                    context.tr('applyForRole'),
-                    style: AppTypography.subtitle,
-                  ),
-                  subtitle: Text('Upgrade jurisdictional administrative scope', style: AppTypography.caption.copyWith(color: Colors.grey)),
-                  trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.grey),
+                InkWell(
                   onTap: () => context.push('/apply-role'),
+                  borderRadius: AppRadii.roundedSm,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF2563EB).withValues(alpha: 0.12),
+                            borderRadius: AppRadii.roundedSm,
+                          ),
+                          child: const Icon(Icons.assignment_ind_rounded, color: Color(0xFF2563EB), size: 20),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                context.tr('applyForRole'),
+                                style: AppTypography.subtitle,
+                              ),
+                              const SizedBox(height: 2),
+                              Text('Apply for Woreda, Zonal, Regional, or Researcher role', style: AppTypography.caption.copyWith(color: Colors.grey)),
+                            ],
+                          ),
+                        ),
+                        const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.grey),
+                      ],
+                    ),
+                  ),
                 ),
                 const Divider(height: 16),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF64748B).withValues(alpha: 0.12),
-                      borderRadius: AppRadii.roundedSm,
-                    ),
-                    child: const Icon(Icons.lock_outline_rounded, color: Color(0xFF64748B), size: 20),
-                  ),
-                  title: Text(
-                    context.tr('changePassword'),
-                    style: AppTypography.subtitle,
-                  ),
-                  subtitle: Text('Update login authentication credentials', style: AppTypography.caption.copyWith(color: Colors.grey)),
-                  trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.grey),
+                InkWell(
                   onTap: () => context.push('/change-password'),
+                  borderRadius: AppRadii.roundedSm,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF64748B).withValues(alpha: 0.12),
+                            borderRadius: AppRadii.roundedSm,
+                          ),
+                          child: const Icon(Icons.lock_outline_rounded, color: Color(0xFF64748B), size: 20),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                context.tr('changePassword'),
+                                style: AppTypography.subtitle,
+                              ),
+                              const SizedBox(height: 2),
+                              Text('Update authentication password and credentials', style: AppTypography.caption.copyWith(color: Colors.grey)),
+                            ],
+                          ),
+                        ),
+                        const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.grey),
+                      ],
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -297,12 +614,7 @@ class ProfileScreen extends ConsumerWidget {
               width: double.infinity,
               height: 48,
               child: OutlinedButton.icon(
-                onPressed: () async {
-                  await ref.read(authProvider.notifier).logout();
-                  if (context.mounted) {
-                    context.go('/login');
-                  }
-                },
+                onPressed: () => _confirmSignOut(context),
                 icon: const Icon(Icons.logout_rounded, color: AppTheme.errorColor),
                 label: Text(
                   context.tr('signOut'),
@@ -398,107 +710,6 @@ class ProfileScreen extends ConsumerWidget {
           ),
         ),
       ],
-    );
-  }
-
-  void _showRoleSwitchDialog(BuildContext context, WidgetRef ref, String currentRole) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (ctx) {
-        final roles = [
-          {'id': 'FARMER', 'name': 'Farmer / አርሶ አደር', 'desc': 'Smallholder crop producer and livestock farmer'},
-          {'id': 'DEVELOPMENT_AGENT', 'name': 'Development Agent (DA)', 'desc': 'Frontline kebele extension advisor'},
-          {'id': 'WOREDA_OFFICER', 'name': 'Woreda Agricultural Officer', 'desc': 'Woreda agricultural desk officer'},
-          {'id': 'ZONAL_OFFICER', 'name': 'Zonal Agricultural Officer', 'desc': 'Zonal directorate officer coordinating woredas'},
-          {'id': 'REGIONAL_OFFICER', 'name': 'Regional Agricultural Officer', 'desc': 'Regional agricultural bureau directorate officer'},
-          {'id': 'RESEARCHER', 'name': 'Agronomist / Researcher', 'desc': 'Soil and agro-climatic researcher'},
-        ];
-
-        return SafeArea(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(ctx).size.height * 0.85,
-            ),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Switch Platform Role', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
-                      IconButton(
-                        icon: const Icon(Icons.close, size: 20),
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                        onPressed: () => Navigator.of(ctx).pop(),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-                  ...roles.map((r) {
-                    final isSelected = currentRole.toUpperCase() == r['id'];
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      decoration: BoxDecoration(
-                        color: isSelected ? const Color(0xFFECFDF5) : Colors.transparent,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: isSelected ? const Color(0xFF1B5E20) : Colors.grey.shade300,
-                          width: isSelected ? 1.5 : 1.0,
-                        ),
-                      ),
-                      child: ListTile(
-                        dense: true,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        title: Text(
-                          r['name']!,
-                          style: TextStyle(
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                            fontSize: 13.5,
-                            color: isSelected ? const Color(0xFF065F46) : Colors.black87,
-                          ),
-                        ),
-                        subtitle: Text(
-                          r['desc']!,
-                          style: TextStyle(fontSize: 11.5, color: Colors.grey.shade600),
-                        ),
-                        trailing: isSelected ? const Icon(Icons.check_circle, color: Color(0xFF1B5E20), size: 18) : null,
-                        onTap: () async {
-                          Navigator.of(ctx).pop();
-                          try {
-                            await ref.read(authProvider.notifier).updateUserRole(r['id']!);
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Role updated to ${r['name']}'),
-                                  backgroundColor: const Color(0xFF1B5E20),
-                                ),
-                              );
-                            }
-                          } catch (e) {
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Failed to update role: $e'), backgroundColor: Colors.red),
-                              );
-                            }
-                          }
-                        },
-                      ),
-                    );
-                  }),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
     );
   }
 }

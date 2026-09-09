@@ -134,49 +134,60 @@ class _CurrentWeatherHeroCardState extends State<CurrentWeatherHeroCard> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (widget.locationName != null && widget.locationName!.isNotEmpty)
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 2),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(Icons.location_on_rounded, size: 13, color: Colors.white70),
-                                    const SizedBox(width: 3),
-                                    Text(
-                                      widget.locationName!,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 13.5,
-                                        fontWeight: FontWeight.w600,
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (widget.locationName != null && widget.locationName!.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 2),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.location_on_rounded, size: 13, color: Colors.white70),
+                                      const SizedBox(width: 3),
+                                      Flexible(
+                                        child: Text(
+                                          widget.locationName!,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 13.5,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
+                              Text(
+                                l10n.translate('today'),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: -0.2,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                            Text(
-                              l10n.translate('today'),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: -0.2,
+                              Text(
+                                displayForecast.date,
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.8),
+                                  fontSize: 12.5,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                            ),
-                            Text(
-                              displayForecast.date,
-                              style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.8),
-                                fontSize: 12.5,
-                              ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
+                        const SizedBox(width: 8),
                         // Localized Condition Badge
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                           decoration: BoxDecoration(
                             color: Colors.black.withValues(alpha: 0.45),
                             borderRadius: AppRadii.roundedPill,
@@ -194,12 +205,17 @@ class _CurrentWeatherHeroCardState extends State<CurrentWeatherHeroCard> {
                                 color: activeCondition.accentColor,
                               ),
                               const SizedBox(width: 6),
-                              Text(
-                                activeCondition.getLocalizedName(lang),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12.5,
-                                  fontWeight: FontWeight.bold,
+                              ConstrainedBox(
+                                constraints: const BoxConstraints(maxWidth: 110),
+                                child: Text(
+                                  activeCondition.getLocalizedName(lang),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                             ],
@@ -207,53 +223,58 @@ class _CurrentWeatherHeroCardState extends State<CurrentWeatherHeroCard> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: AppSpacing.md),
+                    const SizedBox(height: AppSpacing.lg),
 
-                    // Main Temperature & Weather Icon
+                    // Main Temperature & Icon Hero Centerpiece
                     Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  '${displayForecast.temperature.toStringAsFixed(0)}°',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 64,
-                                    fontWeight: FontWeight.w200,
-                                    letterSpacing: -3,
-                                    height: 1.0,
-                                  ),
-                                ),
-                                const Padding(
-                                  padding: EdgeInsets.only(top: 8),
-                                  child: Text(
-                                    'C',
-                                    style: TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 22,
-                                      fontWeight: FontWeight.w400,
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Massive Temperature Value
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '${displayForecast.temperature.round()}°',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 68,
+                                      fontWeight: FontWeight.w200,
+                                      letterSpacing: -3,
+                                      height: 1.0,
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            // High / Low Span
-                            Text(
-                              'H: ${displayForecast.temperatureMax.toStringAsFixed(0)}°   L: ${displayForecast.temperatureMin.toStringAsFixed(0)}°',
-                              style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.9),
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
+                                  const Padding(
+                                    padding: EdgeInsets.only(top: 8),
+                                    child: Text(
+                                      'C',
+                                      style: TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.w400,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                          ],
+                              const SizedBox(height: 4),
+                              // High / Low Span
+                              Text(
+                                'H: ${displayForecast.temperatureMax.toStringAsFixed(0)}°   L: ${displayForecast.temperatureMin.toStringAsFixed(0)}°',
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.9),
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
                         ),
 
                         // Prominent Weather Emblem with Glow
@@ -306,11 +327,15 @@ class _CurrentWeatherHeroCardState extends State<CurrentWeatherHeroCard> {
                             ),
                           ),
                           const SizedBox(width: 6),
-                          Text(
-                            '•  ${displayForecast.getFeelsLikeSummary(lang)}',
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.8),
-                              fontSize: 11.5,
+                          Flexible(
+                            child: Text(
+                              '•  ${displayForecast.getFeelsLikeSummary(lang)}',
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.8),
+                                fontSize: 11.5,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],

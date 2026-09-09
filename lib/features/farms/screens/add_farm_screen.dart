@@ -801,6 +801,14 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
                           options: MapOptions(
                             initialCenter: LatLng(_latitude, _longitude),
                             initialZoom: 10.0,
+                            minZoom: 5.6,
+                            maxZoom: 18.0,
+                            cameraConstraint: CameraConstraint.containCenter(
+                              bounds: LatLngBounds(
+                                const LatLng(3.2, 32.8),
+                                const LatLng(15.2, 48.2),
+                              ),
+                            ),
                             onTap: _onMapPointTapped,
                           ),
                           children: [

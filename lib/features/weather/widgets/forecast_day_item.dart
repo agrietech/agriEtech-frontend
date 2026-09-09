@@ -28,13 +28,13 @@ class ForecastDayItem extends StatelessWidget {
     final cond = day.conditionData;
 
     return AppSurfaceCard(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       margin: const EdgeInsets.only(bottom: AppSpacing.xs),
       child: Row(
         children: [
           // Day Name & Date
           SizedBox(
-            width: 72,
+            width: 54,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
@@ -43,18 +43,22 @@ class ForecastDayItem extends StatelessWidget {
                   isToday ? l10n.translate('today') : _formatDay(day.parsedDate),
                   style: TextStyle(
                     fontWeight: isToday ? FontWeight.bold : FontWeight.w600,
-                    fontSize: 13.5,
+                    fontSize: 13,
                     color: isToday
                         ? AppTheme.primaryColor
                         : (isDark ? Colors.white : const Color(0xFF0F172A)),
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 Text(
                   '${day.parsedDate.day}/${day.parsedDate.month}',
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: 10.5,
                     color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
@@ -62,8 +66,8 @@ class ForecastDayItem extends StatelessWidget {
 
           // Weather Condition Icon Badge with ambient condition tint
           Container(
-            width: 36,
-            height: 36,
+            width: 32,
+            height: 32,
             decoration: BoxDecoration(
               color: cond.accentColor.withValues(alpha: isDark ? 0.22 : 0.12),
               borderRadius: AppRadii.roundedSm,
@@ -71,14 +75,14 @@ class ForecastDayItem extends StatelessWidget {
             child: Icon(
               cond.icon,
               color: cond.accentColor,
-              size: 20,
+              size: 18,
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 6),
 
           // Rain Probability & Volume / Condition Badge
           SizedBox(
-            width: 66,
+            width: 52,
             child: (day.precipitationProbability >= 15.0 || day.rainfall > 0.2)
                 ? Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -89,30 +93,36 @@ class ForecastDayItem extends StatelessWidget {
                         children: [
                           const Icon(
                             Icons.water_drop_rounded,
-                            size: 13,
+                            size: 12,
                             color: Color(0xFF0284C7),
                           ),
                           const SizedBox(width: 2),
-                          Text(
-                            '${day.precipitationProbability.toStringAsFixed(0)}%',
-                            style: const TextStyle(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF0284C7),
+                          Flexible(
+                            child: Text(
+                              '${day.precipitationProbability.toStringAsFixed(0)}%',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF0284C7),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
                       ),
                       if (day.rainfall > 0.4)
                         Padding(
-                          padding: const EdgeInsets.only(left: 15),
+                          padding: const EdgeInsets.only(left: 14),
                           child: Text(
-                            '${day.rainfall.toStringAsFixed(1)} mm',
+                            '${day.rainfall.toStringAsFixed(1)}m',
                             style: TextStyle(
-                              fontSize: 9.5,
+                              fontSize: 9,
                               fontWeight: FontWeight.w500,
                               color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                     ],
@@ -120,47 +130,51 @@ class ForecastDayItem extends StatelessWidget {
                 : Text(
                     cond.getLocalizedName(lang),
                     style: TextStyle(
-                      fontSize: 10.5,
+                      fontSize: 10,
                       color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 6),
 
           // Min Temperature
           SizedBox(
-            width: 26,
+            width: 24,
             child: Text(
               '${day.temperatureMin.toStringAsFixed(0)}°',
               textAlign: TextAlign.right,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: 12.5,
                 fontWeight: FontWeight.w600,
                 color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 6),
 
           // Proportional Continuous Temperature Range Bar
           Expanded(
             child: _buildTemperatureRangeBar(isDark: isDark),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 6),
 
           // Max Temperature
           SizedBox(
-            width: 26,
+            width: 24,
             child: Text(
               '${day.temperatureMax.toStringAsFixed(0)}°',
               textAlign: TextAlign.left,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: 12.5,
                 fontWeight: FontWeight.bold,
                 color: isDark ? Colors.white : const Color(0xFF0F172A),
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],

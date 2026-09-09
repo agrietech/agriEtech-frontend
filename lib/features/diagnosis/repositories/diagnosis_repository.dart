@@ -87,6 +87,34 @@ class DiagnosisRepository {
     }
   }
 
+  /// Get single diagnosis by ID
+  Future<DiagnosisModel> getDiagnosisById(String id) async {
+    try {
+      AppLogger.info('Fetching diagnosis by ID', {'diagnosisId': id});
+
+      final response = await _dioClient.get('${ApiConstants.diseaseDiagnosis}/$id');
+
+      final raw = response.data is Map && response.data['data'] != null
+          ? response.data['data'] as Map<String, dynamic>
+          : response.data as Map<String, dynamic>;
+      final map = Map<String, dynamic>.from(raw);
+      map['imageUrl'] = map['imageUrl'] ?? map['image'] ?? '';
+      map['createdAt'] = map['createdAt'] ?? DateTime.now().toIso8601String();
+
+      final diagnosis = DiagnosisModel.fromJson(map);
+      AppLogger.success('Fetched diagnosis details successfully', {'diagnosisId': id});
+      return diagnosis;
+    } on DioException catch (e) {
+      AppLogger.error('Failed to fetch diagnosis $id', e);
+      throw ErrorHandler.handleError(e);
+    } catch (e) {
+      AppLogger.error('Unexpected error fetching diagnosis $id', e);
+      throw const UnknownError(
+        message: 'Failed to fetch diagnosis details',
+      );
+    }
+  }
+
   /// Get diagnoses for a specific farm
   Future<List<DiagnosisModel>> getFarmDiagnoses(String farmId) async {
     try {

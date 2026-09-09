@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:agrietech/core/widgets/agrietech_logo.dart';
+import 'package:EthioFarm/core/widgets/agrietech_logo.dart';
 
 void main() {
   group('EthioFarmLogo Widget Tests', () {

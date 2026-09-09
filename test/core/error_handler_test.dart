@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:agrietech/core/error/app_error.dart';
-import 'package:agrietech/core/error/error_handler.dart';
+import 'package:EthioFarm/core/error/app_error.dart';
+import 'package:EthioFarm/core/error/error_handler.dart';
 
 void main() {
   group('AppError - Type Hierarchy & Mapping', () {

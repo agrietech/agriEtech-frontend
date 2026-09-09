@@ -78,7 +78,11 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(l10n.translate('weather_forecast')),
+        title: Text(
+          l10n.translate('weather_forecast'),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
         elevation: 0,
         actions: [
           // Location Selector Action Chip
@@ -103,13 +107,13 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
                     const Icon(Icons.location_on_rounded, size: 14, color: AppTheme.primaryColor),
                     const SizedBox(width: 4),
                     ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 120),
+                      constraints: const BoxConstraints(maxWidth: 95),
                       child: Text(
                         weatherState.selectedWoredaName ?? 'Addis Ababa',
                         overflow: TextOverflow.ellipsis,
                         maxLines: 1,
                         style: const TextStyle(
-                          fontSize: 12.5,
+                          fontSize: 12,
                           fontWeight: FontWeight.bold,
                           color: AppTheme.primaryColor,
                         ),
@@ -177,9 +181,7 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
-                                      weatherState.dataSources != null && weatherState.dataSources!.isNotEmpty
-                                          ? weatherState.dataSources!
-                                          : 'Open-Meteo High-Res WMO • OpenWeatherMap Live • World Bank Climate Normals',
+                                      'National Meteorological & Agricultural Climatology Telemetry',
                                       style: TextStyle(
                                         fontSize: 11,
                                         height: 1.35,
@@ -267,12 +269,16 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
       children: [
         Icon(icon, size: AppIconSize.md, color: AppTheme.primaryColor),
         const SizedBox(width: AppSpacing.xs),
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            letterSpacing: -0.2,
+        Expanded(
+          child: Text(
+            title,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              letterSpacing: -0.2,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
       ],

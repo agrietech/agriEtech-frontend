@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:agrietech/core/utils/validators.dart';
+import 'package:EthioFarm/core/utils/validators.dart';
 
 void main() {
   group('Validators - Email', () {

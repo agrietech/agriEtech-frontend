@@ -98,6 +98,7 @@ class ApiConstants {
   static const String seismology = '$analytics/seismology';
   static const String soilDegradation = '$analytics/soil-degradation';
   static const String naturalDisasters = '$analytics/natural-disasters';
+  static const String analyticsExport = '$analytics/export';
 
 
 
@@ -134,6 +135,7 @@ class ApiConstants {
   static const String adminOverview = '/admin/overview';
   static const String adminUsers = '/admin/users';
   static String adminUserById(String id) => '/admin/users/$id';
+  static const String adminFarmerAudience = '/admin/farmers/audience';
 
   // 14. Dedicated Weather & Climatology (/weather)
   static const String weather = '/weather';

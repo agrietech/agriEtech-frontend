@@ -17,6 +17,8 @@ import '../../features/farms/screens/farm_detail_screen.dart';
 import '../../features/farms/screens/add_farm_screen.dart';
 import '../../features/alerts/screens/alerts_list_screen.dart';
 import '../../features/alerts/screens/create_alert_screen.dart';
+import '../../features/alerts/screens/alert_detail_screen.dart';
+import '../../features/alerts/models/alert_models.dart';
 import '../../features/risk/screens/risk_map_screen.dart';
 import '../../features/risk/screens/disaster_intelligence_screen.dart';
 import '../../features/risk/screens/seismology_detail_screen.dart';
@@ -29,6 +31,8 @@ import '../../features/analytics/screens/ussd_alert_console_screen.dart';
 
 import '../../features/diagnosis/screens/diagnosis_list_screen.dart';
 import '../../features/diagnosis/screens/create_diagnosis_screen.dart';
+import '../../features/diagnosis/screens/diagnosis_detail_screen.dart';
+import '../../features/diagnosis/models/diagnosis_models.dart';
 import '../../features/sensors/screens/sensors_list_screen.dart';
 import '../../features/sensors/screens/register_sensor_screen.dart';
 import '../../features/weather/screens/weather_screen.dart';
@@ -201,6 +205,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/alerts/create',
         builder: (context, state) => const CreateAlertScreen(),
       ),
+      GoRoute(
+        path: '/alerts/:id',
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          final alert = state.extra is AlertModel ? state.extra as AlertModel : null;
+          return AlertDetailScreen(alertId: id, initialAlert: alert);
+        },
+      ),
 
       // Risk map & Natural Disaster Intelligence routes
       GoRoute(
@@ -262,6 +274,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/create-diagnosis',
         redirect: (context, state) => '/diagnosis/create',
       ),
+      GoRoute(
+        path: '/diagnosis/:id',
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          final diagnosis =
+              state.extra is DiagnosisModel ? state.extra as DiagnosisModel : null;
+          return DiagnosisDetailScreen(
+            diagnosisId: id,
+            initialDiagnosis: diagnosis,
+          );
+        },
+      ),
 
 
       // Sensor routes
@@ -290,6 +314,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/ai-assistant',
         builder: (context, state) => const AiAssistantScreen(),
+      ),
+      GoRoute(
+        path: '/ethiofarm-ai',
+        redirect: (context, state) => '/ai-assistant',
       ),
       GoRoute(
         path: '/analytics',

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/constants/api_constants.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/utils/in_app_audio.dart';
 import '../../../core/l10n/app_localizations.dart';
 import '../providers/ai_voice_provider.dart';
@@ -31,8 +31,6 @@ class _AiAssistantSheetState extends ConsumerState<AiAssistantSheet>
   final FocusNode _focusNode = FocusNode();
   late AnimationController _pulseController;
   bool _isRecording = false;
-  bool _autoSpeak = true;
-  String? _currentlyPlayingKey;
 
   @override
   void initState() {
@@ -58,6 +56,7 @@ class _AiAssistantSheetState extends ConsumerState<AiAssistantSheet>
 
   @override
   void dispose() {
+    ref.read(aiVoiceProvider.notifier).stopSpeaking();
     InAppAudioPlayer.instance.stop();
     _focusNode.dispose();
     _questionController.dispose();
@@ -78,30 +77,43 @@ class _AiAssistantSheetState extends ConsumerState<AiAssistantSheet>
     });
   }
 
-  void _startRecording() {
+  Future<void> _startRecording() async {
     setState(() => _isRecording = true);
+    final started = await ref.read(aiVoiceProvider.notifier).startVoiceRecording();
+    if (!started && mounted) {
+      setState(() => _isRecording = false);
+    }
   }
 
-  void _stopAndSendRecording() {
+  Future<void> _stopAndSendRecording() async {
     if (!_isRecording) return;
     setState(() => _isRecording = false);
 
-    final text = _questionController.text.trim();
-    if (text.isNotEmpty) {
-      _submitQuestion(text);
+    final liveWords = ref.read(aiVoiceProvider).liveTranscript.trim();
+    final typedText = _questionController.text.trim();
+
+    if (liveWords.isNotEmpty) {
+      await ref.read(aiVoiceProvider.notifier).stopVoiceRecordingAndSubmit();
+      _scrollToBottom();
+    } else if (typedText.isNotEmpty) {
+      await ref.read(aiVoiceProvider.notifier).cancelVoiceRecording();
+      _submitQuestion(typedText);
     } else {
+      await ref.read(aiVoiceProvider.notifier).cancelVoiceRecording();
       final lang = ref.read(aiVoiceProvider).language;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            lang == 'am'
-                ? 'ጥያቄዎን ይፃፉ ወይም ከታች ካሉት አማራጮች አንዱን ይምረጡ'
-                : 'Type question or pick topic below',
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              lang == 'am'
+                  ? 'ጥያቄዎን ይናገሩ ወይም ከታች ይፃፉ'
+                  : 'Speak your question or type below',
+            ),
+            duration: const Duration(seconds: 2),
+            backgroundColor: const Color(0xFF2E7D32),
           ),
-          duration: const Duration(seconds: 2),
-          backgroundColor: const Color(0xFF2E7D32),
-        ),
-      );
+        );
+      }
     }
   }
 
@@ -114,53 +126,6 @@ class _AiAssistantSheetState extends ConsumerState<AiAssistantSheet>
 
     await ref.read(aiVoiceProvider.notifier).sendQuestion(text);
     _scrollToBottom();
-
-    if (_autoSpeak) {
-      final state = ref.read(aiVoiceProvider);
-      final lastMsg = state.messages.isNotEmpty ? state.messages.last : null;
-      if (lastMsg != null && !lastMsg.isUser) {
-        _playInAppAudio(lastMsg.aiResponse?.audioUrl, lastMsg.text, lastMsg.timestamp.toString());
-      }
-    }
-  }
-
-  Future<void> _playInAppAudio(String? audioUrl, String text, String messageKey) async {
-    if (_currentlyPlayingKey == messageKey) {
-      InAppAudioPlayer.instance.stop();
-      setState(() => _currentlyPlayingKey = null);
-      return;
-    }
-
-    final lang = ref.read(aiVoiceProvider).language;
-    final clean = text
-        .replaceAll(RegExp(r'[*#_~>]'), '')
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .trim();
-    final sample = clean.length > 220 ? clean.substring(0, 220) : clean;
-    final encodedSample = Uri.encodeComponent(sample);
-    final streamUrl = audioUrl ??
-        '${ApiConstants.baseApiUrl}/ai/tts-stream?text=$encodedSample&lang=$lang';
-
-    setState(() => _currentlyPlayingKey = messageKey);
-
-    await InAppAudioPlayer.instance.playAudioUrl(
-      streamUrl,
-      onComplete: () {
-        if (mounted) setState(() => _currentlyPlayingKey = null);
-      },
-      onError: (_) {
-        if (mounted) {
-          setState(() => _currentlyPlayingKey = null);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(lang == 'am' ? 'የድምፅ መልዕክት እየተጫወተ ነው...' : 'Playing voice advisory...'),
-              backgroundColor: const Color(0xFF2E7D32),
-              duration: const Duration(seconds: 2),
-            ),
-          );
-        }
-      },
-    );
   }
 
   @override
@@ -252,12 +217,12 @@ class _AiAssistantSheetState extends ConsumerState<AiAssistantSheet>
                     // Auto-Speak Toggle
                     IconButton(
                       icon: Icon(
-                        _autoSpeak ? Icons.volume_up_rounded : Icons.volume_off_rounded,
-                        color: _autoSpeak ? const Color(0xFF81C784) : Colors.white60,
+                        aiState.autoSpeak ? Icons.volume_up_rounded : Icons.volume_off_rounded,
+                        color: aiState.autoSpeak ? const Color(0xFF81C784) : Colors.white60,
                         size: 20,
                       ),
                       tooltip: isAmharic ? 'ድምፅ አጫውት' : 'Auto-Speak',
-                      onPressed: () => setState(() => _autoSpeak = !_autoSpeak),
+                      onPressed: () => ref.read(aiVoiceProvider.notifier).setAutoSpeak(!aiState.autoSpeak),
                     ),
                     // Language Switcher
                     Container(
@@ -273,6 +238,14 @@ class _AiAssistantSheetState extends ConsumerState<AiAssistantSheet>
                           _buildLangButton('en', 'EN'),
                         ],
                       ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.open_in_full_rounded, color: Colors.white, size: 18),
+                      tooltip: isAmharic ? 'ሙሉ ማሳያ ክፈት' : 'Open Full Screen',
+                      onPressed: () {
+                        Navigator.pop(context);
+                        context.push('/ai-assistant');
+                      },
                     ),
                   ],
                 ),
@@ -361,9 +334,7 @@ class _AiAssistantSheetState extends ConsumerState<AiAssistantSheet>
 
                       final msg = aiState.messages[index];
                       final isUser = msg.isUser;
-                      final audioUrl = msg.aiResponse?.audioUrl;
-                      final msgKey = msg.timestamp.toString();
-                      final isPlaying = _currentlyPlayingKey == msgKey;
+                      final isPlaying = aiState.isSpeaking && aiState.currentlyPlayingMessageId == msg.id;
 
                       if (isUser) {
                         return Align(
@@ -475,9 +446,9 @@ class _AiAssistantSheetState extends ConsumerState<AiAssistantSheet>
                                             color: const Color(0xFF2E7D32).withValues(alpha: 0.15),
                                             borderRadius: BorderRadius.circular(6),
                                           ),
-                                          child: Text(
-                                            msg.aiResponse?.aiModel ?? 'OpenRouter Live AI',
-                                            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF2E7D32)),
+                                          child: const Text(
+                                            'EthioFarm AI Intelligence',
+                                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF2E7D32)),
                                           ),
                                         ),
                                         if (msg.aiResponse?.isAiOffline == true)
@@ -507,7 +478,10 @@ class _AiAssistantSheetState extends ConsumerState<AiAssistantSheet>
                                       minimumSize: Size.zero,
                                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                     ),
-                                    onPressed: () => _playInAppAudio(audioUrl, msg.text, msgKey),
+                                    onPressed: () {
+                                      HapticFeedback.lightImpact();
+                                      ref.read(aiVoiceProvider.notifier).speakResponse(msg);
+                                    },
                                   ),
                                 ],
                               ),

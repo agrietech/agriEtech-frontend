@@ -642,6 +642,56 @@ class AuthRepository {
     return await _storage.getUserId();
   }
 
+  /// Get my role upgrade requests
+  Future<List<Map<String, dynamic>>> getMyRoleRequests() async {
+    try {
+      final response = await _dioClient.get('${ApiConstants.roleRequests}/my-requests');
+      final rawData = response.data is Map && response.data['data'] != null
+          ? response.data['data']
+          : response.data;
+      if (rawData is List) {
+        return List<Map<String, dynamic>>.from(rawData);
+      }
+      return [];
+    } catch (e) {
+      AppLogger.warning('Failed to get my role requests', e);
+      return [];
+    }
+  }
+
+  /// Submit a role upgrade request
+  Future<Map<String, dynamic>> submitRoleRequest({
+    required String requestedRole,
+    required String reason,
+    String? organizationName,
+    String? staffIdNumber,
+    String? jurisdictionRegion,
+    String? jurisdictionZone,
+    String? jurisdictionWoreda,
+  }) async {
+    try {
+      final response = await _dioClient.post(
+        ApiConstants.roleRequests,
+        data: {
+          'requestedRole': requestedRole,
+          'reason': reason,
+          'justification': reason,
+          if (organizationName != null && organizationName.isNotEmpty) 'organizationName': organizationName,
+          if (staffIdNumber != null && staffIdNumber.isNotEmpty) 'staffIdNumber': staffIdNumber,
+          if (jurisdictionRegion != null && jurisdictionRegion.isNotEmpty) 'jurisdictionRegion': jurisdictionRegion,
+          if (jurisdictionZone != null && jurisdictionZone.isNotEmpty) 'jurisdictionZone': jurisdictionZone,
+          if (jurisdictionWoreda != null && jurisdictionWoreda.isNotEmpty) 'jurisdictionWoreda': jurisdictionWoreda,
+        },
+      );
+      final rawData = response.data is Map && response.data['data'] != null
+          ? response.data['data'] as Map<String, dynamic>
+          : response.data as Map<String, dynamic>;
+      return rawData;
+    } on DioException catch (e) {
+      throw _handleAuthError(e);
+    }
+  }
+
   /// Save device token for push notifications
   Future<void> saveDeviceToken(String token) async {
     try {

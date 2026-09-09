@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:agrietech/core/l10n/app_languages.dart';
-import 'package:agrietech/core/l10n/app_localizations.dart';
+import 'package:EthioFarm/core/l10n/app_languages.dart';
+import 'package:EthioFarm/core/l10n/app_localizations.dart';
 
 void main() {
   /// Keys actually referenced by `en`, the reference table.

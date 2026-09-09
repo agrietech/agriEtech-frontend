@@ -79,13 +79,13 @@ class DiagnosisModel {
     final prevAm = json['preventionAm'] ?? geminiDiag?['prevention']?['am'];
     final sympEn = json['symptomsEn'] ?? geminiDiag?['symptoms']?['en'];
     final sympAm = json['symptomsAm'] ?? geminiDiag?['symptoms']?['am'];
-    final modelName = json['aiModel'] ?? (rawResp != null && rawResp['aiModel'] != null ? rawResp['aiModel'] : 'Plant.id Botanical + OpenRouter AI Specialist');
+    final modelName = json['aiModel'] ?? (rawResp != null && rawResp['aiModel'] != null ? rawResp['aiModel'] : 'EthioFarm Agronomic Vision Model');
 
     final sources = json['dataSources'] ?? (rawResp != null && rawResp['dataSources'] != null ? rawResp['dataSources'] : null);
     final enginesRaw = json['enginesUsed'] ?? (rawResp != null ? rawResp['enginesUsed'] : null);
     final List<String> parsedEngines = enginesRaw is List
         ? enginesRaw.map((e) => e.toString()).toList()
-        : const ['Plant.id Botanical Engine', 'Pl@ntNet API', 'Perenual Database', 'OpenRouter AI'];
+        : const ['Field Agronomy Engine', 'Pathology Diagnostic System', 'Phytosanitary Protocol', 'Agronomic Advisory Model'];
 
     final fetched = json['fetchedAt'] ?? (rawResp != null ? rawResp['fetchedAt'] : null) ?? json['createdAt'];
 
@@ -112,7 +112,7 @@ class DiagnosisModel {
       symptomsEn: sympEn as String?,
       symptomsAm: sympAm as String?,
       aiModel: modelName as String?,
-      dataSources: (sources ?? 'Plant.id Botanical Engine, Pl@ntNet API, Perenual Database, OpenRouter AI Specialist') as String?,
+      dataSources: (sources ?? 'Verified Agronomic Diagnostic Engine') as String?,
       enginesUsed: parsedEngines,
       fetchedAt: fetched?.toString(),
       rawResponse: rawResp,

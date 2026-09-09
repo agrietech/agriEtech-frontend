@@ -507,3 +507,84 @@ class TrendDataPoint {
     if (label != null) 'label': label,
   };
 }
+
+/// Actionable multilingual agronomic advisory model from backend
+class AgronomicAdvisoryDetail {
+  final String id;
+  final String cropType;
+  final String season;
+  final String titleEn;
+  final String? titleAm;
+  final String? titleOm;
+  final String actionEn;
+  final String? actionAm;
+  final String? actionOm;
+  final String urgency;
+  final String category;
+
+  const AgronomicAdvisoryDetail({
+    required this.id,
+    required this.cropType,
+    required this.season,
+    required this.titleEn,
+    this.titleAm,
+    this.titleOm,
+    required this.actionEn,
+    this.actionAm,
+    this.actionOm,
+    required this.urgency,
+    required this.category,
+  });
+
+  factory AgronomicAdvisoryDetail.fromJson(Map<String, dynamic> json) {
+    return AgronomicAdvisoryDetail(
+      id: (json['id'] ?? '').toString(),
+      cropType: (json['cropType'] ?? 'WHEAT').toString(),
+      season: (json['season'] ?? 'MEHER').toString(),
+      titleEn: (json['titleEn'] ?? '').toString(),
+      titleAm: json['titleAm'] as String?,
+      titleOm: json['titleOm'] as String?,
+      actionEn: (json['actionEn'] ?? '').toString(),
+      actionAm: json['actionAm'] as String?,
+      actionOm: json['actionOm'] as String?,
+      urgency: (json['urgency'] ?? 'MEDIUM').toString(),
+      category: (json['category'] ?? 'GENERAL').toString(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'cropType': cropType,
+    'season': season,
+    'titleEn': titleEn,
+    if (titleAm != null) 'titleAm': titleAm,
+    if (titleOm != null) 'titleOm': titleOm,
+    'actionEn': actionEn,
+    if (actionAm != null) 'actionAm': actionAm,
+    if (actionOm != null) 'actionOm': actionOm,
+    'urgency': urgency,
+    'category': category,
+  };
+
+  /// Returns localized title based on language code ('am', 'om', 'en')
+  String localizedTitle(String languageCode) {
+    if (languageCode == 'am' && titleAm != null && titleAm!.isNotEmpty) {
+      return titleAm!;
+    }
+    if (languageCode == 'om' && titleOm != null && titleOm!.isNotEmpty) {
+      return titleOm!;
+    }
+    return titleEn;
+  }
+
+  /// Returns localized action text based on language code ('am', 'om', 'en')
+  String localizedAction(String languageCode) {
+    if (languageCode == 'am' && actionAm != null && actionAm!.isNotEmpty) {
+      return actionAm!;
+    }
+    if (languageCode == 'om' && actionOm != null && actionOm!.isNotEmpty) {
+      return actionOm!;
+    }
+    return actionEn;
+  }
+}

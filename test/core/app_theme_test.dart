@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:agrietech/core/theme/app_theme.dart';
+import 'package:EthioFarm/core/theme/app_theme.dart';
 
 void main() {
   group('AppTheme - Risk Color Mapping', () {

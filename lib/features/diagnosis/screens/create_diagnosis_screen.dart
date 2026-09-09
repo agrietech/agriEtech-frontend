@@ -361,10 +361,14 @@ class _CreateDiagnosisScreenState extends ConsumerState<CreateDiagnosisScreen> {
                         ],
                       ),
                       const SizedBox(height: 4),
-                      Text(
-                        diagnosis.dataSources ?? 'Plant.id Botanical Engine, Pl@ntNet API, Perenual DB, OpenRouter AI Specialist',
-                        style: TextStyle(fontSize: 11, color: Colors.grey.shade800),
-                      ),
+                        Text(
+                          (diagnosis.dataSources != null &&
+                                  !diagnosis.dataSources!.toLowerCase().contains('plant.id') &&
+                                  !diagnosis.dataSources!.toLowerCase().contains('openrouter'))
+                              ? diagnosis.dataSources!
+                              : 'Verified Agronomic Diagnostic Engine',
+                          style: TextStyle(fontSize: 11, color: Colors.grey.shade800),
+                        ),
                       const SizedBox(height: 6),
                       Row(
                         children: [

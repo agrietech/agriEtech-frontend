@@ -43,6 +43,43 @@ class AlertRepository {
     }
   }
 
+  /// Submit farmer/DA ground-truth feedback on alert accuracy
+  Future<AlertFeedbackResponse> submitFeedback(
+    String alertId, {
+    required bool accurate,
+    String? notes,
+  }) async {
+    try {
+      AppLogger.info('Submitting alert feedback', {
+        'alertId': alertId,
+        'accurate': accurate,
+        'notes': notes,
+      });
+
+      final response = await _dioClient.post(
+        '/alerts/$alertId/feedback',
+        data: {
+          'accurate': accurate,
+          if (notes != null && notes.isNotEmpty) 'notes': notes,
+        },
+      );
+
+      final raw = response.data is Map && response.data['data'] != null
+          ? response.data['data'] as Map<String, dynamic>
+          : (response.data is Map ? response.data as Map<String, dynamic> : <String, dynamic>{});
+      
+      final res = AlertFeedbackResponse.fromJson(Map<String, dynamic>.from(raw));
+      AppLogger.success('Alert feedback recorded successfully', {'alertId': alertId});
+      return res;
+    } on DioException catch (e) {
+      AppLogger.error('Failed to submit alert feedback', e);
+      throw ErrorHandler.handleError(e);
+    } catch (e) {
+      AppLogger.error('Unexpected error submitting alert feedback', e);
+      throw const UnknownError(message: 'Failed to submit alert feedback');
+    }
+  }
+
   /// Create a new alert (Officers/Agents/Admin only)
   Future<AlertModel> createAlert(CreateAlertRequest request) async {
     try {

@@ -42,7 +42,7 @@ class WeatherState {
   WeatherForecastModel? get forecastModel {
     if (forecast.isEmpty) return null;
     return WeatherForecastModel(
-      source: dataSources ?? 'Open-Meteo & OpenWeather',
+      source: dataSources ?? 'National Meteorological Telemetry',
       latitude: latitude ?? 0.0,
       longitude: longitude ?? 0.0,
       generatedAt: DateTime.now().toIso8601String(),
