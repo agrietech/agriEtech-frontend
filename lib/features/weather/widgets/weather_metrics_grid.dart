@@ -365,6 +365,8 @@ class WeatherMetricsGrid extends StatelessWidget {
               color: isDark ? Colors.white : const Color(0xFF0F172A),
               letterSpacing: -0.5,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 2),
 

@@ -36,38 +36,46 @@ class RainfallChart extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF0284C7).withValues(alpha: isDark ? 0.25 : 0.12),
-                      borderRadius: AppRadii.roundedPill,
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.water_drop_rounded, size: 12, color: Color(0xFF0284C7)),
-                        const SizedBox(width: 4),
-                        Text(
+              Flexible(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0284C7).withValues(alpha: isDark ? 0.25 : 0.12),
+                    borderRadius: AppRadii.roundedPill,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.water_drop_rounded, size: 12, color: Color(0xFF0284C7)),
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
                           '7-Day Total: ${totalRain.toStringAsFixed(1)} mm',
                           style: const TextStyle(
-                            fontSize: 11.5,
+                            fontSize: 11,
                             fontWeight: FontWeight.bold,
                             color: Color(0xFF0284C7),
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
-              Text(
-                '$rainyDaysCount rainy ${rainyDaysCount == 1 ? 'day' : 'days'} expected',
-                style: TextStyle(
-                  fontSize: 11.5,
-                  color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
-                  fontWeight: FontWeight.w500,
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  '$rainyDaysCount rainy ${rainyDaysCount == 1 ? 'day' : 'days'} expected',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  textAlign: TextAlign.right,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],

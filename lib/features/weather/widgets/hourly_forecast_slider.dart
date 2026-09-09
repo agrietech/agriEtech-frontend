@@ -39,7 +39,7 @@ class HourlyForecastSlider extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.itemGap),
         SizedBox(
-          height: 125,
+          height: 146,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
@@ -51,8 +51,8 @@ class HourlyForecastSlider extends StatelessWidget {
               final cond = item.conditionData;
 
               return Container(
-                width: 72,
-                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+                width: 74,
+                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
                 decoration: BoxDecoration(
                   color: isFirst
                       ? AppTheme.primaryColor.withValues(alpha: isDark ? 0.25 : 0.12)
@@ -83,37 +83,45 @@ class HourlyForecastSlider extends StatelessWidget {
                         fontWeight: isFirst ? FontWeight.bold : FontWeight.w500,
                         color: isFirst ? AppTheme.primaryColor : (isDark ? Colors.white70 : Colors.black87),
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     Icon(
                       cond.icon,
-                      size: 26,
+                      size: 24,
                       color: cond.accentColor,
                     ),
-                    Text(
-                      '${item.temperatureC.round()}°',
-                      style: const TextStyle(
-                        fontSize: 14.5,
-                        fontWeight: FontWeight.bold,
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        '${item.temperatureC.round()}°',
+                        style: const TextStyle(
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                     if (item.precipitationProbability > 5)
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.water_drop_rounded, size: 10, color: Color(0xFF0284C7)),
-                          const SizedBox(width: 2),
-                          Text(
-                            '${item.precipitationProbability.round()}%',
-                            style: const TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF0284C7),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.water_drop_rounded, size: 10, color: Color(0xFF0284C7)),
+                            const SizedBox(width: 2),
+                            Text(
+                              '${item.precipitationProbability.round()}%',
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF0284C7),
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       )
                     else
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 14),
                   ],
                 ),
               );
