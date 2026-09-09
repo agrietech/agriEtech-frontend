@@ -1,3 +1,5 @@
+import 'dart:ui' show FlutterView, PlatformDispatcher;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -5,9 +7,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'core/config/env.dart';
 import 'core/utils/logger.dart';
+import 'core/utils/responsive.dart';
 import 'core/services/notification_service.dart';
+import 'core/storage/app_preferences.dart';
 import 'app.dart';
 
 /// Background message handler (must be top-level)
@@ -58,10 +63,37 @@ void main() async {
 
     // Set preferred orientations and system UI overlay (Mobile only)
     if (!kIsWeb) {
-      await SystemChrome.setPreferredOrientations([
-        DeviceOrientation.portraitUp,
-        DeviceOrientation.portraitDown,
-      ]);
+      // Lock rotation on phones only; tablets and desktop are free to rotate.
+      // This runs before the first frame, so there is no BuildContext yet and
+      // metrics come from the platform view directly.
+      //
+      // If the engine has not reported metrics yet (physicalSize still zero on
+      // a cold start) we keep the historical portrait lock rather than guess,
+      // so the fallback is never worse than the previous behaviour.
+      final FlutterView? view = PlatformDispatcher.instance.implicitView;
+      final Size physical = view?.physicalSize ?? Size.zero;
+      final bool metricsUnavailable = physical.isEmpty;
+      final double shortestSide =
+          metricsUnavailable ? 0 : physical.shortestSide / view!.devicePixelRatio;
+      final bool isPhone =
+          metricsUnavailable || shortestSide < Breakpoints.phoneShortestSide;
+
+      if (metricsUnavailable) {
+        AppLogger.warning(
+          'Window metrics unavailable at startup - defaulting to portrait lock',
+        );
+      }
+
+      await SystemChrome.setPreferredOrientations(
+        isPhone
+            ? const [DeviceOrientation.portraitUp, DeviceOrientation.portraitDown]
+            : const [
+                DeviceOrientation.portraitUp,
+                DeviceOrientation.portraitDown,
+                DeviceOrientation.landscapeLeft,
+                DeviceOrientation.landscapeRight,
+              ],
+      );
 
       SystemChrome.setSystemUIOverlayStyle(
         const SystemUiOverlayStyle(
@@ -71,11 +103,24 @@ void main() async {
       );
     }
 
-    AppLogger.info('AgriEtech app starting...');
+    // Restore user preferences (language, theme) before the first frame so the
+    // app never flashes English/system-theme before switching.
+    SharedPreferences? prefs;
+    try {
+      prefs = await SharedPreferences.getInstance();
+      AppLogger.info('Preferences loaded');
+    } catch (e) {
+      AppLogger.warning('SharedPreferences unavailable - using session defaults', e);
+    }
+
+    AppLogger.info('EthioFarm app starting...');
 
     runApp(
-      const ProviderScope(
-        child: AgriEtechApp(),
+      ProviderScope(
+        overrides: [
+          if (prefs != null) sharedPreferencesProvider.overrideWithValue(prefs),
+        ],
+        child: const EthioFarmApp(),
       ),
     );
   } catch (e, stackTrace) {

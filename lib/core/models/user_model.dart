@@ -1,11 +1,13 @@
 /// User and authentication data models (pure Dart without Freezed)
 library user_model;
 
-/// User roles enumeration
+/// User roles enumeration across 1 National Admin + 6 Roles
 enum UserRole {
   farmer('FARMER'),
   developmentAgent('DEVELOPMENT_AGENT'),
   woredaOfficer('WOREDA_OFFICER'),
+  zonalOfficer('ZONAL_OFFICER'),
+  regionalOfficer('REGIONAL_OFFICER'),
   researcher('RESEARCHER'),
   admin('ADMIN');
 
@@ -16,16 +18,25 @@ enum UserRole {
     if (role == null) return UserRole.farmer;
     final upper = role.toUpperCase().replaceAll('-', '_').trim();
     switch (upper) {
+      case 'REGIONAL_OFFICER':
+      case 'REGIONAL_ADMIN':
+        return UserRole.regionalOfficer;
+      case 'ZONAL_OFFICER':
+      case 'ZONE_OFFICER':
+        return UserRole.zonalOfficer;
       case 'DEVELOPMENT_AGENT':
       case 'AGENT':
+      case 'DA':
         return UserRole.developmentAgent;
       case 'WOREDA_OFFICER':
       case 'OFFICER':
         return UserRole.woredaOfficer;
       case 'RESEARCHER':
+      case 'AGRONOMIST':
         return UserRole.researcher;
       case 'ADMIN':
       case 'ADMINISTRATOR':
+      case 'NATIONAL_ADMIN':
         return UserRole.admin;
       case 'FARMER':
       default:
@@ -43,11 +54,19 @@ class UserModel {
   final String? email;
   final String fullName;
   final UserRole role;
+  final String? regionId;
+  final String? zoneId;
   final String? woredaId;
+  final String? kebeleId;
+  final String? kebeleName;
+  final RegionInfo? region;
+  final ZoneInfo? zone;
   final WoredaInfo? woreda;
+  final KebeleInfo? kebele;
   final String? preferredLang;
   final String? deviceToken;
   final bool isActive;
+  final bool isPhoneVerified;
   final DateTime? lastLoginAt;
   final DateTime? createdAt;
   final DateTime? updatedAt;
@@ -58,11 +77,19 @@ class UserModel {
     this.email,
     required this.fullName,
     required this.role,
+    this.regionId,
+    this.zoneId,
     this.woredaId,
+    this.kebeleId,
+    this.kebeleName,
+    this.region,
+    this.zone,
     this.woreda,
+    this.kebele,
     this.preferredLang,
     this.deviceToken,
     this.isActive = true,
+    this.isPhoneVerified = false,
     this.lastLoginAt,
     this.createdAt,
     this.updatedAt,
@@ -80,13 +107,27 @@ class UserModel {
       email: json['email'] as String?,
       fullName: (json['fullName'] ?? json['name'] ?? 'User').toString(),
       role: role,
+      regionId: json['regionId'] as String?,
+      zoneId: json['zoneId'] as String?,
       woredaId: (json['woredaId'] ?? json['woreda']?['id']) as String?,
+      kebeleId: (json['kebeleId'] ?? json['kebele']?['id']) as String?,
+      kebeleName: json['kebeleName'] as String?,
+      region: json['region'] is Map<String, dynamic>
+          ? RegionInfo.fromJson(json['region'] as Map<String, dynamic>)
+          : null,
+      zone: json['zone'] is Map<String, dynamic>
+          ? ZoneInfo.fromJson(json['zone'] as Map<String, dynamic>)
+          : null,
       woreda: json['woreda'] is Map<String, dynamic>
           ? WoredaInfo.fromJson(json['woreda'] as Map<String, dynamic>)
+          : null,
+      kebele: json['kebele'] is Map<String, dynamic>
+          ? KebeleInfo.fromJson(json['kebele'] as Map<String, dynamic>)
           : null,
       preferredLang: json['preferredLang'] as String?,
       deviceToken: json['deviceToken'] as String?,
       isActive: json['isActive'] is bool ? json['isActive'] as bool : true,
+      isPhoneVerified: json['isPhoneVerified'] is bool ? json['isPhoneVerified'] as bool : false,
       lastLoginAt: json['lastLoginAt'] != null
           ? DateTime.tryParse(json['lastLoginAt'].toString())
           : null,
@@ -105,11 +146,19 @@ class UserModel {
     if (email != null) 'email': email,
     'fullName': fullName,
     'role': role.value,
+    if (regionId != null) 'regionId': regionId,
+    if (zoneId != null) 'zoneId': zoneId,
     if (woredaId != null) 'woredaId': woredaId,
+    if (kebeleId != null) 'kebeleId': kebeleId,
+    if (kebeleName != null) 'kebeleName': kebeleName,
+    if (region != null) 'region': region!.toJson(),
+    if (zone != null) 'zone': zone!.toJson(),
     if (woreda != null) 'woreda': woreda!.toJson(),
+    if (kebele != null) 'kebele': kebele!.toJson(),
     if (preferredLang != null) 'preferredLang': preferredLang,
     if (deviceToken != null) 'deviceToken': deviceToken,
     'isActive': isActive,
+    'isPhoneVerified': isPhoneVerified,
     if (lastLoginAt != null) 'lastLoginAt': lastLoginAt!.toIso8601String(),
     if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
     if (updatedAt != null) 'updatedAt': updatedAt!.toIso8601String(),
@@ -121,11 +170,19 @@ class UserModel {
     String? email,
     String? fullName,
     UserRole? role,
+    String? regionId,
+    String? zoneId,
     String? woredaId,
+    String? kebeleId,
+    String? kebeleName,
+    RegionInfo? region,
+    ZoneInfo? zone,
     WoredaInfo? woreda,
+    KebeleInfo? kebele,
     String? preferredLang,
     String? deviceToken,
     bool? isActive,
+    bool? isPhoneVerified,
     DateTime? lastLoginAt,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -136,16 +193,63 @@ class UserModel {
       email: email ?? this.email,
       fullName: fullName ?? this.fullName,
       role: role ?? this.role,
+      regionId: regionId ?? this.regionId,
+      zoneId: zoneId ?? this.zoneId,
       woredaId: woredaId ?? this.woredaId,
+      kebeleId: kebeleId ?? this.kebeleId,
+      kebeleName: kebeleName ?? this.kebeleName,
+      region: region ?? this.region,
+      zone: zone ?? this.zone,
       woreda: woreda ?? this.woreda,
+      kebele: kebele ?? this.kebele,
       preferredLang: preferredLang ?? this.preferredLang,
       deviceToken: deviceToken ?? this.deviceToken,
       isActive: isActive ?? this.isActive,
+      isPhoneVerified: isPhoneVerified ?? this.isPhoneVerified,
       lastLoginAt: lastLoginAt ?? this.lastLoginAt,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
+}
+
+/// Kebele information
+class KebeleInfo {
+  final String id;
+  final String name;
+  final String? woredaId;
+  final double? elevationMeters;
+  final String? agroZone;
+  final String? ftcName;
+
+  const KebeleInfo({
+    required this.id,
+    required this.name,
+    this.woredaId,
+    this.elevationMeters,
+    this.agroZone,
+    this.ftcName,
+  });
+
+  factory KebeleInfo.fromJson(Map<String, dynamic> json) {
+    return KebeleInfo(
+      id: (json['id'] ?? '').toString(),
+      name: (json['name'] ?? json['nameEn'] ?? json['nameAm'] ?? '').toString(),
+      woredaId: json['woredaId'] as String?,
+      elevationMeters: json['elevationMeters'] != null ? (json['elevationMeters'] as num).toDouble() : null,
+      agroZone: json['agroZone'] as String?,
+      ftcName: json['ftcName'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    if (woredaId != null) 'woredaId': woredaId,
+    if (elevationMeters != null) 'elevationMeters': elevationMeters,
+    if (agroZone != null) 'agroZone': agroZone,
+    if (ftcName != null) 'ftcName': ftcName,
+  };
 }
 
 /// Woreda information
@@ -277,22 +381,30 @@ class LoginResponse {
   final String accessToken;
   final String refreshToken;
   final UserModel user;
+  final bool requiresPhoneVerification;
 
   const LoginResponse({
     required this.accessToken,
     required this.refreshToken,
     required this.user,
+    this.requiresPhoneVerification = false,
   });
 
   factory LoginResponse.fromJson(Map<String, dynamic> json) {
+    final user = UserModel.fromJson(
+      json['user'] is Map<String, dynamic>
+          ? json['user'] as Map<String, dynamic>
+          : (json['data'] is Map<String, dynamic> ? json['data'] as Map<String, dynamic> : json),
+    );
+    final reqPhoneVerify = json['requiresPhoneVerification'] == true ||
+        (json['data'] is Map && (json['data'] as Map)['requiresPhoneVerification'] == true) ||
+        (!user.isPhoneVerified && user.phone.isNotEmpty);
+
     return LoginResponse(
       accessToken: (json['accessToken'] ?? json['token'] ?? '').toString(),
       refreshToken: (json['refreshToken'] ?? '').toString(),
-      user: UserModel.fromJson(
-        json['user'] is Map<String, dynamic>
-            ? json['user'] as Map<String, dynamic>
-            : (json['data'] is Map<String, dynamic> ? json['data'] as Map<String, dynamic> : json),
-      ),
+      user: user,
+      requiresPhoneVerification: reqPhoneVerify,
     );
   }
 
@@ -300,6 +412,7 @@ class LoginResponse {
     'accessToken': accessToken,
     'refreshToken': refreshToken,
     'user': user.toJson(),
+    'requiresPhoneVerification': requiresPhoneVerification,
   };
 }
 
@@ -309,18 +422,34 @@ class RegisterRequest {
   final String password;
   final String fullName;
   final String? email;
+  final String? role;
+  final String? regionId;
+  final String? zoneId;
   final String? woredaId;
+  final String? kebeleId;
+  final String? kebeleName;
   final String? preferredLang;
   final String? deviceToken;
+  final String? organizationName;
+  final String? staffIdNumber;
+  final String? justification;
 
   const RegisterRequest({
     required this.phone,
     required this.password,
     required this.fullName,
     this.email,
+    this.role = 'FARMER',
+    this.regionId,
+    this.zoneId,
     this.woredaId,
+    this.kebeleId,
+    this.kebeleName,
     this.preferredLang,
     this.deviceToken,
+    this.organizationName,
+    this.staffIdNumber,
+    this.justification,
   });
 
   factory RegisterRequest.fromJson(Map<String, dynamic> json) {
@@ -329,9 +458,17 @@ class RegisterRequest {
       password: (json['password'] ?? '').toString(),
       fullName: (json['fullName'] ?? json['name'] ?? '').toString(),
       email: json['email'] as String?,
+      role: (json['role'] as String?) ?? 'FARMER',
+      regionId: json['regionId'] as String?,
+      zoneId: json['zoneId'] as String?,
       woredaId: json['woredaId'] as String?,
+      kebeleId: json['kebeleId'] as String?,
+      kebeleName: json['kebeleName'] as String?,
       preferredLang: json['preferredLang'] as String?,
       deviceToken: json['deviceToken'] as String?,
+      organizationName: json['organizationName'] as String?,
+      staffIdNumber: json['staffIdNumber'] as String?,
+      justification: json['justification'] as String?,
     );
   }
 
@@ -341,10 +478,18 @@ class RegisterRequest {
     'password': password,
     'fullName': fullName,
     'name': fullName,
+    'role': role ?? 'FARMER',
     if (email != null) 'email': email,
+    if (regionId != null) 'regionId': regionId,
+    if (zoneId != null) 'zoneId': zoneId,
     if (woredaId != null) 'woredaId': woredaId,
+    if (kebeleId != null) 'kebeleId': kebeleId,
+    if (kebeleName != null) 'kebeleName': kebeleName,
     if (preferredLang != null) 'preferredLang': preferredLang,
     if (deviceToken != null) 'deviceToken': deviceToken,
+    if (organizationName != null) 'organizationName': organizationName,
+    if (staffIdNumber != null) 'staffIdNumber': staffIdNumber,
+    if (justification != null) 'justification': justification,
   };
 }
 

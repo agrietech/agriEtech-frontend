@@ -1,13 +1,49 @@
+import 'dart:async';
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../../core/models/farm_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/constants/ethiopian_agriculture.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../../../../core/utils/validators.dart';
-import '../providers/farm_provider.dart';
+import 'package:latlong2/latlong.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/validators.dart';
+import '../../../core/constants/api_constants.dart';
+import '../../offline_sync/domain/sync_service.dart';
+import '../../boundaries/providers/boundary_provider.dart';
+import '../../boundaries/models/boundary_models.dart';
+import '../providers/farms_provider.dart';
 
-/// Add Farm Screen with Guaranteed Manual Coordinates, Woreda Presets & GPS Auto-Capture
+class EthiopianCropOption {
+  final String nameEn;
+  final String nameAm;
+  const EthiopianCropOption(this.nameEn, this.nameAm);
+}
+
+class EthiopianCrops {
+  static const List<EthiopianCropOption> allCrops = [
+    EthiopianCropOption('Teff', 'ጤፍ'),
+    EthiopianCropOption('Wheat', 'ስንዴ'),
+    EthiopianCropOption('Maize', 'በቆሎ'),
+    EthiopianCropOption('Barley', 'ገብስ'),
+    EthiopianCropOption('Sorghum', 'ማሽላ'),
+    EthiopianCropOption('Coffee', 'ቡና'),
+    EthiopianCropOption('Sesame', 'ሰሊጥ'),
+    EthiopianCropOption('Chickpeas', 'ሽንብራ'),
+    EthiopianCropOption('Lentils', 'ምስር'),
+    EthiopianCropOption('Faba Bean', 'ባቄላ'),
+    EthiopianCropOption('Enset', 'እንሰት'),
+    EthiopianCropOption('Avocado', 'አቮካዶ'),
+    EthiopianCropOption('Potato', 'ድንች'),
+    EthiopianCropOption('Red Pepper / Berbere', 'ቃሪያ / በርበሬ'),
+    EthiopianCropOption('Garlic', 'ነጭ ሽንኩርት'),
+    EthiopianCropOption('Other (Custom Crop)', 'የተለየ ሰብል'),
+  ];
+}
+
+/// World-Class Enterprise Farm & GIS Plot Registration Screen
 class AddFarmScreen extends ConsumerStatefulWidget {
   const AddFarmScreen({super.key});
 
@@ -18,126 +54,249 @@ class AddFarmScreen extends ConsumerStatefulWidget {
 class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  final _sizeController = TextEditingController();
+  final _sizeController = TextEditingController(text: '1.5');
   final _latController = TextEditingController(text: '8.54000');
   final _lngController = TextEditingController(text: '39.27000');
-  final _additionalCropsController = TextEditingController();
+  final _customCropController = TextEditingController();
+
+  final MapController _miniMapController = MapController();
+
+  // 0: Tap on GIS Map, 1: Woreda Centroid, 2: Direct Coordinates, 3: Auto GPS
+  int _locationMode = 0;
 
   String? _selectedCrop = 'Teff';
-  String? _selectedSoil = 'Vertisol (Black Cotton)';
-  String? _selectedIrrigation = 'Rainfed';
-  String _selectedWoredaPreset = 'Adama Zuria (Oromia)';
+  String? _selectedSoil = 'Vertisol (Black Cotton - ጥቁር አፈር)';
+  String? _selectedIrrigation = 'Rainfed (የዝናብ እርሻ)';
+  String _selectedSlope = 'Flat / Plain (0-2% Slope)';
+
+  DateTime _sowingDate = DateTime.now().subtract(const Duration(days: 14));
+  DateTime _expectedHarvestDate = DateTime.now().add(const Duration(days: 90));
+
+  String _selectedRegion = 'Oromia';
+  String _selectedWoredaId = 'ET040101';
+  String _selectedWoredaName = 'Adama Zuria';
 
   double _latitude = 8.54000;
   double _longitude = 39.27000;
   bool _isLoading = false;
   bool _isGettingLocation = false;
 
-  final Map<String, List<double>> _woredaPresets = {
-    'Adama Zuria (Oromia)': [8.54000, 39.27000],
-    'Bishoftu / Ada\'a (Oromia)': [8.75000, 38.98000],
-    'Lume / Mojo (Oromia)': [8.60000, 39.12000],
-    'Bahir Dar Zuria (Amhara)': [11.59000, 37.39000],
-    'Debre Birhan (Amhara)': [9.68000, 39.53000],
-    'Hawassa Zuria (Sidama)': [7.05000, 38.48000],
-    'Alaba Special Woreda (Central)': [7.31000, 38.09000],
-    'Mekelle / Enderta (Tigray)': [13.49000, 39.47000],
-    'Jigjiga Zuria (Somali)': [9.35000, 42.80000],
-  };
+  bool _hasUnsavedChanges = false;
+  Timer? _draftSaveTimer;
 
   @override
   void initState() {
     super.initState();
-    _latController.text = _latitude.toStringAsFixed(5);
-    _lngController.text = _longitude.toStringAsFixed(5);
+    _loadDraft();
+
+    _nameController.addListener(_onFormChanged);
+    _sizeController.addListener(_onFormChanged);
+
+    _latController.addListener(() {
+      final v = double.tryParse(_latController.text);
+      if (v != null && Validators.isWithinEthiopia(v, _longitude)) {
+        _latitude = v;
+      }
+      _onFormChanged();
+    });
+    _lngController.addListener(() {
+      final v = double.tryParse(_lngController.text);
+      if (v != null && Validators.isWithinEthiopia(_latitude, v)) {
+        _longitude = v;
+      }
+      _onFormChanged();
+    });
+  }
+
+  void _onFormChanged() {
+    if (!_hasUnsavedChanges) {
+      setState(() => _hasUnsavedChanges = true);
+    }
+    _draftSaveTimer?.cancel();
+    _draftSaveTimer = Timer(const Duration(seconds: 2), _saveDraft);
+  }
+
+  Future<void> _saveDraft() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final draft = {
+        'farmName': _nameController.text.trim(),
+        'size': _sizeController.text.trim(),
+        'crop': _selectedCrop,
+        'soil': _selectedSoil,
+        'irrigation': _selectedIrrigation,
+        'latitude': _latitude,
+        'longitude': _longitude,
+        'region': _selectedRegion,
+        'woredaId': _selectedWoredaId,
+        'woredaName': _selectedWoredaName,
+        'updatedAt': DateTime.now().toIso8601String(),
+      };
+      await prefs.setString('agrietech_farm_registration_draft', jsonEncode(draft));
+    } catch (_) {}
+  }
+
+  Future<void> _loadDraft() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString('agrietech_farm_registration_draft');
+      if (raw != null && raw.isNotEmpty) {
+        final Map<String, dynamic> draft = jsonDecode(raw);
+        if (mounted) {
+          setState(() {
+            if (draft['farmName'] != null && (draft['farmName'] as String).isNotEmpty) {
+              _nameController.text = draft['farmName'];
+            }
+            if (draft['size'] != null && (draft['size'] as String).isNotEmpty) {
+              _sizeController.text = draft['size'];
+            }
+            if (draft['crop'] != null) _selectedCrop = draft['crop'];
+            if (draft['soil'] != null) _selectedSoil = draft['soil'];
+            if (draft['irrigation'] != null) _selectedIrrigation = draft['irrigation'];
+            if (draft['latitude'] != null) {
+              _latitude = (draft['latitude'] as num).toDouble();
+              _latController.text = _latitude.toStringAsFixed(5);
+            }
+            if (draft['longitude'] != null) {
+              _longitude = (draft['longitude'] as num).toDouble();
+              _lngController.text = _longitude.toStringAsFixed(5);
+            }
+            if (draft['region'] != null) _selectedRegion = draft['region'];
+            if (draft['woredaId'] != null) _selectedWoredaId = draft['woredaId'];
+            if (draft['woredaName'] != null) _selectedWoredaName = draft['woredaName'];
+          });
+        }
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _clearDraft() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('agrietech_farm_registration_draft');
+    } catch (_) {}
   }
 
   @override
   void dispose() {
+    _draftSaveTimer?.cancel();
+    _nameController.removeListener(_onFormChanged);
+    _sizeController.removeListener(_onFormChanged);
+
     _nameController.dispose();
     _sizeController.dispose();
     _latController.dispose();
     _lngController.dispose();
-    _additionalCropsController.dispose();
+    _customCropController.dispose();
     super.dispose();
   }
 
-  void _applyWoredaPreset(String woredaName) {
-    final coords = _woredaPresets[woredaName];
-    if (coords != null) {
-      setState(() {
-        _selectedWoredaPreset = woredaName;
-        _latitude = coords[0];
-        _longitude = coords[1];
-        _latController.text = _latitude.toStringAsFixed(5);
-        _lngController.text = _longitude.toStringAsFixed(5);
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Coordinates updated from $woredaName preset'),
-          backgroundColor: const Color(0xFF2E7D32),
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    }
+  void _onWoredaSelected(WoredaModel woreda) {
+    setState(() {
+      _selectedWoredaName = woreda.name;
+      _selectedWoredaId = woreda.id;
+      _selectedRegion = woreda.zone?.region?.name ?? 'National Scope';
+      _latitude = woreda.centerLat;
+      _longitude = woreda.centerLng;
+      _latController.text = woreda.centerLat.toStringAsFixed(5);
+      _lngController.text = woreda.centerLng.toStringAsFixed(5);
+    });
+    _miniMapController.move(LatLng(woreda.centerLat, woreda.centerLng), 11.5);
+    _onFormChanged();
   }
 
+  void _onMapPointTapped(TapPosition tapPosition, LatLng point) {
+    // Validate that clicked coordinates reside strictly within Ethiopian territory
+    if (!Validators.isWithinEthiopia(point.latitude, point.longitude)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.warning_amber_rounded, color: Colors.white),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Selected point (${point.latitude.toStringAsFixed(3)}°N, ${point.longitude.toStringAsFixed(3)}°E) is outside Ethiopian borders.',
+                  style: const TextStyle(fontSize: 12),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: const Color(0xFFD32F2F),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _latitude = point.latitude;
+      _longitude = point.longitude;
+      _latController.text = point.latitude.toStringAsFixed(5);
+      _lngController.text = point.longitude.toStringAsFixed(5);
+
+      final woredas = ref.read(allWoredasProvider).asData?.value ?? [];
+      WoredaModel? closestWoreda;
+      double minDistance = double.infinity;
+
+      for (final woreda in woredas) {
+        final dLat = woreda.centerLat - point.latitude;
+        final dLng = woreda.centerLng - point.longitude;
+        final dist = (dLat * dLat) + (dLng * dLng);
+        if (dist < minDistance) {
+          minDistance = dist;
+          closestWoreda = woreda;
+        }
+      }
+
+      if (closestWoreda != null) {
+        _selectedWoredaName = closestWoreda.name;
+        _selectedWoredaId = closestWoreda.id;
+        _selectedRegion = closestWoreda.zone?.region?.name ?? 'National Scope';
+      }
+    });
+    _onFormChanged();
+  }
+
+
   Future<void> _getCurrentLocation() async {
-    if (!mounted) return;
     setState(() => _isGettingLocation = true);
 
     try {
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-      }
-
-      Position? position;
-      if (permission != LocationPermission.denied && permission != LocationPermission.deniedForever) {
-        try {
-          position = await Geolocator.getCurrentPosition(
-            desiredAccuracy: LocationAccuracy.low,
-            timeLimit: const Duration(seconds: 4),
-          );
-        } catch (_) {
-          position = await Geolocator.getLastKnownPosition();
-        }
-      }
-
-      if (position != null) {
-        if (mounted) {
-          setState(() {
-            _latitude = position!.latitude;
-            _longitude = position.longitude;
-            _latController.text = _latitude.toStringAsFixed(5);
-            _lngController.text = _longitude.toStringAsFixed(5);
-          });
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('GPS Captured: ${_latitude.toStringAsFixed(5)}, ${_longitude.toStringAsFixed(5)}'),
-              backgroundColor: const Color(0xFF2E7D32),
-            ),
-          );
-        }
-      } else {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Using regional reference coordinates (Adama Zuria)'),
-              backgroundColor: Color(0xFF2E7D32),
+              content: Text('GPS service disabled on device. Using administrative centroid.'),
+              behavior: SnackBarBehavior.floating,
             ),
           );
         }
+        return;
       }
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) return;
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+        timeLimit: const Duration(seconds: 10),
+      );
+
+      final lat = position.latitude;
+      final lng = position.longitude;
+      setState(() {
+        _latitude = lat;
+        _longitude = lng;
+        _latController.text = lat.toStringAsFixed(5);
+        _lngController.text = lng.toStringAsFixed(5);
+      });
+      _miniMapController.move(LatLng(lat, lng), 14);
     } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('You can manually edit coordinates below'),
-            backgroundColor: Color(0xFF2E7D32),
-          ),
-        );
-      }
     } finally {
       if (mounted) {
         setState(() => _isGettingLocation = false);
@@ -150,36 +309,73 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
 
     final parsedLat = double.tryParse(_latController.text.trim()) ?? _latitude;
     final parsedLng = double.tryParse(_lngController.text.trim()) ?? _longitude;
+    final size = double.tryParse(_sizeController.text.trim()) ?? 1.0;
+
+    final effectiveCrop = (_selectedCrop == 'Other (Custom Crop)')
+        ? (_customCropController.text.trim().isNotEmpty ? _customCropController.text.trim() : 'Custom Crop')
+        : (_selectedCrop ?? 'Teff');
 
     setState(() => _isLoading = true);
 
+    final farmPayload = {
+      'farmName': _nameController.text.trim(),
+      'areaHectares': size,
+      'primaryCrop': effectiveCrop,
+      'soilType': _selectedSoil ?? 'Vertisol (Black Cotton - ጥቁር አፈር)',
+      'irrigationType': _selectedIrrigation ?? 'Rainfed (የዝናብ እርሻ)',
+      'latitude': parsedLat,
+      'longitude': parsedLng,
+      'woredaId': _selectedWoredaId,
+    };
+
     try {
-      final size = double.tryParse(_sizeController.text.trim()) ?? 1.0;
       await ref.read(farmsProvider.notifier).createFarm(
-            name: _nameController.text.trim(),
-            size: size,
-            primaryCrop: _selectedCrop ?? 'Teff',
-            soilType: _selectedSoil ?? 'Vertisol (Black Cotton)',
-            irrigationType: _selectedIrrigation ?? 'Rainfed',
-            latitude: parsedLat,
-            longitude: parsedLng,
+            CreateFarmRequest(
+              farmName: _nameController.text.trim(),
+              areaHectares: size,
+              primaryCrop: effectiveCrop,
+              soilType: _selectedSoil ?? 'Vertisol (Black Cotton - ጥቁር አፈር)',
+              irrigationType: _selectedIrrigation ?? 'Rainfed (የዝናብ እርሻ)',
+              latitude: parsedLat,
+              longitude: parsedLng,
+              woredaId: _selectedWoredaId,
+            ),
           );
+
+      await _clearDraft();
+      _hasUnsavedChanges = false;
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Farm registered successfully!'),
+            content: Text('Farm plot registered and synced with GEE telemetry!'),
             backgroundColor: Color(0xFF2E7D32),
+            behavior: SnackBarBehavior.floating,
           ),
         );
         context.pop();
       }
-    } catch (_) {
+    } catch (e) {
+      // Enqueue to offline sync queue for automatic background synchronization
+      await SyncService.enqueue(ApiConstants.farms, 'POST', farmPayload);
+      await _clearDraft();
+      _hasUnsavedChanges = false;
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Farm registered successfully!'),
-            backgroundColor: Color(0xFF2E7D32),
+            content: Row(
+              children: [
+                Icon(Icons.cloud_off, color: Colors.white, size: 20),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text('Offline: Farm saved locally. Will sync when connected.'),
+                ),
+              ],
+            ),
+            backgroundColor: Color(0xFFE65100),
+            behavior: SnackBarBehavior.floating,
+            duration: Duration(seconds: 4),
           ),
         );
         context.pop();
@@ -191,236 +387,687 @@ class _AddFarmScreenState extends ConsumerState<AddFarmScreen> {
     }
   }
 
+  Future<bool> _onWillPop() async {
+    if (!_hasUnsavedChanges) return true;
+
+    final shouldPop = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Discard Unsaved Changes?'),
+        content: const Text('Your draft has been auto-saved locally and will be available when you return.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Keep Editing'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFC62828)),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Discard & Exit'),
+          ),
+        ],
+      ),
+    );
+    return shouldPop ?? false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final theme = Theme.of(context);
+    final woredasAsync = ref.watch(allWoredasProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Add Farm'),
-      ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16.0),
-          children: [
-            TextFormField(
-              controller: _nameController,
-              decoration: InputDecoration(
-                labelText: 'Farm Name',
-                hintText: 'e.g., Bishoftu Wheat Plot #1',
-                prefixIcon: const Icon(Icons.label_outline),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                filled: true,
-                fillColor: isDark ? const Color(0xFF1B2E1E) : const Color(0xFFF9FAF9),
-              ),
-              validator: (v) => Validators.required(v, 'Farm name'),
-              textCapitalization: TextCapitalization.words,
-              enabled: !_isLoading,
-            ),
-            const SizedBox(height: 16),
+    return PopScope(
+      canPop: !_hasUnsavedChanges,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (!didPop) {
+          final shouldExit = await _onWillPop();
+          if (shouldExit && context.mounted) {
+            Navigator.of(context).pop();
+          }
+        }
+      },
 
-            DropdownButtonFormField<String>(
-              value: _selectedCrop,
-              decoration: InputDecoration(
-                labelText: 'Primary Crop',
-                prefixIcon: const Icon(Icons.grass),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                filled: true,
-                fillColor: isDark ? const Color(0xFF1B2E1E) : const Color(0xFFF9FAF9),
-              ),
-              items: EthiopianCrops.allCrops.map((crop) {
-                return DropdownMenuItem(
-                  value: crop.nameEn,
-                  child: Text('${crop.nameEn} (${crop.nameAm})'),
-                );
-              }).toList(),
-              onChanged: _isLoading ? null : (v) => setState(() => _selectedCrop = v),
-            ),
-            const SizedBox(height: 16),
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Register New Farm Plot'),
+        ),
+        body: Form(
+          key: _formKey,
+          child: ListView(
+            padding: const EdgeInsets.all(16.0),
+            children: [
 
-            TextFormField(
-              controller: _sizeController,
-              decoration: InputDecoration(
-                labelText: 'Farm Area (Hectares)',
-                hintText: 'e.g., 2.5',
-                prefixIcon: const Icon(Icons.square_foot),
-                suffixText: 'ha',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                filled: true,
-                fillColor: isDark ? const Color(0xFF1B2E1E) : const Color(0xFFF9FAF9),
-              ),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              validator: Validators.farmArea,
-              enabled: !_isLoading,
-            ),
-            const SizedBox(height: 16),
+            // 1. General Info Card
+            _buildFormCard(
+              title: 'General Farm Information',
+              icon: Icons.agriculture,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextFormField(
+                    controller: _nameController,
+                    decoration: InputDecoration(
+                      label: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('Farm Plot Name'),
+                          Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                      prefixIcon: const Icon(Icons.label_outline),
+                      border: const OutlineInputBorder(borderRadius: AppRadii.roundedMd),
+                      filled: true,
+                      fillColor: isDark ? AppTheme.surfaceDark : const Color(0xFFF8FAF8),
+                    ),
+                    validator: (v) => Validators.required(v, 'Farm name'),
+                    textCapitalization: TextCapitalization.words,
+                    enabled: !_isLoading,
+                  ),
+                  const SizedBox(height: 14),
 
-            // Soil Type Dropdown
-            DropdownButtonFormField<String>(
-              value: _selectedSoil,
-              decoration: InputDecoration(
-                labelText: 'Soil Type (Optional)',
-                prefixIcon: const Icon(Icons.landscape),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                filled: true,
-                fillColor: isDark ? const Color(0xFF1B2E1E) : const Color(0xFFF9FAF9),
-              ),
-              items: const [
-                DropdownMenuItem(value: 'Vertisol (Black Cotton)', child: Text('Vertisol (Black Cotton Soil)')),
-                DropdownMenuItem(value: 'Nitisol (Red Clay)', child: Text('Nitisol (Red Clay Soil)')),
-                DropdownMenuItem(value: 'Cambisol (Brown Loam)', child: Text('Cambisol (Brown Loam)')),
-                DropdownMenuItem(value: 'Fluvisol (Alluvial)', child: Text('Fluvisol (Alluvial)')),
-                DropdownMenuItem(value: 'Sandy / Arenosol', child: Text('Sandy / Arenosol')),
-              ],
-              onChanged: _isLoading ? null : (v) => setState(() => _selectedSoil = v),
-            ),
-            const SizedBox(height: 16),
-
-            // Irrigation Type Dropdown
-            DropdownButtonFormField<String>(
-              value: _selectedIrrigation,
-              decoration: InputDecoration(
-                labelText: 'Irrigation Type (Optional)',
-                prefixIcon: const Icon(Icons.water_drop),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                filled: true,
-                fillColor: isDark ? const Color(0xFF1B2E1E) : const Color(0xFFF9FAF9),
-              ),
-              items: const [
-                DropdownMenuItem(value: 'Rainfed', child: Text('Rainfed (Seasonal)')),
-                DropdownMenuItem(value: 'Drip Irrigation', child: Text('Drip Irrigation')),
-                DropdownMenuItem(value: 'Furrow / Surface', child: Text('Furrow / Surface')),
-                DropdownMenuItem(value: 'Sprinkler Irrigation', child: Text('Sprinkler Irrigation')),
-              ],
-              onChanged: _isLoading ? null : (v) => setState(() => _selectedIrrigation = v),
-            ),
-            const SizedBox(height: 16),
-
-            // Location Card with Manual Coordinates, Woreda Presets & GPS Button
-            Card(
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
-                side: BorderSide(color: isDark ? const Color(0xFF263E26) : Colors.grey.shade300),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(Icons.location_on, color: AppTheme.primaryColor, size: 22),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Farm Location & Coordinates',
-                          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                  DropdownButtonFormField<String>(
+                    isExpanded: true,
+                    initialValue: _selectedCrop,
+                    decoration: InputDecoration(
+                      label: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('Primary Crop'),
+                          Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                      prefixIcon: const Icon(Icons.grass),
+                      border: const OutlineInputBorder(borderRadius: AppRadii.roundedMd),
+                      filled: true,
+                      fillColor: isDark ? AppTheme.surfaceDark : const Color(0xFFF8FAF8),
+                    ),
+                    items: EthiopianCrops.allCrops.map((crop) {
+                      return DropdownMenuItem(
+                        value: crop.nameEn,
+                        child: Text(
+                          '${crop.nameEn} (${crop.nameAm})',
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
                         ),
-                      ],
+                      );
+                    }).toList(),
+                    onChanged: _isLoading ? null : (v) => setState(() => _selectedCrop = v),
+                  ),
+
+                  if (_selectedCrop == 'Other (Custom Crop)') ...[
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _customCropController,
+                      decoration: InputDecoration(
+                        label: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text('Custom Crop Name'),
+                            Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                        prefixIcon: const Icon(Icons.eco_outlined, color: AppTheme.primaryColor),
+                        border: const OutlineInputBorder(borderRadius: AppRadii.roundedMd),
+                        filled: true,
+                        fillColor: isDark ? AppTheme.surfaceDark : const Color(0xFFF8FAF8),
+                      ),
+                      validator: (v) => _selectedCrop == 'Other (Custom Crop)' ? Validators.required(v, 'Custom crop name') : null,
+                      enabled: !_isLoading,
+                    ),
+                  ],
+
+                  const SizedBox(height: 14),
+
+                  TextFormField(
+                    controller: _sizeController,
+                    decoration: InputDecoration(
+                      label: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('Farm Size (Hectares)'),
+                          Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                      prefixIcon: const Icon(Icons.square_foot),
+                      suffixText: 'ha',
+                      border: const OutlineInputBorder(borderRadius: AppRadii.roundedMd),
+                      filled: true,
+                      fillColor: isDark ? AppTheme.surfaceDark : const Color(0xFFF8FAF8),
+                    ),
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    validator: Validators.farmArea,
+                    enabled: !_isLoading,
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // 2. Soil & Water Prescription Card
+            _buildFormCard(
+              title: 'Soil Classification & Irrigation',
+              icon: Icons.science_outlined,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  DropdownButtonFormField<String>(
+                    isExpanded: true,
+                    initialValue: _selectedSoil,
+                    decoration: InputDecoration(
+                      label: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('EthioSIS Soil Type'),
+                          Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                      prefixIcon: const Icon(Icons.terrain),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      filled: true,
+                      fillColor: isDark ? const Color(0xFF1B2E1E) : const Color(0xFFF9FAF9),
+                    ),
+                    items: const [
+                      DropdownMenuItem(
+                        value: 'Vertisol (Black Cotton - ጥቁር አፈር)',
+                        child: Text(
+                          'Vertisol (Black Cotton - ጥቁር አፈር)',
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      ),
+                      DropdownMenuItem(
+                        value: 'Nitisol (Red Basaltic - ቀይ አፈር)',
+                        child: Text(
+                          'Nitisol (Red Basaltic - ቀይ አፈር)',
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      ),
+                      DropdownMenuItem(
+                        value: 'Cambisol (Brown Loam - ቡናማ አፈር)',
+                        child: Text(
+                          'Cambisol (Brown Loam - ቡናማ አፈር)',
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      ),
+                      DropdownMenuItem(
+                        value: 'Fluvisol (Alluvial - ወንዝ ዳርቻ አፈር)',
+                        child: Text(
+                          'Fluvisol (Alluvial - ወንዝ ዳርቻ አፈር)',
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      ),
+                    ],
+                    onChanged: _isLoading ? null : (v) => setState(() => _selectedSoil = v),
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  DropdownButtonFormField<String>(
+                    isExpanded: true,
+                    initialValue: _selectedIrrigation,
+                    decoration: InputDecoration(
+                      label: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('Water Source / Irrigation Mode'),
+                          Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                      prefixIcon: const Icon(Icons.water_drop),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      filled: true,
+                      fillColor: isDark ? const Color(0xFF1B2E1E) : const Color(0xFFF9FAF9),
+                    ),
+                    items: const [
+                      DropdownMenuItem(
+                        value: 'Rainfed (የዝናብ እርሻ)',
+                        child: Text(
+                          'Rainfed (የዝናብ እርሻ)',
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      ),
+                      DropdownMenuItem(
+                        value: 'Furrow Irrigation (የቦይ መስኖ)',
+                        child: Text(
+                          'Furrow Irrigation (የቦይ መስኖ)',
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      ),
+                      DropdownMenuItem(
+                        value: 'Drip Irrigation (የጠብታ መስኖ)',
+                        child: Text(
+                          'Drip Irrigation (የጠብታ መስኖ)',
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      ),
+                      DropdownMenuItem(
+                        value: 'Groundwater / Solar Pump (የከርሰ ምድር ውሀ)',
+                        child: Text(
+                          'Groundwater / Solar Pump (የከርሰ ምድር ውሀ)',
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      ),
+                    ],
+                    onChanged: _isLoading ? null : (v) => setState(() => _selectedIrrigation = v),
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  DropdownButtonFormField<String>(
+                    isExpanded: true,
+                    initialValue: _selectedSlope,
+                    decoration: InputDecoration(
+                      label: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('Topography / Slope'),
+                          Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                      prefixIcon: const Icon(Icons.landscape_outlined),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      filled: true,
+                      fillColor: isDark ? const Color(0xFF1B2E1E) : const Color(0xFFF9FAF9),
+                    ),
+                    items: const [
+                      DropdownMenuItem(
+                        value: 'Flat / Plain (0-2% Slope)',
+                        child: Text('Flat / Plain (0-2% Slope)', overflow: TextOverflow.ellipsis, maxLines: 1),
+                      ),
+                      DropdownMenuItem(
+                        value: 'Gentle Slope (2-8% Slope)',
+                        child: Text('Gentle Slope (2-8% Slope)', overflow: TextOverflow.ellipsis, maxLines: 1),
+                      ),
+                      DropdownMenuItem(
+                        value: 'Highland Hillside (8-15% Slope)',
+                        child: Text('Highland Hillside (8-15% Slope)', overflow: TextOverflow.ellipsis, maxLines: 1),
+                      ),
+                      DropdownMenuItem(
+                        value: 'Valley Bottom / River Basin',
+                        child: Text('Valley Bottom / River Basin', overflow: TextOverflow.ellipsis, maxLines: 1),
+                      ),
+                    ],
+                    onChanged: _isLoading ? null : (v) => setState(() => _selectedSlope = v ?? _selectedSlope),
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Sowing and Harvest Dates
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: _isLoading ? null : () async {
+                            final picked = await showDatePicker(
+                              context: context,
+                              initialDate: _sowingDate,
+                              firstDate: DateTime(2020),
+                              lastDate: DateTime(2035),
+                            );
+                            if (picked != null) setState(() => _sowingDate = picked);
+                          },
+                          icon: const Icon(Icons.calendar_today, size: 16),
+                          label: Text('Sown: ${_sowingDate.day}/${_sowingDate.month}/${_sowingDate.year}', style: const TextStyle(fontSize: 12)),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: _isLoading ? null : () async {
+                            final picked = await showDatePicker(
+                              context: context,
+                              initialDate: _expectedHarvestDate,
+                              firstDate: DateTime.now(),
+                              lastDate: DateTime(2035),
+                            );
+                            if (picked != null) setState(() => _expectedHarvestDate = picked);
+                          },
+                          icon: const Icon(Icons.event_available, size: 16),
+                          label: Text('Harvest: ${_expectedHarvestDate.day}/${_expectedHarvestDate.month}/${_expectedHarvestDate.year}', style: const TextStyle(fontSize: 12)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // 3. Location & GIS Boundary Picker
+            _buildFormCard(
+              title: 'GIS Plot Boundary & Coordinates',
+              icon: Icons.place,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SegmentedButton<int>(
+                    segments: const [
+                      ButtonSegment(
+                        value: 0,
+                        label: Text('Tap Map\n(GIS)', textAlign: TextAlign.center, style: TextStyle(fontSize: 10)),
+                        icon: Icon(Icons.touch_app, size: 14),
+                      ),
+                      ButtonSegment(
+                        value: 1,
+                        label: Text('Woreda\n(Zero GPS)', textAlign: TextAlign.center, style: TextStyle(fontSize: 10)),
+                        icon: Icon(Icons.map, size: 14),
+                      ),
+                      ButtonSegment(
+                        value: 2,
+                        label: Text('Manual\nCoords', textAlign: TextAlign.center, style: TextStyle(fontSize: 10)),
+                        icon: Icon(Icons.edit_location_alt, size: 14),
+                      ),
+                      ButtonSegment(
+                        value: 3,
+                        label: Text('Auto\nGPS', textAlign: TextAlign.center, style: TextStyle(fontSize: 10)),
+                        icon: Icon(Icons.my_location, size: 14),
+                      ),
+                    ],
+                    selected: {_locationMode},
+                    onSelectionChanged: (set) {
+                      final mode = set.first;
+                      setState(() => _locationMode = mode);
+                      if (mode == 3) {
+                        _getCurrentLocation();
+                      }
+                    },
+                    style: SegmentedButton.styleFrom(
+                      selectedBackgroundColor: const Color(0xFF1B5E20),
+                      selectedForegroundColor: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Mode 0: Interactive GIS Map Pinpoint
+                  if (_locationMode == 0) ...[
+                    Container(
+                      height: 200,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: const Color(0xFF2E7D32).withValues(alpha: 0.4)),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(14),
+                        child: FlutterMap(
+                          mapController: _miniMapController,
+                          options: MapOptions(
+                            initialCenter: LatLng(_latitude, _longitude),
+                            initialZoom: 10.0,
+                            onTap: _onMapPointTapped,
+                          ),
+                          children: [
+                            TileLayer(
+                              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                              fallbackUrl: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
+                              userAgentPackageName: 'com.ethiofarm.app',
+                              maxZoom: 19,
+                            ),
+                            MarkerLayer(
+                              markers: [
+                                Marker(
+                                  point: LatLng(_latitude, _longitude),
+                                  width: 40,
+                                  height: 40,
+                                  child: const Icon(
+                                    Icons.location_pin,
+                                    color: Colors.red,
+                                    size: 40,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Tap anywhere on the map to pinpoint exact farm plot coordinates',
+                      style: TextStyle(color: Colors.grey.shade600, fontSize: 11),
                     ),
                     const SizedBox(height: 12),
+                  ],
 
-                    // Quick Woreda Region Selector
-                    DropdownButtonFormField<String>(
-                      value: _selectedWoredaPreset,
-                      decoration: InputDecoration(
-                        labelText: 'Select Woreda Preset (Auto-fills Coordinates)',
-                        prefixIcon: const Icon(Icons.map_outlined),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                        filled: true,
-                        fillColor: isDark ? const Color(0xFF1B2E1E) : const Color(0xFFF9FAF9),
-                      ),
-                      items: _woredaPresets.keys.map((woreda) {
-                        return DropdownMenuItem(value: woreda, child: Text(woreda, style: const TextStyle(fontSize: 13)));
-                      }).toList(),
-                      onChanged: (v) {
-                        if (v != null) _applyWoredaPreset(v);
+                  // Mode 1: Administrative Woreda Centroid
+                  if (_locationMode == 1) ...[
+                    woredasAsync.when(
+                      data: (woredas) {
+                        final validWoredaId = woredas.any((w) => w.id == _selectedWoredaId)
+                            ? _selectedWoredaId
+                            : (woredas.isNotEmpty ? woredas.first.id : null);
+                        return DropdownButtonFormField<String>(
+                          key: ValueKey('woreda_picker_$validWoredaId'),
+                          isExpanded: true,
+                          initialValue: validWoredaId,
+                          decoration: InputDecoration(
+                            label: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text('Woreda Centroid'),
+                                Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
+                              ],
+                            ),
+                            prefixIcon: const Icon(Icons.location_city),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                            filled: true,
+                            fillColor: isDark ? const Color(0xFF1B2E1E) : Colors.white,
+                          ),
+                          items: woredas.map((w) {
+                            final regionName = w.zone?.region?.name ?? '';
+                            final subtitle = regionName.isNotEmpty ? ' ($regionName)' : '';
+                            return DropdownMenuItem(
+                              value: w.id,
+                              child: Text(
+                                '${w.name}$subtitle',
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                              ),
+                            );
+                          }).toList(),
+                          onChanged: _isLoading ? null : (v) {
+                            if (v != null) {
+                              final matched = woredas.firstWhere((w) => w.id == v);
+                              _onWoredaSelected(matched);
+                            }
+                          },
+                        );
                       },
+                      loading: () => const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8),
+                        child: LinearProgressIndicator(),
+                      ),
+                      error: (_, __) => Text(
+                        'Woreda: $_selectedWoredaName',
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
                     ),
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 12),
+                  ],
 
-                    // Manual Latitude & Longitude Input Fields
+                  // Mode 2: Manual Coordinates
+                  if (_locationMode == 2) ...[
                     Row(
                       children: [
                         Expanded(
                           child: TextFormField(
                             controller: _latController,
                             decoration: InputDecoration(
-                              labelText: 'Latitude (°N)',
-                              hintText: '8.54000',
-                              prefixIcon: const Icon(Icons.north_east, size: 18),
+                              label: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text('Latitude (°N)'),
+                                  Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
+                                ],
+                              ),
                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                               filled: true,
-                              fillColor: isDark ? const Color(0xFF1B2E1E) : const Color(0xFFF9FAF9),
+                              fillColor: isDark ? const Color(0xFF1B2E1E) : Colors.white,
                             ),
                             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                            validator: Validators.numeric,
+                            validator: Validators.latitude,
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 10),
                         Expanded(
                           child: TextFormField(
                             controller: _lngController,
                             decoration: InputDecoration(
-                              labelText: 'Longitude (°E)',
-                              hintText: '39.27000',
-                              prefixIcon: const Icon(Icons.south_east, size: 18),
+                              label: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text('Longitude (°E)'),
+                                  Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
+                                ],
+                              ),
                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                               filled: true,
-                              fillColor: isDark ? const Color(0xFF1B2E1E) : const Color(0xFFF9FAF9),
+                              fillColor: isDark ? const Color(0xFF1B2E1E) : Colors.white,
                             ),
                             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                            validator: Validators.numeric,
+                            validator: Validators.longitude,
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 12),
+                  ],
 
-                    // GPS Auto-Capture Button
-                    ElevatedButton.icon(
-                      onPressed: (_isLoading || _isGettingLocation) ? null : _getCurrentLocation,
-                      icon: _isGettingLocation
-                          ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                          : const Icon(Icons.my_location, size: 18),
-                      label: const Text('Capture Current GPS Location (Optional)'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFE8F5E9),
-                        foregroundColor: const Color(0xFF1B5E20),
-                        elevation: 0,
-                        minimumSize: const Size(double.infinity, 44),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  // Mode 3: Auto-GPS Sensor
+                  if (_locationMode == 3) ...[
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        children: [
+                          _isGettingLocation
+                              ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                              : const Icon(Icons.gps_fixed, color: Color(0xFF2E7D32), size: 20),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              _isGettingLocation
+                                  ? 'Acquiring high-accuracy GNSS fix...'
+                                  : 'Device GPS: ${_latitude.toStringAsFixed(5)}°N, ${_longitude.toStringAsFixed(5)}°E',
+                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: _isGettingLocation ? null : _getCurrentLocation,
+                            child: const Text('Re-scan'),
+                          ),
+                        ],
                       ),
                     ),
+                    const SizedBox(height: 12),
                   ],
+
+                  // Centroid Confirmation Card
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2E7D32).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.verified, color: Color(0xFF2E7D32), size: 18),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'GIS Centroid: ${_latitude.toStringAsFixed(5)}°N, ${_longitude.toStringAsFixed(5)}°E ($_selectedWoredaName, $_selectedRegion)',
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11.5, color: Color(0xFF1B5E20)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            // Submit Button
+            SizedBox(
+              height: 52,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF2E7D32),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  elevation: 3,
+                ),
+                onPressed: _isLoading ? null : _saveFarm,
+                icon: _isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                      )
+                    : const Icon(Icons.check_circle_outline),
+                label: Text(
+                  _isLoading ? 'Registering & Syncing...' : 'Register Farm Plot',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
               ),
             ),
             const SizedBox(height: 24),
-
-            SizedBox(
-              height: 52,
-              child: ElevatedButton.icon(
-                onPressed: _isLoading ? null : _saveFarm,
-                icon: const Icon(Icons.save, size: 20),
-                label: _isLoading
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Colors.white)),
-                      )
-                    : const Text('Save Farm', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1B5E20),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-            ),
           ],
         ),
+      ),
+      ),
+    );
+  }
+
+  Widget _buildFormCard({
+
+    required String title,
+    required IconData icon,
+    required Widget child,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF162518) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: isDark ? const Color(0xFF263E26) : Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: const Color(0xFF2E7D32), size: 20),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              ),
+            ],
+          ),
+          const Divider(height: 20),
+          child,
+        ],
       ),
     );
   }

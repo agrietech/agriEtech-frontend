@@ -42,6 +42,7 @@ void main() {
       expect(state.isDevelopmentAgent, isFalse);
       expect(state.canCreateAlerts, isFalse);
       expect(state.canAccessAllData, isFalse);
+      expect(state.canManageSensors, isTrue);
     });
 
     test('Woreda Officer and Admin can create alerts and access data', () {
@@ -74,6 +75,62 @@ void main() {
       expect(adminState.isAdmin, isTrue);
       expect(adminState.canCreateAlerts, isTrue);
       expect(adminState.canAccessAllData, isTrue);
+    });
+
+    test('LoginResponse correctly parses requiresPhoneVerification flag', () {
+      final unverifiedJson = {
+        'accessToken': 'jwt-token-123',
+        'refreshToken': 'jwt-refresh-123',
+        'requiresPhoneVerification': true,
+        'user': {
+          'id': 'u-10',
+          'fullName': 'Derartu Tulu',
+          'phone': '+251911998877',
+          'role': 'FARMER',
+          'isPhoneVerified': false,
+        },
+      };
+
+      final response = LoginResponse.fromJson(unverifiedJson);
+      expect(response.requiresPhoneVerification, isTrue);
+      expect(response.user.isPhoneVerified, isFalse);
+
+      final verifiedJson = {
+        'accessToken': 'jwt-token-456',
+        'refreshToken': 'jwt-refresh-456',
+        'requiresPhoneVerification': false,
+        'user': {
+          'id': 'u-11',
+          'fullName': 'Haile Gebrselassie',
+          'phone': '+251911445566',
+          'role': 'FARMER',
+          'isPhoneVerified': true,
+        },
+      };
+
+      final verifiedResponse = LoginResponse.fromJson(verifiedJson);
+      expect(verifiedResponse.requiresPhoneVerification, isFalse);
+      expect(verifiedResponse.user.isPhoneVerified, isTrue);
+    });
+
+    test('RegisterResult encapsulates registration requirement correctly', () {
+      const user = UserModel(
+        id: 'u-12',
+        fullName: 'Kenenisa Bekele',
+        phone: '+251912345678',
+        role: UserRole.farmer,
+        isPhoneVerified: false,
+      );
+
+      const result = RegisterResult(
+        requiresPhoneVerification: true,
+        phone: '+251912345678',
+        user: user,
+      );
+
+      expect(result.requiresPhoneVerification, isTrue);
+      expect(result.phone, '+251912345678');
+      expect(result.user.isPhoneVerified, isFalse);
     });
   });
 }

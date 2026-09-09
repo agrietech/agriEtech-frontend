@@ -3,18 +3,19 @@ import '../../../core/error/app_error.dart';
 import '../../../core/error/error_handler.dart';
 import '../../../core/network/dio_client.dart';
 import '../../../core/utils/logger.dart';
-import '../data/ethiopia_boundaries_data.dart';
+import 'boundary_local_cache.dart';
 import '../models/boundary_models.dart';
 
+/// Boundary Repository managing real database queries and persistent offline caching.
 class BoundaryRepository {
   final DioClient _dioClient;
 
   BoundaryRepository(this._dioClient);
 
-  /// Get all regions
+  /// Get all regions from backend database, with persistent disk cache fallback
   Future<List<RegionModel>> getRegions() async {
     try {
-      AppLogger.info('Fetching regions');
+      AppLogger.info('Fetching regions from backend database');
 
       final response = await _dioClient.get('/boundaries/regions');
 
@@ -26,19 +27,30 @@ class BoundaryRepository {
           .toList();
 
       if (regionsList.isNotEmpty) {
-        AppLogger.success('Fetched ${regionsList.length} regions');
+        AppLogger.success('Fetched ${regionsList.length} regions from backend');
+        // Persist to local disk cache for instant offline access
+        await BoundaryLocalCache.saveRegions(regionsList);
         return regionsList;
       }
     } catch (e) {
-      AppLogger.warning('Failed to fetch regions from backend, using preloaded data: $e');
+      AppLogger.warning('Failed to fetch regions from backend, checking local persistent cache: $e');
     }
-    return EthiopiaBoundariesData.defaultRegions;
+
+    // Check local persistent disk cache
+    final cached = await BoundaryLocalCache.getRegions();
+    if (cached.isNotEmpty) {
+      AppLogger.info('Loaded ${cached.length} regions from local disk cache');
+      return cached;
+    }
+
+    // Cold-boot baseline
+    return BoundaryLocalCache.defaultRegions;
   }
 
-  /// Get zones by region
+  /// Get zones for a region from backend database, with persistent disk cache fallback
   Future<List<ZoneModel>> getZonesByRegion(String regionId) async {
     try {
-      AppLogger.info('Fetching zones for region', {'regionId': regionId});
+      AppLogger.info('Fetching zones from backend database for region', {'regionId': regionId});
 
       final response = await _dioClient.get(
         '/boundaries/zones',
@@ -53,23 +65,33 @@ class BoundaryRepository {
           .toList();
 
       if (zonesList.isNotEmpty) {
-        AppLogger.success('Fetched ${zonesList.length} zones');
+        AppLogger.success('Fetched ${zonesList.length} zones from backend');
+        // Persist to local disk cache
+        await BoundaryLocalCache.saveZonesByRegion(regionId, zonesList);
         return zonesList;
       }
     } catch (e) {
-      AppLogger.warning('Failed to fetch zones for $regionId, using preloaded data: $e');
+      AppLogger.warning('Failed to fetch zones for $regionId, checking local cache: $e');
     }
-    return EthiopiaBoundariesData.getFallbackZones(regionId);
+
+    // Check local persistent disk cache
+    final cached = await BoundaryLocalCache.getZonesByRegion(regionId);
+    if (cached.isNotEmpty) {
+      AppLogger.info('Loaded ${cached.length} zones from local disk cache for $regionId');
+      return cached;
+    }
+
+    return [];
   }
 
-  /// Get woredas by zone
+  /// Get woredas for a zone from backend database, with persistent disk cache fallback
   Future<List<WoredaModel>> getWoredasByZone(String zoneId) async {
     try {
-      AppLogger.info('Fetching woredas for zone', {'zoneId': zoneId});
+      AppLogger.info('Fetching woredas from backend database for zone', {'zoneId': zoneId});
 
       final response = await _dioClient.get(
         '/boundaries/woredas',
-        queryParameters: {'zoneId': zoneId},
+        queryParameters: {'zoneId': zoneId, 'limit': 200},
       );
 
       final raw = response.data is Map ? (response.data['data'] ?? response.data) : response.data;
@@ -80,21 +102,34 @@ class BoundaryRepository {
           .toList();
 
       if (woredasList.isNotEmpty) {
-        AppLogger.success('Fetched ${woredasList.length} woredas');
+        AppLogger.success('Fetched ${woredasList.length} woredas from backend for zone $zoneId');
+        // Persist to local disk cache
+        await BoundaryLocalCache.saveWoredasByZone(zoneId, woredasList);
         return woredasList;
       }
     } catch (e) {
-      AppLogger.warning('Failed to fetch woredas for $zoneId, using preloaded data: $e');
+      AppLogger.warning('Failed to fetch woredas for $zoneId, checking local cache: $e');
     }
-    return EthiopiaBoundariesData.getFallbackWoredas(zoneId);
+
+    // Check local persistent disk cache
+    final cached = await BoundaryLocalCache.getWoredasByZone(zoneId);
+    if (cached.isNotEmpty) {
+      AppLogger.info('Loaded ${cached.length} woredas from local disk cache for $zoneId');
+      return cached;
+    }
+
+    return [];
   }
 
-  /// Get all woredas
+  /// Get all woredas from backend database, with persistent disk cache fallback
   Future<List<WoredaModel>> getAllWoredas() async {
     try {
-      AppLogger.info('Fetching all woredas');
+      AppLogger.info('Fetching all woredas from backend database');
 
-      final response = await _dioClient.get('/boundaries/woredas');
+      final response = await _dioClient.get(
+        '/boundaries/woredas',
+        queryParameters: {'limit': 1500},
+      );
 
       final raw = response.data is Map ? (response.data['data'] ?? response.data) : response.data;
       final list = raw is List ? raw : [];
@@ -104,35 +139,45 @@ class BoundaryRepository {
           .toList();
 
       if (woredasList.isNotEmpty) {
-        AppLogger.success('Fetched ${woredasList.length} woredas');
+        AppLogger.success('Fetched ${woredasList.length} woredas from backend');
+        await BoundaryLocalCache.saveAllWoredas(woredasList);
         return woredasList;
       }
     } catch (e) {
-      AppLogger.warning('Failed to fetch all woredas, using preloaded data: $e');
+      AppLogger.warning('Failed to fetch all woredas from backend, checking local cache: $e');
     }
-    final all = <WoredaModel>[];
-    for (final list in EthiopiaBoundariesData.defaultWoredasByZone.values) {
-      all.addAll(list);
+
+    // Check local persistent disk cache
+    final cached = await BoundaryLocalCache.getAllWoredas();
+    if (cached.isNotEmpty) {
+      AppLogger.info('Loaded ${cached.length} all woredas from local disk cache');
+      return cached;
     }
-    return all;
+
+    return [];
   }
 
-  /// Get woreda by ID with full details
+  /// Get woreda by ID with full details from backend database
   Future<WoredaModel> getWoredaById(String woredaId) async {
     try {
-      AppLogger.info('Fetching woreda by ID', {'woredaId': woredaId});
+      AppLogger.info('Fetching woreda details from backend database', {'woredaId': woredaId});
 
       final response = await _dioClient.get('/boundaries/woredas/$woredaId');
 
       final raw = response.data is Map ? (response.data['data'] ?? response.data) : response.data;
       final woreda = WoredaModel.fromJson(raw as Map<String, dynamic>);
-      AppLogger.success('Fetched woreda details');
+      AppLogger.success('Fetched woreda details from backend');
+      await BoundaryLocalCache.saveWoredaById(woredaId, woreda);
       return woreda;
     } on DioException catch (e) {
-      AppLogger.error('Failed to fetch woreda', e);
+      AppLogger.warning('Dio error fetching woreda $woredaId: $e');
+      final cached = await BoundaryLocalCache.getWoredaById(woredaId);
+      if (cached != null) return cached;
       throw ErrorHandler.handleError(e);
     } catch (e) {
-      AppLogger.error('Unexpected error fetching woreda', e);
+      AppLogger.warning('Unexpected error fetching woreda $woredaId: $e');
+      final cached = await BoundaryLocalCache.getWoredaById(woredaId);
+      if (cached != null) return cached;
       throw const UnknownError(
         message: 'Failed to fetch woreda details',
       );

@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:agrietech/features/ai_voice/data/repositories/ai_voice_repository.dart';
-import 'package:agrietech/features/ai_voice/presentation/providers/ai_voice_provider.dart';
+import 'package:agrietech/features/ai_voice/repositories/ai_voice_repository.dart';
+import 'package:agrietech/features/ai_voice/providers/ai_voice_provider.dart';
 
 void main() {
   group('AiVoiceResponse & Language Support Tests', () {

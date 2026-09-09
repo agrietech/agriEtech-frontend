@@ -1,7 +1,7 @@
 /// Application Constants
 class AppConstants {
   // App Info
-  static const String appName = 'AgriEtech';
+  static const String appName = 'EthioFarm';
   static const String appVersion = '1.0.0';
 
   // Storage Keys

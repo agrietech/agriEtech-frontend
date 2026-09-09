@@ -1,7 +1,114 @@
 import 'package:intl/intl.dart';
 
-/// Date and time formatting utilities
+/// Detailed representation of an Ethiopian Agricultural Season
+class EthiopianSeasonInfo {
+  final String seasonCode; // TSEDAY_MEHER, BEGA, BELG_METSEW, KIREMT
+  final String nameEn;
+  final String nameAm;
+  final String westernSeason;
+  final String gregorianMonths;
+  final String ethiopianMonthsEn;
+  final String ethiopianMonthsAm;
+  final String characteristicsEn;
+  final String characteristicsAm;
+
+  const EthiopianSeasonInfo({
+    required this.seasonCode,
+    required this.nameEn,
+    required this.nameAm,
+    required this.westernSeason,
+    required this.gregorianMonths,
+    required this.ethiopianMonthsEn,
+    required this.ethiopianMonthsAm,
+    required this.characteristicsEn,
+    required this.characteristicsAm,
+  });
+
+  String get displayName => '$nameEn ($nameAm) – $westernSeason';
+}
+
+/// Date and time formatting utilities with Standard Ethiopian Four-Season Model
 class DateFormatter {
+  /// 1. ጸደይ / መኸር (Tseday / Meher) – Spring / Harvest (Sep to Nov | Meskerem, Tikimt, Hidar)
+  static const EthiopianSeasonInfo tsedayMeher = EthiopianSeasonInfo(
+    seasonCode: 'TSEDAY_MEHER',
+    nameEn: 'Tseday / Meher',
+    nameAm: '\u1338\u12f0\u12ed / \u1218\u1280\u122d',
+    westernSeason: 'Spring / Harvest Season',
+    gregorianMonths: 'September to November',
+    ethiopianMonthsEn: 'Meskerem, Tikimt, Hidar',
+    ethiopianMonthsAm: '\u1218\u1235\u12a8\u1228\u121d\u1363 \u1325\u1245\u121d\u1275\u1363 \u1285\u12f3\u122d',
+    characteristicsEn: 'Harvest & flower-blooming season following the Ethiopian New Year as Adey Abeba daisies bloom across the highlands.',
+    characteristicsAm: '\u12e8\u1218\u1230\u1265\u1230\u1262\u12eb\u1293 \u12e8\u12a0\u12f0\u12ed \u12a0\u1260\u1263 \u121b\u1348\u1260\u1262\u12eb \u12c8\u1245\u1275',
+  );
+
+  /// 2. በጋ (Bega) – Summer / Dry Season (Dec to Feb | Tahsas, Tir, Yakatit)
+  static const EthiopianSeasonInfo bega = EthiopianSeasonInfo(
+    seasonCode: 'BEGA',
+    nameEn: 'Bega',
+    nameAm: '\u1260\u130b',
+    westernSeason: 'Summer / Dry Season',
+    gregorianMonths: 'December to February',
+    ethiopianMonthsEn: 'Tahsas, Tir, Yakatit',
+    ethiopianMonthsAm: '\u1273\u1285\u1223\u1225\u1363 \u1325\u122d\u1363 \u12e8\u12a8\u1272\u1275',
+    characteristicsEn: 'Primary dry, sunny, and windy season with cool mornings and optimal post-harvest logistics.',
+    characteristicsAm: '\u12f0\u1228\u1245\u1363 \u1338\u1203\u12eb\u121b\u1293 \u1295\u134b\u123b\u121b \u12e8\u1260\u130b \u12c8\u1245\u1275',
+  );
+
+  /// 3. በልግ / መፀው (Belg / Metsew) – Autumn / Short Rainy Season (Mar to May | Maggabit, Miyazya, Ginbot)
+  static const EthiopianSeasonInfo belgMetsew = EthiopianSeasonInfo(
+    seasonCode: 'BELG_METSEW',
+    nameEn: 'Belg / Metsew',
+    nameAm: '\u1260\u120d\u130d / \u1218\u1338\u12c8',
+    westernSeason: 'Autumn / Short Rainy Season',
+    gregorianMonths: 'March to May',
+    ethiopianMonthsEn: 'Maggabit, Miyazya, Ginbot',
+    ethiopianMonthsAm: '\u1218\u130b\u1262\u1275\u1363 \u121a\u12eb\u12dd\u12eb\u1363 \u130d\u1295\u1266\u1275',
+    characteristicsEn: 'Mild temperatures and short rains crucial for Belg crop planting and pasture regeneration.',
+    characteristicsAm: '\u12a0\u1283\u12ed \u12a0\u12ed\u1290\u1275 \u12a8\u1208\u120d \u12e8\u1260\u120d\u130d \u12dd\u1293\u1265 \u12c8\u1245\u1275',
+  );
+
+  /// 4. ክረምት (Kiremt) – Winter / Long Rainy Season (Jun to Aug | Sene, Hamle, Nehasse)
+  static const EthiopianSeasonInfo kiremt = EthiopianSeasonInfo(
+    seasonCode: 'KIREMT',
+    nameEn: 'Kiremt',
+    nameAm: '\u12ad\u1228\u121d\u1275',
+    westernSeason: 'Winter / Long Rainy Season',
+    gregorianMonths: 'June to August',
+    ethiopianMonthsEn: 'Sene, Hamle, Nehasse',
+    ethiopianMonthsAm: '\u1230\u1294\u1363 \u1210\u121d\u120c\u1363 \u1290\u1210\u1234',
+    characteristicsEn: 'Main long rainy season with heavy rainfall feeding up to 95% of national food crop production.',
+    characteristicsAm: '\u12cb\u1293\u12cd \u12e8\u12ad\u1228\u121d\u1275 \u12e8\u12dd\u1293\u1265 \u12c8\u1245\u1275',
+  );
+
+  /// Get structured Ethiopian season info based on calendar date
+  static EthiopianSeasonInfo getEthiopianSeasonInfo(DateTime date) {
+    final month = date.month;
+    if (month >= 9 && month <= 11) {
+      return tsedayMeher;
+    } else if (month == 12 || month == 1 || month == 2) {
+      return bega;
+    } else if (month >= 3 && month <= 5) {
+      return belgMetsew;
+    } else {
+      return kiremt;
+    }
+  }
+
+  /// Get season name string with Amharic and Gregorian alignment
+  static String getSeason(DateTime date) {
+    final info = getEthiopianSeasonInfo(date);
+    return '${info.nameEn} (${info.nameAm} - ${info.westernSeason})';
+  }
+
+  /// All 4 Ethiopian agricultural seasons in standard chronological order
+  static List<EthiopianSeasonInfo> get allSeasons => [
+        tsedayMeher,
+        bega,
+        belgMetsew,
+        kiremt,
+      ];
+
   /// Format date to readable string (e.g., "Jan 15, 2024")
   static String formatDate(DateTime date) {
     return DateFormat('MMM dd, yyyy').format(date);
@@ -157,21 +264,7 @@ class DateFormatter {
 
   /// Format Ethiopian date string with season context
   static String formatEthiopianDate(DateTime date) {
-    final season = getSeason(date).split(' ').first;
+    final season = getEthiopianSeasonInfo(date).nameEn;
     return '${formatDate(date)} ($season)';
-  }
-
-  /// Get season based on date
-  static String getSeason(DateTime date) {
-    final month = date.month;
-    
-    // Ethiopian seasons
-    if (month >= 6 && month <= 9) {
-      return 'Kiremt (Rainy Season)';
-    } else if (month >= 10 || month <= 1) {
-      return 'Bega (Dry Season)';
-    } else {
-      return 'Belg (Small Rainy Season)';
-    }
   }
 }

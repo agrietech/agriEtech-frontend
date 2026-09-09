@@ -1,0 +1,14 @@
+{
+  "@@locale": "om",
+  "@@last_modified": "2026-08-28",
+  "appTitle": "AgriEtech Dorgommii Dursa",
+  "droughtRisk": "Balaan Dheebuu",
+  "floodRisk": "Balaan Lolaa",
+  "locustRisk": "Balaan Dargaggoo",
+  "vegetationHealth": "Fayyaa Margaa (NDVI)",
+  "weatherForecast": "Rahmanni Qilleensaa",
+  "alerts": "Beeksisa Balaa",
+  "myFarms": "Lafa Koo",
+  "soilProfile": "Xurii fi Midhaan Lafa",
+  "diagnoseCrop": "Dhukkuba Midhaan Adda Baasuu"
+}

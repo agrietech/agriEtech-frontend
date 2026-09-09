@@ -1,23 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
-    <!-- Allow cleartext traffic for local development & physical device testing -->
-    <base-config cleartextTrafficPermitted="true">
+    <!-- Production Base Configuration: HTTPS required, only system CAs trusted -->
+    <base-config cleartextTrafficPermitted="false">
         <trust-anchors>
             <certificates src="system" />
-            <certificates src="user" />
         </trust-anchors>
     </base-config>
 
+    <!-- Cleartext permitted STRICTLY for local development emulators and offline servers -->
     <domain-config cleartextTrafficPermitted="true">
-        <!-- Render backend domain -->
-        <domain includeSubdomains="true">agrietech.onrender.com</domain>
-        <domain includeSubdomains="true">onrender.com</domain>
-
-        <!-- Local IPs & Emulators -->
         <domain includeSubdomains="true">localhost</domain>
         <domain includeSubdomains="true">127.0.0.1</domain>
         <domain includeSubdomains="true">10.0.2.2</domain>
         <domain includeSubdomains="true">10.228.162.78</domain>
         <domain includeSubdomains="true">10.78.97.164</domain>
     </domain-config>
+
+    <!-- Debug overrides: Allow user-installed certificates for network debugging in debug builds only -->
+    <debug-overrides>
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </debug-overrides>
 </network-security-config>

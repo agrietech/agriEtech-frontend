@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import '../../../core/constants/api_endpoints.dart';
+import '../../../core/constants/api_constants.dart';
 import '../../../core/error/app_error.dart';
 import '../../../core/error/error_handler.dart';
 import '../../../core/network/dio_client.dart';
@@ -23,39 +23,39 @@ class DiagnosisRepository {
       try {
         if (request.imageBytes != null && request.imageBytes!.isNotEmpty) {
           response = await _dioClient.uploadBytes(
-            ApiEndpoints.diagnose,
+            ApiConstants.diagnose,
             request.imageBytes!,
             fileName: 'plantscan_${DateTime.now().millisecondsSinceEpoch}.jpg',
             fieldName: 'image',
             data: {
-              'farmId': request.farmId,
+              if (request.farmId != null && request.farmId!.isNotEmpty) 'farmId': request.farmId,
               if (request.cropType != null) 'cropType': request.cropType,
               'language': request.language,
             },
           );
         } else if (request.imagePath != null && request.imagePath!.isNotEmpty) {
           response = await _dioClient.uploadFile(
-            ApiEndpoints.diagnose,
+            ApiConstants.diagnose,
             request.imagePath!,
             fieldName: 'image',
             data: {
-              'farmId': request.farmId,
+              if (request.farmId != null && request.farmId!.isNotEmpty) 'farmId': request.farmId,
               if (request.cropType != null) 'cropType': request.cropType,
               'language': request.language,
             },
           );
         } else {
           response = await _dioClient.post(
-            ApiEndpoints.diagnose,
+            ApiConstants.diagnose,
             data: request.toJson(),
           );
         }
       } catch (uploadError) {
         AppLogger.warning('Multipart upload failed, falling back to JSON base64 upload', uploadError);
         response = await _dioClient.post(
-          ApiEndpoints.diagnose,
+          ApiConstants.diagnose,
           data: {
-            'farmId': request.farmId,
+            if (request.farmId != null && request.farmId!.isNotEmpty) 'farmId': request.farmId,
             if (request.imageBase64.isNotEmpty) 'imageBase64': request.imageBase64,
             if (request.imageBase64.isNotEmpty) 'image': 'data:image/jpeg;base64,${request.imageBase64}',
             if (request.cropType != null) 'cropType': request.cropType,
@@ -70,40 +70,20 @@ class DiagnosisRepository {
       final map = Map<String, dynamic>.from(raw);
       map['imageUrl'] = map['imageUrl'] ?? map['image'] ?? '';
       map['createdAt'] = map['createdAt'] ?? DateTime.now().toIso8601String();
-      map['farmId'] = map['farmId'] ?? request.farmId;
+      if (map['farmId'] == null && request.farmId != null) {
+        map['farmId'] = request.farmId;
+      }
       final diagnosis = DiagnosisModel.fromJson(map);
       AppLogger.success('Diagnosis created successfully', {'diagnosisId': diagnosis.id});
       return diagnosis;
+    } on DioException catch (e) {
+      AppLogger.error('Failed to create diagnosis via API', e);
+      throw ErrorHandler.handleError(e);
     } catch (e) {
-      AppLogger.warning('Creating local resilient diagnosis result fallback: ' + e.toString());
-      final crop = request.cropType ?? 'Wheat';
-      final isMaize = crop.toLowerCase().contains('maize') || crop.toLowerCase().contains('corn');
-      final isTeff = crop.toLowerCase().contains('teff');
-
-      final diagnosisId = 'diag_' + DateTime.now().millisecondsSinceEpoch.toString();
-      final map = {
-        'id': diagnosisId,
-        'farmId': (request.farmId != null && request.farmId.isNotEmpty) ? request.farmId : 'farm_demo_01',
-        'cropType': crop,
-        'cropIdentified': isMaize ? 'Maize (Zea mays)' : (isTeff ? 'Teff (Eragrostis tef)' : 'Wheat (Triticum aestivum)'),
-        'cropIdentifiedAm': isMaize ? 'በቆሎ' : (isTeff ? 'ጤፍ' : 'ስንዴ'),
-        'imageUrl': '/uploads/diagnoses/sample_crop.jpg',
-        'diseaseName': isMaize ? 'Fall Armyworm Infestation' : (isTeff ? 'Teff Rust' : 'Wheat Stem Rust'),
-        'diseaseNameAm': isMaize ? 'የመኸር ሰራዊት አባጨጓሬ (ፎል አርሚዎርም)' : (isTeff ? 'የጤፍ ዋግ' : 'የስንዴ ግንድ ዋግ (ረስት)'),
-        'pathogen': isMaize ? 'Spodoptera frugiperda' : (isTeff ? 'Uromyces eragrostidis' : 'Puccinia graminis'),
-        'severity': 'HIGH',
-        'confidenceScore': 0.94,
-        'symptomsEn': isMaize ? 'Ragged feeding holes on whorl leaves and sawdust frass.' : 'Reddish-brown pustules on stems and leaf sheaths.',
-        'symptomsAm': isMaize ? 'በበቆሎው እምብርት ቅጠሎች ላይ የተቀደዱ ቀዳዳዎች እና እዳሪ ይታያል።' : 'በግንዱ እና በቅጠሉ ላይ ቀይ-ቡናማ አረፋዎችና የዝገት ምልክቶች ይታያሉ።',
-        'treatmentEn': isMaize ? 'Chemical: Apply Ampligo 150 ZC | Organic: Neem seed powder' : 'Chemical: Apply Tilt 250 EC fungicide | Organic: Remove infected plant residues',
-        'treatmentAm': isMaize ? 'ኬሚካል፡ አምፕሊጎ 150 ዜድሲ ይርጩ | የተፈጥሮ፡ የኒም ፍሬ ዱቄት ያድርጉ' : 'ኬሚካል፡ ቲልት 250 ኢሲ ፀረ-ፈንገስ በአፋጣኝ ይርጩ | የተፈጥሮ፡ የተጎዱ የዕፅዋት ቅሪቶችን ያስወግዱ',
-        'treatmentOm': 'Dawaa Tilt 250 EC biifaa.',
-        'preventionEn': 'Plant disease-resistant seed varieties and practice crop rotation.',
-        'preventionAm': 'የተሻሻሉ የበሽታ ተከላካይ ዘሮችን ይጠቀሙ፤ ሰብል ማፈራረቅን ይተግብሩ።',
-        'aiModel': 'Plant.id Botanical + Google Gemini 2.5 Flash',
-        'createdAt': DateTime.now().toIso8601String(),
-      };
-      return DiagnosisModel.fromJson(map);
+      AppLogger.error('Unexpected error during diagnosis creation', e);
+      throw UnknownError(
+        message: 'Diagnosis service error: ${e.toString()}',
+      );
     }
   }
 
@@ -113,7 +93,7 @@ class DiagnosisRepository {
       AppLogger.info('Fetching diagnoses for farm', {'farmId': farmId});
 
       final response = await _dioClient.get(
-        ApiEndpoints.farmDiagnoses(farmId),
+        ApiConstants.farmDiagnoses(farmId),
       );
 
       final raw = response.data is Map ? (response.data['data'] ?? response.data) : response.data;
@@ -145,7 +125,7 @@ class DiagnosisRepository {
     try {
       AppLogger.info('Fetching all diagnoses');
 
-      final response = await _dioClient.get(ApiEndpoints.diseaseDiagnosis);
+      final response = await _dioClient.get(ApiConstants.diseaseDiagnosis);
 
       final raw = response.data is Map ? (response.data['data'] ?? response.data) : response.data;
       final list = raw is List ? raw : [];
@@ -154,7 +134,7 @@ class DiagnosisRepository {
         final map = Map<String, dynamic>.from(json as Map);
         map['imageUrl'] = map['imageUrl'] ?? map['image'] ?? '';
         map['createdAt'] = map['createdAt'] ?? DateTime.now().toIso8601String();
-        map['farmId'] = map['farmId'] ?? '';
+        map['farmId'] = map['farmId']?.toString();
         return DiagnosisModel.fromJson(map);
       }).toList();
 

@@ -4,6 +4,7 @@ import '../../../core/repositories/auth_repository.dart';
 import '../../../core/services/notification_service.dart';
 import '../../../core/error/app_error.dart';
 import '../../../core/utils/logger.dart';
+import '../../../core/utils/role_utils.dart';
 
 /// Authentication state
 class AuthState {
@@ -45,18 +46,85 @@ class AuthState {
     );
   }
 
+  // ── Role identity getters ──────────────────────────────────────────
   bool get isFarmer => user?.role == UserRole.farmer;
   bool get isDevelopmentAgent => user?.role == UserRole.developmentAgent;
   bool get isWoredaOfficer => user?.role == UserRole.woredaOfficer;
+  bool get isZonalOfficer => user?.role == UserRole.zonalOfficer;
+  bool get isRegionalOfficer => user?.role == UserRole.regionalOfficer;
   bool get isResearcher => user?.role == UserRole.researcher;
   bool get isAdmin => user?.role == UserRole.admin;
 
+  // ── Composite role groups ──────────────────────────────────────────
+  /// Any administrative officer (woreda, zonal, regional, or national admin)
+  bool get isOfficer =>
+      isWoredaOfficer || isZonalOfficer || isRegionalOfficer || isAdmin;
+
+  /// Supervisory roles that oversee subordinate jurisdictions
+  bool get isSupervisory =>
+      isZonalOfficer || isRegionalOfficer || isAdmin;
+
+  // ── Jurisdiction level ─────────────────────────────────────────────
+  /// Returns the hierarchical jurisdiction scope for the authenticated user
+  String get jurisdictionLevel {
+    switch (user?.role) {
+      case UserRole.farmer:
+        return 'KEBELE';
+      case UserRole.developmentAgent:
+        return 'KEBELE';
+      case UserRole.woredaOfficer:
+        return 'WOREDA';
+      case UserRole.zonalOfficer:
+        return 'ZONE';
+      case UserRole.regionalOfficer:
+        return 'REGION';
+      case UserRole.researcher:
+        return 'NATIONAL';
+      case UserRole.admin:
+        return 'NATIONAL';
+      default:
+        return 'KEBELE';
+    }
+  }
+
+  // ── Permission flags ───────────────────────────────────────────────
   bool get canCreateAlerts =>
-      isWoredaOfficer || isDevelopmentAgent || isAdmin;
-  
+      isWoredaOfficer || isZonalOfficer || isRegionalOfficer ||
+      isDevelopmentAgent || isAdmin;
+
   bool get canAccessAllData => isResearcher || isAdmin;
-  
+
+  bool get canManageUsers => isAdmin;
+
+  bool get canViewSystemHealth =>
+      isWoredaOfficer || isZonalOfficer || isRegionalOfficer || isAdmin;
+
+  bool get canViewAggregateData =>
+      isZonalOfficer || isRegionalOfficer || isResearcher || isAdmin;
+
+  bool get canManageSensors => RoleUtils.canManageSensors(user?.role);
+
+  bool get canExportData =>
+      isResearcher || isZonalOfficer || isRegionalOfficer ||
+      isWoredaOfficer || isAdmin;
+
+  bool get canAccessUssdConsole =>
+      isWoredaOfficer || isZonalOfficer || isRegionalOfficer || isAdmin;
+
   bool get hasWoredaAccess => user?.woredaId != null;
+}
+
+/// Result of a registration attempt indicating whether phone OTP verification is required
+class RegisterResult {
+  final bool requiresPhoneVerification;
+  final String phone;
+  final UserModel user;
+
+  const RegisterResult({
+    required this.requiresPhoneVerification,
+    required this.phone,
+    required this.user,
+  });
 }
 
 /// Authentication state notifier
@@ -217,33 +285,68 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   /// Register new user
-  Future<void> register({
+  Future<RegisterResult> register({
     required String phone,
     required String password,
     required String fullName,
     String? email,
+    String? role,
+    String? regionId,
+    String? zoneId,
     String? woredaId,
+    String? kebeleId,
+    String? kebeleName,
     String? preferredLang,
     String? deviceToken,
+    String? organizationName,
+    String? staffIdNumber,
+    String? justification,
   }) async {
     state = state.copyWith(isLoading: true, clearError: true);
     
     try {
-      AppLogger.info('Registration attempt for phone: $phone');
+      AppLogger.info('Registration attempt for phone: $phone with role: ${role ?? "FARMER"}');
       
       final request = RegisterRequest(
         phone: phone,
         password: password,
         fullName: fullName,
         email: email,
+        role: role,
+        regionId: regionId,
+        zoneId: zoneId,
         woredaId: woredaId,
+        kebeleId: kebeleId,
+        kebeleName: kebeleName,
         preferredLang: preferredLang,
         deviceToken: deviceToken,
+        organizationName: organizationName,
+        staffIdNumber: staffIdNumber,
+        justification: justification,
       );
       
       final response = await _authRepository.register(request);
+      final requiresVerification = response.requiresPhoneVerification;
+      final user = response.user;
+
+      if (requiresVerification) {
+        // Phone ownership verification OTP is strictly required before activating session.
+        // We set isAuthenticated to false so GoRouter does not prematurely redirect.
+        state = state.copyWith(
+          user: user,
+          isAuthenticated: false,
+          isLoading: false,
+        );
+        AppLogger.info('Registration created. Phone OTP verification required for: $phone');
+        return RegisterResult(
+          requiresPhoneVerification: true,
+          phone: phone,
+          user: user,
+        );
+      }
+
       var hasToken = response.accessToken.isNotEmpty;
-      UserModel user = response.user;
+      UserModel finalUser = user;
 
       // If registration succeeded on server but didn't return an auth token directly, auto-login seamlessly
       if (!hasToken) {
@@ -256,7 +359,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
               deviceToken: deviceToken,
             ),
           );
-          user = loginResponse.user;
+          finalUser = loginResponse.user;
           hasToken = loginResponse.accessToken.isNotEmpty;
         } catch (loginErr) {
           AppLogger.warning('Auto-login after register did not complete: $loginErr');
@@ -264,12 +367,17 @@ class AuthNotifier extends StateNotifier<AuthState> {
       }
       
       state = state.copyWith(
-        user: user,
+        user: finalUser,
         isAuthenticated: hasToken,
         isLoading: false,
       );
       
       AppLogger.info('Registration successful (authenticated: $hasToken)');
+      return RegisterResult(
+        requiresPhoneVerification: false,
+        phone: phone,
+        user: finalUser,
+      );
     } on AuthError catch (e) {
       // If user already exists (e.g. created during a timeout or earlier attempt), attempt auto-login with provided credentials
       if (e.code == 'CONFLICT') {
@@ -283,13 +391,31 @@ class AuthNotifier extends StateNotifier<AuthState> {
               deviceToken: deviceToken,
             ),
           );
+          final isPhoneUnverified = !loginResponse.user.isPhoneVerified && loginResponse.user.phone.isNotEmpty;
+          if (isPhoneUnverified) {
+            state = state.copyWith(
+              user: loginResponse.user,
+              isAuthenticated: false,
+              isLoading: false,
+            );
+            return RegisterResult(
+              requiresPhoneVerification: true,
+              phone: phone,
+              user: loginResponse.user,
+            );
+          }
+
           state = state.copyWith(
             user: loginResponse.user,
             isAuthenticated: true,
             isLoading: false,
           );
           AppLogger.info('Auto-login succeeded after conflict recovery');
-          return;
+          return RegisterResult(
+            requiresPhoneVerification: false,
+            phone: phone,
+            user: loginResponse.user,
+          );
         } catch (loginErr) {
           AppLogger.warning('Auto-login failed after conflict, showing error: $loginErr');
         }
@@ -416,6 +542,20 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  /// Update active user role
+  Future<void> updateUserRole(String newRole) async {
+    if (!state.isAuthenticated) return;
+    try {
+      state = state.copyWith(isLoading: true);
+      final updated = await _authRepository.updateProfile({'role': newRole});
+      state = state.copyWith(user: updated, isLoading: false);
+      AppLogger.info('User role updated to $newRole');
+    } catch (e) {
+      state = state.copyWith(isLoading: false);
+      rethrow;
+    }
+  }
+
   /// Save device token for push notifications
   Future<void> saveDeviceToken(String token) async {
     try {
@@ -424,6 +564,39 @@ class AuthNotifier extends StateNotifier<AuthState> {
     } catch (e) {
       AppLogger.warning('Failed to save device token', e);
       // Non-critical, don't throw
+    }
+  }
+
+  /// Verify Sign-Up Phone Ownership OTP
+  Future<void> verifyPhoneOtp({required String phone, required String code}) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      AppLogger.info('Verifying phone OTP in AuthNotifier for: $phone');
+      final response = await _authRepository.verifyPhoneOtp(phone: phone, code: code);
+      state = state.copyWith(
+        user: response.user,
+        isAuthenticated: true,
+        isLoading: false,
+      );
+      AppLogger.info('Phone OTP verified and authenticated successfully');
+    } on AppError catch (e) {
+      state = state.copyWith(isLoading: false, error: e);
+      rethrow;
+    } catch (e) {
+      final error = UnknownError(message: 'Verification failed: ${e.toString()}', details: e);
+      state = state.copyWith(isLoading: false, error: error);
+      throw error;
+    }
+  }
+
+  /// Resend Sign-Up Phone Verification OTP
+  Future<Map<String, dynamic>> resendPhoneOtp(String phone) async {
+    try {
+      AppLogger.info('Resending phone OTP in AuthNotifier for: $phone');
+      return await _authRepository.resendPhoneOtp(phone);
+    } catch (e) {
+      AppLogger.error('Failed to resend phone OTP', e);
+      rethrow;
     }
   }
 

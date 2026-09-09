@@ -18,7 +18,7 @@ class AuthRepository {
   /// Login user with email or phone and password
   Future<LoginResponse> login(LoginRequest request) async {
     try {
-      final identifier = (request.email ?? request.phone ?? request.identifier ?? '').trim();
+      final identifier = (request.phone ?? request.identifier ?? request.email ?? '').trim();
       final isEmail = identifier.contains('@');
       final formattedPhone = !isEmail ? _normalizePhone(identifier) : null;
       AppLogger.info('Attempting login for: ${isEmail ? identifier : formattedPhone}');
@@ -27,7 +27,7 @@ class AuthRepository {
         if (isEmail) 'email': identifier,
         if (!isEmail) 'phoneNumber': formattedPhone,
         if (!isEmail) 'phone': formattedPhone,
-        'identifier': identifier,
+        'identifier': formattedPhone ?? identifier,
         if (request.deviceToken != null) 'deviceToken': request.deviceToken,
       };
       final response = await _dioClient.post(
@@ -87,12 +87,18 @@ class AuthRepository {
   }
 
   String _normalizePhone(String phone) {
-    final clean = phone.trim().replaceAll(RegExp(r'[\s\-]'), '');
+    final clean = phone.trim().replaceAll(RegExp(r'[\s\-()]'), '');
     if ((clean.startsWith('09') || clean.startsWith('07')) && clean.length == 10) {
       return '+251${clean.substring(1)}';
     }
+    if ((clean.startsWith('9') || clean.startsWith('7')) && clean.length == 9) {
+      return '+251$clean';
+    }
     if (clean.startsWith('251') && clean.length == 12) {
       return '+$clean';
+    }
+    if (clean.startsWith('+251') && clean.length == 13) {
+      return clean;
     }
     return clean;
   }
@@ -108,9 +114,16 @@ class AuthRepository {
         'phoneNumber': formattedPhone,
         'password': request.password,
         'fullName': request.fullName,
-        'role': 'FARMER',
+        'role': request.role ?? 'FARMER',
         if (request.email != null && request.email!.isNotEmpty) 'email': request.email,
+        if (request.regionId != null && request.regionId!.isNotEmpty) 'regionId': request.regionId,
+        if (request.zoneId != null && request.zoneId!.isNotEmpty) 'zoneId': request.zoneId,
         if (request.woredaId != null && request.woredaId!.isNotEmpty) 'woredaId': request.woredaId,
+        if (request.kebeleId != null && request.kebeleId!.isNotEmpty) 'kebeleId': request.kebeleId,
+        if (request.kebeleName != null && request.kebeleName!.isNotEmpty) 'kebeleName': request.kebeleName,
+        if (request.organizationName != null && request.organizationName!.isNotEmpty) 'organizationName': request.organizationName,
+        if (request.staffIdNumber != null && request.staffIdNumber!.isNotEmpty) 'staffIdNumber': request.staffIdNumber,
+        if (request.justification != null && request.justification!.isNotEmpty) 'justification': request.justification,
         if (request.preferredLang != null && request.preferredLang!.isNotEmpty) 'preferredLang': request.preferredLang,
         if (request.deviceToken != null && request.deviceToken!.isNotEmpty) 'deviceToken': request.deviceToken,
       };
@@ -143,24 +156,34 @@ class AuthRepository {
       }
 
       final user = UserModel.fromJson(normalizedUser);
+      final reqPhoneVerify = rawData['requiresPhoneVerification'] == true ||
+          (!user.isPhoneVerified && user.phone.isNotEmpty);
+
       final loginResponse = LoginResponse(
         accessToken: accessToken,
         refreshToken: refreshToken,
         user: user,
+        requiresPhoneVerification: reqPhoneVerify,
       );
 
-      // Save authentication tokens & user profile locally for offline persistence
-      if (accessToken.isNotEmpty) {
-        await _storage.saveAccessToken(accessToken);
+      // Only commit authentication tokens locally if phone verification is NOT required.
+      // For phone-based sign-ups, tokens will only be saved upon successful OTP verification.
+      if (!reqPhoneVerify) {
+        if (accessToken.isNotEmpty) {
+          await _storage.saveAccessToken(accessToken);
+        }
+        if (refreshToken.isNotEmpty) {
+          await _storage.saveRefreshToken(refreshToken);
+        }
+        await _storage.saveUserId(user.id);
+        await _storage.saveUserData(jsonEncode(user.toJson()));
       }
-      if (refreshToken.isNotEmpty) {
-        await _storage.saveRefreshToken(refreshToken);
-      }
-      await _storage.saveUserId(user.id);
-      await _storage.saveUserData(jsonEncode(user.toJson()));
 
-      AppLogger.info('Registration successful for user: ${user.id}');
-      
+      AppLogger.info(
+        'Registration API succeeded for user: ${user.id} '
+        '(requiresPhoneVerification: $reqPhoneVerify)',
+      );
+
       return loginResponse;
     } on DioException catch (e) {
       AppLogger.error('Registration failed', e);
@@ -208,6 +231,43 @@ class AuthRepository {
     }
   }
 
+  /// Update user profile
+  Future<UserModel> updateProfile(Map<String, dynamic> updates) async {
+    try {
+      AppLogger.info('Updating user profile', updates);
+      final response = await _dioClient.put(
+        ApiConstants.profile,
+        data: updates,
+      );
+
+      dynamic raw = response.data;
+      Map<String, dynamic> userData = {};
+      if (raw is Map) {
+        final rawMap = Map<String, dynamic>.from(raw);
+        if (rawMap['data'] is Map) {
+          final dataMap = Map<String, dynamic>.from(rawMap['data'] as Map);
+          userData = dataMap['user'] is Map
+              ? Map<String, dynamic>.from(dataMap['user'] as Map)
+              : dataMap;
+        } else if (rawMap['user'] is Map) {
+          userData = Map<String, dynamic>.from(rawMap['user'] as Map);
+        } else {
+          userData = rawMap;
+        }
+      }
+
+      final updatedUser = UserModel.fromJson(userData);
+      await _storage.saveUserData(jsonEncode(updatedUser.toJson()));
+      return updatedUser;
+    } on DioException catch (e) {
+      AppLogger.error('Failed to update profile', e);
+      throw NetworkError.fromDioException(e);
+    } catch (e, stackTrace) {
+      AppLogger.error('Unexpected profile update error', e, stackTrace);
+      throw UnknownError(message: 'Failed to update profile: ${e.toString()}');
+    }
+  }
+
   /// Get locally cached user profile for offline session continuity
   Future<UserModel?> getCachedUser() async {
     try {
@@ -243,6 +303,7 @@ class AuthRepository {
       
       throw NetworkError.fromDioException(e);
     } catch (e, stackTrace) {
+      if (e is AppError) rethrow;
       AppLogger.error('Unexpected password update error', e, stackTrace);
       throw UnknownError(message: 'Failed to update password: ${e.toString()}');
     }
@@ -263,8 +324,19 @@ class AuthRepository {
         ApiConstants.refreshToken, data: {'refreshToken': refreshToken},
       );
 
-      final newAccessToken = response.data['accessToken'] as String;
-      final newRefreshToken = response.data['refreshToken'] as String?;
+      dynamic raw = response.data;
+      Map<String, dynamic> dataMap = {};
+      if (raw is Map) {
+        final rawMap = Map<String, dynamic>.from(raw);
+        if (rawMap['data'] is Map) {
+          dataMap = Map<String, dynamic>.from(rawMap['data'] as Map);
+        } else {
+          dataMap = rawMap;
+        }
+      }
+
+      final newAccessToken = (dataMap['accessToken'] ?? dataMap['token']) as String;
+      final newRefreshToken = dataMap['refreshToken'] as String?;
 
       await _storage.saveAccessToken(newAccessToken);
       if (newRefreshToken != null) {
@@ -292,8 +364,9 @@ class AuthRepository {
     try {
       AppLogger.info('Updating device token', {'token': token});
 
-      await _dioClient.post(
-        '/auth/device-token',
+      // Update via PUT /auth/me which handles deviceToken cleanly
+      await _dioClient.put(
+        ApiConstants.profile,
         data: {'deviceToken': token},
       );
 
@@ -354,6 +427,184 @@ class AuthRepository {
     } catch (e, stackTrace) {
       AppLogger.error('Unexpected password reset error', e, stackTrace);
       throw const UnknownError(message: 'Failed to reset password');
+    }
+  }
+
+  /// Request passwordless login OTP sent via SMS to Ethiopian mobile
+  Future<Map<String, dynamic>> requestLoginOtp(String phone) async {
+    try {
+      final formattedPhone = _normalizePhone(phone);
+      AppLogger.info('Requesting login OTP for phone: $formattedPhone');
+      final response = await _dioClient.post(
+        ApiConstants.requestLoginOtp,
+        data: {
+          'phone': formattedPhone,
+          'phoneNumber': formattedPhone,
+        },
+      );
+      final data = response.data is Map && response.data['data'] != null
+          ? response.data['data'] as Map<String, dynamic>
+          : response.data as Map<String, dynamic>;
+      AppLogger.info('Login OTP requested successfully');
+      return data;
+    } on DioException catch (e) {
+      AppLogger.error('Request login OTP failed', e);
+      throw _handleAuthError(e);
+    } catch (e, stackTrace) {
+      AppLogger.error('Unexpected error requesting login OTP', e, stackTrace);
+      throw const UnknownError(message: 'Failed to request login code');
+    }
+  }
+
+  /// Verify passwordless login OTP and store JWT credentials
+  Future<LoginResponse> verifyLoginOtp({required String phone, required String code}) async {
+    try {
+      final formattedPhone = _normalizePhone(phone);
+      final cleanCode = code.trim();
+      AppLogger.info('Verifying login OTP for phone: $formattedPhone');
+      final response = await _dioClient.post(
+        ApiConstants.verifyLoginOtp,
+        data: {
+          'phone': formattedPhone,
+          'phoneNumber': formattedPhone,
+          'code': cleanCode,
+          'otp': cleanCode,
+        },
+      );
+
+      final rawData = response.data is Map && response.data['data'] != null
+          ? response.data['data'] as Map<String, dynamic>
+          : response.data as Map<String, dynamic>;
+
+      final accessToken = (rawData['accessToken'] ?? rawData['token'] ?? rawData['tokens']?['accessToken'] ?? '').toString();
+      final refreshToken = (rawData['refreshToken'] ?? rawData['tokens']?['refreshToken'] ?? '').toString();
+      final userData = rawData['user'] is Map ? rawData['user'] as Map<String, dynamic> : rawData;
+
+      final normalizedUser = Map<String, dynamic>.from(userData);
+      if (!normalizedUser.containsKey('phone') && normalizedUser.containsKey('phoneNumber')) {
+        normalizedUser['phone'] = normalizedUser['phoneNumber'];
+      }
+      if (!normalizedUser.containsKey('role') || normalizedUser['role'] == null) {
+        normalizedUser['role'] = 'FARMER';
+      }
+      if (!normalizedUser.containsKey('fullName') || normalizedUser['fullName'] == null) {
+        normalizedUser['fullName'] = normalizedUser['name'] ?? 'Farmer';
+      }
+      if (!normalizedUser.containsKey('id') || normalizedUser['id'] == null) {
+        normalizedUser['id'] = normalizedUser['_id'] ?? '';
+      }
+
+      final user = UserModel.fromJson(normalizedUser);
+
+      if (accessToken.isNotEmpty) {
+        await _storage.saveAccessToken(accessToken);
+      }
+      if (refreshToken.isNotEmpty) {
+        await _storage.saveRefreshToken(refreshToken);
+      }
+      await _storage.saveUserId(user.id);
+      await _storage.saveUserData(jsonEncode(user.toJson()));
+
+      return LoginResponse(
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+        user: user,
+      );
+    } on DioException catch (e) {
+      AppLogger.error('Verify login OTP failed', e);
+      throw _handleAuthError(e);
+    } catch (e, stackTrace) {
+      AppLogger.error('Unexpected error verifying login OTP', e, stackTrace);
+      throw const UnknownError(message: 'Failed to verify login code');
+    }
+  }
+
+  /// Verify Sign-Up Phone Ownership OTP and activate session
+  Future<LoginResponse> verifyPhoneOtp({required String phone, required String code}) async {
+    try {
+      final formattedPhone = _normalizePhone(phone);
+      final cleanCode = code.trim();
+      AppLogger.info('Verifying sign-up phone OTP for: $formattedPhone');
+      final response = await _dioClient.post(
+        ApiConstants.verifyPhoneOtp,
+        data: {
+          'phone': formattedPhone,
+          'phoneNumber': formattedPhone,
+          'code': cleanCode,
+          'otp': cleanCode,
+        },
+      );
+
+      final rawData = response.data is Map && response.data['data'] != null
+          ? response.data['data'] as Map<String, dynamic>
+          : response.data as Map<String, dynamic>;
+
+      final accessToken = (rawData['accessToken'] ?? rawData['token'] ?? '').toString();
+      final refreshToken = (rawData['refreshToken'] ?? '').toString();
+      final userData = rawData['user'] is Map ? rawData['user'] as Map<String, dynamic> : rawData;
+
+      final normalizedUser = Map<String, dynamic>.from(userData);
+      if (!normalizedUser.containsKey('phone') && normalizedUser.containsKey('phoneNumber')) {
+        normalizedUser['phone'] = normalizedUser['phoneNumber'];
+      }
+      if (!normalizedUser.containsKey('role') || normalizedUser['role'] == null) {
+        normalizedUser['role'] = 'FARMER';
+      }
+      if (!normalizedUser.containsKey('fullName') || normalizedUser['fullName'] == null) {
+        normalizedUser['fullName'] = normalizedUser['name'] ?? 'User';
+      }
+      if (!normalizedUser.containsKey('id') || normalizedUser['id'] == null) {
+        normalizedUser['id'] = normalizedUser['_id'] ?? '';
+      }
+
+      final user = UserModel.fromJson(normalizedUser);
+
+      if (accessToken.isNotEmpty) {
+        await _storage.saveAccessToken(accessToken);
+      }
+      if (refreshToken.isNotEmpty) {
+        await _storage.saveRefreshToken(refreshToken);
+      }
+      await _storage.saveUserId(user.id);
+      await _storage.saveUserData(jsonEncode(user.toJson()));
+
+      return LoginResponse(
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+        user: user,
+      );
+    } on DioException catch (e) {
+      AppLogger.error('Verify sign-up phone OTP failed', e);
+      throw _handleAuthError(e);
+    } catch (e, stackTrace) {
+      AppLogger.error('Unexpected error verifying sign-up phone OTP', e, stackTrace);
+      throw const UnknownError(message: 'Failed to verify phone verification code');
+    }
+  }
+
+  /// Resend Sign-Up Phone Verification OTP with cooldown
+  Future<Map<String, dynamic>> resendPhoneOtp(String phone) async {
+    try {
+      final formattedPhone = _normalizePhone(phone);
+      AppLogger.info('Resending sign-up phone OTP for: $formattedPhone');
+      final response = await _dioClient.post(
+        ApiConstants.resendPhoneOtp,
+        data: {
+          'phone': formattedPhone,
+          'phoneNumber': formattedPhone,
+        },
+      );
+      final data = response.data is Map && response.data['data'] != null
+          ? response.data['data'] as Map<String, dynamic>
+          : response.data as Map<String, dynamic>;
+      AppLogger.info('Sign-up phone OTP resent successfully');
+      return data;
+    } on DioException catch (e) {
+      AppLogger.error('Resend sign-up phone OTP failed', e);
+      throw _handleAuthError(e);
+    } catch (e, stackTrace) {
+      AppLogger.error('Unexpected error resending sign-up phone OTP', e, stackTrace);
+      throw const UnknownError(message: 'Failed to resend phone verification code');
     }
   }
 
@@ -441,15 +692,19 @@ class AuthRepository {
       if (responseData is Map && responseData['code'] == 'ACCOUNT_LOCKED') {
         return AuthError.accountLocked();
       }
+      var cleanMessage = backendMessage;
+      if (cleanMessage != null && cleanMessage.toLowerCase().contains('invalid email or password')) {
+        cleanMessage = 'Invalid phone number or password.';
+      }
       return AuthError(
-        message: backendMessage ?? 'Invalid phone/email or password.',
+        message: cleanMessage ?? 'Invalid phone number or password.',
         code: 'INVALID_CREDENTIALS',
       );
     }
 
     if (statusCode == 403) {
       return AuthError(
-        message: backendMessage ?? 'Access denied. Please verify your email or contact support.',
+        message: backendMessage ?? 'Access denied. Please verify your phone number or contact support.',
         code: 'FORBIDDEN',
       );
     }

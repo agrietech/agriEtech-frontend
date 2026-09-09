@@ -22,3 +22,5 @@ Thumbs.db
 .flutter-plugins
 .flutter-plugins-dependencies
 *.log
+# Widget Preview related
+.widget_preview/

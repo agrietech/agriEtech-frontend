@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/dio_client.dart';
-import '../data/ethiopia_boundaries_data.dart';
 import '../models/boundary_models.dart';
+import '../repositories/boundary_local_cache.dart';
 import '../repositories/boundary_repository.dart';
 
 /// Boundary repository provider
@@ -13,49 +13,29 @@ final boundaryRepositoryProvider = Provider<BoundaryRepository>((ref) {
 /// Regions provider
 final regionsProvider = FutureProvider<List<RegionModel>>((ref) async {
   final repository = ref.watch(boundaryRepositoryProvider);
-  try {
-    final regions = await repository.getRegions();
-    if (regions.isNotEmpty) return regions;
-  } catch (_) {}
-  return EthiopiaBoundariesData.defaultRegions;
+  return await repository.getRegions();
 });
 
-/// Zones provider (filtered by region)
+/// Zones provider (filtered dynamically by region)
 final zonesByRegionProvider =
     FutureProvider.family<List<ZoneModel>, String?>((ref, regionId) async {
-  if (regionId == null) return [];
+  if (regionId == null || regionId.isEmpty) return [];
   final repository = ref.watch(boundaryRepositoryProvider);
-  try {
-    final zones = await repository.getZonesByRegion(regionId);
-    if (zones.isNotEmpty) return zones;
-  } catch (_) {}
-  return EthiopiaBoundariesData.getFallbackZones(regionId);
+  return await repository.getZonesByRegion(regionId);
 });
 
-/// Woredas provider (filtered by zone)
+/// Woredas provider (filtered dynamically by zone)
 final woredasByZoneProvider =
     FutureProvider.family<List<WoredaModel>, String?>((ref, zoneId) async {
-  if (zoneId == null) return [];
+  if (zoneId == null || zoneId.isEmpty) return [];
   final repository = ref.watch(boundaryRepositoryProvider);
-  try {
-    final woredas = await repository.getWoredasByZone(zoneId);
-    if (woredas.isNotEmpty) return woredas;
-  } catch (_) {}
-  return EthiopiaBoundariesData.getFallbackWoredas(zoneId);
+  return await repository.getWoredasByZone(zoneId);
 });
 
 /// All woredas provider
 final allWoredasProvider = FutureProvider<List<WoredaModel>>((ref) async {
   final repository = ref.watch(boundaryRepositoryProvider);
-  try {
-    final woredas = await repository.getAllWoredas();
-    if (woredas.isNotEmpty) return woredas;
-  } catch (_) {}
-  final all = <WoredaModel>[];
-  for (final list in EthiopiaBoundariesData.defaultWoredasByZone.values) {
-    all.addAll(list);
-  }
-  return all;
+  return await repository.getAllWoredas();
 });
 
 /// Woreda details provider
@@ -70,23 +50,21 @@ class BoundaryHierarchyNotifier extends StateNotifier<BoundaryHierarchy> {
   final BoundaryRepository _repository;
 
   BoundaryHierarchyNotifier(this._repository)
-      : super(BoundaryHierarchy(regions: EthiopiaBoundariesData.defaultRegions)) {
+      : super(const BoundaryHierarchy(regions: BoundaryLocalCache.defaultRegions)) {
     loadRegions();
   }
 
-  /// Load all regions
+  /// Load all regions from backend database / local persistent disk cache
   Future<void> loadRegions() async {
     try {
       final regions = await _repository.getRegions();
       if (regions.isNotEmpty) {
         state = state.copyWith(regions: regions);
-        return;
       }
     } catch (_) {}
-    state = state.copyWith(regions: EthiopiaBoundariesData.defaultRegions);
   }
 
-  /// Select region and load its zones
+  /// Select region and dynamically load its zones and woredas from backend / cache
   Future<void> selectRegion(RegionModel? region) async {
     state = state.copyWith(
       selectedRegion: region,
@@ -99,17 +77,12 @@ class BoundaryHierarchyNotifier extends StateNotifier<BoundaryHierarchy> {
     if (region != null) {
       try {
         final zones = await _repository.getZonesByRegion(region.id);
-        if (zones.isNotEmpty) {
-          state = state.copyWith(zones: zones);
-          return;
-        }
+        state = state.copyWith(zones: zones);
       } catch (_) {}
-      final fallbackZones = EthiopiaBoundariesData.getFallbackZones(region.id);
-      state = state.copyWith(zones: fallbackZones);
     }
   }
 
-  /// Select zone and load its woredas
+  /// Select zone and dynamically load its woredas from backend / cache
   Future<void> selectZone(ZoneModel? zone) async {
     state = state.copyWith(
       selectedZone: zone,
@@ -120,13 +93,8 @@ class BoundaryHierarchyNotifier extends StateNotifier<BoundaryHierarchy> {
     if (zone != null) {
       try {
         final woredas = await _repository.getWoredasByZone(zone.id);
-        if (woredas.isNotEmpty) {
-          state = state.copyWith(woredas: woredas);
-          return;
-        }
+        state = state.copyWith(woredas: woredas);
       } catch (_) {}
-      final fallbackWoredas = EthiopiaBoundariesData.getFallbackWoredas(zone.id);
-      state = state.copyWith(woredas: fallbackWoredas);
     }
   }
 

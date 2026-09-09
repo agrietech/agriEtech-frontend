@@ -20,6 +20,10 @@ class ApiConstants {
   static const String updatePassword = '$auth/update-password';
   static const String forgotPassword = '$auth/forgot-password';
   static const String resetPassword = '$auth/reset-password';
+  static const String requestLoginOtp = '$auth/request-login-otp';
+  static const String verifyLoginOtp = '$auth/verify-login-otp';
+  static const String verifyPhoneOtp = '$auth/verify-phone-otp';
+  static const String resendPhoneOtp = '$auth/resend-phone-otp';
   static const String verifyEmail = '$auth/verify-email';
   static const String resendVerification = '$auth/resend-verification';
   static const String roleRequests = '$auth/role-requests';
@@ -29,7 +33,12 @@ class ApiConstants {
   static const String regions = '$boundaries/regions';
   static const String zones = '$boundaries/zones';
   static const String woredas = '$boundaries/woredas';
+  static const String kebeles = '$boundaries/kebeles';
+  static const String hierarchy = '$boundaries/hierarchy';
+  static const String nationalSummary = '$boundaries/summary';
   static String woredaById(String id) => '$boundaries/woredas/$id';
+  static String kebeleById(String id) => '$boundaries/kebeles/$id';
+
 
   // 3. Farm Plot Registry Endpoints (/farms)
   static const String farms = '/farms';
@@ -47,17 +56,28 @@ class ApiConstants {
   static String satelliteWoreda(String woredaId) => '$satelliteObservations/woreda/$woredaId';
   static const String satelliteIngest = '$satelliteObservations/ingest';
 
-  // 6. Multi-Hazard Risk Assessment Endpoints (/risk-assessments)
+  // 6. Integrated Risk Assessment Endpoints (/risk-assessments)
   static const String riskAssessments = '/risk-assessments';
   static const String evaluateRisk = '$riskAssessments/evaluate';
   static String riskByWoreda(String woredaId) => '$riskAssessments/woreda/$woredaId';
   static const String riskStatistics = '$riskAssessments/statistics';
   static String riskStats([String? period]) => '$riskAssessments/statistics';
 
-  // 7. Early Warning Alert Endpoints (/alerts)
+  // 7. Smart Alert Endpoints (/alerts)
   static const String alerts = '/alerts';
   static String alertById(String id) => '$alerts/$id';
   static String alertMarkRead(String id) => '$alerts/$id/read';
+
+  // 7A. Notification Endpoints (/notifications)
+  static const String notifications = '/notifications';
+  static String notificationById(String id) => '$notifications/$id';
+  static String notificationMarkRead(String id) => '$notifications/$id/read';
+  static const String notificationsReadAll = '$notifications/mark-all-read';
+  static const String notificationsUnreadCount = '$notifications/unread-count';
+
+  // 7B. Advisories Endpoints (/advisories)
+  static const String advisories = '/advisories';
+  static String advisoryById(String id) => '$advisories/$id';
 
   // 8. AI Crop Disease Diagnosis Endpoints (/disease-diagnosis)
   static const String diseaseDiagnosis = '/disease-diagnosis';
@@ -71,6 +91,15 @@ class ApiConstants {
   static const String temporalTrends = '$analytics/temporal-trends';
   static const String agronomicAdvisories = '$analytics/agronomic-advisories';
   static const String analyticsAiInsights = '$analytics/ai-insights';
+  static const String hyperLocal = '$analytics/hyper-local';
+  static const String soilProfile = '$analytics/soil-profile';
+  static const String downscaledForecast = '$analytics/downscaled-forecast';
+  static const String agroZone = '$analytics/agro-zone';
+  static const String seismology = '$analytics/seismology';
+  static const String soilDegradation = '$analytics/soil-degradation';
+  static const String naturalDisasters = '$analytics/natural-disasters';
+
+
 
   // 9A. Location-Based Map & Analytics (/analytics/location)
   static const String locationMap = '$analytics/location/map';
@@ -105,6 +134,11 @@ class ApiConstants {
   static const String adminOverview = '/admin/overview';
   static const String adminUsers = '/admin/users';
   static String adminUserById(String id) => '/admin/users/$id';
+
+  // 14. Dedicated Weather & Climatology (/weather)
+  static const String weather = '/weather';
+  static const String weatherForecast = '$weather/forecast';
+  static const String weatherCurrent = '$weather/current';
   static String adminUserRole(String id) => '/admin/users/$id/role';
   static String adminUserStatus(String id) => '/admin/users/$id/status';
   static const String adminFarms = '/admin/farms';

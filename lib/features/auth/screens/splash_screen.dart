@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/agrietech_logo.dart';
 import '../providers/auth_provider.dart';
 
@@ -73,14 +74,14 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
             end: Alignment.bottomCenter,
             colors: isDark
                 ? const [
-                    Color(0xFF0D2E14),
-                    Color(0xFF091F0E),
-                    Color(0xFF051208),
+                    Color(0xFF122418),
+                    Color(0xFF162D1F),
+                    Color(0xFF102216),
                   ]
                 : const [
-                    Color(0xFFF1F8F1),
-                    Color(0xFFE8F5E9),
-                    Color(0xFFDCEFDC),
+                    Color(0xFFF0FDF4),
+                    Color(0xFFDCFCE7),
+                    Color(0xFFF4F9F4),
                   ],
           ),
         ),
@@ -95,10 +96,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                 opacity: _fadeAnimation,
                 child: ScaleTransition(
                   scale: _scaleAnimation,
-                  child: const AgriEtechLogo.hero(
+                  child: const EthioFarmLogo.hero(
                     size: 92,
                     showTagline: true,
-                    customTagline: 'EARLY WARNING & ADVISORY SYSTEM',
+                    customTagline: 'SMART FARMING & ADVISORY SYSTEM',
                   ),
                 ),
               ),
@@ -116,15 +117,14 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                       child: CircularProgressIndicator(
                         strokeWidth: 2.8,
                         valueColor: AlwaysStoppedAnimation<Color>(
-                          isDark ? const Color(0xFFF59E0B) : const Color(0xFF2E7D32),
+                          isDark ? const Color(0xFF81C784) : const Color(0xFF2E7D32),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppSpacing.md),
                     Text(
                       'Securing Agricultural Resilience...',
-                      style: TextStyle(
-                        fontSize: 12,
+                      style: AppTypography.caption.copyWith(
                         fontWeight: FontWeight.w500,
                         letterSpacing: 0.4,
                         color: isDark ? Colors.grey.shade400 : Colors.grey.shade700,
@@ -134,7 +134,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                 ),
               ),
 
-              const SizedBox(height: 32),
+              const SizedBox(height: AppSpacing.xl),
             ],
           ),
         ),

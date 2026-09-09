@@ -61,8 +61,15 @@ class DioClient {
           // Log error
           AppLogger.error('API Error: ${error.message}', error.error, error.stackTrace);
 
-          // Handle 401 Unauthorized
-          if (error.response?.statusCode == 401) {
+          // Handle 401 Unauthorized (exclude auth endpoints to avoid infinite refresh loops & deadlocks)
+          final path = error.requestOptions.path;
+          final isAuthEndpoint = path.contains(ApiConstants.login) ||
+              path.contains(ApiConstants.register) ||
+              path.contains(ApiConstants.refreshToken) ||
+              path.contains(ApiConstants.forgotPassword) ||
+              path.contains(ApiConstants.resetPassword);
+
+          if (error.response?.statusCode == 401 && !isAuthEndpoint) {
             final refreshed = await _refreshToken();
             if (refreshed) {
               try {
@@ -158,8 +165,22 @@ class DioClient {
     );
   }
 
-  /// Refresh access token
+  Future<bool>? _refreshFuture;
+
+  /// Refresh access token with concurrency lock
   Future<bool> _refreshToken() async {
+    if (_refreshFuture != null) {
+      return _refreshFuture!;
+    }
+    _refreshFuture = _performTokenRefresh();
+    try {
+      return await _refreshFuture!;
+    } finally {
+      _refreshFuture = null;
+    }
+  }
+
+  Future<bool> _performTokenRefresh() async {
     try {
       final refreshToken = await _storage.getRefreshToken();
       if (refreshToken == null) {
@@ -297,7 +318,6 @@ class DioClient {
     final multipartFile = await MultipartFile.fromFile(filePath, filename: fileName);
     final formData = FormData.fromMap({
       fieldName: multipartFile,
-      if (fieldName != 'file') 'file': await MultipartFile.fromFile(filePath, filename: fileName),
       ...?data,
     });
 
@@ -323,7 +343,6 @@ class DioClient {
     final multipartFile = MultipartFile.fromBytes(bytes, filename: fileName);
     final formData = FormData.fromMap({
       fieldName: multipartFile,
-      if (fieldName != 'file') 'file': MultipartFile.fromBytes(bytes, filename: fileName),
       ...?data,
     });
 

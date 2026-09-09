@@ -41,6 +41,19 @@ class SecureStorageService {
     return await _storage.read(key: 'cached_user_data');
   }
 
+  // Remembered user (Username / Phone / Email)
+  Future<void> saveRememberedUser(String identifier) async {
+    await _storage.write(key: 'remembered_user_identifier', value: identifier);
+  }
+
+  Future<String?> getRememberedUser() async {
+    return await _storage.read(key: 'remembered_user_identifier');
+  }
+
+  Future<void> clearRememberedUser() async {
+    await _storage.delete(key: 'remembered_user_identifier');
+  }
+
   Future<void> clearAuth() async {
     await _storage.delete(key: AppConstants.accessTokenKey);
     await _storage.delete(key: AppConstants.refreshTokenKey);

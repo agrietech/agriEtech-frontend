@@ -4,7 +4,7 @@ import '../config/env.dart';
 
 /// Application logging utility
 class AppLogger {
-  static const String _tag = 'AgriEtech';
+  static const String _tag = 'EthioFarm';
 
   /// Log info message
   static void info(String message, [Object? data]) {
@@ -41,6 +41,10 @@ class AppLogger {
       );
     }
   }
+
+  /// Alias for warning
+  static void warn(String message, [Object? error]) => warning(message, error);
+
 
   /// Log error message
   static void error(String message, [Object? error, StackTrace? stackTrace]) {

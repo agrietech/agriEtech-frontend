@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/utils/date_formatter.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/utils/role_utils.dart';
+import '../../../core/widgets/error_view.dart';
+import '../../../core/widgets/shimmer_loading.dart';
+
+import '../../../core/widgets/empty_state_view.dart';
+import '../../../core/utils/date_formatter.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../models/diagnosis_models.dart';
 import '../providers/diagnosis_provider.dart';
@@ -21,7 +26,15 @@ class DiagnosisListScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Disease Diagnosis'),
+        elevation: 0,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              ref.read(diagnosisListProvider.notifier).refresh();
+              ref.invalidate(diagnosisStatisticsProvider);
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.filter_list_off),
             tooltip: 'Clear Filters',
@@ -39,7 +52,13 @@ class DiagnosisListScreen extends ConsumerWidget {
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: DiagnosisStatisticsCard(statistics: statistics),
+                child: Column(
+                  children: [
+                    DiagnosisStatisticsCard(statistics: statistics),
+                    const SizedBox(height: 12),
+                    _buildLiveTelemetryBanner(context, ref),
+                  ],
+                ),
               ),
             ),
 
@@ -48,33 +67,13 @@ class DiagnosisListScreen extends ConsumerWidget {
               data: (diagnoses) {
                 if (diagnoses.isEmpty) {
                   return SliverFillRemaining(
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.biotech_outlined,
-                            size: 64,
-                            color: Colors.grey[400],
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'No diagnoses available',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleMedium
-                                ?.copyWith(color: Colors.grey[600]),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Upload plant images to get started',
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyMedium
-                                ?.copyWith(color: Colors.grey[500]),
-                          ),
-                        ],
-                      ),
+                    hasScrollBody: false,
+                    child: EmptyStateView(
+                      icon: Icons.biotech_outlined,
+                      title: 'No Plant Health Scans',
+                      message: 'Take or upload photos of crop leaves displaying lesions, rust, or discoloration to receive instant AI pathogen diagnosis and organic treatment protocols.',
+                      actionLabel: 'Scan Crop Leaf',
+                      onAction: () => context.push('/diagnosis/create'),
                     ),
                   );
                 }
@@ -102,35 +101,14 @@ class DiagnosisListScreen extends ConsumerWidget {
                 );
               },
               loading: () => const SliverFillRemaining(
-                child: Center(child: CircularProgressIndicator()),
+                child: ListSkeleton(count: 3),
               ),
               error: (error, stack) => SliverFillRemaining(
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.error_outline,
-                          size: 48, color: Colors.red[300]),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Failed to load diagnoses',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        error.toString(),
-                        style: Theme.of(context).textTheme.bodyMedium,
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 16),
-                      ElevatedButton.icon(
-                        onPressed: () =>
-                            ref.read(diagnosisListProvider.notifier).refresh(),
-                        icon: const Icon(Icons.refresh),
-                        label: const Text('Retry'),
-                      ),
-                    ],
-                  ),
+                child: AppErrorView(
+                  icon: Icons.biotech_rounded,
+                  title: 'Failed to load diagnoses',
+                  message: error.toString(),
+                  onRetry: () => ref.read(diagnosisListProvider.notifier).refresh(),
                 ),
               ),
             ),
@@ -139,6 +117,7 @@ class DiagnosisListScreen extends ConsumerWidget {
       ),
       floatingActionButton: RoleUtils.canCreateDiagnosis(user?.role)
           ? FloatingActionButton.extended(
+              heroTag: 'fab_diagnosis_list',
               onPressed: () {
                 Navigator.push(
                   context,
@@ -374,11 +353,25 @@ class DiagnosisListScreen extends ConsumerWidget {
                 ),
               _buildDetailRow(
                 context,
-                'Date',
+                'Diagnosis Date',
                 DateFormatter.formatDateTime(
                     DateTime.tryParse(diagnosis.createdAt) ?? DateTime.now()),
                 null,
               ),
+              _buildDetailRow(
+                context,
+                'Data Sources',
+                diagnosis.dataSources ?? 'Plant.id Botanical Engine, Pl@ntNet API, OpenRouter AI',
+                const Color(0xFF16A34A),
+              ),
+              if (diagnosis.fetchedAt != null)
+                _buildDetailRow(
+                  context,
+                  'Fetched from Source',
+                  DateFormatter.formatDateTime(
+                      DateTime.tryParse(diagnosis.fetchedAt!) ?? DateTime.now()),
+                  null,
+                ),
               if (diagnosis.aiModel != null)
                 _buildDetailRow(
                   context,
@@ -386,6 +379,36 @@ class DiagnosisListScreen extends ConsumerWidget {
                   diagnosis.aiModel!,
                   null,
                 ),
+              if (diagnosis.enginesUsed.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(
+                  'Multi-Engine Attribution',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  children: diagnosis.enginesUsed.map((engine) {
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFDCFCE7),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: const Color(0xFF86EFAC)),
+                      ),
+                      child: Text(
+                        engine,
+                        style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: Color(0xFF15803D)),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 8),
+              ],
 
               const SizedBox(height: 24),
 
@@ -458,5 +481,95 @@ class DiagnosisListScreen extends ConsumerWidget {
       default:
         return Colors.grey;
     }
+  }
+
+  Widget _buildLiveTelemetryBanner(BuildContext context, WidgetRef ref) {
+    final meta = ref.watch(diagnosisTelemetryMetaProvider);
+    final DateTime? lastFetched = meta['lastFetched'] as DateTime?;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final formattedTime = lastFetched != null
+        ? DateFormatter.formatDateTime(lastFetched)
+        : 'Connecting to live engine...';
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF142416) : const Color(0xFFF0FDF4),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFF22C55E).withValues(alpha: isDark ? 0.3 : 0.5),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: const Color(0xFF16A34A).withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.stream, size: 16, color: Color(0xFF16A34A)),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Text(
+                      'LIVE TELEMETRY STREAM',
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.6,
+                        color: Color(0xFF16A34A),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF22C55E),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Plant.id Botanical • Pl@ntNet API • Perenual DB • OpenRouter AI',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.grey.shade300 : const Color(0xFF1E293B),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Fetched from source: $formattedTime',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.sync, size: 18, color: Color(0xFF16A34A)),
+            tooltip: 'Sync with Live Sources',
+            onPressed: () {
+              ref.read(diagnosisListProvider.notifier).refresh();
+              ref.invalidate(diagnosisStatisticsProvider);
+            },
+          ),
+        ],
+      ),
+    );
   }
 }

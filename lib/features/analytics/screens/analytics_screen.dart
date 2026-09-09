@@ -1,10 +1,15 @@
+import 'dart:math';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/date_formatter.dart';
-import '../../../core/models/analytics_model.dart';
+import '../../../core/utils/role_utils.dart';
+import '../models/analytics_model.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../providers/analytics_provider.dart';
+
+import '../widgets/ethiopia_gis_map_widget.dart';
 
 class AnalyticsScreen extends ConsumerStatefulWidget {
   const AnalyticsScreen({super.key});
@@ -20,7 +25,9 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
   @override
   Widget build(BuildContext context) {
     final analyticsAsync = ref.watch(analyticsDataProvider(_selectedPeriod));
+    final user = ref.watch(currentUserProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final canExport = RoleUtils.canExportData(user?.role);
 
     return Scaffold(
       appBar: AppBar(
@@ -31,31 +38,33 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
             tooltip: 'Refresh Data',
             onPressed: () => ref.invalidate(analyticsDataProvider(_selectedPeriod)),
           ),
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert),
-            onSelected: (value) {
-              if (value == 'export') {
-                _showExportDialog();
-              }
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'export',
-                child: Row(
-                  children: [
-                    Icon(Icons.download),
-                    SizedBox(width: 8),
-                    Text('Export Analytics Report'),
-                  ],
+          if (canExport)
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert),
+              onSelected: (value) {
+                if (value == 'export') {
+                  _showExportDialog();
+                }
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'export',
+                  child: Row(
+                    children: [
+                      Icon(Icons.download),
+                      SizedBox(width: 8),
+                      Text('Export Analytics Report'),
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
         ],
       ),
       body: Column(
+
         children: [
-          // High-Tech Timeframe Pill Selector (Daily, Weekly, Monthly, Seasonal, Yearly)
+          // Timeframe Pill Selector
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
@@ -109,37 +118,25 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
                 child: ListView(
                   padding: const EdgeInsets.all(16),
                   children: [
-                    // 1. Executive Telemetry Overview KPI Cards
+                    // National GIS Telemetry Map of Ethiopia
+                    const EthiopiaGisMapWidget(height: 340),
+                    const SizedBox(height: 16),
                     _buildExecutiveOverviewCard(data, isDark),
                     const SizedBox(height: 16),
-
-                    // 2. Ethiopian Crop Calendar & Seasonal Advisory Card (Special highlight for Seasonal / Yearly)
                     if (data['cropCalendar'] is CropCalendarModel) ...[
                       _buildCropCalendarCard(data['cropCalendar'] as CropCalendarModel, isDark),
                       const SizedBox(height: 16),
                     ],
-
-                    // 3. AI Agronomic Insights Card
                     _buildAiInsightsCard(data, isDark),
                     const SizedBox(height: 16),
-
-                    // 4. Multi-Hazard Risk Level Trends Chart
                     _buildRiskTrendsCard(data, isDark),
                     const SizedBox(height: 16),
-
-                    // 5. Agro-Climatic NDVI & Weather Trends Chart
                     _buildClimaticTrendsCard(data, isDark),
                     const SizedBox(height: 16),
-
-                    // 6. Alert Frequency by Hazard Type (Pie / Donut Chart)
                     _buildAlertFrequencyCard(data, isDark),
                     const SizedBox(height: 16),
-
-                    // 7. Crop Distribution by Registry (Bar Chart)
                     _buildCropDistributionCard(data, isDark),
                     const SizedBox(height: 16),
-
-                    // 8. Regional Risk & Woreda Summary
                     _buildRegionalSummaryCard(data),
                     const SizedBox(height: 24),
                   ],
@@ -235,10 +232,10 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
           const SizedBox(height: 16),
           Row(
             children: [
-              _buildKpiItem('Monitored Farms', '$totalFarms', Icons.agriculture, const Color(0xFF86EFAC)),
-              _buildKpiItem('Active Woredas', '$totalWoredas', Icons.public, const Color(0xFF93C5FD)),
-              _buildKpiItem('Early Warnings', '$activeAlerts', Icons.warning_amber, const Color(0xFFFDE047)),
-              _buildKpiItem('Critical Risk', '$criticalWoredas', Icons.crisis_alert, const Color(0xFFFCA5A5)),
+              _buildKpiItem('Monitored Farms', totalFarms.toString(), Icons.agriculture, const Color(0xFF86EFAC)),
+              _buildKpiItem('Active Woredas', totalWoredas.toString(), Icons.public, const Color(0xFF93C5FD)),
+              _buildKpiItem('Smart Alerts', activeAlerts.toString(), Icons.warning_amber, const Color(0xFFFDE047)),
+              _buildKpiItem('Critical Risk', criticalWoredas.toString(), Icons.crisis_alert, const Color(0xFFFCA5A5)),
             ],
           ),
         ],
@@ -290,7 +287,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Ethiopian Season: ${calendar.currentSeason} (ወቅታዊ የግብርና ሁኔታ)',
+                    'Ethiopian Season: ${calendar.currentSeason}',
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                   ),
                 ),
@@ -353,7 +350,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
     final aiInsights = data['aiInsights'] as String?;
     final defaultInsight = _selectedPeriod == 'SEASONAL' || _selectedPeriod == 'YEARLY'
         ? 'National seasonal satellite metrics indicate optimal vegetative vigor in central and western highlands. Watch for decadal rainfall anomalies in south-eastern pastoral woredas.'
-        : 'Current temporal data indicates stable moisture conditions with low multi-hazard risk across 85% of registered zones.';
+        : 'Current temporal data indicates stable moisture conditions with low integrated risk across 85% of registered zones.';
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -413,7 +410,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
   }
 
   Widget _buildRiskTrendsCard(Map<String, dynamic> data, bool isDark) {
-    final trends = data['riskTrends'] as List<Map<String, dynamic>>? ?? [];
+    final trends = (data['riskTrends'] as List?)?.whereType<Map<String, dynamic>>().toList() ?? [];
 
     return Card(
       elevation: 2,
@@ -427,7 +424,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Multi-Hazard Risk Level Trends',
+                  'Risk Level Trends',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -441,16 +438,20 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
             const SizedBox(height: 16),
             SizedBox(
               height: 200,
-              child: trends.isEmpty
-                  ? const Center(child: Text('No trend points available for this period'))
+              child: trends.length < 2
+                  ? const Center(child: Text('Gathering historical risk trend points...'))
                   : LineChart(
                       LineChartData(
+                        minX: 0,
+                        maxX: max(1.0, (trends.length - 1).toDouble()),
+                        minY: 0,
+                        maxY: 15,
                         gridData: const FlGridData(show: true, drawVerticalLine: false),
                         titlesData: FlTitlesData(
                           leftTitles: AxisTitles(
                             sideTitles: SideTitles(
                               showTitles: true,
-                              reservedSize: 32,
+                              reservedSize: 28,
                               getTitlesWidget: (value, meta) {
                                 return Text(
                                   value.toInt().toString(),
@@ -464,8 +465,8 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
                               showTitles: true,
                               getTitlesWidget: (value, meta) {
                                 final idx = value.toInt();
-                                if (idx < 0 || idx >= trends.length) return const Text('');
-                                final rawDate = trends[idx]['date'].toString();
+                                if (idx < 0 || idx >= trends.length) return const SizedBox.shrink();
+                                final rawDate = trends[idx]['date']?.toString() ?? '';
                                 final parsed = DateTime.tryParse(rawDate);
                                 return Padding(
                                   padding: const EdgeInsets.only(top: 4),
@@ -546,8 +547,8 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
   }
 
   Widget _buildClimaticTrendsCard(Map<String, dynamic> data, bool isDark) {
-    final rainfall = data['rainfallTrend'] as List<TrendDataPoint>? ?? [];
-    final temp = data['temperatureTrend'] as List<TrendDataPoint>? ?? [];
+    final rainfall = (data['rainfallTrend'] as List?)?.whereType<TrendDataPoint>().toList() ?? [];
+    final temp = (data['temperatureTrend'] as List?)?.whereType<TrendDataPoint>().toList() ?? [];
 
     return Card(
       elevation: 2,
@@ -576,17 +577,19 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
             const SizedBox(height: 16),
             SizedBox(
               height: 180,
-              child: rainfall.isEmpty
+              child: rainfall.length < 2
                   ? const Center(child: Text('Satellite observation telemetry syncing...'))
                   : LineChart(
                       LineChartData(
+                        minX: 0,
+                        maxX: max(1.0, (rainfall.length - 1).toDouble()),
                         gridData: const FlGridData(show: true, drawVerticalLine: false),
                         titlesData: FlTitlesData(
                           leftTitles: AxisTitles(
                             sideTitles: SideTitles(
                               showTitles: true,
-                              reservedSize: 32,
-                              getTitlesWidget: (val, meta) => Text('${val.toInt()}', style: const TextStyle(fontSize: 9)),
+                              reservedSize: 28,
+                              getTitlesWidget: (val, meta) => Text(val.toInt().toString(), style: const TextStyle(fontSize: 9)),
                             ),
                           ),
                           bottomTitles: AxisTitles(
@@ -594,7 +597,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
                               showTitles: true,
                               getTitlesWidget: (val, meta) {
                                 final idx = val.toInt();
-                                if (idx < 0 || idx >= rainfall.length) return const Text('');
+                                if (idx < 0 || idx >= rainfall.length) return const SizedBox.shrink();
                                 return Text(rainfall[idx].date.split('-').last, style: const TextStyle(fontSize: 9));
                               },
                             ),
@@ -639,7 +642,8 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
   }
 
   Widget _buildAlertFrequencyCard(Map<String, dynamic> data, bool isDark) {
-    final frequency = data['alertFrequency'] as Map<String, int>? ?? {};
+    final frequency = (data['alertFrequency'] as Map?)?.cast<String, int>() ?? {};
+    final validFrequency = frequency.entries.where((e) => e.value > 0).toList();
 
     return Card(
       elevation: 2,
@@ -658,16 +662,16 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
             const SizedBox(height: 16),
             SizedBox(
               height: 200,
-              child: frequency.isEmpty
+              child: validFrequency.isEmpty
                   ? const Center(child: Text('No active hazard alerts recorded'))
                   : PieChart(
                       PieChartData(
-                        sections: frequency.entries.map((entry) {
+                        sections: validFrequency.map((entry) {
                           return PieChartSectionData(
                             value: entry.value.toDouble(),
-                            title: '${entry.value}',
+                            title: entry.value.toString(),
                             color: _getHazardColor(entry.key),
-                            radius: 75,
+                            radius: 70,
                             titleStyle: const TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
@@ -682,7 +686,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: frequency.entries.map((entry) {
+              children: validFrequency.map((entry) {
                 return _buildLegendItem(
                   _formatHazardType(entry.key),
                   _getHazardColor(entry.key),
@@ -696,7 +700,9 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
   }
 
   Widget _buildCropDistributionCard(Map<String, dynamic> data, bool isDark) {
-    final distribution = data['cropDistribution'] as Map<String, int>? ?? {};
+    final distribution = (data['cropDistribution'] as Map?)?.cast<String, int>() ?? {};
+    final validEntries = distribution.entries.where((e) => e.value > 0).toList();
+    final maxVal = validEntries.fold<int>(0, (a, b) => a > b.value ? a : b.value);
 
     return Card(
       elevation: 2,
@@ -715,29 +721,30 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
             const SizedBox(height: 16),
             SizedBox(
               height: 200,
-              child: distribution.isEmpty
+              child: validEntries.isEmpty
                   ? const Center(child: Text('No crop records found'))
                   : BarChart(
                       BarChartData(
                         alignment: BarChartAlignment.spaceAround,
-                        maxY: distribution.values.fold(0, (a, b) => a > b ? a : b).toDouble() * 1.3 + 1,
+                        maxY: max(5.0, maxVal.toDouble() * 1.3),
+                        minY: 0,
                         titlesData: FlTitlesData(
                           leftTitles: const AxisTitles(
                             sideTitles: SideTitles(
                               showTitles: true,
-                              reservedSize: 32,
+                              reservedSize: 28,
                             ),
                           ),
                           bottomTitles: AxisTitles(
                             sideTitles: SideTitles(
                               showTitles: true,
                               getTitlesWidget: (value, meta) {
-                                final crops = distribution.keys.toList();
-                                if (value.toInt() >= crops.length) return const Text('');
+                                final idx = value.toInt();
+                                if (idx < 0 || idx >= validEntries.length) return const SizedBox.shrink();
                                 return Padding(
                                   padding: const EdgeInsets.only(top: 4),
                                   child: Text(
-                                    crops[value.toInt()],
+                                    validEntries[idx].key,
                                     style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500),
                                   ),
                                 );
@@ -748,7 +755,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
                           topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                         ),
                         borderData: FlBorderData(show: false),
-                        barGroups: distribution.entries.toList().asMap().entries.map((entry) {
+                        barGroups: validEntries.asMap().entries.map((entry) {
                           return BarChartGroupData(
                             x: entry.key,
                             barRods: [
@@ -849,9 +856,7 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
       builder: (context) => AlertDialog(
         title: const Text('Export Analytics Report'),
         content: const Text(
-          'Choose report export format:\n\n'
-          '• Executive PDF - Comprehensive charts and AI advisories\n'
-          '• CSV Spreadsheet - Raw sensor & satellite telemetry dataset',
+          'Choose report export format:\n\n• Executive PDF - Comprehensive charts and AI advisories\n• CSV Spreadsheet - Raw sensor & satellite telemetry dataset',
         ),
         actions: [
           TextButton(
@@ -879,15 +884,15 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
   String _formatPeriod(String period) {
     switch (period) {
       case 'DAILY':
-        return 'Daily (ዕለታዊ)';
+        return 'Daily (\u12d5\u1208\u1273\u12ca)';
       case 'WEEKLY':
-        return 'Weekly (ሳምንታዊ)';
+        return 'Weekly (\u1233\u121d\u1295\u1273\u12ca)';
       case 'MONTHLY':
-        return 'Monthly (ወርሃዊ)';
+        return 'Monthly (\u12c8\u122b\u12ca)';
       case 'SEASONAL':
-        return 'Seasonal (ወቅታዊ)';
+        return 'Seasonal (\u12c8\u1245\u1273\u12ca)';
       case 'YEARLY':
-        return 'Yearly (ዓመታዊ)';
+        return 'Yearly (\u12d3\u1218\u1273\u12ca)';
       default:
         return period;
     }

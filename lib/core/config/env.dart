@@ -1,7 +1,14 @@
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb, kReleaseMode;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Environment configuration with comprehensive settings
 class AppEnv {
+  // Compile-time environment overrides (via --dart-define)
+  static const String _compileTimeApiUrl = String.fromEnvironment('API_BASE_URL');
+  static const String _compileTimeSocketUrl = String.fromEnvironment('SOCKET_BASE_URL');
+  static const String _compileTimeAppEnv = String.fromEnvironment('APP_ENV');
+
   /// Initialize environment variables
   static Future<void> init() async {
     try {
@@ -16,26 +23,49 @@ class AppEnv {
     return dotenv.env[key] ?? defaultValue;
   }
 
-  // API Configuration
-  static String get apiBaseUrl => 
-    _get('API_BASE_URL', 'https://agrietech.onrender.com/api/v1');
+  // API Configuration (Automatically routes to 10.0.2.2 on Android Emulators)
+  static String get apiBaseUrl {
+    if (_compileTimeApiUrl.isNotEmpty) {
+      return _compileTimeApiUrl;
+    }
+    const defaultUrl = 'https://agrietech.onrender.com/api/v1';
+    final raw = _get('API_BASE_URL', defaultUrl);
+    if (!kIsWeb && Platform.isAndroid) {
+      if (raw.contains('localhost')) return raw.replaceAll('localhost', '10.0.2.2');
+      if (raw.contains('127.0.0.1')) return raw.replaceAll('127.0.0.1', '10.0.2.2');
+    }
+    return raw;
+  }
   
-  static String get socketBaseUrl => 
-    _get('SOCKET_BASE_URL', 'https://agrietech.onrender.com');
+  static String get socketBaseUrl {
+    if (_compileTimeSocketUrl.isNotEmpty) {
+      return _compileTimeSocketUrl;
+    }
+    const defaultUrl = 'https://agrietech.onrender.com';
+    final raw = _get('SOCKET_BASE_URL', defaultUrl);
+    if (!kIsWeb && Platform.isAndroid) {
+      if (raw.contains('localhost')) return raw.replaceAll('localhost', '10.0.2.2');
+      if (raw.contains('127.0.0.1')) return raw.replaceAll('127.0.0.1', '10.0.2.2');
+    }
+    return raw;
+  }
 
   // Map Configuration
   static String get mapTileUrl => 
     _get('MAP_TILE_URL', 'https://tile.openstreetmap.org/{z}/{x}/{y}.png');
 
   // Environment Settings
-  static String get appEnv => _get('APP_ENV', 'development');
+  static String get appEnv {
+    if (_compileTimeAppEnv.isNotEmpty) return _compileTimeAppEnv;
+    return _get('APP_ENV', kReleaseMode ? 'production' : 'development');
+  }
   static bool get isProduction => appEnv == 'production';
   static bool get isDevelopment => appEnv == 'development';
   static bool get debugMode => _get('DEBUG_MODE', 'false').toLowerCase() == 'true';
 
   // API Timeouts
   static Duration get apiTimeout => Duration(
-    milliseconds: int.tryParse(_get('API_TIMEOUT', '90000')) ?? 90000,
+    milliseconds: int.tryParse(_get('API_TIMEOUT', '30000')) ?? 30000,
   );
   
   static Duration get longApiTimeout => Duration(
@@ -47,7 +77,7 @@ class AppEnv {
     _get('CACHE_ENABLED', 'true').toLowerCase() != 'false';
   
   static Duration get cacheShortDuration => Duration(
-    milliseconds: int.tryParse(_get('CACHE_DURATION_SHORT', '300000')) ?? 30000,
+    milliseconds: int.tryParse(_get('CACHE_DURATION_SHORT', '300000')) ?? 300000,
   );
   
   static Duration get cacheMediumDuration => Duration(
@@ -70,7 +100,7 @@ class AppEnv {
 
   // Firebase Configuration
   static String get firebaseProjectId => 
-    _get('FIREBASE_PROJECT_ID', 'agrietech-ewa');
+    _get('FIREBASE_PROJECT_ID', 'ethiofarm-ewa');
   
   static String get firebaseApiKey => _get('FIREBASE_API_KEY', '');
   static String get firebaseAppId => _get('FIREBASE_APP_ID', '');
