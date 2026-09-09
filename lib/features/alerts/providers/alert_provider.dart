@@ -36,7 +36,11 @@ class AlertNotifier extends StateNotifier<AsyncValue<List<AlertModel>>> {
       state.whenData((alerts) {
         try {
           final raw = data is Map ? data : <String, dynamic>{};
-          final map = Map<String, dynamic>.from(raw);
+          // Unbox { timestamp, alert: {...} } or { data: {...} } or direct {...}
+          final alertPayload = raw['alert'] is Map
+              ? raw['alert'] as Map
+              : (raw['data'] is Map ? raw['data'] as Map : raw);
+          final map = Map<String, dynamic>.from(alertPayload);
           map['title'] = map['title'] ?? map['titleEn'] ?? map['titleAm'] ?? 'Emergency Alert';
           map['message'] = map['message'] ?? map['messageEn'] ?? map['messageAm'] ?? '';
           map['createdAt'] = map['createdAt'] ?? map['sentAt'] ?? DateTime.now().toIso8601String();
@@ -61,7 +65,10 @@ class AlertNotifier extends StateNotifier<AsyncValue<List<AlertModel>>> {
       state.whenData((alerts) {
         try {
           final raw = data is Map ? data : <String, dynamic>{};
-          final map = Map<String, dynamic>.from(raw);
+          final alertPayload = raw['alert'] is Map
+              ? raw['alert'] as Map
+              : (raw['data'] is Map ? raw['data'] as Map : raw);
+          final map = Map<String, dynamic>.from(alertPayload);
           map['title'] = map['title'] ?? map['titleEn'] ?? map['titleAm'] ?? 'Alert';
           map['message'] = map['message'] ?? map['messageEn'] ?? map['messageAm'] ?? '';
           map['createdAt'] = map['createdAt'] ?? map['sentAt'] ?? DateTime.now().toIso8601String();
@@ -313,5 +320,11 @@ final createAlertProvider =
 final alertsProvider = FutureProvider<List<AlertModel>>((ref) async {
   final alertRepository = ref.watch(alertRepositoryProvider);
   return await alertRepository.getAlerts(limit: 50);
+});
+
+/// Single alert provider fetching freshest alert details by ID
+final singleAlertProvider = FutureProvider.family<AlertModel, String>((ref, id) async {
+  final repository = ref.watch(alertRepositoryProvider);
+  return await repository.getAlertById(id);
 });
 

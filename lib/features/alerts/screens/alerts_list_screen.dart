@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/widgets/error_view.dart';
-import '../../../core/utils/date_formatter.dart';
 import '../../../core/utils/role_utils.dart';
 import '../../../core/widgets/shimmer_loading.dart';
 import '../../../core/widgets/empty_state_view.dart';
@@ -34,8 +34,37 @@ class _AlertsListScreenState extends ConsumerState<AlertsListScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Alerts & Advisories'),
+        title: const Text(
+          'Alerts & Advisories',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
         actions: [
+          // Live backend status indicator
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 13, horizontal: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+            decoration: BoxDecoration(
+              color: Colors.green.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.green.withValues(alpha: 0.5)),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.circle, color: Color(0xFF16A34A), size: 7),
+                SizedBox(width: 4),
+                Text(
+                  'Live',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF15803D),
+                  ),
+                ),
+              ],
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.done_all),
             tooltip: 'Mark All as Read',
@@ -172,220 +201,6 @@ class _AlertsListScreenState extends ConsumerState<AlertsListScreen> {
     if (!alert.isRead) {
       ref.read(alertListProvider.notifier).markAsRead(alert.id);
     }
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.6,
-        minChildSize: 0.4,
-        maxChildSize: 0.9,
-        expand: false,
-        builder: (context, scrollController) => SingleChildScrollView(
-          controller: scrollController,
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Handle bar
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 20),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-
-              // Header
-              Row(
-                children: [
-                  _getSeverityIcon(alert.severity),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          alert.title,
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          _getHazardTypeDisplay(alert.hazardType),
-                          style:
-                              Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: Colors.grey[600],
-                                  ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-
-              const Divider(height: 32),
-
-              // Message
-              Text(
-                'Message',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                alert.message,
-                style: Theme.of(context).textTheme.bodyLarge,
-              ),
-
-              const SizedBox(height: 24),
-
-              // Action Items
-              if (alert.actionItems.isNotEmpty) ...[
-                Text(
-                  'Action Items',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 8),
-                ...alert.actionItems.map((item) => Padding(
-                      padding: const EdgeInsets.only(bottom: 8.0),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Icon(Icons.check_circle_outline, size: 20),
-                          const SizedBox(width: 8),
-                          Expanded(child: Text(item)),
-                        ],
-                      ),
-                    )),
-                const SizedBox(height: 24),
-              ],
-
-              // Details
-              _buildDetailRow(
-                context,
-                'Severity',
-                _getSeverityDisplay(alert.severity),
-                _getSeverityColor(alert.severity),
-              ),
-              _buildDetailRow(
-                context,
-                'Priority',
-                'Priority ${alert.priority}',
-                null,
-              ),
-              if (alert.woreda != null)
-                _buildDetailRow(
-                  context,
-                  'Location',
-                  alert.woreda!.name,
-                  null,
-                ),
-              _buildDetailRow(
-                context,
-                'Status',
-                alert.isActive ? 'Active' : 'Expired',
-                alert.isActive ? const Color(0xFF43A047) : Colors.grey,
-              ),
-              if (alert.validUntil != null)
-                _buildDetailRow(
-                  context,
-                  'Valid Until',
-                  DateFormatter.formatDateTimeSafe(alert.validUntil),
-                  null,
-                ),
-              _buildDetailRow(
-                context,
-                'Created',
-                DateFormatter.formatRelativeSafe(alert.createdAt),
-                null,
-              ),
-
-              const SizedBox(height: 24),
-
-              // Close button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Close'),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDetailRow(
-    BuildContext context,
-    String label,
-    String value,
-    Color? valueColor,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: Theme.of(context)
-                .textTheme
-                .bodyMedium
-                ?.copyWith(color: Colors.grey[600]),
-          ),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: valueColor,
-                  fontWeight: FontWeight.w600,
-                ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _getSeverityIcon(String severity) {
-    final color = _getSeverityColor(severity);
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Icon(Icons.warning, color: color, size: 32),
-    );
-  }
-
-  Color _getSeverityColor(String severity) {
-    switch (severity) {
-      case 'CRITICAL':
-        return const Color(0xFFD32F2F);
-      case 'HIGH':
-        return const Color(0xFFF4511E);
-      case 'MODERATE':
-        return const Color(0xFFFB8C00);
-      case 'LOW':
-        return const Color(0xFF43A047);
-      default:
-        return Colors.grey;
-    }
-  }
-
-  String _getSeverityDisplay(String severity) {
-    return severity[0] + severity.substring(1).toLowerCase();
-  }
-
-  String _getHazardTypeDisplay(String hazardType) {
-    return hazardType.replaceAll('_', ' ').split(' ').map((word) {
-      return word[0].toUpperCase() + word.substring(1).toLowerCase();
-    }).join(' ');
+    context.push('/alerts/${alert.id}', extra: alert);
   }
 }

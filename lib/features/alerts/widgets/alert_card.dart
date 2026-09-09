@@ -34,7 +34,7 @@ class AlertCard extends StatelessWidget {
       ),
       color: alert.isRead ? Colors.white : const Color(0xFFFAFFFA),
       child: InkWell(
-        onTap: onTap,
+        onTap: onTap ?? () => context.push('/alerts/${alert.id}', extra: alert),
         borderRadius: BorderRadius.circular(16),
         child: Padding(
           padding: const EdgeInsets.all(16.0),
