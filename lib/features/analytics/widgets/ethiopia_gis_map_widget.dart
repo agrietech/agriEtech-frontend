@@ -38,6 +38,23 @@ class _EthiopiaGisMapWidgetState extends ConsumerState<EthiopiaGisMapWidget> {
   bool _showRivers = true;
   bool _isLocating = false;
   LatLng? _userLocation;
+  String _selectedRegionFilter = 'All';
+  WoredaSpatialProfile? _selectedWoreda;
+  bool _showScientificLegend = false;
+
+  static const List<Map<String, dynamic>> _ethiopianRegions = [
+    {'name': 'All', 'label': '🇪🇹 National', 'center': LatLng(9.145, 40.489), 'zoom': 6.2},
+    {'name': 'Oromia', 'label': 'Oromia (ኦሮሚያ)', 'center': LatLng(8.54, 39.27), 'zoom': 7.6},
+    {'name': 'Amhara', 'label': 'Amhara (አማራ)', 'center': LatLng(11.59, 37.39), 'zoom': 7.6},
+    {'name': 'Tigray', 'label': 'Tigray (ትግራይ)', 'center': LatLng(13.50, 39.47), 'zoom': 8.0},
+    {'name': 'Sidama', 'label': 'Sidama (ሲዳማ)', 'center': LatLng(7.05, 38.48), 'zoom': 8.5},
+    {'name': 'Somali', 'label': 'Somali (ሶማሌ)', 'center': LatLng(7.35, 44.28), 'zoom': 7.2},
+    {'name': 'Afar', 'label': 'Afar (አፋር)', 'center': LatLng(11.79, 41.01), 'zoom': 7.6},
+    {'name': 'South', 'label': 'South (ደቡብ)', 'center': LatLng(6.86, 37.76), 'zoom': 8.0},
+    {'name': 'Benishangul', 'label': 'Benishangul (ቤኒሻንጉል)', 'center': LatLng(10.06, 34.53), 'zoom': 7.8},
+    {'name': 'Gambella', 'label': 'Gambella (ጋምቤላ)', 'center': LatLng(8.25, 34.58), 'zoom': 8.2},
+    {'name': 'Dire Dawa', 'label': 'Dire Dawa (ድሬዳዋ)', 'center': LatLng(9.60, 41.86), 'zoom': 9.2},
+  ];
 
   // Strict Ethiopian Camera Bounding Box
   static final LatLngBounds _ethiopiaBounds = LatLngBounds(
@@ -585,6 +602,10 @@ class _EthiopiaGisMapWidgetState extends ConsumerState<EthiopiaGisMapWidget> {
                             trailing: const Icon(Icons.arrow_forward_ios, size: 14),
                             onTap: () {
                               Navigator.pop(ctx);
+                              setState(() {
+                                _selectedWoreda = item;
+                                _selectedRegionFilter = item.region;
+                              });
                               _mapController.move(item.centroid, 8.8);
                               _showWoredaInspectorSheet(item);
                             },
@@ -739,16 +760,22 @@ class _EthiopiaGisMapWidgetState extends ConsumerState<EthiopiaGisMapWidget> {
     final registeredFarms = farmsState.farms;
 
     // Use live updated profiles when ready, otherwise baseline default profiles
-    final List<WoredaSpatialProfile> woredas = liveWoredasAsync.asData?.value ?? defaultWoredaSpatialProfiles;
+    final List<WoredaSpatialProfile> allWoredas = liveWoredasAsync.asData?.value ?? defaultWoredaSpatialProfiles;
     final isLiveSyncing = liveWoredasAsync.isLoading;
     final activeAlerts = alertsState.asData?.value ?? [];
+
+    // Filter woredas by selected region
+    final List<WoredaSpatialProfile> filteredByRegion = _selectedRegionFilter == 'All'
+        ? allWoredas
+        : allWoredas.where((w) => w.region.toLowerCase().contains(_selectedRegionFilter.toLowerCase())).toList();
+    final List<WoredaSpatialProfile> woredas = filteredByRegion.isEmpty ? allWoredas : filteredByRegion;
 
     final mapWidget = FlutterMap(
       mapController: _mapController,
       options: MapOptions(
         initialCenter: const LatLng(9.145, 40.489),
         initialZoom: 6.2,
-        minZoom: 5.0,
+        minZoom: 5.8,
         maxZoom: 14.0,
         cameraConstraint: CameraConstraint.containCenter(bounds: _ethiopiaBounds),
         onTap: (_, point) {
@@ -756,6 +783,7 @@ class _EthiopiaGisMapWidgetState extends ConsumerState<EthiopiaGisMapWidget> {
           for (final woreda in woredas) {
             final dist = const Distance().as(LengthUnit.Kilometer, point, woreda.centroid);
             if (dist < 40.0) {
+              setState(() => _selectedWoreda = woreda);
               _showWoredaInspectorSheet(woreda);
               return;
             }
@@ -803,11 +831,12 @@ class _EthiopiaGisMapWidgetState extends ConsumerState<EthiopiaGisMapWidget> {
         // 4. Ethiopian Administrative Woreda Choropleth Polygons Layer (Live Shaded)
         PolygonLayer(
           polygons: woredas.map((w) {
+            final isSelected = _selectedWoreda != null && (_selectedWoreda!.id == w.id || _selectedWoreda!.woredaName == w.woredaName);
             return Polygon(
               points: w.polygon,
-              color: _getPolygonColorForWoreda(w),
-              borderColor: _getPolygonBorderColorForWoreda(w),
-              borderStrokeWidth: 2.0,
+              color: isSelected ? Colors.amber.withValues(alpha: 0.7) : _getPolygonColorForWoreda(w),
+              borderColor: isSelected ? Colors.amber.shade300 : _getPolygonBorderColorForWoreda(w),
+              borderStrokeWidth: isSelected ? 3.5 : 2.0,
               isFilled: true,
             );
           }).toList(),
@@ -1044,7 +1073,60 @@ class _EthiopiaGisMapWidgetState extends ConsumerState<EthiopiaGisMapWidget> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
+
+                // Place & Jurisdiction Filter Ribbon
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      const Icon(Icons.place_outlined, size: 14, color: AppTheme.primaryColor),
+                      const SizedBox(width: 4),
+                      const Text('Jurisdiction:', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold)),
+                      const SizedBox(width: 6),
+                      ..._ethiopianRegions.map((r) {
+                        final isSelected = _selectedRegionFilter == r['name'];
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 5),
+                          child: ChoiceChip(
+                            label: Text(
+                              r['label'] as String,
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                              ),
+                            ),
+                            selected: isSelected,
+                            selectedColor: AppTheme.primaryColor.withValues(alpha: 0.2),
+                            onSelected: (_) {
+                              setState(() {
+                                _selectedRegionFilter = r['name'] as String;
+                                _selectedWoreda = null;
+                              });
+                              _mapController.move(r['center'] as LatLng, (r['zoom'] as num).toDouble());
+                            },
+                            side: BorderSide(
+                              color: isSelected ? AppTheme.primaryColor : Colors.grey.shade300,
+                            ),
+                            visualDensity: VisualDensity.compact,
+                          ),
+                        );
+                      }),
+                      if (_selectedWoreda != null) ...[
+                        Chip(
+                          avatar: const Icon(Icons.location_on, size: 14, color: Colors.amber),
+                          label: Text(_selectedWoreda!.woredaName, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                          deleteIcon: const Icon(Icons.close, size: 12),
+                          onDeleted: () {
+                            setState(() => _selectedWoreda = null);
+                          },
+                          visualDensity: VisualDensity.compact,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 6),
 
                 // Disaster Mode Switcher Ribbon
                 SingleChildScrollView(
@@ -1144,27 +1226,115 @@ class _EthiopiaGisMapWidgetState extends ConsumerState<EthiopiaGisMapWidget> {
                     ),
                   ),
 
-                  // Map Legend Pill Overlay
+                  // Floating Left Place & Telemetry HUD Pill
                   Positioned(
-                    bottom: 12,
-                    left: 12,
+                    top: 14,
+                    left: 14,
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.78),
+                        color: (isDark ? Colors.black : const Color(0xFF0F172A)).withValues(alpha: 0.88),
                         borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.25),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          _buildLegendDot(const Color(0xFFDC2626), 'Critical'),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryColor.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.4)),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.location_on, size: 11, color: Color(0xFF34D399)),
+                                const SizedBox(width: 3),
+                                Text(
+                                  _selectedRegionFilter == 'All' ? 'All Ethiopia' : _selectedRegionFilter,
+                                  style: const TextStyle(color: Color(0xFF34D399), fontSize: 10, fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            ),
+                          ),
                           const SizedBox(width: 8),
-                          _buildLegendDot(const Color(0xFFEA580C), 'High'),
-                          const SizedBox(width: 8),
-                          _buildLegendDot(const Color(0xFFF59E0B), 'Moderate'),
-                          const SizedBox(width: 8),
-                          _buildLegendDot(const Color(0xFF10B981), 'Safe'),
+                          Text(
+                            _selectedWoreda != null ? _selectedWoreda!.woredaName : '${woredas.length} Jurisdictions',
+                            style: const TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.w600),
+                          ),
                         ],
+                      ),
+                    ),
+                  ),
+
+                  // Scientific Map Legend Overlay (Expandable)
+                  Positioned(
+                    bottom: 14,
+                    left: 14,
+                    child: GestureDetector(
+                      key: const Key('scientific_legend_toggle'),
+                      onTap: () => setState(() => _showScientificLegend = !_showScientificLegend),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: (isDark ? Colors.black : const Color(0xFF0F172A)).withValues(alpha: 0.88),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.25),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                _buildLegendDot(const Color(0xFFDC2626), 'Critical'),
+                                const SizedBox(width: 6),
+                                _buildLegendDot(const Color(0xFFEA580C), 'High'),
+                                const SizedBox(width: 6),
+                                _buildLegendDot(const Color(0xFFF59E0B), 'Moderate'),
+                                const SizedBox(width: 6),
+                                _buildLegendDot(const Color(0xFF10B981), 'Safe'),
+                                const SizedBox(width: 6),
+                                Icon(
+                                  _showScientificLegend ? Icons.expand_less : Icons.tune_rounded,
+                                  size: 14,
+                                  color: Colors.white70,
+                                ),
+                              ],
+                            ),
+                            if (_showScientificLegend) ...[
+                              const SizedBox(height: 8),
+                              const Divider(height: 1, color: Colors.white24),
+                              const SizedBox(height: 6),
+                              const Text(
+                                'Scientific Metric Thresholds:',
+                                style: TextStyle(color: Colors.white70, fontSize: 9, fontWeight: FontWeight.bold),
+                              ),
+                              const SizedBox(height: 3),
+                              const Text('• Drought: SPI-3 < -1.2 (Severe Deficit)', style: TextStyle(color: Colors.white60, fontSize: 8.5)),
+                              const Text('• Flood: River Discharge > 250 m³/s', style: TextStyle(color: Colors.white60, fontSize: 8.5)),
+                              const Text('• Soil Loss: RUSLE > 25 t/ha/yr', style: TextStyle(color: Colors.white60, fontSize: 8.5)),
+                              const Text('• Seismology: PGA > 0.15g (Active Rift)', style: TextStyle(color: Colors.white60, fontSize: 8.5)),
+                            ],
+                          ],
+                        ),
                       ),
                     ),
                   ),

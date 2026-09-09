@@ -23,11 +23,22 @@ class AnalyticsRepository {
   }
 
   /// Get temporal trends
-  Future<TemporalTrendModel> getTemporalTrends(String period) async {
+  Future<TemporalTrendModel> getTemporalTrends(
+    String period, {
+    String? woredaId,
+    bool includeAi = true,
+    String language = 'am',
+  }) async {
     try {
+      final queryParams = <String, dynamic>{
+        'timeframe': period.toUpperCase(),
+        if (woredaId != null && woredaId.isNotEmpty) 'woredaId': woredaId,
+        'includeAi': includeAi.toString(),
+        'language': language,
+      };
       final response = await _dioClient.get(
         ApiConstants.temporalTrends,
-        queryParameters: {'timeframe': period.toUpperCase()},
+        queryParameters: queryParams,
       );
       final rawData = response.data is Map && response.data['data'] != null ? response.data['data'] : response.data;
       return TemporalTrendModel.fromJson(rawData as Map<String, dynamic>);
@@ -48,7 +59,7 @@ class AnalyticsRepository {
     }
   }
 
-  /// Get agronomic advisories
+  /// Get agronomic advisories (simple text list)
   Future<List<String>> getAgronomicAdvisories({String? woredaId}) async {
     try {
       final queryParams = woredaId != null ? {'woredaId': woredaId} : null;
@@ -66,6 +77,54 @@ class AnalyticsRepository {
         return rawData.map((e) => e.toString()).toList();
       }
       return [];
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// Get detailed multilingual actionable agronomic advisories
+  Future<List<AgronomicAdvisoryDetail>> getAgronomicAdvisoriesDetailed({
+    String? cropType,
+    String season = 'MEHER',
+    String? woredaId,
+  }) async {
+    try {
+      final queryParams = <String, dynamic>{
+        if (cropType != null && cropType.isNotEmpty) 'cropType': cropType.toUpperCase(),
+        'season': season.toUpperCase(),
+        if (woredaId != null && woredaId.isNotEmpty) 'woredaId': woredaId,
+      };
+      final response = await _dioClient.get(
+        ApiConstants.agronomicAdvisories,
+        queryParameters: queryParams,
+      );
+      final rawData = response.data is Map ? (response.data['data'] ?? response.data) : response.data;
+      if (rawData is Map && rawData['advisories'] is List) {
+        return (rawData['advisories'] as List)
+            .map((adv) => AgronomicAdvisoryDetail.fromJson(adv is Map ? Map<String, dynamic>.from(adv) : <String, dynamic>{}))
+            .toList();
+      }
+      return [];
+    } on DioException catch (e) {
+      AppLogger.warning('Failed to fetch detailed agronomic advisories: ${e.message}');
+      return [];
+    }
+  }
+
+  /// Export analytics dataset or report (format: 'csv' or 'json')
+  Future<dynamic> exportAnalyticsData({String format = 'csv', String scope = 'summary'}) async {
+    try {
+      final response = await _dioClient.get(
+        ApiConstants.analyticsExport,
+        queryParameters: {
+          'format': format,
+          'scope': scope,
+        },
+        options: format == 'csv'
+            ? Options(responseType: ResponseType.plain)
+            : Options(responseType: ResponseType.json),
+      );
+      return response.data;
     } on DioException catch (e) {
       throw _handleError(e);
     }
