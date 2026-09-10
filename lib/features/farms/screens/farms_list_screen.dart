@@ -362,14 +362,14 @@ class _FarmCard extends StatelessWidget {
                                   color: const Color(0xFF10B981).withValues(alpha: 0.12),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
-                                child: const Row(
+                                child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(Icons.satellite_alt, size: 10, color: Color(0xFF10B981)),
-                                    SizedBox(width: 4),
+                                    const Icon(Icons.location_on, size: 10, color: Color(0xFF10B981)),
+                                    const SizedBox(width: 4),
                                     Text(
-                                      'NDVI 0.72',
-                                      style: TextStyle(
+                                      farm.woreda?.name ?? (hasSensors ? '${farm.sensors.length} IoT Active' : 'GPS Verified'),
+                                      style: const TextStyle(
                                         color: Color(0xFF10B981),
                                         fontSize: 10,
                                         fontWeight: FontWeight.bold,

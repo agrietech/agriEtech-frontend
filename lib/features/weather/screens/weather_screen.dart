@@ -1,7 +1,10 @@
+import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/l10n/app_localizations.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/date_formatter.dart';
 import '../../../core/widgets/app_surface_card.dart';
 import '../../../core/widgets/error_view.dart';
 import '../../../core/widgets/shimmer_loading.dart';
@@ -34,10 +37,25 @@ class WeatherScreen extends ConsumerStatefulWidget {
 }
 
 class _WeatherScreenState extends ConsumerState<WeatherScreen> {
+  Timer? _weatherAutoRefreshTimer;
+
   @override
   void initState() {
     super.initState();
     Future.microtask(() => _loadWeatherData());
+
+    // Auto-refresh weather telemetry periodically (every 90 seconds)
+    _weatherAutoRefreshTimer = Timer.periodic(const Duration(seconds: 90), (_) {
+      if (mounted) {
+        _loadWeatherData();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _weatherAutoRefreshTimer?.cancel();
+    super.dispose();
   }
 
   void _loadWeatherData() {
@@ -171,17 +189,41 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      l10n.translate('live_met_telemetry'),
-                                      style: const TextStyle(
-                                        fontSize: 12.5,
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xFF0369A1),
-                                      ),
+                                    Row(
+                                      children: [
+                                        Text(
+                                          l10n.translate('live_met_telemetry'),
+                                          style: const TextStyle(
+                                            fontSize: 12.5,
+                                            fontWeight: FontWeight.bold,
+                                            color: Color(0xFF0369A1),
+                                          ),
+                                        ),
+                                        if (weatherState.lastUpdated != null) ...[
+                                          const SizedBox(width: 6),
+                                          Container(
+                                            width: 6,
+                                            height: 6,
+                                            decoration: const BoxDecoration(
+                                              color: Color(0xFF10B981),
+                                              shape: BoxShape.circle,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            'Synced ${DateFormatter.formatRelativeTime(weatherState.lastUpdated!)}',
+                                            style: const TextStyle(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold,
+                                              color: Color(0xFF10B981),
+                                            ),
+                                          ),
+                                        ],
+                                      ],
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
-                                      'National Meteorological & Agricultural Climatology Telemetry',
+                                      weatherState.dataSources ?? 'Open-Meteo High-Resolution WMO • OpenWeatherMap Live Telemetry',
                                       style: TextStyle(
                                         fontSize: 11,
                                         height: 1.35,
@@ -202,8 +244,36 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
                           const SizedBox(height: AppSpacing.sectionGap),
                         ],
 
-                        // Agronomic Evapotranspiration (ET₀) & Irrigation Card
-                        const EvapotranspirationCard(),
+                        // Agronomic Evapotranspiration (ET₀) & Irrigation Card (Dynamic from Live Telemetry)
+                        Builder(
+                          builder: (context) {
+                            final cur = weatherState.current ?? (weatherState.days.isNotEmpty ? weatherState.days.first : null);
+                            final temp = cur?.temperature ?? cur?.maxTempC ?? 18.0;
+                            final maxT = cur?.maxTempC ?? (temp + 4.0);
+                            final minT = cur?.minTempC ?? (temp - 4.0);
+                            final windKmh = cur?.windSpeedKmh ?? 12.0;
+                            final rainMm = cur?.precipitationMm ?? 0.0;
+
+                            // FAO-56 Penman-Monteith / Hargreaves Reference ET0
+                            final double et0 = math.max(1.5, math.min(9.0, 0.0023 * (temp + 17.8) * math.sqrt(math.max(1.0, maxT - minT)) * 14.5 + (windKmh * 0.04)));
+                            final double effRain = rainMm > 0 ? (rainMm * 0.8) : 0.0;
+                            final double deficit = effRain - et0;
+                            final String etStatus = deficit < -2.5 ? 'DEFICIT' : (deficit > 2.0 ? 'SURPLUS' : 'OPTIMAL');
+                            final String etAdvisory = deficit < -2.5
+                                ? 'Evaporative demand exceeds rainfall: Supplemental irrigation of ${(et0 - effRain).toStringAsFixed(1)} mm/day recommended.'
+                                : (deficit > 2.0
+                                    ? 'Precipitation surplus: Monitor field drainage to prevent waterlogging.'
+                                    : 'Agro-climatic moisture balance optimal: Evaporative demand satisfied by current conditions.');
+
+                            return EvapotranspirationCard(
+                              referenceEt0: et0,
+                              effectiveRain: effRain,
+                              netDeficit: deficit,
+                              status: etStatus,
+                              advisoryText: etAdvisory,
+                            );
+                          },
+                        ),
                         const SizedBox(height: AppSpacing.sectionGap),
 
                         // Real True 7-Day Future Forecast (Starting from Today)

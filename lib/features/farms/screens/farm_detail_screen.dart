@@ -3,8 +3,32 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
+import '../../../core/constants/api_constants.dart';
+import '../../../core/network/dio_client.dart';
 import '../../../core/theme/app_theme.dart';
 import '../providers/farms_provider.dart';
+
+/// Async provider for live hyper-local planetary telemetry (Google Earth Engine & EthioSIS)
+final farmHyperLocalProvider = FutureProvider.family<Map<String, dynamic>, ({double lat, double lng, String crop})>((ref, args) async {
+  final client = ref.watch(dioClientProvider);
+  try {
+    final response = await client.dio.get<Map<String, dynamic>>(
+      ApiConstants.hyperLocal,
+      queryParameters: {
+        'lat': args.lat,
+        'lng': args.lng,
+        'crop': args.crop,
+      },
+    );
+    if (response.statusCode == 200 && response.data != null) {
+      final body = response.data!;
+      return (body['data'] as Map<String, dynamic>?) ?? body;
+    }
+  } catch (_) {
+    // Graceful fallback to empty map on connectivity delays
+  }
+  return {};
+});
 
 class FarmDetailScreen extends ConsumerWidget {
   final String farmId;
@@ -131,127 +155,173 @@ class FarmDetailScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: AppSpacing.lg),
 
-                      // Google Earth Engine & Planetary Telemetry Card
-                      Container(
-                        padding: const EdgeInsets.all(AppSpacing.cardPadding),
-                        decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF162A1D) : Colors.white,
-                          borderRadius: AppRadii.roundedLg,
-                          border: Border.all(
-                            color: isDark ? AppTheme.borderDark : AppTheme.borderLight,
-                          ),
-                          boxShadow: AppShadows.soft(isDark: isDark),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  children: [
-                                    const Icon(Icons.satellite_alt, size: 18, color: AppTheme.primaryColor),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      'Planetary Telemetry (GEE)',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 13,
-                                        color: isDark ? Colors.white : AppTheme.primaryDark,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                  decoration: const BoxDecoration(
-                                    color: AppTheme.primaryContainer,
-                                    borderRadius: AppRadii.roundedPill,
-                                  ),
-                                  child: const Text(
-                                    '10m High-Res',
-                                    style: TextStyle(color: AppTheme.primaryDark, fontSize: 10, fontWeight: FontWeight.bold),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: AppSpacing.itemGap),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _buildTelemetryStat(
-                                    label: 'Sentinel-2 NDVI',
-                                    value: '0.78',
-                                    subtitle: 'Healthy Vigor',
-                                    color: AppTheme.telemetryNdvi,
-                                    isDark: isDark,
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: _buildTelemetryStat(
-                                    label: 'SAR Soil Moisture',
-                                    value: '72.6%',
-                                    subtitle: 'Optimal Saturation',
-                                    color: AppTheme.telemetrySoil,
-                                    isDark: isDark,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.md),
+                        Builder(
+                          builder: (context) {
+                            final hlAsync = ref.watch(farmHyperLocalProvider((lat: farm.latitude, lng: farm.longitude, crop: farm.primaryCrop)));
+                            final hlData = hlAsync.asData?.value;
+                            final remoteSensing = hlData?['remoteSensing'] as Map<String, dynamic>?;
+                            final sentinel2Ndvi = (remoteSensing?['sentinel2Ndvi10m'] as num?)?.toDouble() ??
+                                (remoteSensing?['sentinel2Ndvi'] as num?)?.toDouble() ??
+                                (remoteSensing?['ndvi'] as num?)?.toDouble();
+                            final sarMoisture = (remoteSensing?['sarSoilMoisturePct'] as num?)?.toDouble() ??
+                                (remoteSensing?['soilMoisturePct'] as num?)?.toDouble();
 
-                      // EthioSIS Digital Soil Health Prescription Card
-                      Container(
-                        padding: const EdgeInsets.all(AppSpacing.cardPadding),
-                        decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF132317) : const Color(0xFFF1F8F1),
-                          borderRadius: AppRadii.roundedLg,
-                          border: Border.all(
-                            color: const Color(0xFF2E7D32).withValues(alpha: isDark ? 0.35 : 0.25),
-                          ),
-                          boxShadow: AppShadows.soft(isDark: isDark),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
+                            final ndviDisplay = sentinel2Ndvi != null
+                                ? sentinel2Ndvi.toStringAsFixed(2)
+                                : (hlAsync.isLoading ? '...' : '--');
+                            final ndviSubtitle = sentinel2Ndvi != null
+                                ? (sentinel2Ndvi >= 0.6 ? 'Healthy Vigor' : (sentinel2Ndvi >= 0.4 ? 'Moderate' : 'Low Vigor'))
+                                : (hlAsync.isLoading ? 'Syncing...' : 'Telemetry Inactive');
+
+                            final moistureDisplay = sarMoisture != null
+                                ? '${sarMoisture.toStringAsFixed(1)}%'
+                                : (hlAsync.isLoading ? '...' : '--');
+                            final moistureSubtitle = sarMoisture != null
+                                ? (sarMoisture >= 60 ? 'Optimal Saturation' : (sarMoisture >= 30 ? 'Adequate' : 'Dry Deficit'))
+                                : (hlAsync.isLoading ? 'Syncing...' : 'Telemetry Inactive');
+
+                            final soilHealth = hlData?['soilHealth'] as Map<String, dynamic>?;
+                            final resolvedSoilType = farm.soilType ??
+                                (soilHealth?['dominantSoilType'] as String?) ??
+                                (soilHealth?['soilType'] as String?) ??
+                                'Digital Soil Mapping...';
+                            final resolvedPh = (soilHealth?['soilPh'] as num?)?.toDouble() ??
+                                (soilHealth?['ph'] as num?)?.toDouble();
+                            final phText = resolvedPh != null ? ' (pH ${resolvedPh.toStringAsFixed(1)})' : '';
+                            final resolvedPrescription = (soilHealth?['recommendedBlend'] as String?) ??
+                                (soilHealth?['fertilizerRecommendation'] as String?) ??
+                                (hlData?['agronomicRecommendations'] != null && (hlData!['agronomicRecommendations'] as List).isNotEmpty
+                                    ? hlData['agronomicRecommendations'][0].toString()
+                                    : 'Analyzing EthioSIS nutrient map...');
+
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Icon(Icons.science_outlined, size: 18, color: Color(0xFF2E7D32)),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'EthioSIS Soil & Fertilizer Prescription',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13,
-                                    color: isDark ? const Color(0xFFA7F3D0) : const Color(0xFF1B5E20),
+                                // Google Earth Engine & Planetary Telemetry Card
+                                Container(
+                                  padding: const EdgeInsets.all(AppSpacing.cardPadding),
+                                  decoration: BoxDecoration(
+                                    color: isDark ? const Color(0xFF162A1D) : Colors.white,
+                                    borderRadius: AppRadii.roundedLg,
+                                    border: Border.all(
+                                      color: isDark ? AppTheme.borderDark : AppTheme.borderLight,
+                                    ),
+                                    boxShadow: AppShadows.soft(isDark: isDark),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              const Icon(Icons.satellite_alt, size: 18, color: AppTheme.primaryColor),
+                                              const SizedBox(width: 8),
+                                              Text(
+                                                'Planetary Telemetry (GEE)',
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 13,
+                                                  color: isDark ? Colors.white : AppTheme.primaryDark,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                            decoration: const BoxDecoration(
+                                              color: AppTheme.primaryContainer,
+                                              borderRadius: AppRadii.roundedPill,
+                                            ),
+                                            child: const Text(
+                                              '10m High-Res',
+                                              style: TextStyle(color: AppTheme.primaryDark, fontSize: 10, fontWeight: FontWeight.bold),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: AppSpacing.itemGap),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: _buildTelemetryStat(
+                                              label: 'Sentinel-2 NDVI',
+                                              value: ndviDisplay,
+                                              subtitle: ndviSubtitle,
+                                              color: AppTheme.telemetryNdvi,
+                                              isDark: isDark,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 10),
+                                          Expanded(
+                                            child: _buildTelemetryStat(
+                                              label: 'SAR Soil Moisture',
+                                              value: moistureDisplay,
+                                              subtitle: moistureSubtitle,
+                                              color: AppTheme.telemetrySoil,
+                                              isDark: isDark,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: AppSpacing.md),
+
+                                // EthioSIS Digital Soil Health Prescription Card
+                                Container(
+                                  padding: const EdgeInsets.all(AppSpacing.cardPadding),
+                                  decoration: BoxDecoration(
+                                    color: isDark ? const Color(0xFF132317) : const Color(0xFFF1F8F1),
+                                    borderRadius: AppRadii.roundedLg,
+                                    border: Border.all(
+                                      color: const Color(0xFF2E7D32).withValues(alpha: isDark ? 0.35 : 0.25),
+                                    ),
+                                    boxShadow: AppShadows.soft(isDark: isDark),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          const Icon(Icons.science_outlined, size: 18, color: Color(0xFF2E7D32)),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            'EthioSIS Soil & Fertilizer Prescription',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 13,
+                                              color: isDark ? const Color(0xFFA7F3D0) : const Color(0xFF1B5E20),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 10),
+                                      Text(
+                                        'Soil Type: $resolvedSoilType$phText',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                          color: isDark ? Colors.grey.shade300 : const Color(0xFF1E293B),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Prescription: $resolvedPrescription',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: isDark ? Colors.grey.shade400 : const Color(0xFF475569),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],
-                            ),
-                            const SizedBox(height: 10),
-                            Text(
-                              'Soil Type: Deep Nitisol / Vertisol (pH 6.5)',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: isDark ? Colors.grey.shade300 : const Color(0xFF1E293B),
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Prescription: NPSB (100 kg/ha) at basal + Urea (100 kg/ha split-applied at tillering)',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: isDark ? Colors.grey.shade400 : const Color(0xFF475569),
-                              ),
-                            ),
-                          ],
+                            );
+                          },
                         ),
-                      ),
                       const SizedBox(height: AppSpacing.lg),
 
                       // Action buttons

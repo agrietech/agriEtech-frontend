@@ -337,7 +337,7 @@ class _AiLeafScannerModalState extends State<AiLeafScannerModal>
                           letterSpacing: 0.3,
                         ),
                       ),
-                      const Text(
+                      Text(
                         'High-Precision Optical Agronomic Diagnostic Model',
                         style: TextStyle(color: Colors.white60, fontSize: 11),
                       ),

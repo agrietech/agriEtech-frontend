@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -30,6 +31,7 @@ class DashboardScreen extends ConsumerStatefulWidget {
 class _DashboardScreenState extends ConsumerState<DashboardScreen> with SingleTickerProviderStateMixin {
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
+  Timer? _autoRefreshTimer;
 
   @override
   void initState() {
@@ -44,10 +46,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> with SingleTi
 
     // Load dashboard data on init
     Future.microtask(() => ref.read(dashboardProvider.notifier).loadDashboard());
+
+    // Auto-refresh telemetry every 60 seconds
+    _autoRefreshTimer = Timer.periodic(const Duration(seconds: 60), (_) {
+      if (mounted) {
+        ref.read(dashboardProvider.notifier).refreshDashboard();
+      }
+    });
   }
 
   @override
   void dispose() {
+    _autoRefreshTimer?.cancel();
     _pulseController.dispose();
     super.dispose();
   }
@@ -1031,11 +1041,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> with SingleTi
                   label: 'Data Points Today',
                   value: health.dataPointsToday.toString(),
                 ),
-                const _StatItem(
+                _StatItem(
                   icon: Icons.dns,
                   label: 'API Gateway',
-                  value: '99.9%',
-                  valueColor: Colors.green,
+                  value: health.apiHealthy ? 'ONLINE' : 'DEGRADED',
+                  valueColor: health.apiHealthy ? Colors.green : Colors.amber,
                 ),
               ],
             ),

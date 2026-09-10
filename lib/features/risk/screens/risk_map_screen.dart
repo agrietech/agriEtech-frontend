@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../analytics/widgets/ethiopia_gis_map_widget.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/agrietech_app_drawer.dart';
+import '../providers/gis_spatial_risk_provider.dart';
 
 class RiskMapScreen extends ConsumerWidget {
   const RiskMapScreen({super.key});
@@ -11,6 +12,13 @@ class RiskMapScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final woredasAsync = ref.watch(liveSpatialRiskProfilesProvider);
+    final woredas = woredasAsync.asData?.value ?? defaultWoredaSpatialProfiles;
+
+    final droughtCriticalCount = woredas.where((w) => w.spi3 < -1.0).length;
+    final highFlowCount = woredas.where((w) => w.riverDischargeM3s > 250.0).length;
+    final highErosionCount = woredas.where((w) => w.soilLossTonsPerHa > 15.0).length;
+    final isSyncing = woredasAsync.isLoading;
 
     return Scaffold(
       drawer: const EthioFarmAppDrawer(),
@@ -50,13 +58,29 @@ class RiskMapScreen extends ConsumerWidget {
                 children: [
                   _buildLiveTelemetryItem('🌋 MER Faults', 'Active Wonji', Colors.deepOrange),
                   const SizedBox(width: 16),
-                  _buildLiveTelemetryItem('☀️ SPI-3 Drought', '2 Critical', AppTheme.telemetryDrought),
+                  _buildLiveTelemetryItem(
+                    '☀️ SPI-3 Drought',
+                    isSyncing ? 'Syncing...' : '$droughtCriticalCount Critical',
+                    AppTheme.telemetryDrought,
+                  ),
                   const SizedBox(width: 16),
-                  _buildLiveTelemetryItem('🌊 Basin Flow', '3 High Flow', AppTheme.telemetryFlood),
+                  _buildLiveTelemetryItem(
+                    '🌊 Basin Flow',
+                    isSyncing ? 'Syncing...' : '$highFlowCount High Flow',
+                    AppTheme.telemetryFlood,
+                  ),
                   const SizedBox(width: 16),
-                  _buildLiveTelemetryItem('🌱 RUSLE Loss', '16 Belts', const Color(0xFF854D0E)),
+                  _buildLiveTelemetryItem(
+                    '🌱 RUSLE Loss',
+                    isSyncing ? 'Syncing...' : '$highErosionCount Belts',
+                    const Color(0xFF854D0E),
+                  ),
                   const SizedBox(width: 16),
-                  _buildLiveTelemetryItem('🛰️ Sentinel-2', 'Live Ingest', AppTheme.telemetryNdvi),
+                  _buildLiveTelemetryItem(
+                    '🛰️ Sentinel-2',
+                    isSyncing ? 'Ingesting...' : '${woredas.length} Zones',
+                    AppTheme.telemetryNdvi,
+                  ),
                 ],
               ),
             ),

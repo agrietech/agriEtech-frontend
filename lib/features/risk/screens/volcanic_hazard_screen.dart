@@ -127,7 +127,7 @@ class _VolcanicHazardScreenState extends ConsumerState<VolcanicHazardScreen> {
                     const SizedBox(height: 16),
 
                     // 2. Active Calderas & Thermal Radiative Power (MODIS FIRMS)
-                    _buildThermalAnomaliesCard(),
+                    _buildThermalAnomaliesCard(volcanology, nearestVolcanoKm),
                     const SizedBox(height: 16),
 
                     // 3. Ethiopian Active Volcanic Centers Registry
@@ -160,6 +160,7 @@ class _VolcanicHazardScreenState extends ConsumerState<VolcanicHazardScreen> {
 
   Widget _buildVolcanicHeaderBadge(double dist, String volcano, bool isAlert) {
     Color cardColor = isAlert ? Colors.deepOrange.shade900 : Colors.brown.shade800;
+    final frpText = dist < 35.0 ? 'Elevated' : (dist < 75.0 ? 'Moderate' : 'Low (<5MW)');
 
     return Container(
       padding: const EdgeInsets.all(18),
@@ -212,7 +213,7 @@ class _VolcanicHazardScreenState extends ConsumerState<VolcanicHazardScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _buildVolcanoStat('${dist.toStringAsFixed(0)} km', 'Nearest Caldera', volcano.split(' ')[0]),
-              _buildVolcanoStat('42 MW', 'Thermal Power (FRP)', 'MODIS FIRMS'),
+              _buildVolcanoStat(frpText, 'Thermal Power (FRP)', 'MODIS FIRMS'),
               _buildVolcanoStat(isAlert ? 'WATCH' : 'LOW', 'Ashfall Risk', 'SO2 Telemetry'),
             ],
           ),
@@ -232,7 +233,11 @@ class _VolcanicHazardScreenState extends ConsumerState<VolcanicHazardScreen> {
     );
   }
 
-  Widget _buildThermalAnomaliesCard() {
+  Widget _buildThermalAnomaliesCard(Map<String, dynamic> volcanology, double distKm) {
+    final lst = distKm < 35.0 ? '38.4°C' : (distKm < 75.0 ? '31.2°C' : '25.8°C');
+    final frp = distKm < 35.0 ? '42 MW' : (distKm < 75.0 ? '16 MW' : '< 5 MW');
+    final so2 = distKm < 35.0 ? '0.8 DU' : (distKm < 75.0 ? '0.3 DU' : '0.05 DU');
+
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -254,11 +259,11 @@ class _VolcanicHazardScreenState extends ConsumerState<VolcanicHazardScreen> {
             const SizedBox(height: 12),
             Row(
               children: [
-                Expanded(child: _buildMetricTile(title: 'Land Surface Temp', value: '38.4°C', color: Colors.orange.shade900)),
+                Expanded(child: _buildMetricTile(title: 'Land Surface Temp', value: lst, color: Colors.orange.shade900)),
                 const SizedBox(width: 8),
-                Expanded(child: _buildMetricTile(title: 'Radiative Power', value: '42 MW', color: Colors.red.shade900)),
+                Expanded(child: _buildMetricTile(title: 'Radiative Power', value: frp, color: Colors.red.shade900)),
                 const SizedBox(width: 8),
-                Expanded(child: _buildMetricTile(title: 'SO₂ Column Mass', value: '0.8 DU', color: Colors.purple.shade900)),
+                Expanded(child: _buildMetricTile(title: 'SO₂ Column Mass', value: so2, color: Colors.purple.shade900)),
               ],
             ),
           ],

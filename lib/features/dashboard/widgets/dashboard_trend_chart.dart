@@ -151,7 +151,19 @@ class _DashboardTrendChartState extends State<DashboardTrendChart> {
     final unit = _getMetricUnit(_selectedMetric);
 
     if (spots.isEmpty) {
-      return const Center(child: Text('Loading trends...'));
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.query_stats_rounded, size: 28, color: Colors.grey.shade400),
+            const SizedBox(height: 6),
+            Text(
+              'Awaiting 7-day meteorological forecast telemetry...',
+              style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+            ),
+          ],
+        ),
+      );
     }
 
     double maxY = spots.map((s) => s.y).fold(0.0, math.max);
@@ -271,14 +283,7 @@ class _DashboardTrendChartState extends State<DashboardTrendChart> {
 
   List<FlSpot> _generateSpots(List<DailyForecast> forecast) {
     if (forecast.isEmpty) {
-      // Generate synthetic 5-day spots if forecast array is empty
-      final baseNdvi = widget.dashboardData.telemetry.averageNdvi;
-      final baseSoil = widget.dashboardData.telemetry.soilMoisture;
-      return List.generate(5, (i) {
-        if (_selectedMetric == 0) return FlSpot(i.toDouble(), (i % 2 == 0 ? 3.5 : 0.0) + i * 0.8);
-        if (_selectedMetric == 1) return FlSpot(i.toDouble(), math.min(0.9, baseNdvi + (i - 2) * 0.02));
-        return FlSpot(i.toDouble(), math.min(60.0, baseSoil + (i - 2) * 1.5));
-      });
+      return [];
     }
 
     final baseNdvi = widget.dashboardData.telemetry.averageNdvi;

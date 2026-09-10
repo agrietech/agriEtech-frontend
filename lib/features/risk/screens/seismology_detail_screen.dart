@@ -120,15 +120,26 @@ class _SeismologyDetailScreenState extends ConsumerState<SeismologyDetailScreen>
           Expanded(
             child: seismicAsync.when(
               data: (data) {
-                final hazard = data['locationRisk']?['seismicHazard'] as Map<String, dynamic>? ?? {};
-                final fault = data['locationRisk']?['nearestFaultSystem'] as Map<String, dynamic>? ?? {};
-                final advisories = (data['infrastructureAdvisories'] as List<dynamic>?) ?? [];
-                final recentQuakes = (data['recentEarthquakesFeed'] as List<dynamic>?) ?? [];
+                final hazard = (data['locationRisk']?['seismicHazard'] as Map<String, dynamic>?) ??
+                    (data['seismicHazard'] as Map<String, dynamic>?) ?? {};
+                final fault = (data['locationRisk']?['nearestFaultSystem'] as Map<String, dynamic>?) ??
+                    (data['nearestFaultSystem'] as Map<String, dynamic>?) ?? {};
+                final advisories = (data['locationRisk']?['infrastructureSafety']?['am'] as List<dynamic>?) ??
+                    (data['locationRisk']?['infrastructureSafety']?['en'] as List<dynamic>?) ??
+                    (data['infrastructureAdvisories'] as List<dynamic>?) ?? [];
+                final recentQuakes = (data['recentEarthquakes'] as List<dynamic>?) ??
+                    (data['recentEarthquakesFeed'] as List<dynamic>?) ?? [];
 
-                final pga = (hazard['peakGroundAcceleration_g'] as num?)?.toDouble() ?? 0.28;
-                final mmi = hazard['mercalliIntensityExpected'] as String? ?? 'VII';
-                final prob30 = (hazard['thirtyYearEarthquakeProbM5Plus'] as num?)?.toDouble() ?? 78.5;
-                final riskLevel = hazard['compositeRiskLevel'] as String? ?? 'HIGH_SEISMIC_ZONE';
+                final pga = (hazard['peakGroundAccelerationG'] as num?)?.toDouble() ??
+                    (hazard['peakGroundAcceleration_g'] as num?)?.toDouble() ?? 0.0;
+                final mmi = (hazard['modifiedMercalliIntensity'] as String?) ??
+                    (hazard['mercalliIntensityExpected'] as String?) ?? 'N/A';
+                final prob30 = (hazard['probabilityOfMag4PlusIn30Days'] as num?) != null
+                    ? ((hazard['probabilityOfMag4PlusIn30Days'] as num).toDouble() * 100)
+                    : ((hazard['thirtyYearEarthquakeProbM5Plus'] as num?)?.toDouble() ?? 0.0);
+                final riskLevel = (hazard['riskLevelAm'] as String?) ??
+                    (hazard['riskLevel'] as String?) ??
+                    (hazard['compositeRiskLevel'] as String?) ?? 'LOW_SEISMIC';
 
                 return ListView(
                   padding: const EdgeInsets.all(AppSpacing.md),

@@ -21,6 +21,7 @@ class WeatherState {
   final String? error;
   final double? latitude;
   final double? longitude;
+  final DateTime? lastUpdated;
 
   const WeatherState({
     this.historical = const [],
@@ -35,6 +36,7 @@ class WeatherState {
     this.error,
     this.latitude,
     this.longitude,
+    this.lastUpdated,
   });
 
   List<ForecastModel> get days => forecast;
@@ -74,6 +76,7 @@ class WeatherState {
     String? error,
     double? latitude,
     double? longitude,
+    DateTime? lastUpdated,
   }) =>
       WeatherState(
         historical: historical ?? this.historical,
@@ -88,6 +91,7 @@ class WeatherState {
         error: error,
         latitude: latitude ?? this.latitude,
         longitude: longitude ?? this.longitude,
+        lastUpdated: lastUpdated ?? this.lastUpdated,
       );
 }
 
@@ -135,6 +139,7 @@ class WeatherNotifier extends StateNotifier<WeatherState> {
         selectedWoredaName: resolvedWoredaName,
         dataSources: result.dataSources,
         isLoading: false,
+        lastUpdated: DateTime.now(),
       );
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
