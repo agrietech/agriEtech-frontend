@@ -39,6 +39,13 @@ import '../../features/weather/screens/weather_screen.dart';
 import '../../features/boundaries/screens/boundaries_screen.dart';
 import '../../features/analytics/screens/analytics_screen.dart';
 import '../../features/ai_voice/screens/ai_assistant_screen.dart';
+import '../../features/crop_protection/screens/crop_protection_hub_screen.dart';
+import '../../features/crop_protection/screens/weed_detector_screen.dart';
+import '../../features/crop_protection/screens/spray_window_screen.dart';
+import '../../features/crop_protection/screens/nutrient_scanner_screen.dart';
+import '../../features/crop_protection/screens/pest_scout_screen.dart';
+import '../../features/crop_protection/screens/tank_mix_screen.dart';
+import '../../features/crop_protection/screens/seed_calculator_screen.dart';
 
 /// Listenable that notifies GoRouter whenever AuthState changes
 class AuthChangeNotifier extends ChangeNotifier {
@@ -322,6 +329,68 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/analytics',
         builder: (context, state) => const AnalyticsScreen(),
+      ),
+
+      // 15. Smart Crop Protection & Precision Management Suite
+      GoRoute(
+        path: '/crop-protection',
+        builder: (context, state) => const CropProtectionHubScreen(),
+      ),
+      GoRoute(
+        path: '/smart-ai',
+        redirect: (context, state) => '/crop-protection',
+      ),
+      GoRoute(
+        path: '/intelligence',
+        redirect: (context, state) => '/crop-protection',
+      ),
+      GoRoute(
+        path: '/crop-protection/weed-detector',
+        builder: (context, state) => const WeedDetectorScreen(),
+      ),
+      GoRoute(
+        path: '/weed-detector',
+        redirect: (context, state) => '/crop-protection/weed-detector',
+      ),
+      GoRoute(
+        path: '/crop-protection/spray-window',
+        builder: (context, state) => const SprayWindowScreen(),
+      ),
+      GoRoute(
+        path: '/spray-window',
+        redirect: (context, state) => '/crop-protection/spray-window',
+      ),
+      GoRoute(
+        path: '/crop-protection/nutrient-scanner',
+        builder: (context, state) => const NutrientScannerScreen(),
+      ),
+      GoRoute(
+        path: '/nutrient-scanner',
+        redirect: (context, state) => '/crop-protection/nutrient-scanner',
+      ),
+      GoRoute(
+        path: '/crop-protection/pest-scout',
+        builder: (context, state) => const PestScoutScreen(),
+      ),
+      GoRoute(
+        path: '/pest-scout',
+        redirect: (context, state) => '/crop-protection/pest-scout',
+      ),
+      GoRoute(
+        path: '/crop-protection/tank-mix',
+        builder: (context, state) => const TankMixScreen(),
+      ),
+      GoRoute(
+        path: '/tank-mix',
+        redirect: (context, state) => '/crop-protection/tank-mix',
+      ),
+      GoRoute(
+        path: '/crop-protection/seed-calculator',
+        builder: (context, state) => const SeedCalculatorScreen(),
+      ),
+      GoRoute(
+        path: '/seed-calculator',
+        redirect: (context, state) => '/crop-protection/seed-calculator',
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

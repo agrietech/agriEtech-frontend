@@ -74,6 +74,7 @@ class AppLocalizations {
 
       // Navigation & Dashboard
       'home': 'Home',
+      'smartAi': 'Smart AI',
       'dashboard': 'Dashboard',
       'farms': 'My Farms',
       'alerts': 'Alerts',
@@ -254,6 +255,7 @@ class AppLocalizations {
 
       // Navigation & Dashboard
       'home': 'ዋና ገጽ',
+      'smartAi': 'ስማርት AI',
       'dashboard': 'መቆጣጠሪያ ሰሌዳ',
       'farms': 'የእኔ እርሻዎች',
       'alerts': 'ማስጠንቀቂያዎች',
@@ -394,6 +396,7 @@ class AppLocalizations {
       'login': 'Seeni',
       'register': 'Galmaa\'i',
       'home': 'Fuula Dura',
+      'smartAi': 'Smart AI',
       'dashboard': 'Gabaasa',
       'farms': 'Qotiisa',
       'diagnosis': 'Qorannoo',
@@ -558,6 +561,7 @@ class AppLocalizations {
       'app_tagline': 'ስርዓት ዘመናዊ ሕርሻ',
       'login': 'እቶ',
       'home': 'ቀንዲ ገጽ',
+      'smartAi': 'ስማርት AI',
       'dashboard': 'ዳሽቦርድ',
       'farms': 'ሕርሻታት',
       'diagnosis': 'ምርመራ',
@@ -723,6 +727,7 @@ class AppLocalizations {
       'app_tagline': 'Nidaamka Beeraha Casriga ah',
       'login': 'Gal',
       'home': 'Bogga Hore',
+      'smartAi': 'Smart AI',
       'dashboard': 'Warbixin',
       'farms': 'Beeraha',
       'diagnosis': 'Baadhitaan',

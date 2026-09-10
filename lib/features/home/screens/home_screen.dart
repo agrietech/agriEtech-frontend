@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/role_utils.dart';
 import '../../../core/utils/responsive.dart';
+import '../../../core/utils/date_formatter.dart';
 import '../../../core/widgets/agrietech_logo.dart';
 import '../../../core/widgets/agrietech_app_drawer.dart';
 import '../../../core/widgets/app_surface_card.dart';
@@ -18,6 +20,7 @@ import '../../dashboard/providers/dashboard_provider.dart';
 import '../../dashboard/models/dashboard_models.dart';
 import '../../alerts/providers/alert_provider.dart';
 import '../../alerts/models/alert_models.dart';
+import '../../weather/providers/weather_provider.dart';
 import 'main_navigation_shell.dart';
 
 /// Unified Executive Agricultural Command Center for EthioFarm Platform
@@ -30,6 +33,9 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
+  Timer? _homeRefreshTimer;
+  String _selectedAppCategory = 'all';
+
   @override
   void initState() {
     super.initState();
@@ -40,6 +46,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ref.read(dashboardProvider.notifier).loadDashboard();
       }
     });
+
+    // Auto-refresh telemetry every 60 seconds
+    _homeRefreshTimer = Timer.periodic(const Duration(seconds: 60), (_) {
+      if (mounted) {
+        ref.read(dashboardProvider.notifier).refreshDashboard();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _homeRefreshTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _handleRefresh() async {
@@ -254,52 +273,42 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               // ─── 2. Active Hazard Smart Alert Ribbon ──────────────────
               _buildHazardStatusRibbon(context, ref, activeAlerts, data, isDark),
 
+              // ─── 2b. Smart Agricultural Intelligence Command Hub ──────
+              _buildSmartIntelligenceHubCard(context, ref, isDark),
+
               // ─── 3. Live Satellite & IoT Telemetry Matrix (HUD) ───────
               Padding(
                 padding: const EdgeInsets.fromLTRB(AppSpacing.screenPadding, AppSpacing.lg, AppSpacing.screenPadding, AppSpacing.xs),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFF10B981),
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          'LIVE SATELLITE & IOT HUD',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 1.0,
-                            color: isDark ? AppTheme.telemetryNdvi : const Color(0xFF166534),
-                          ),
-                        ),
-                      ],
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF10B981),
+                        shape: BoxShape.circle,
+                      ),
                     ),
-                    InkWell(
-                      onTap: () {
-                        HapticFeedback.lightImpact();
-                        NavigationHelper.navigateOrSwitchTab(context, ref, '/analytics');
-                      },
+                    const SizedBox(width: 6),
+                    Expanded(
                       child: Text(
-                        'View Detailed GIS >',
+                        dashState.lastUpdated != null
+                            ? 'LIVE SATELLITE & IOT HUD • Synced ${DateFormatter.formatRelativeTime(dashState.lastUpdated!)}'
+                            : 'LIVE SATELLITE & IOT HUD',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: isDark ? AppTheme.primaryLight : const Color(0xFF2563EB),
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.8,
+                          color: isDark ? AppTheme.telemetryNdvi : const Color(0xFF166534),
                         ),
                       ),
                     ),
                   ],
                 ),
               ),
-              _buildTelemetryHUD(context, ref, data, isDark),
+              _buildTelemetryHUD(context, ref, data, isDark, isLoading: dashState.isLoading),
 
               // ─── 4. High-Impact Quick Action Command Matrix ───────────
               Padding(
@@ -320,28 +329,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(AppSpacing.screenPadding, AppSpacing.lg, AppSpacing.screenPadding, AppSpacing.xs),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'AGRONOMIC CLIMATOLOGY',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 1.0,
-                        color: isDark ? Colors.grey.shade400 : const Color(0xFF475569),
-                      ),
-                    ),
-                    InkWell(
-                      onTap: () {
-                        HapticFeedback.lightImpact();
-                        NavigationHelper.navigateOrSwitchTab(context, ref, '/weather');
-                      },
+                    Expanded(
                       child: Text(
-                        '7-Day Outlook >',
+                        'AGRONOMIC CLIMATOLOGY',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: isDark ? AppTheme.primaryLight : const Color(0xFF2563EB),
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1.0,
+                          color: isDark ? Colors.grey.shade400 : const Color(0xFF475569),
                         ),
                       ),
                     ),
@@ -350,41 +348,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
               _buildClimatologySnapshotCard(context, ref, data, isDark),
 
-              // ─── 6. Platform Services & Governance Hub ────────────────
-              Padding(
-                padding: const EdgeInsets.fromLTRB(AppSpacing.screenPadding, AppSpacing.lg, AppSpacing.screenPadding, AppSpacing.xs),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      context.tr('services').toUpperCase(),
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 1.0,
-                        color: isDark ? Colors.grey.shade400 : const Color(0xFF475569),
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF16A34A).withValues(alpha: 0.12),
-                        borderRadius: AppRadii.roundedPill,
-                      ),
-                      child: const Text(
-                        '12 MODULES ACTIVE',
-                        style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF16A34A),
-                          letterSpacing: 0.4,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              _buildServicesGrid(context, ref, authState, activeAlerts.length, isDark),
+              // ─── 6. Enterprise Categorized Operations & App Matrix ────
+              _buildEnterpriseAppDirectory(context, ref, authState, activeAlerts.length, isDark),
 
               const SizedBox(height: AppSpacing.xxl),
             ],
@@ -552,33 +517,33 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           const SizedBox(height: AppSpacing.md),
 
           // Docked Hero KPI Strip (Glassmorphic)
-          _buildHeroKpiStrip(context, data, isDark),
+          _buildHeroKpiStrip(context, data, isDark, isLoading: data == null),
         ],
       ),
     );
   }
 
   /// Docked Hero KPI strip giving instant operational status
-  Widget _buildHeroKpiStrip(BuildContext context, DashboardData? data, bool isDark) {
+  Widget _buildHeroKpiStrip(BuildContext context, DashboardData? data, bool isDark, {bool isLoading = false}) {
     final totalArea = data != null && data.farmSummary.totalArea > 0
         ? '${data.farmSummary.totalArea.toStringAsFixed(1)} ha'
         : (data != null && data.jurisdictionMetrics.monitoredHectares > 0
             ? '${data.jurisdictionMetrics.monitoredHectares.toStringAsFixed(1)} ha'
-            : '34.5 ha');
+            : (isLoading ? '--' : '0.0 ha'));
 
     final totalFarms = data != null && data.farmSummary.totalFarms > 0
         ? '${data.farmSummary.totalFarms}'
         : (data != null && data.jurisdictionMetrics.totalFarmers > 0
             ? '${data.jurisdictionMetrics.totalFarmers}'
-            : '18');
+            : (isLoading ? '--' : '0'));
 
     final activeSensors = data != null && data.farmSummary.activeSensors > 0
         ? '${data.farmSummary.activeSensors}'
         : (data != null && data.jurisdictionMetrics.activeSensors > 0
             ? '${data.jurisdictionMetrics.activeSensors}'
-            : '12');
+            : (isLoading ? '--' : '0'));
 
-    final systemStatus = data?.systemHealth.status ?? 'OPERATIONAL';
+    final systemStatus = data?.systemHealth.status ?? (isLoading ? 'SYNCING' : 'OPERATIONAL');
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -721,13 +686,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           ),
                         ),
                         const SizedBox(width: 6),
-                        Text(
-                          'ACTIVE EMERGENCY ALERT (${activeAlerts.length})',
-                          style: TextStyle(
-                            color: ribbonColor,
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.4,
+                        Flexible(
+                          child: Text(
+                            'ACTIVE EMERGENCY ALERT (${activeAlerts.length})',
+                            style: TextStyle(
+                              color: ribbonColor,
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.4,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
@@ -807,25 +776,42 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     BuildContext context,
     WidgetRef ref,
     DashboardData? data,
-    bool isDark,
-  ) {
+    bool isDark, {
+    bool isLoading = false,
+  }) {
+    final weatherState = ref.watch(weatherProvider);
+
     // 1. NDVI Health (Sentinel-2)
-    final ndvi = data?.telemetry.averageNdvi ?? 0.72;
-    final ndviValue = ndvi.toStringAsFixed(2);
-    final ndviBadge = _ndviConditionBadge(ndvi);
-    final ndviColor = _ndviConditionColor(ndvi);
+    final ndvi = data?.telemetry.averageNdvi;
+    final ndviValue = ndvi != null && ndvi > 0
+        ? ndvi.toStringAsFixed(2)
+        : (isLoading ? '...' : '--');
+    final ndviBadge = ndvi != null && ndvi > 0
+        ? _ndviConditionBadge(ndvi)
+        : (isLoading ? 'SYNCING' : 'NO DATA');
+    final ndviColor = ndvi != null && ndvi > 0
+        ? _ndviConditionColor(ndvi)
+        : Colors.grey;
 
     // 2. Soil Moisture & IoT Probes
-    final soilMoisture = data?.telemetry.soilMoisture ?? 41.2;
-    final soilValue = '${soilMoisture.toStringAsFixed(1)}%';
-    final activeProbes = data?.farmSummary.activeSensors ?? 12;
-    final soilBadge = '$activeProbes ONLINE';
+    final soilMoisture = data?.telemetry.soilMoisture;
+    final soilValue = soilMoisture != null && soilMoisture > 0
+        ? '${soilMoisture.toStringAsFixed(1)}%'
+        : (isLoading ? '--' : 'N/A');
+    final activeProbes = data?.farmSummary.activeSensors ?? data?.jurisdictionMetrics.activeSensors ?? 0;
+    final soilBadge = activeProbes > 0
+        ? '$activeProbes ONLINE'
+        : (isLoading ? 'SYNCING' : '0 ONLINE');
 
     // 3. Climatology & Rain
-    final rainfall = data?.weatherSummary.current?.rainfall ?? 1.5;
-    final temp = data?.weatherSummary.current?.temperature ?? 24.2;
-    final rainValue = '${temp.toStringAsFixed(1)}°C';
-    final rainBadge = rainfall > 0 ? '${rainfall.toStringAsFixed(1)} mm rain' : 'DRY';
+    final temp = data?.weatherSummary.current?.temperature ?? weatherState.current?.maxTempC;
+    final rainfall = data?.weatherSummary.current?.rainfall ?? weatherState.current?.precipitationMm;
+    final rainValue = temp != null
+        ? '${temp.toStringAsFixed(1)}°C'
+        : (isLoading ? '--' : '--');
+    final rainBadge = rainfall != null && rainfall > 0
+        ? '${rainfall.toStringAsFixed(1)} mm rain'
+        : (rainfall != null ? 'DRY' : (isLoading ? 'SYNCING' : 'STABLE'));
 
     // 4. Composite Hazard Radar
     final critRisks = data?.riskSummary.criticalRisk ?? 0;
@@ -974,6 +960,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   letterSpacing: -0.3,
                   color: isDark ? Colors.white : const Color(0xFF1E293B),
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
               Text(
                 title,
@@ -982,6 +970,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   fontWeight: FontWeight.w600,
                   color: isDark ? Colors.grey.shade300 : const Color(0xFF334155),
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 2),
               Text(
@@ -1008,6 +998,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     WidgetRef ref,
     bool isDark,
   ) {
+    final authState = ref.watch(authProvider);
+    final canAddFarm = RoleUtils.canManageFarms(authState.user?.role);
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenPadding),
       child: LayoutBuilder(
@@ -1047,25 +1040,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
               _buildTactileActionCard(
                 context,
-                icon: Icons.dialpad_rounded,
-                title: 'USSD *212#',
-                subtitle: 'Offline Mobile Hub',
-                accentColor: const Color(0xFFD97706),
+                icon: Icons.wb_sunny_rounded,
+                title: context.tr('weather'),
+                subtitle: 'Microclimate & Rain',
+                accentColor: const Color(0xFF0284C7),
                 onTap: () {
                   HapticFeedback.lightImpact();
-                  context.push('/ussd-console');
+                  context.push('/weather');
                 },
                 isDark: isDark,
               ),
               _buildTactileActionCard(
                 context,
-                icon: Icons.add_location_alt_rounded,
-                title: 'Register Plot',
-                subtitle: 'GPS Polygon Mapping',
+                icon: canAddFarm ? Icons.add_location_alt_rounded : Icons.map_rounded,
+                title: canAddFarm ? 'Register Plot' : context.tr('risks'),
+                subtitle: canAddFarm ? 'GPS Polygon Mapping' : 'Spatial Hazard Radar',
                 accentColor: const Color(0xFF2563EB),
                 onTap: () {
                   HapticFeedback.lightImpact();
-                  context.push('/farms/add');
+                  context.push(canAddFarm ? '/farms/add' : '/risks');
                 },
                 isDark: isDark,
               ),
@@ -1143,12 +1136,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     DashboardData? data,
     bool isDark,
   ) {
+    final weatherState = ref.watch(weatherProvider);
     final curWeather = data?.weatherSummary.current;
-    final temp = curWeather?.temperature ?? 24.2;
-    final humidity = curWeather?.humidity ?? 58.0;
-    final wind = curWeather?.windSpeed ?? 12.0;
-    final rainfall = curWeather?.rainfall ?? 1.5;
-    final condition = curWeather?.condition ?? 'Partly Cloudy';
+    final liveWeather = weatherState.current;
+
+    final temp = curWeather?.temperature ?? liveWeather?.maxTempC;
+    final humidity = curWeather?.humidity ?? liveWeather?.relativeHumidity;
+    final wind = curWeather?.windSpeed ?? liveWeather?.windSpeedKmh;
+    final rainfall = curWeather?.rainfall ?? liveWeather?.precipitationMm;
+    final condition = curWeather?.condition ?? liveWeather?.description ?? 'Optimal Crop Climate';
     final forecastList = data?.weatherSummary.forecast ?? [];
 
     return Padding(
@@ -1166,20 +1162,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    const Icon(Icons.wb_cloudy_rounded, color: Color(0xFF0284C7), size: 18),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Today\'s Microclimate',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w800,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                Expanded(
+                  child: Row(
+                    children: [
+                      const Icon(Icons.wb_cloudy_rounded, color: Color(0xFF0284C7), size: 18),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          'Today\'s Microclimate',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            color: isDark ? Colors.white : const Color(0xFF0F172A),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
+                const SizedBox(width: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
@@ -1194,6 +1197,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       color: Color(0xFF0284C7),
                       letterSpacing: 0.3,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
@@ -1204,13 +1209,33 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildWeatherKpi(icon: Icons.thermostat_rounded, label: 'Temperature', value: '${temp.toStringAsFixed(1)}°C', isDark: isDark),
+                _buildWeatherKpi(
+                  icon: Icons.thermostat_rounded,
+                  label: 'Temperature',
+                  value: temp != null ? '${temp.toStringAsFixed(1)}°C' : '--',
+                  isDark: isDark,
+                ),
                 _buildVerticalKpiDivider(isDark),
-                _buildWeatherKpi(icon: Icons.water_drop_outlined, label: 'Humidity', value: '${humidity.toInt()}%', isDark: isDark),
+                _buildWeatherKpi(
+                  icon: Icons.water_drop_outlined,
+                  label: 'Humidity',
+                  value: humidity != null ? '${humidity.toInt()}%' : '--',
+                  isDark: isDark,
+                ),
                 _buildVerticalKpiDivider(isDark),
-                _buildWeatherKpi(icon: Icons.air_rounded, label: 'Wind Speed', value: '${wind.toStringAsFixed(0)} km/h', isDark: isDark),
+                _buildWeatherKpi(
+                  icon: Icons.air_rounded,
+                  label: 'Wind Speed',
+                  value: wind != null ? '${wind.toStringAsFixed(0)} km/h' : '--',
+                  isDark: isDark,
+                ),
                 _buildVerticalKpiDivider(isDark),
-                _buildWeatherKpi(icon: Icons.cloud_download_outlined, label: 'Rainfall', value: '${rainfall.toStringAsFixed(1)} mm', isDark: isDark),
+                _buildWeatherKpi(
+                  icon: Icons.cloud_download_outlined,
+                  label: 'Rainfall',
+                  value: rainfall != null ? '${rainfall.toStringAsFixed(1)} mm' : '0.0 mm',
+                  isDark: isDark,
+                ),
               ],
             ),
 
@@ -1268,19 +1293,32 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 borderRadius: AppRadii.roundedSm,
                 border: Border.all(color: const Color(0xFF16A34A).withValues(alpha: 0.2)),
               ),
-              child: const Row(
+              child: Row(
                 children: [
-                  Icon(Icons.eco_rounded, size: 14, color: Color(0xFF16A34A)),
-                  SizedBox(width: 8),
+                  const Icon(Icons.eco_rounded, size: 14, color: Color(0xFF16A34A)),
+                  const SizedBox(width: 8),
                   Expanded(
-                    child: Text(
-                      'Seasonal Advisory: High soil moisture and moderate temperatures provide optimal conditions for field scouting and vegetative tillering.',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w500,
-                        color: Color(0xFF15803D),
-                        height: 1.3,
-                      ),
+                    child: Builder(
+                      builder: (context) {
+                        final alertsListAsync = ref.watch(alertListProvider);
+                        final alerts = alertsListAsync.asData?.value ?? [];
+                        final advisoryMsg = alerts.isNotEmpty
+                            ? 'Seasonal Advisory: ${alerts.first.title} - ${alerts.first.message}'
+                            : (data != null && data.recentAlerts.isNotEmpty
+                                ? 'Seasonal Advisory: ${data.recentAlerts.first.title}'
+                                : 'Seasonal Advisory: Favorable agro-climatic conditions for active weeding, fertilizer application, and pest surveillance.');
+                        return Text(
+                          advisoryMsg,
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
+                            color: Color(0xFF15803D),
+                            height: 1.3,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        );
+                      },
                     ),
                   ),
                 ],
@@ -1331,9 +1369,247 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  // ─── 6. Platform Services & Governance Hub ────────────────────────
+  // ─── 2b. Smart Agricultural Intelligence Command Hub ─────────────
 
-  Widget _buildServicesGrid(
+  Widget _buildSmartIntelligenceHubCard(BuildContext context, WidgetRef ref, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(AppSpacing.screenPadding, AppSpacing.md, AppSpacing.screenPadding, 0),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: isDark
+              ? const LinearGradient(
+                  colors: [Color(0xFF042F1A), Color(0xFF064E3B), Color(0xFF0F172A)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                )
+              : const LinearGradient(
+                  colors: [Color(0xFFE8F5E9), Color(0xFFDCFCE7), Color(0xFFF0FDF4)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isDark ? const Color(0xFF10B981).withValues(alpha: 0.35) : const Color(0xFF16A34A).withValues(alpha: 0.35),
+            width: 1.2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
+              blurRadius: 14,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header Row: Title & Link to Common Nav
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF10B981).withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.4)),
+                  ),
+                  child: const Icon(Icons.psychology_rounded, color: Color(0xFF10B981), size: 22),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Flexible(
+                            child: Text(
+                              'SMART AGRI-INTELLIGENCE',
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.8,
+                                color: Color(0xFF10B981),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF10B981).withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: const Text(
+                              '8 ENGINES',
+                              style: TextStyle(
+                                fontSize: 8.5,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF10B981),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Autonomous AI Vision, Soil Calibrations & Climatology',
+                        style: TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w500,
+                          color: isDark ? Colors.grey.shade300 : const Color(0xFF334155),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                InkWell(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    NavigationHelper.navigateOrSwitchTab(context, ref, '/crop-protection');
+                  },
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF16A34A),
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF16A34A).withValues(alpha: 0.3),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Open Hub',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        SizedBox(width: 3),
+                        Icon(Icons.arrow_forward_rounded, size: 13, color: Colors.white),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // Horizontal scrolling rail of all 8 engines
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              child: Row(
+                children: [
+                  _buildEngineQuickPill(context, ref, icon: Icons.biotech_rounded, label: 'Disease Doctor', tag: 'Pathology', color: const Color(0xFF059669), route: '/create-diagnosis', isDark: isDark),
+                  _buildEngineQuickPill(context, ref, icon: Icons.smart_toy_rounded, label: 'Voice Agronomist', tag: 'Bilingual', color: const Color(0xFF0284C7), route: '/ai-assistant', isDark: isDark),
+                  _buildEngineQuickPill(context, ref, icon: Icons.grass_rounded, label: 'Weed Detector', tag: 'AI Vision', color: const Color(0xFF16A34A), route: '/crop-protection/weed-detector', isDark: isDark),
+                  _buildEngineQuickPill(context, ref, icon: Icons.air_rounded, label: 'Spray Radar', tag: 'Weather', color: const Color(0xFF0284C7), route: '/crop-protection/spray-window', isDark: isDark),
+                  _buildEngineQuickPill(context, ref, icon: Icons.energy_savings_leaf_rounded, label: 'Nutrient Scan', tag: 'Chlorosis', color: const Color(0xFFD97706), route: '/crop-protection/nutrient-scanner', isDark: isDark),
+                  _buildEngineQuickPill(context, ref, icon: Icons.bug_report_rounded, label: 'Pest Scout', tag: 'ETL Engine', color: const Color(0xFFDC2626), route: '/crop-protection/pest-scout', isDark: isDark),
+                  _buildEngineQuickPill(context, ref, icon: Icons.science_rounded, label: 'Tank-Mix', tag: 'W-A-L-E-S', color: const Color(0xFF9333EA), route: '/crop-protection/tank-mix', isDark: isDark),
+                  _buildEngineQuickPill(context, ref, icon: Icons.straighten_rounded, label: 'Seed Calc', tag: 'Timad/Ha', color: const Color(0xFF0D9488), route: '/crop-protection/seed-calculator', isDark: isDark),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEngineQuickPill(
+    BuildContext context,
+    WidgetRef ref, {
+    required IconData icon,
+    required String label,
+    required String tag,
+    required Color color,
+    required String route,
+    required bool isDark,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          NavigationHelper.navigateOrSwitchTab(context, ref, route);
+        },
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+          decoration: BoxDecoration(
+            color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: isDark ? color.withValues(alpha: 0.3) : color.withValues(alpha: 0.25),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Icon(icon, size: 14, color: color),
+              ),
+              const SizedBox(width: 7),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? Colors.white : const Color(0xFF1E293B),
+                    ),
+                  ),
+                  Text(
+                    tag,
+                    style: TextStyle(
+                      fontSize: 8.5,
+                      fontWeight: FontWeight.w600,
+                      color: color,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ─── 6. Enterprise Categorized Operations & App Matrix ────────────
+
+  Widget _buildEnterpriseAppDirectory(
     BuildContext context,
     WidgetRef ref,
     AuthState authState,
@@ -1342,175 +1618,487 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   ) {
     final user = authState.user;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenPadding),
-      child: GridView.count(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        crossAxisCount: context.responsive(compact: 3, medium: 4, expanded: 6),
-        mainAxisSpacing: AppSpacing.itemGap,
-        crossAxisSpacing: AppSpacing.itemGap,
-        childAspectRatio: 0.94,
-        children: [
-          _buildServiceCard(
-            context,
-            ref,
-            icon: Icons.dashboard_rounded,
-            label: context.tr('dashboard'),
-            color: const Color(0xFF16A34A),
-            tag: 'ANALYTICS',
-            route: '/dashboard',
-          ),
-          if (RoleUtils.canManageFarms(user?.role))
-            _buildServiceCard(
-              context,
-              ref,
-              icon: Icons.agriculture_rounded,
-              label: context.tr('farms'),
-              color: const Color(0xFF15803D),
-              tag: 'GIS',
-              route: '/farms',
-            ),
-          _buildServiceCard(
-            context,
-            ref,
-            icon: Icons.biotech_rounded,
-            label: context.tr('diagnosis'),
-            color: const Color(0xFF0D9488),
-            tag: 'AI',
-            route: '/diagnosis',
-          ),
-          _buildServiceCard(
-            context,
-            ref,
-            icon: Icons.wb_cloudy_rounded,
-            label: context.tr('weather'),
-            color: const Color(0xFF0284C7),
-            tag: 'RADAR',
-            route: '/weather',
-          ),
-          _buildServiceCard(
-            context,
-            ref,
-            icon: Icons.map_rounded,
-            label: context.tr('risks'),
-            color: const Color(0xFFDC2626),
-            tag: 'EARTH',
-            route: '/risks',
-          ),
-          _buildServiceCard(
-            context,
-            ref,
-            icon: Icons.thunderstorm_rounded,
-            label: context.tr('disasters'),
-            color: const Color(0xFFEA580C),
-            tag: 'EW',
-            route: '/disasters',
-          ),
-          if (authState.canManageSensors)
-            _buildServiceCard(
-              context,
-              ref,
-              icon: Icons.sensors_rounded,
-              label: context.tr('sensors'),
-              color: const Color(0xFF7C3AED),
-              tag: 'LoRa',
-              route: '/sensors',
-            ),
-          _buildServiceCard(
-            context,
-            ref,
-            icon: Icons.public_rounded,
-            label: context.tr('boundaries'),
-            color: const Color(0xFF059669),
-            tag: 'WMO',
-            route: '/boundaries',
-          ),
-          _buildServiceCard(
-            context,
-            ref,
-            icon: Icons.notifications_active_rounded,
-            label: context.tr('alerts'),
-            color: const Color(0xFFD97706),
-            badgeCount: activeAlertCount,
-            route: '/alerts',
-          ),
-          if (RoleUtils.canViewAnalytics(user?.role))
-            _buildServiceCard(
-              context,
-              ref,
-              icon: Icons.insights_rounded,
-              label: context.tr('analytics'),
-              color: const Color(0xFF4338CA),
-              tag: 'BI',
-              route: '/analytics',
-            ),
-          if (authState.canAccessUssdConsole)
-            _buildServiceCard(
-              context,
-              ref,
-              icon: Icons.dialpad_rounded,
-              label: context.tr('ussd'),
-              color: const Color(0xFF0D9488),
-              tag: '*212#',
-              route: '/ussd-console',
-            ),
-          _buildServiceCard(
-            context,
-            ref,
-            icon: Icons.assignment_ind_rounded,
-            label: context.tr('role'),
-            color: const Color(0xFF2563EB),
-            tag: 'IAM',
-            route: '/apply-role',
-          ),
-        ],
+    final allItems = [
+      // Smart AI Suite (8)
+      const _EnterpriseAppItem(
+        id: 'ai_weed',
+        label: 'Weed Detector',
+        amharicLabel: 'የአረም መለያ',
+        subtitle: 'Knapsack Dilutions & Herbicides',
+        icon: Icons.grass_rounded,
+        color: Color(0xFF16A34A),
+        category: 'ai',
+        tag: 'AI VISION',
+        route: '/crop-protection/weed-detector',
       ),
+      const _EnterpriseAppItem(
+        id: 'ai_spray',
+        label: 'Spray Radar',
+        amharicLabel: 'የርጭት አየር ሁኔታ',
+        subtitle: 'Drift Risk & Rain Window',
+        icon: Icons.air_rounded,
+        color: Color(0xFF0284C7),
+        category: 'ai',
+        tag: 'RADAR',
+        route: '/crop-protection/spray-window',
+      ),
+      const _EnterpriseAppItem(
+        id: 'ai_nutrient',
+        label: 'Nutrient Scanner',
+        amharicLabel: 'የቅጠል ንጥረ-ነገር',
+        subtitle: 'Leaf Chlorosis & Top-Dressing',
+        icon: Icons.energy_savings_leaf_rounded,
+        color: Color(0xFFD97706),
+        category: 'ai',
+        tag: 'SOIL/NPSB',
+        route: '/crop-protection/nutrient-scanner',
+      ),
+      const _EnterpriseAppItem(
+        id: 'ai_pest',
+        label: 'Pest Scout & ETL',
+        amharicLabel: 'የተባይ ቅኝት',
+        subtitle: 'Economic Injury Thresholds',
+        icon: Icons.bug_report_rounded,
+        color: Color(0xFFDC2626),
+        category: 'ai',
+        tag: 'ETL',
+        route: '/crop-protection/pest-scout',
+      ),
+      const _EnterpriseAppItem(
+        id: 'ai_tank_mix',
+        label: 'Tank-Mix Validator',
+        amharicLabel: 'የኬሚካል ቅልቅል',
+        subtitle: 'W-A-L-E-S Mixing Sequence',
+        icon: Icons.science_rounded,
+        color: Color(0xFF9333EA),
+        category: 'ai',
+        tag: 'W-A-L-E-S',
+        route: '/crop-protection/tank-mix',
+      ),
+      const _EnterpriseAppItem(
+        id: 'ai_seed_calc',
+        label: 'Seed Calculator',
+        amharicLabel: 'የዘር መጠን አስሊ',
+        subtitle: 'Certified Kg / Timad & Ha',
+        icon: Icons.straighten_rounded,
+        color: Color(0xFF0D9488),
+        category: 'ai',
+        tag: 'TIMAD/HA',
+        route: '/crop-protection/seed-calculator',
+      ),
+      _EnterpriseAppItem(
+        id: 'ai_crop_doctor',
+        label: context.tr('diagnosis'),
+        amharicLabel: 'የሰብል በሽታ መለያ',
+        subtitle: 'Leaf Pathology Diagnostics',
+        icon: Icons.biotech_rounded,
+        color: const Color(0xFF059669),
+        category: 'ai',
+        tag: 'PATHOLOGY',
+        route: '/diagnosis',
+      ),
+      const _EnterpriseAppItem(
+        id: 'ai_voice',
+        label: 'Voice AI',
+        amharicLabel: 'ኢትዮፋርም AI',
+        subtitle: 'Bilingual Speech & Chat AI',
+        icon: Icons.smart_toy_rounded,
+        color: Color(0xFF0284C7),
+        category: 'ai',
+        tag: 'VOICE AI',
+        route: '/ai-assistant',
+      ),
+
+      // Earth Observation & Climate (5)
+      _EnterpriseAppItem(
+        id: 'earth_risks',
+        label: context.tr('risks'),
+        amharicLabel: 'የአደጋ ካርታ',
+        subtitle: 'Sentinel-2 Hazard Radar',
+        icon: Icons.map_rounded,
+        color: const Color(0xFFDC2626),
+        category: 'earth',
+        tag: 'EARTH',
+        route: '/risks',
+      ),
+      _EnterpriseAppItem(
+        id: 'earth_weather',
+        label: context.tr('weather'),
+        amharicLabel: 'የአየር ሁኔታ',
+        subtitle: '7-Day Agronomic Outlook',
+        icon: Icons.wb_cloudy_rounded,
+        color: const Color(0xFF0284C7),
+        category: 'earth',
+        tag: 'RADAR',
+        route: '/weather',
+      ),
+      _EnterpriseAppItem(
+        id: 'earth_disasters',
+        label: context.tr('disasters'),
+        amharicLabel: 'የተፈጥሮ አደጋዎች',
+        subtitle: 'Drought, Flood & Seismic',
+        icon: Icons.thunderstorm_rounded,
+        color: const Color(0xFFEA580C),
+        category: 'earth',
+        tag: 'EARLY WARN',
+        route: '/disasters',
+      ),
+      _EnterpriseAppItem(
+        id: 'earth_boundaries',
+        label: context.tr('boundaries'),
+        amharicLabel: 'ወሰኖች',
+        subtitle: 'WMO & Administrative GIS',
+        icon: Icons.public_rounded,
+        color: const Color(0xFF059669),
+        category: 'earth',
+        tag: 'WMO',
+        route: '/boundaries',
+      ),
+      _EnterpriseAppItem(
+        id: 'earth_alerts',
+        label: context.tr('alerts'),
+        amharicLabel: 'ማስጠንቀቂያዎች',
+        subtitle: 'Active Hazard Dispatcher',
+        icon: Icons.notifications_active_rounded,
+        color: const Color(0xFFD97706),
+        category: 'earth',
+        tag: 'DISPATCH',
+        route: '/alerts',
+        badgeCount: activeAlertCount,
+      ),
+
+      // Field Operations (4)
+      _EnterpriseAppItem(
+        id: 'field_farms',
+        label: context.tr('farms'),
+        amharicLabel: 'የእኔ እርሻዎች',
+        subtitle: 'GPS Cadastral Management',
+        icon: Icons.agriculture_rounded,
+        color: const Color(0xFF15803D),
+        category: 'field',
+        tag: 'GIS',
+        route: '/farms',
+        isVisible: (u, auth) => RoleUtils.canManageFarms(u?.role),
+      ),
+      _EnterpriseAppItem(
+        id: 'field_sensors',
+        label: context.tr('sensors'),
+        amharicLabel: 'ሴንሰሮች',
+        subtitle: 'LoRaWAN Soil Probes',
+        icon: Icons.sensors_rounded,
+        color: const Color(0xFF7C3AED),
+        category: 'field',
+        tag: 'LoRaWAN',
+        route: '/sensors',
+        isVisible: (u, auth) => auth.canManageSensors,
+      ),
+      _EnterpriseAppItem(
+        id: 'field_register_plot',
+        label: 'Plot Survey',
+        amharicLabel: 'አዲስ ማሳ መመዝገቢያ',
+        subtitle: 'Polygon Boundary Mapping',
+        icon: Icons.add_location_alt_rounded,
+        color: const Color(0xFF16A34A),
+        category: 'field',
+        tag: 'SURVEY',
+        route: '/farms/add',
+        isVisible: (u, auth) => RoleUtils.canManageFarms(u?.role),
+      ),
+      const _EnterpriseAppItem(
+        id: 'field_crop_protection_suite',
+        label: 'Crop Protection Hub',
+        amharicLabel: 'የተቀናጀ የሰብል ጥበቃ',
+        subtitle: 'Integrated Diagnostic Suite',
+        icon: Icons.shield_rounded,
+        color: Color(0xFF059669),
+        category: 'field',
+        tag: 'SUITE',
+        route: '/crop-protection',
+      ),
+
+      // Executive BI & IAM (4)
+      _EnterpriseAppItem(
+        id: 'exec_dashboard',
+        label: context.tr('dashboard'),
+        amharicLabel: 'መቆጣጠሪያ ሰሌዳ',
+        subtitle: 'Executive Telemetry Overview',
+        icon: Icons.dashboard_rounded,
+        color: const Color(0xFF16A34A),
+        category: 'executive',
+        tag: 'ANALYTICS',
+        route: '/dashboard',
+      ),
+      _EnterpriseAppItem(
+        id: 'exec_analytics',
+        label: context.tr('analytics'),
+        amharicLabel: 'ትንታኔ',
+        subtitle: 'Sector BI & Macro Modeling',
+        icon: Icons.insights_rounded,
+        color: const Color(0xFF4338CA),
+        category: 'executive',
+        tag: 'BI',
+        route: '/analytics',
+        isVisible: (u, auth) => RoleUtils.canViewAnalytics(u?.role),
+      ),
+      _EnterpriseAppItem(
+        id: 'exec_ussd',
+        label: 'USSD *212#',
+        amharicLabel: 'USSD *212#',
+        subtitle: 'Smallholder Mobile Broadcast',
+        icon: Icons.dialpad_rounded,
+        color: const Color(0xFF2563EB),
+        category: 'executive',
+        tag: 'TELCO',
+        route: '/ussd-console',
+        isVisible: (u, auth) => auth.canAccessUssdConsole,
+      ),
+      _EnterpriseAppItem(
+        id: 'exec_role',
+        label: context.tr('role'),
+        amharicLabel: 'የስራ ድርሻ',
+        subtitle: 'IAM & Permission Upgrades',
+        icon: Icons.assignment_ind_rounded,
+        color: const Color(0xFF2563EB),
+        category: 'executive',
+        tag: 'IAM',
+        route: '/apply-role',
+      ),
+    ];
+
+    final visibleItems = allItems.where((item) {
+      if (item.isVisible != null && !item.isVisible!(user, authState)) {
+        return false;
+      }
+      if (_selectedAppCategory == 'all') return true;
+      return item.category == _selectedAppCategory;
+    }).toList();
+
+    final categories = [
+      _CategoryFilter(
+        key: 'all',
+        label: 'All Operations',
+        count: allItems.where((i) => i.isVisible == null || i.isVisible!(user, authState)).length,
+      ),
+      _CategoryFilter(
+        key: 'ai',
+        label: 'Smart AI Suite',
+        count: allItems.where((i) => i.category == 'ai' && (i.isVisible == null || i.isVisible!(user, authState))).length,
+      ),
+      _CategoryFilter(
+        key: 'earth',
+        label: 'Earth & Climate',
+        count: allItems.where((i) => i.category == 'earth' && (i.isVisible == null || i.isVisible!(user, authState))).length,
+      ),
+      _CategoryFilter(
+        key: 'field',
+        label: 'Field Ops',
+        count: allItems.where((i) => i.category == 'field' && (i.isVisible == null || i.isVisible!(user, authState))).length,
+      ),
+      _CategoryFilter(
+        key: 'executive',
+        label: 'Executive BI',
+        count: allItems.where((i) => i.category == 'executive' && (i.isVisible == null || i.isVisible!(user, authState))).length,
+      ),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Header Section Title & Active Module Pill
+        Padding(
+          padding: const EdgeInsets.fromLTRB(AppSpacing.screenPadding, AppSpacing.lg, AppSpacing.screenPadding, AppSpacing.xs),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'ENTERPRISE OPERATIONS',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.0,
+                    color: isDark ? Colors.grey.shade400 : const Color(0xFF475569),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF16A34A).withValues(alpha: 0.12),
+                  borderRadius: AppRadii.roundedPill,
+                ),
+                child: Text(
+                  '${visibleItems.length} APPS ACTIVE',
+                  style: const TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF16A34A),
+                    letterSpacing: 0.4,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Interactive Category Filter Pills
+        Padding(
+          padding: const EdgeInsets.fromLTRB(AppSpacing.screenPadding, AppSpacing.xs, AppSpacing.screenPadding, AppSpacing.sm),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              children: categories.map((cat) {
+                final isSelected = _selectedAppCategory == cat.key;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 6),
+                  child: InkWell(
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      setState(() {
+                        _selectedAppCategory = cat.key;
+                      });
+                    },
+                    borderRadius: BorderRadius.circular(20),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? (isDark ? const Color(0xFF1E3825) : const Color(0xFFDCFCE7))
+                            : (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.04)),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: isSelected
+                              ? (isDark ? const Color(0xFF4ADE80) : const Color(0xFF16A34A))
+                              : (isDark ? AppTheme.borderDark : AppTheme.borderLight),
+                          width: isSelected ? 1.2 : 0.8,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            cat.label,
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                              color: isSelected
+                                  ? (isDark ? const Color(0xFF4ADE80) : const Color(0xFF14532D))
+                                  : (isDark ? Colors.grey.shade300 : const Color(0xFF475569)),
+                            ),
+                          ),
+                          const SizedBox(width: 5),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? (isDark ? const Color(0xFF16A34A) : const Color(0xFF15803D))
+                                  : (isDark ? Colors.grey.shade800 : Colors.grey.shade300),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              '${cat.count}',
+                              style: TextStyle(
+                                fontSize: 8.5,
+                                fontWeight: FontWeight.bold,
+                                color: isSelected ? Colors.white : (isDark ? Colors.grey.shade300 : const Color(0xFF334155)),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        ),
+
+        // Enterprise App Icon Grid
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenPadding),
+          child: GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: context.responsive(compact: 3, medium: 4, expanded: 6),
+              mainAxisSpacing: AppSpacing.itemGap,
+              crossAxisSpacing: AppSpacing.itemGap,
+              childAspectRatio: 0.92,
+            ),
+            itemCount: visibleItems.length,
+            itemBuilder: (context, index) {
+              return _buildEnterpriseAppCard(context, ref, visibleItems[index], isDark);
+            },
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _buildServiceCard(
+  Widget _buildEnterpriseAppCard(
     BuildContext context,
-    WidgetRef ref, {
-    required IconData icon,
-    required String label,
-    required Color color,
-    required String route,
-    String? tag,
-    int badgeCount = 0,
-  }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
+    WidgetRef ref,
+    _EnterpriseAppItem item,
+    bool isDark,
+  ) {
     return AppSurfaceCard(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
       onTap: () {
         HapticFeedback.lightImpact();
-        NavigationHelper.navigateOrSwitchTab(context, ref, route);
+        NavigationHelper.navigateOrSwitchTab(context, ref, item.route);
       },
       child: Stack(
         alignment: Alignment.center,
         children: [
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Container(
-                width: 38,
-                height: 38,
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.12),
-                  borderRadius: AppRadii.roundedMd,
-                  border: Border.all(color: color.withValues(alpha: 0.25)),
+                  color: item.color.withValues(alpha: isDark ? 0.18 : 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: item.color.withValues(alpha: isDark ? 0.35 : 0.25),
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: item.color.withValues(alpha: isDark ? 0.15 : 0.08),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
-                child: Icon(icon, color: color, size: 19),
+                child: Icon(item.icon, color: item.color, size: 20),
               ),
-              const SizedBox(height: 7),
+              const SizedBox(height: 6),
               Text(
-                label,
+                item.label,
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
-                  color: isDark ? Colors.grey.shade200 : const Color(0xFF334155),
+                  color: isDark ? Colors.grey.shade100 : const Color(0xFF1E293B),
                   letterSpacing: -0.2,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                item.subtitle,
+                style: TextStyle(
+                  fontSize: 8.5,
+                  fontWeight: FontWeight.w500,
+                  color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
                 ),
                 textAlign: TextAlign.center,
                 maxLines: 1,
@@ -1518,10 +2106,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ],
           ),
-          if (badgeCount > 0)
+          if (item.badgeCount > 0)
             Positioned(
               top: 0,
-              right: 4,
+              right: 0,
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                 decoration: const BoxDecoration(
@@ -1529,24 +2117,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   borderRadius: AppRadii.roundedPill,
                 ),
                 child: Text(
-                  '$badgeCount',
+                  '${item.badgeCount}',
                   style: const TextStyle(color: Colors.white, fontSize: 8.5, fontWeight: FontWeight.bold),
                 ),
               ),
             )
-          else if (tag != null)
+          else
             Positioned(
               top: 0,
-              right: 4,
+              right: 0,
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.14),
-                  borderRadius: AppRadii.roundedXs,
+                  color: item.color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
-                  tag,
-                  style: TextStyle(color: color, fontSize: 7.5, fontWeight: FontWeight.w800, letterSpacing: 0.2),
+                  item.tag,
+                  style: TextStyle(
+                    color: item.color,
+                    fontSize: 7,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.2,
+                  ),
                 ),
               ),
             ),
@@ -1661,3 +2254,46 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return days[date.weekday - 1];
   }
 }
+
+/// Model for Classified Enterprise Operations App Icon
+class _EnterpriseAppItem {
+  final String id;
+  final String label;
+  final String amharicLabel;
+  final String subtitle;
+  final IconData icon;
+  final Color color;
+  final String category; // 'ai', 'earth', 'field', 'executive'
+  final String tag;
+  final String route;
+  final int badgeCount;
+  final bool Function(UserModel? user, AuthState authState)? isVisible;
+
+  const _EnterpriseAppItem({
+    required this.id,
+    required this.label,
+    required this.amharicLabel,
+    required this.subtitle,
+    required this.icon,
+    required this.color,
+    required this.category,
+    required this.tag,
+    required this.route,
+    this.badgeCount = 0,
+    this.isVisible,
+  });
+}
+
+/// Model for Enterprise Category Filter Chip
+class _CategoryFilter {
+  final String key;
+  final String label;
+  final int count;
+
+  const _CategoryFilter({
+    required this.key,
+    required this.label,
+    required this.count,
+  });
+}
+

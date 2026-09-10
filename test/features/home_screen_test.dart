@@ -231,7 +231,8 @@ void main() {
       expect(find.text('AI Crop Diagnostics'), findsOneWidget);
       expect(find.text('EthioFarm AI'), findsOneWidget);
       expect(find.text('Bilingual AI Agronomist'), findsOneWidget);
-      expect(find.text('USSD *212#'), findsNWidgets(2)); // in matrix and services
+      expect(find.text('Weather'), findsWidgets);
+      expect(find.text('Microclimate & Rain'), findsOneWidget);
       expect(find.text('Register Plot'), findsOneWidget);
     });
 
@@ -285,6 +286,58 @@ void main() {
 
       expect(find.textContaining('Agro-Climatic Stability: All monitored woredas in normal range'), findsOneWidget);
       expect(find.text('3D GIS Map >'), findsOneWidget);
+    });
+
+    testWidgets('renders Smart Agricultural Intelligence Suite Hub Card with 8 AI engines & Open Hub action', (tester) async {
+      await tester.pumpWidget(createTestApp(
+        dashboardData: testDashboardData,
+        user: testUser,
+      ));
+      await tester.pump();
+
+      // Verify Smart Agri-Intelligence Hub Card
+      expect(find.text('SMART AGRI-INTELLIGENCE'), findsOneWidget);
+      expect(find.text('8 ENGINES'), findsOneWidget);
+      expect(find.text('Open Hub'), findsOneWidget);
+
+      // Verify quick engine pills
+      expect(find.text('Disease Doctor'), findsOneWidget);
+      expect(find.text('Voice Agronomist'), findsOneWidget);
+      expect(find.text('Weed Detector'), findsWidgets);
+      expect(find.text('Spray Radar'), findsWidgets);
+      expect(find.text('Nutrient Scan'), findsOneWidget);
+      expect(find.text('Pest Scout'), findsWidgets);
+      expect(find.text('Tank-Mix'), findsOneWidget);
+      expect(find.text('Seed Calc'), findsOneWidget);
+    });
+
+    testWidgets('renders Enterprise Operations directory and filters by category tabs', (tester) async {
+      await tester.pumpWidget(createTestApp(
+        dashboardData: testDashboardData,
+        user: testUser,
+      ));
+      await tester.pump();
+
+      // Verify Enterprise Operations section
+      expect(find.text('ENTERPRISE OPERATIONS'), findsOneWidget);
+      expect(find.text('All Operations'), findsOneWidget);
+      expect(find.text('Smart AI Suite'), findsOneWidget);
+      expect(find.text('Earth & Climate'), findsOneWidget);
+      expect(find.text('Field Ops'), findsOneWidget);
+      expect(find.text('Executive BI'), findsOneWidget);
+
+      // Scroll down and switch to Smart AI Suite filter
+      await tester.drag(find.byType(SingleChildScrollView).first, const Offset(0, -800));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Smart AI Suite'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Weed Detector'), findsWidgets);
+      expect(find.text('Spray Radar'), findsWidgets);
+      expect(find.text('Nutrient Scanner'), findsOneWidget);
+      expect(find.text('Pest Scout & ETL'), findsOneWidget);
+      expect(find.text('Tank-Mix Validator'), findsOneWidget);
+      expect(find.text('Seed Calculator'), findsOneWidget);
     });
   });
 }
