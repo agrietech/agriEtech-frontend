@@ -156,8 +156,19 @@ class ApiConstants {
   static const String adminIngestionTrigger = '/admin/ingestion/trigger';
   static const String adminAuditLogs = '/admin/audit-logs';
   static const String adminRoleRequests = '/admin/role-requests';
-  static String adminApproveRoleRequest(String id) => '/admin/role-requests/$id/approve';
-  static String adminRejectRoleRequest(String id) => '/admin/role-requests/$id/reject';
+  // 15. Smart Crop Protection & Precision Management Suite (/crop-protection)
+  static const String cropProtection = '/crop-protection';
+  static const String weedDetect = '$cropProtection/weed/detect';
+  static const String weedDatabase = '$cropProtection/weed/database';
+  static const String sprayWindow = '$cropProtection/spray-window';
+  static const String nutrientScan = '$cropProtection/nutrient/scan';
+  static const String nutrientDatabase = '$cropProtection/nutrient/database';
+  static const String pestScout = '$cropProtection/pest/scout';
+  static const String pestDatabase = '$cropProtection/pest/database';
+  static const String tankMixValidate = '$cropProtection/tank-mix/validate';
+  static const String tankMixChemicals = '$cropProtection/tank-mix/chemicals';
+  static const String seedCalculator = '$cropProtection/seed-calculator';
+  static const String seedCrops = '$cropProtection/seed-calculator/crops';
 
   // Request Timeouts
   static Duration get defaultTimeout => AppEnv.apiTimeout;
