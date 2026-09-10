@@ -174,11 +174,12 @@ class _WeedDetectorScreenState extends ConsumerState<WeedDetectorScreen> {
             children: [
               const Icon(Icons.camera_alt_rounded, color: AppTheme.primaryColor, size: 20),
               const SizedBox(width: 8),
-              const Text(
-                'Weed Leaf / Field Photo',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              const Expanded(
+                child: Text(
+                  'Weed Leaf / Field Photo',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                ),
               ),
-              const Spacer(),
               if (_imageBytes != null)
                 TextButton(
                   onPressed: () => setState(() {
@@ -418,9 +419,11 @@ class _WeedDetectorScreenState extends ConsumerState<WeedDetectorScreen> {
                 children: [
                   Icon(Icons.colorize_rounded, color: Colors.white, size: 22),
                   SizedBox(width: 8),
-                  Text(
-                    '16L Knapsack Sprayer Dilution Plan',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                  Expanded(
+                    child: Text(
+                      '16L Knapsack Sprayer Dilution Plan',
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                    ),
                   ),
                 ],
               ),

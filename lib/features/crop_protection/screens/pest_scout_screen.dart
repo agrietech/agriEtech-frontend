@@ -179,11 +179,12 @@ class _PestScoutScreenState extends ConsumerState<PestScoutScreen> {
             children: [
               const Icon(Icons.bug_report_rounded, color: Color(0xFFDC2626), size: 20),
               const SizedBox(width: 8),
-              const Text(
-                'Insect Pest / Crop Damage Photo',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              const Expanded(
+                child: Text(
+                  'Insect Pest / Crop Damage Photo',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                ),
               ),
-              const Spacer(),
               if (_imageBytes != null)
                 TextButton(
                   onPressed: () => setState(() {
@@ -303,15 +304,15 @@ class _PestScoutScreenState extends ConsumerState<PestScoutScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Observed Field Infestation:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              const Expanded(
+                child: Text('Observed Field Infestation:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              ),
               const SizedBox(width: 8),
-              Flexible(
-                child: Text(
-                  '${_damagePercent.toStringAsFixed(0)}% ($_infestedCount / $_totalSampled plants)',
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFFDC2626)),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+              Text(
+                '${_damagePercent.toStringAsFixed(0)}% ($_infestedCount / $_totalSampled plants)',
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFFDC2626)),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),

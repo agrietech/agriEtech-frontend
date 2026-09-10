@@ -205,7 +205,10 @@ class _SeedCalculatorScreenState extends ConsumerState<SeedCalculatorScreen> {
             children: [
               Expanded(
                 child: ChoiceChip(
-                  label: const Text('Row Planting (ረድፍ)'),
+                  label: const FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text('Row Planting (ረድፍ)'),
+                  ),
                   selected: _plantingMethod == 'ROW',
                   onSelected: (sel) {
                     if (sel) {
@@ -218,7 +221,10 @@ class _SeedCalculatorScreenState extends ConsumerState<SeedCalculatorScreen> {
               const SizedBox(width: 8),
               Expanded(
                 child: ChoiceChip(
-                  label: const Text('Broadcasting (መበተን)'),
+                  label: const FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text('Broadcasting (መበተን)'),
+                  ),
                   selected: _plantingMethod == 'BROADCAST',
                   onSelected: (sel) {
                     if (sel) {
@@ -259,9 +265,11 @@ class _SeedCalculatorScreenState extends ConsumerState<SeedCalculatorScreen> {
                 children: [
                   const Icon(Icons.grain_rounded, color: Colors.white, size: 24),
                   const SizedBox(width: 10),
-                  Text(
-                    '${res.crop.cropNameEn} Seed Requirement',
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                  Expanded(
+                    child: Text(
+                      '${res.crop.cropNameEn} Seed Requirement',
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
                   ),
                 ],
               ),
@@ -301,9 +309,11 @@ class _SeedCalculatorScreenState extends ConsumerState<SeedCalculatorScreen> {
                 children: [
                   Icon(Icons.grid_4x4_rounded, color: AppTheme.primaryColor, size: 20),
                   SizedBox(width: 8),
-                  Text(
-                    'Planting Geometry & Population Target',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.5),
+                  Expanded(
+                    child: Text(
+                      'Planting Geometry & Population Target',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.5),
+                    ),
                   ),
                 ],
               ),
@@ -348,9 +358,11 @@ class _SeedCalculatorScreenState extends ConsumerState<SeedCalculatorScreen> {
                 children: [
                   Icon(Icons.compost_rounded, color: Color(0xFF15803D), size: 20),
                   SizedBox(width: 8),
-                  Text(
-                    'Basal & Top-Dress Fertilizer Plan',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.5),
+                  Expanded(
+                    child: Text(
+                      'Basal & Top-Dress Fertilizer Plan',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.5),
+                    ),
                   ),
                 ],
               ),
@@ -370,15 +382,15 @@ class _SeedCalculatorScreenState extends ConsumerState<SeedCalculatorScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Basal NPSB at Planting:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                        const Expanded(
+                          child: Text('Basal NPSB at Planting:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                        ),
                         const SizedBox(width: 8),
-                        Flexible(
-                          child: Text(
-                            '${fert.basalNpsb.totalRequiredKg} kg (${fert.basalNpsb.bags50kg} bags)',
-                            style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF15803D)),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                        Text(
+                          '${fert.basalNpsb.totalRequiredKg} kg (${fert.basalNpsb.bags50kg} bags)',
+                          style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF15803D), fontSize: 12),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
@@ -405,15 +417,15 @@ class _SeedCalculatorScreenState extends ConsumerState<SeedCalculatorScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Top-Dress Urea (46% N):', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                        const Expanded(
+                          child: Text('Top-Dress Urea (46% N):', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                        ),
                         const SizedBox(width: 8),
-                        Flexible(
-                          child: Text(
-                            '${fert.topDressUrea.totalRequiredKg} kg (${fert.topDressUrea.bags50kg} bags)',
-                            style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0284C7)),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                        Text(
+                          '${fert.topDressUrea.totalRequiredKg} kg (${fert.topDressUrea.bags50kg} bags)',
+                          style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0284C7), fontSize: 12),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),

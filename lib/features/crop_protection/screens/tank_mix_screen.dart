@@ -117,11 +117,12 @@ class _TankMixScreenState extends ConsumerState<TankMixScreen> {
             children: [
               const Icon(Icons.science_rounded, color: Color(0xFF9333EA), size: 22),
               const SizedBox(width: 8),
-              const Text(
-                'Select Chemicals to Tank-Mix',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              const Expanded(
+                child: Text(
+                  'Select Chemicals to Tank-Mix',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                ),
               ),
-              const Spacer(),
               Text(
                 '${_selectedProductIds.length} selected',
                 style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF9333EA)),
@@ -154,28 +155,40 @@ class _TankMixScreenState extends ConsumerState<TankMixScreen> {
   Widget _buildVolumeSelector(bool isDark) {
     return AppSurfaceCard(
       padding: const EdgeInsets.all(14),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.water_drop_outlined, color: AppTheme.primaryColor, size: 20),
-          const SizedBox(width: 10),
-          const Text('Sprayer Volume:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-          const Spacer(),
-          ...[16.0, 50.0, 100.0, 200.0].map((v) {
-            final isSel = _waterVolume == v;
-            return Padding(
-              padding: const EdgeInsets.only(left: 6),
-              child: ChoiceChip(
-                label: Text('${v.toInt()}L', style: const TextStyle(fontSize: 11)),
-                selected: isSel,
-                onSelected: (s) {
-                  if (s) {
-                    setState(() => _waterVolume = v);
-                    _runValidation();
-                  }
-                },
+          const Row(
+            children: [
+              Icon(Icons.water_drop_outlined, color: AppTheme.primaryColor, size: 20),
+              SizedBox(width: 10),
+              Expanded(
+                child: Text('Sprayer Volume:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
               ),
-            );
-          }),
+            ],
+          ),
+          const SizedBox(height: 10),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [16.0, 50.0, 100.0, 200.0].map((v) {
+                final isSel = _waterVolume == v;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: ChoiceChip(
+                    label: Text('${v.toInt()}L', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                    selected: isSel,
+                    onSelected: (s) {
+                      if (s) {
+                        setState(() => _waterVolume = v);
+                        _runValidation();
+                      }
+                    },
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
         ],
       ),
     );
@@ -385,9 +398,11 @@ class _TankMixScreenState extends ConsumerState<TankMixScreen> {
             children: [
               Icon(Icons.biotech_rounded, color: AppTheme.primaryColor, size: 22),
               SizedBox(width: 8),
-              Text(
-                'Pre-Mix Validation: 500 mL Jar Test Protocol',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.primaryColor),
+              Expanded(
+                child: Text(
+                  'Pre-Mix Validation: 500 mL Jar Test Protocol',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.primaryColor),
+                ),
               ),
             ],
           ),

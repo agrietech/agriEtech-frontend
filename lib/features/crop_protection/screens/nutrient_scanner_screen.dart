@@ -169,11 +169,12 @@ class _NutrientScannerScreenState extends ConsumerState<NutrientScannerScreen> {
             children: [
               const Icon(Icons.center_focus_strong_rounded, color: Color(0xFFD97706), size: 20),
               const SizedBox(width: 8),
-              const Text(
-                'Leaf Chlorosis Photograph (Optional)',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              const Expanded(
+                child: Text(
+                  'Leaf Chlorosis Photograph (Optional)',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                ),
               ),
-              const Spacer(),
               if (_imageBytes != null)
                 TextButton(
                   onPressed: () => setState(() {
@@ -190,7 +191,7 @@ class _NutrientScannerScreenState extends ConsumerState<NutrientScannerScreen> {
               borderRadius: AppRadii.roundedMd,
               child: Image.memory(
                 _imageBytes!,
-                height: 170,
+                height: 160,
                 width: double.infinity,
                 fit: BoxFit.cover,
               ),
@@ -198,21 +199,21 @@ class _NutrientScannerScreenState extends ConsumerState<NutrientScannerScreen> {
           else
             Container(
               width: double.infinity,
-              height: 110,
+              height: 100,
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF291B10) : const Color(0xFFFFFBEB),
+                color: isDark ? const Color(0xFF2E1C0C) : const Color(0xFFFFFBEB),
                 borderRadius: AppRadii.roundedMd,
                 border: Border.all(
-                  color: isDark ? const Color(0xFF452A15) : const Color(0xFFFDE68A),
+                  color: isDark ? const Color(0xFF523315) : const Color(0xFFFDE68A),
                 ),
               ),
               child: const Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.photo_camera_back_rounded, size: 32, color: Color(0xFFD97706)),
+                  Icon(Icons.camera_alt_outlined, size: 30, color: Color(0xFFD97706)),
                   SizedBox(height: 6),
                   Text(
-                    'Upload leaf photo or choose visual symptom patterns below',
+                    'Tap Camera / Gallery below to inspect yellowing pattern',
                     style: TextStyle(fontSize: 11.5, color: Colors.grey),
                   ),
                 ],
@@ -249,11 +250,19 @@ class _NutrientScannerScreenState extends ConsumerState<NutrientScannerScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Visual Agronomic Symptoms',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+          const Row(
+            children: [
+              Icon(Icons.tune_rounded, color: AppTheme.primaryColor, size: 20),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Crop & Visual Symptom Markers',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
 
           // Crop Type
           DropdownButtonFormField<String>(
@@ -277,7 +286,10 @@ class _NutrientScannerScreenState extends ConsumerState<NutrientScannerScreen> {
             children: [
               Expanded(
                 child: ChoiceChip(
-                  label: const Text('Older / Lower Leaves'),
+                  label: const FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text('Older / Lower Leaves'),
+                  ),
                   selected: _leafPosition == 'older',
                   onSelected: (sel) {
                     if (sel) setState(() => _leafPosition = 'older');
@@ -287,7 +299,10 @@ class _NutrientScannerScreenState extends ConsumerState<NutrientScannerScreen> {
               const SizedBox(width: 8),
               Expanded(
                 child: ChoiceChip(
-                  label: const Text('Youngest Upper Leaves'),
+                  label: const FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text('Youngest Upper Leaves'),
+                  ),
                   selected: _leafPosition == 'upper',
                   onSelected: (sel) {
                     if (sel) setState(() => _leafPosition = 'upper');

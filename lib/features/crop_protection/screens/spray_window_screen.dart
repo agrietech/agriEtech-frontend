@@ -119,9 +119,11 @@ class _SprayWindowScreenState extends ConsumerState<SprayWindowScreen> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    const Text(
-                      'Next 12 Hours Spray Suitability Timeline',
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                    const Expanded(
+                      child: Text(
+                        'Next 12 Hours Spray Suitability Timeline',
+                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                      ),
                     ),
                   ],
                 ),
@@ -358,9 +360,11 @@ class _SprayWindowScreenState extends ConsumerState<SprayWindowScreen> {
             children: [
               Icon(Icons.umbrella_rounded, color: AppTheme.primaryColor, size: 20),
               SizedBox(width: 8),
-              Text(
-                'Rainfastness & Drift Precautions',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+              Expanded(
+                child: Text(
+                  'Rainfastness & Drift Precautions',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                ),
               ),
             ],
           ),
