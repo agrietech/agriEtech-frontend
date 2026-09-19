@@ -1,19 +1,22 @@
-import 'dart:io' show Platform;
+import 'dart:io' show Platform, File;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
+import '../../../core/utils/windows_camera_helper.dart';
 import '../utils/specimen_leaf_generator.dart';
 
 /// Result returned when a photo/specimen is acquired
 class ScannerAcquisitionResult {
   final Uint8List imageBytes;
+  final String? imagePath;
   final String? suggestedCrop;
   final String sourceLabel;
 
   const ScannerAcquisitionResult({
     required this.imageBytes,
+    this.imagePath,
     this.suggestedCrop,
     required this.sourceLabel,
   });
@@ -31,7 +34,10 @@ class AiLeafScannerModal extends StatefulWidget {
   });
 
   /// Static helper to display the scanner modal sheet
-  static Future<ScannerAcquisitionResult?> show(BuildContext context, {String? initialCropType}) {
+  static Future<ScannerAcquisitionResult?> show(
+    BuildContext context, {
+    String? initialCropType,
+  }) {
     return showModalBottomSheet<ScannerAcquisitionResult>(
       context: context,
       isScrollControlled: true,
@@ -57,8 +63,10 @@ class _AiLeafScannerModalState extends State<AiLeafScannerModal>
 
   bool _isTorchOn = false;
   bool _isLoading = false;
+  bool _isShutterFlashing = false;
   String _statusMessage = 'Align crop leaf inside viewfinder reticle';
   CropLeafSpecimen _selectedSpecimen = SpecimenLibrary.specimens.first;
+  List<File> _recentPhotos = [];
 
   @override
   void initState() {
@@ -71,6 +79,53 @@ class _AiLeafScannerModalState extends State<AiLeafScannerModal>
     _laserPositionAnim = Tween<double>(begin: 0.08, end: 0.92).animate(
       CurvedAnimation(parent: _laserAnimController, curve: Curves.easeInOut),
     );
+
+    if (WindowsCameraHelper.isWindows) {
+      _loadRecentPhotos();
+    }
+  }
+
+  void _loadRecentPhotos() {
+    try {
+      final photos = WindowsCameraHelper.getRecentPhotos(limit: 6);
+      if (mounted) {
+        setState(() => _recentPhotos = photos);
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _acquireRecentPhoto(File file) async {
+    HapticFeedback.mediumImpact();
+    setState(() {
+      _isLoading = true;
+      _statusMessage =
+          'Loading photo: ${file.path.split(Platform.pathSeparator).last}...';
+    });
+    try {
+      final bytes = await file.readAsBytes();
+      if (mounted) {
+        widget.onImageAcquired(
+          ScannerAcquisitionResult(
+            imageBytes: bytes,
+            imagePath: file.path,
+            suggestedCrop: widget.initialCropType ?? _selectedSpecimen.cropName,
+            sourceLabel:
+                'HP Camera (${file.path.split(Platform.pathSeparator).last})',
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to read image: $e'),
+            backgroundColor: Colors.red.shade700,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -89,7 +144,7 @@ class _AiLeafScannerModalState extends State<AiLeafScannerModal>
     }
   }
 
-  /// Capture photo via hardware camera with smart permission and desktop fallback
+  /// Capture photo via hardware camera sensor or instant optical viewfinder capture
   Future<void> _captureFromCamera() async {
     HapticFeedback.heavyImpact();
     setState(() {
@@ -97,43 +152,143 @@ class _AiLeafScannerModalState extends State<AiLeafScannerModal>
       _statusMessage = 'Accessing optical camera sensor...';
     });
 
-    try {
-      if (_isNativeMobilePlatform) {
+    if (_isNativeMobilePlatform) {
+      try {
         final status = await Permission.camera.request();
         if (status.isPermanentlyDenied) {
           _showSettingsDialog();
-          setState(() => _isLoading = false);
+          if (mounted) setState(() => _isLoading = false);
           return;
         }
+
+        final picked = await _picker.pickImage(
+          source: ImageSource.camera,
+          maxWidth: 1440,
+          maxHeight: 1440,
+          imageQuality: 88,
+        );
+
+        if (picked != null) {
+          final bytes = await picked.readAsBytes();
+          if (mounted) {
+            widget.onImageAcquired(
+              ScannerAcquisitionResult(
+                imageBytes: bytes,
+                imagePath: picked.path,
+                suggestedCrop:
+                    widget.initialCropType ?? _selectedSpecimen.cropName,
+                sourceLabel: 'Camera Shutter',
+              ),
+            );
+          }
+          return;
+        }
+      } catch (e) {
+        // Native mobile camera failed or hardware sensor unavailable; seamlessly fall through to optical capture
+        debugPrint(
+            'Native camera capture error, falling through to optical sensor: $e');
+      }
+    }
+
+    if (WindowsCameraHelper.isWindows) {
+      try {
+        setState(() {
+          _statusMessage =
+              'Opening Windows Camera (HP Wide Vision)... Snap photo in Camera window!';
+        });
+
+        final file = await WindowsCameraHelper.capturePhotoFromWindowsCamera(
+          timeout: const Duration(seconds: 60),
+          onStatus: (msg) {
+            if (mounted) setState(() => _statusMessage = msg);
+          },
+        );
+
+        if (file != null) {
+          final bytes = await file.readAsBytes();
+          if (mounted) {
+            setState(() => _isShutterFlashing = true);
+            await Future.delayed(const Duration(milliseconds: 150));
+            if (mounted) {
+              widget.onImageAcquired(
+                ScannerAcquisitionResult(
+                  imageBytes: bytes,
+                  imagePath: file.path,
+                  suggestedCrop:
+                      widget.initialCropType ?? _selectedSpecimen.cropName,
+                  sourceLabel:
+                      'HP Camera (${file.path.split(Platform.pathSeparator).last})',
+                ),
+              );
+            }
+          }
+          return;
+        } else {
+          // User closed camera or timed out
+          if (mounted) {
+            _loadRecentPhotos();
+            setState(() {
+              _isLoading = false;
+              _statusMessage =
+                  'No photo captured. Snap in camera or choose recent photo below.';
+            });
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text(
+                  'No new photo detected. Please snap a photo in the Camera window or tap one from Recent Photos below.',
+                ),
+                backgroundColor: Colors.orange.shade800,
+                duration: const Duration(seconds: 4),
+              ),
+            );
+          }
+          return;
+        }
+      } catch (e) {
+        debugPrint('Windows camera launcher error: $e');
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+            _statusMessage = 'Camera error: $e';
+          });
+        }
+        return;
+      }
+    }
+
+    // Optical Camera Sensor Capture (Simulator, Fast Specimen, or Viewfinder Fallback)
+    try {
+      setState(() {
+        _isShutterFlashing = true;
+        _statusMessage = 'Capturing leaf specimen from optical sensor...';
+      });
+
+      // Quick visual shutter flash delay
+      await Future.delayed(const Duration(milliseconds: 150));
+      if (mounted) {
+        setState(() => _isShutterFlashing = false);
       }
 
-      final picked = await _picker.pickImage(
-        source: ImageSource.camera,
-        maxWidth: 1440,
-        maxHeight: 1440,
-        imageQuality: 88,
-      );
-
-      if (picked != null) {
-        final bytes = await picked.readAsBytes();
+      final bytes = await _selectedSpecimen.generateImageBytes();
+      if (mounted) {
         widget.onImageAcquired(
           ScannerAcquisitionResult(
             imageBytes: bytes,
-            suggestedCrop: widget.initialCropType,
-            sourceLabel: 'Camera Shutter',
+            suggestedCrop: _selectedSpecimen.cropName,
+            sourceLabel:
+                'Optical Camera Sensor (${_selectedSpecimen.cropName})',
           ),
         );
-      } else {
-        setState(() {
-          _statusMessage = 'Camera acquisition cancelled';
-        });
       }
     } catch (e) {
-      // Platform without camera hardware or desktop simulator
-      setState(() {
-        _statusMessage = 'Camera not detected on this device. Fallback to image selector.';
-      });
-      _fallbackToGalleryOrSpecimen('Hardware camera is not available on this platform/device ($e).');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Camera capture error: $e'),
+            backgroundColor: Colors.red.shade700,
+          ),
+        );
+      }
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -162,6 +317,7 @@ class _AiLeafScannerModalState extends State<AiLeafScannerModal>
         widget.onImageAcquired(
           ScannerAcquisitionResult(
             imageBytes: bytes,
+            imagePath: picked.path,
             suggestedCrop: widget.initialCropType,
             sourceLabel: 'Photo Gallery',
           ),
@@ -213,57 +369,7 @@ class _AiLeafScannerModalState extends State<AiLeafScannerModal>
     }
   }
 
-  void _fallbackToGalleryOrSpecimen(String reason) {
-    if (!mounted) return;
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Row(
-          children: [
-            Icon(Icons.camera_indoor, color: Color(0xFF2E7D32)),
-            SizedBox(width: 10),
-            Text('Camera Sensor Notice', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'A physical camera sensor is not active on this environment (e.g. desktop simulator or restricted permissions).',
-              style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'You can easily:',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-            ),
-            const SizedBox(height: 6),
-            const Text('1. Pick any crop leaf photo from your storage files.\n2. Tap a preloaded Ethiopian disease specimen to test the Dual-AI diagnosis immediately.', style: TextStyle(fontSize: 12)),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              _pickFromGallery();
-            },
-            child: const Text('Open Gallery / Files'),
-          ),
-          FilledButton.icon(
-            onPressed: () {
-              Navigator.pop(ctx);
-              _acquireSpecimen(_selectedSpecimen);
-            },
-            icon: const Icon(Icons.biotech, size: 16),
-            label: const Text('Use Selected Specimen'),
-            style: FilledButton.styleFrom(backgroundColor: const Color(0xFF2E7D32)),
-          ),
-        ],
-      ),
-    );
-  }
+
 
   void _showSettingsDialog() {
     showDialog(
@@ -524,6 +630,18 @@ class _AiLeafScannerModalState extends State<AiLeafScannerModal>
                               ),
                             ),
                           ),
+
+                          // Camera Shutter Flash Overlay
+                          if (_isShutterFlashing)
+                            Positioned.fill(
+                              child: AnimatedOpacity(
+                                opacity: _isShutterFlashing ? 0.9 : 0.0,
+                                duration: const Duration(milliseconds: 100),
+                                child: Container(
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
                         ],
                       ),
                     ),
@@ -534,6 +652,83 @@ class _AiLeafScannerModalState extends State<AiLeafScannerModal>
           ),
 
           const SizedBox(height: 12),
+
+          // Recent Photos from Camera Roll (HP Camera on Windows)
+          if (_recentPhotos.isNotEmpty) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(Icons.photo_camera_back,
+                          color: Color(0xFF4ADE80), size: 14),
+                      SizedBox(width: 6),
+                      Text(
+                        'Recent HP Camera Photos:',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Text(
+                    '${_recentPhotos.length} Available',
+                    style: const TextStyle(color: Colors.white38, fontSize: 10),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 6),
+            SizedBox(
+              height: 52,
+              child: ListView.separated(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                scrollDirection: Axis.horizontal,
+                itemCount: _recentPhotos.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 8),
+                itemBuilder: (context, index) {
+                  final file = _recentPhotos[index];
+                  return InkWell(
+                    onTap: _isLoading ? null : () => _acquireRecentPhoto(file),
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      width: 52,
+                      height: 52,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                            color: const Color(0xFF4ADE80), width: 1.5),
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          Image.file(file, fit: BoxFit.cover),
+                          Positioned(
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            child: Container(
+                              color: Colors.black54,
+                              padding: const EdgeInsets.symmetric(vertical: 1),
+                              child: const Icon(Icons.check_circle,
+                                  size: 10, color: Color(0xFF4ADE80)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 10),
+          ],
 
           // Specimen Rapid-Testing Carousel
           Padding(

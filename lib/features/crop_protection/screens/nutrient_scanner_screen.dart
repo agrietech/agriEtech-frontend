@@ -12,7 +12,8 @@ class NutrientScannerScreen extends ConsumerStatefulWidget {
   const NutrientScannerScreen({super.key});
 
   @override
-  ConsumerState<NutrientScannerScreen> createState() => _NutrientScannerScreenState();
+  ConsumerState<NutrientScannerScreen> createState() =>
+      _NutrientScannerScreenState();
 }
 
 class _NutrientScannerScreenState extends ConsumerState<NutrientScannerScreen> {
@@ -60,13 +61,13 @@ class _NutrientScannerScreenState extends ConsumerState<NutrientScannerScreen> {
     }
 
     ref.read(nutrientScannerStateProvider.notifier).scan(
-      imagePath: _imagePath,
-      imageBase64: base64Str,
-      cropType: _selectedCrop,
-      leafPosition: _leafPosition,
-      pattern: _symptomPattern,
-      soilPh: _soilPh,
-    );
+          imagePath: _imagePath,
+          imageBase64: base64Str,
+          cropType: _selectedCrop,
+          leafPosition: _leafPosition,
+          pattern: _symptomPattern,
+          soilPh: _soilPh,
+        );
   }
 
   @override
@@ -109,7 +110,8 @@ class _NutrientScannerScreenState extends ConsumerState<NutrientScannerScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFD97706),
                   foregroundColor: Colors.white,
-                  shape: const RoundedRectangleBorder(borderRadius: AppRadii.roundedMd),
+                  shape: const RoundedRectangleBorder(
+                      borderRadius: AppRadii.roundedMd),
                   elevation: 2,
                 ),
                 onPressed: scanState.isLoading ? null : _runScan,
@@ -117,12 +119,16 @@ class _NutrientScannerScreenState extends ConsumerState<NutrientScannerScreen> {
                     ? const SizedBox(
                         width: 20,
                         height: 20,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2),
                       )
                     : const Icon(Icons.energy_savings_leaf_rounded),
                 label: Text(
-                  scanState.isLoading ? 'Analyzing Chlorosis & Soil...' : 'Diagnose Deficiency & Top-Dressing',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  scanState.isLoading
+                      ? 'Analyzing Chlorosis & Soil...'
+                      : 'Diagnose Deficiency & Top-Dressing',
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 14),
                 ),
               ),
             ),
@@ -141,7 +147,9 @@ class _NutrientScannerScreenState extends ConsumerState<NutrientScannerScreen> {
                     const Icon(Icons.error_outline_rounded, color: Colors.red),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: Text('Scan error: ${scanState.error}', style: const TextStyle(color: Colors.red, fontSize: 12)),
+                      child: Text('Scan error: ${scanState.error}',
+                          style:
+                              const TextStyle(color: Colors.red, fontSize: 12)),
                     ),
                   ],
                 ),
@@ -167,7 +175,8 @@ class _NutrientScannerScreenState extends ConsumerState<NutrientScannerScreen> {
         children: [
           Row(
             children: [
-              const Icon(Icons.center_focus_strong_rounded, color: Color(0xFFD97706), size: 20),
+              const Icon(Icons.center_focus_strong_rounded,
+                  color: Color(0xFFD97706), size: 20),
               const SizedBox(width: 8),
               const Expanded(
                 child: Text(
@@ -181,7 +190,8 @@ class _NutrientScannerScreenState extends ConsumerState<NutrientScannerScreen> {
                     _imageBytes = null;
                     _imagePath = null;
                   }),
-                  child: const Text('Clear', style: TextStyle(color: Colors.red, fontSize: 12)),
+                  child: const Text('Clear',
+                      style: TextStyle(color: Colors.red, fontSize: 12)),
                 ),
             ],
           ),
@@ -201,16 +211,20 @@ class _NutrientScannerScreenState extends ConsumerState<NutrientScannerScreen> {
               width: double.infinity,
               height: 100,
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF2E1C0C) : const Color(0xFFFFFBEB),
+                color:
+                    isDark ? const Color(0xFF2E1C0C) : const Color(0xFFFFFBEB),
                 borderRadius: AppRadii.roundedMd,
                 border: Border.all(
-                  color: isDark ? const Color(0xFF523315) : const Color(0xFFFDE68A),
+                  color: isDark
+                      ? const Color(0xFF523315)
+                      : const Color(0xFFFDE68A),
                 ),
               ),
               child: const Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.camera_alt_outlined, size: 30, color: Color(0xFFD97706)),
+                  Icon(Icons.camera_alt_outlined,
+                      size: 30, color: Color(0xFFD97706)),
                   SizedBox(height: 6),
                   Text(
                     'Tap Camera / Gallery below to inspect yellowing pattern',
@@ -270,9 +284,12 @@ class _NutrientScannerScreenState extends ConsumerState<NutrientScannerScreen> {
             decoration: const InputDecoration(
               labelText: 'Crop Species',
               border: OutlineInputBorder(borderRadius: AppRadii.roundedMd),
-              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              contentPadding:
+                  EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             ),
-            items: _crops.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+            items: _crops
+                .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                .toList(),
             onChanged: (val) {
               if (val != null) setState(() => _selectedCrop = val);
             },
@@ -280,7 +297,8 @@ class _NutrientScannerScreenState extends ConsumerState<NutrientScannerScreen> {
           const SizedBox(height: 12),
 
           // Leaf Location
-          const Text('Leaf Position on Plant', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+          const Text('Leaf Position on Plant',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
           const SizedBox(height: 6),
           Row(
             children: [
@@ -319,7 +337,8 @@ class _NutrientScannerScreenState extends ConsumerState<NutrientScannerScreen> {
             decoration: const InputDecoration(
               labelText: 'Visual Discoloration Pattern',
               border: OutlineInputBorder(borderRadius: AppRadii.roundedMd),
-              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              contentPadding:
+                  EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             ),
             items: const [
               DropdownMenuItem(
@@ -357,12 +376,16 @@ class _NutrientScannerScreenState extends ConsumerState<NutrientScannerScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Estimated Soil pH:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              const Text('Estimated Soil pH:',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
               const SizedBox(width: 8),
               Flexible(
                 child: Text(
                   '${_soilPh.toStringAsFixed(1)} (${_soilPh < 5.5 ? "Acidic Nitisol" : (_soilPh > 7.5 ? "Alkaline Vertisol" : "Optimal")})',
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.primaryColor),
+                  style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.primaryColor),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -404,7 +427,8 @@ class _NutrientScannerScreenState extends ConsumerState<NutrientScannerScreen> {
                       color: const Color(0xFFD97706).withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.science_rounded, color: Color(0xFFD97706), size: 24),
+                    child: const Icon(Icons.science_rounded,
+                        color: Color(0xFFD97706), size: 24),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -413,7 +437,8 @@ class _NutrientScannerScreenState extends ConsumerState<NutrientScannerScreen> {
                       children: [
                         Text(
                           def.nutrient,
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 17),
                         ),
                         Text(
                           def.nutrientNameAm,
@@ -427,14 +452,18 @@ class _NutrientScannerScreenState extends ConsumerState<NutrientScannerScreen> {
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: const Color(0xFFD97706).withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
                       '${(result.confidenceScore * 100).toInt()}% CONFIDENCE',
-                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFFD97706)),
+                      style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFFD97706)),
                     ),
                   ),
                 ],
@@ -442,23 +471,30 @@ class _NutrientScannerScreenState extends ConsumerState<NutrientScannerScreen> {
               const SizedBox(height: 12),
               Text(
                 def.visualDescriptionEn,
-                style: TextStyle(fontSize: 12.5, color: isDark ? Colors.white70 : const Color(0xFF334155), height: 1.35),
+                style: TextStyle(
+                    fontSize: 12.5,
+                    color: isDark ? Colors.white70 : const Color(0xFF334155),
+                    height: 1.35),
               ),
               const SizedBox(height: 6),
               Text(
                 def.visualDescriptionAm,
-                style: const TextStyle(fontSize: 12, color: Color(0xFF15803D), height: 1.35),
+                style: const TextStyle(
+                    fontSize: 12, color: Color(0xFF15803D), height: 1.35),
               ),
               const SizedBox(height: 10),
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                  color: isDark
+                      ? const Color(0xFF1E293B)
+                      : const Color(0xFFF1F5F9),
                   borderRadius: AppRadii.roundedMd,
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.terrain_rounded, size: 16, color: Colors.grey),
+                    const Icon(Icons.terrain_rounded,
+                        size: 16, color: Colors.grey),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -489,18 +525,25 @@ class _NutrientScannerScreenState extends ConsumerState<NutrientScannerScreen> {
             children: [
               const Row(
                 children: [
-                  Icon(Icons.inventory_2_rounded, color: Colors.white, size: 22),
+                  Icon(Icons.inventory_2_rounded,
+                      color: Colors.white, size: 22),
                   SizedBox(width: 8),
                   Text(
-                    'Corrective Fertilizer Prescription',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                    'Fertilizer Prescription',
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15),
                   ),
                 ],
               ),
               const SizedBox(height: 12),
               Text(
                 'Fertilizer: ${action.fertilizerName} (${action.fertilizerNameAm})',
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14),
               ),
               const SizedBox(height: 4),
               Text(
@@ -519,12 +562,16 @@ class _NutrientScannerScreenState extends ConsumerState<NutrientScannerScreen> {
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.scale_rounded, color: Colors.white, size: 16),
+                        const Icon(Icons.scale_rounded,
+                            color: Colors.white, size: 16),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             'Dosage: ${action.ratePerHectare}',
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12.5),
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12.5),
                           ),
                         ),
                       ],
@@ -532,12 +579,16 @@ class _NutrientScannerScreenState extends ConsumerState<NutrientScannerScreen> {
                     const SizedBox(height: 6),
                     Row(
                       children: [
-                        const Icon(Icons.colorize_rounded, color: Colors.white, size: 16),
+                        const Icon(Icons.colorize_rounded,
+                            color: Colors.white, size: 16),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             'Emergency Knapsack Rescue: ${action.knapsackFoliarRescue}',
-                            style: const TextStyle(color: Color(0xFF86EFAC), fontWeight: FontWeight.bold, fontSize: 12),
+                            style: const TextStyle(
+                                color: Color(0xFF86EFAC),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12),
                           ),
                         ),
                       ],
@@ -553,7 +604,8 @@ class _NutrientScannerScreenState extends ConsumerState<NutrientScannerScreen> {
               const SizedBox(height: 4),
               Text(
                 action.timingAm,
-                style: const TextStyle(color: Color(0xFF86EFAC), fontSize: 11.5),
+                style:
+                    const TextStyle(color: Color(0xFF86EFAC), fontSize: 11.5),
               ),
             ],
           ),
@@ -580,7 +632,8 @@ class _NutrientScannerScreenState extends ConsumerState<NutrientScannerScreen> {
               builder: (context, ref, _) {
                 final nutAsync = ref.watch(nutrientDatabaseFutureProvider);
                 return nutAsync.when(
-                  loading: () => const Center(child: CircularProgressIndicator()),
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
                   error: (e, _) => Center(child: Text('Failed: $e')),
                   data: (defs) => ListView.separated(
                     controller: controller,
@@ -592,10 +645,16 @@ class _NutrientScannerScreenState extends ConsumerState<NutrientScannerScreen> {
                       return ListTile(
                         leading: CircleAvatar(
                           backgroundColor: const Color(0xFFFEF3C7),
-                          child: Text(d.nutrient.split(' ')[0], style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFB45309))),
+                          child: Text(d.nutrient.split(' ')[0],
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFFB45309))),
                         ),
-                        title: Text(d.nutrient, style: const TextStyle(fontWeight: FontWeight.bold)),
-                        subtitle: Text('${d.nutrientNameAm}\n${d.symptomPattern}'),
+                        title: Text(d.nutrient,
+                            style:
+                                const TextStyle(fontWeight: FontWeight.bold)),
+                        subtitle:
+                            Text('${d.nutrientNameAm}\n${d.symptomPattern}'),
                         isThreeLine: true,
                       );
                     },

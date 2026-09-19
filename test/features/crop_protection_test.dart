@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:EthioFarm/features/crop_protection/models/crop_protection_models.dart';
+import 'package:EthioFarm/features/diagnosis/utils/specimen_leaf_generator.dart';
+import 'package:EthioFarm/features/diagnosis/widgets/ai_leaf_scanner_modal.dart';
 
 void main() {
   group('Crop Protection & Field Suite Unit Tests', () {
@@ -330,6 +332,25 @@ void main() {
       expect(seedRes.seedPlan.totalSeedRequiredKg, 2.5);
       expect(seedRes.seedPlan.rowSpacingCm, 20);
       expect(seedRes.fertilizerPlan.basalNpsb.totalRequiredKg, 50.0);
+    });
+
+    test('Optical leaf specimen generates valid photo bytes and ScannerAcquisitionResult', () async {
+      final specimen = SpecimenLibrary.specimens.first;
+      expect(specimen.cropName, isNotEmpty);
+
+      final bytes = await specimen.generateImageBytes();
+      expect(bytes, isNotEmpty);
+      expect(bytes.length, greaterThan(100));
+
+      final result = ScannerAcquisitionResult(
+        imageBytes: bytes,
+        suggestedCrop: specimen.cropName,
+        sourceLabel: 'Optical Camera Sensor (${specimen.cropName})',
+      );
+
+      expect(result.imageBytes, equals(bytes));
+      expect(result.suggestedCrop, equals(specimen.cropName));
+      expect(result.sourceLabel, contains('Optical Camera Sensor'));
     });
   });
 }
