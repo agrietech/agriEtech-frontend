@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../theme/app_theme.dart';
+import '../models/user_model.dart';
 import '../utils/role_utils.dart';
 import '../l10n/l10n_extension.dart';
 import 'language_selector.dart';
@@ -156,9 +157,12 @@ class EthioFarmAppDrawer extends ConsumerWidget {
               children: [
                 // ── Operations ──
                 _buildSectionLabel(context, 'OPERATIONS'),
-                _buildNavTile(context, ref, icon: Icons.dashboard_rounded, label: context.tr('dashboard'), route: '/dashboard', color: const Color(0xFF16A34A)),
+                if (user?.role != UserRole.farmer)
+                  _buildNavTile(context, ref, icon: Icons.dashboard_rounded, label: context.tr('dashboard'), route: '/dashboard', color: const Color(0xFF16A34A)),
                 if (RoleUtils.canManageFarms(user?.role))
                   _buildNavTile(context, ref, icon: Icons.agriculture_rounded, label: context.tr('farms'), route: '/farms', color: const Color(0xFF15803D)),
+                if (RoleUtils.canEditKebeleBoundary(user?.role))
+                  _buildNavTile(context, ref, icon: Icons.polyline_rounded, label: 'Kebele GIS Boundary', route: '/boundaries/kebele-polygon', color: const Color(0xFF0284C7)),
                 _buildNavTile(context, ref, icon: Icons.biotech_rounded, label: context.tr('diagnosis'), route: '/diagnosis', color: const Color(0xFF0D9488)),
                 _buildNavTile(context, ref, icon: Icons.wb_cloudy_rounded, label: context.tr('weather'), route: '/weather', color: const Color(0xFF0284C7)),
 
@@ -170,7 +174,8 @@ class EthioFarmAppDrawer extends ConsumerWidget {
                 _buildNavTile(context, ref, icon: Icons.thunderstorm_rounded, label: context.tr('disasters'), route: '/disasters', color: const Color(0xFFEA580C)),
                 if (authState.canManageSensors)
                   _buildNavTile(context, ref, icon: Icons.sensors_rounded, label: context.tr('sensors'), route: '/sensors', color: const Color(0xFF7C3AED)),
-                _buildNavTile(context, ref, icon: Icons.public_rounded, label: context.tr('boundaries'), route: '/boundaries', color: const Color(0xFF059669)),
+                if (user?.role != UserRole.farmer)
+                  _buildNavTile(context, ref, icon: Icons.public_rounded, label: context.tr('boundaries'), route: '/boundaries', color: const Color(0xFF059669)),
 
                 _buildDivider(isDark),
 

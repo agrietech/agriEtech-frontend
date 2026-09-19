@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:EthioFarm/features/home/screens/home_screen.dart';
 import 'package:EthioFarm/features/dashboard/providers/dashboard_provider.dart';
 import 'package:EthioFarm/features/dashboard/models/dashboard_models.dart';
@@ -135,6 +136,7 @@ void main() {
       List<AlertModel> activeAlerts = const [],
     }) {
       return ProviderScope(
+        key: ValueKey('${user.id}_${user.role.name}'),
         overrides: [
           currentUserProvider.overrideWithValue(user),
           authProvider.overrideWith((ref) => FakeAuthNotifier(AuthState(
@@ -165,92 +167,75 @@ void main() {
       );
     }
 
-    testWidgets('renders Command Center Hero with user name, role, and jurisdiction breadcrumb', (tester) async {
+    testWidgets('renders top Command Center Hero banner with user identity, daily temperature, and status', (tester) async {
       await tester.pumpWidget(createTestApp(
         dashboardData: testDashboardData,
         user: testUser,
       ));
       await tester.pump();
 
-      // Verify User Name & Greeting
       expect(find.text('Dr. Alemayehu Tesfaye'), findsOneWidget);
       expect(find.textContaining('SENTINEL-2 & LORAWAN ONLINE'), findsOneWidget);
-
-      // Verify Jurisdiction Breadcrumb
-      expect(find.textContaining('Oromia • East Shewa • Adama Rural • Kebele 04'), findsOneWidget);
-
-      // Verify Role Badge
+      expect(find.textContaining('Adama Rural Woreda Administration'), findsOneWidget);
+      expect(find.text('WOREDA EXCLUSIVE'), findsOneWidget);
       expect(find.text('WOREDA OFFICER'), findsOneWidget);
 
-      // Verify Hero KPI Strip
-      expect(find.text('48.5 ha'), findsOneWidget);
-      expect(find.text('24'), findsOneWidget);
-      expect(find.text('16'), findsOneWidget);
-      expect(find.text('OPERATIONAL'), findsOneWidget);
+      // Daily temperature and hourly weather metrics on the hero banner
+      expect(find.text('24.5°C'), findsOneWidget);
+      expect(find.text('Partly Cloudy'), findsOneWidget);
+      expect(find.text('HOURLY LIVE'), findsOneWidget);
+      expect(find.textContaining('💧 56%'), findsOneWidget);
+
+      // Best agronomic telemetry metrics on the hero KPI strip
+      expect(find.text('42.8%'), findsOneWidget); // LoRaWAN Soil Moisture
+      expect(find.text('0.74 NDVI'), findsOneWidget); // Sentinel-2 Vegetation Index
+      expect(find.text('48.5 ha'), findsOneWidget); // Monitored Hectares
     });
 
-    testWidgets('renders Live Satellite & IoT HUD with real telemetry values', (tester) async {
+    testWidgets('renders all application tools directly as icons on home screen', (tester) async {
       await tester.pumpWidget(createTestApp(
         dashboardData: testDashboardData,
         user: testUser,
       ));
       await tester.pump();
 
-      // Verify Section Title
-      expect(find.text('LIVE SATELLITE & IOT HUD'), findsOneWidget);
-
-      // Verify NDVI Vegetation Card
-      expect(find.text('0.74'), findsOneWidget);
-      expect(find.text('OPTIMAL'), findsOneWidget);
-      expect(find.text('NDVI Vegetation'), findsOneWidget);
-
-      // Verify Soil Moisture Card
-      expect(find.text('42.8%'), findsOneWidget);
-      expect(find.text('16 ONLINE'), findsOneWidget);
-      expect(find.text('Soil Moisture'), findsOneWidget);
-
-      // Verify Microclimate Weather Card (shown in HUD and Microclimate card)
-      expect(find.text('24.5°C'), findsNWidgets(2));
-      expect(find.text('2.4 mm rain'), findsOneWidget);
-
-      // Verify Hazard Radar Card
-      expect(find.text('10 Warnings'), findsOneWidget);
-      expect(find.text('CRITICAL'), findsOneWidget);
-      expect(find.text('1148 Woredas Monitored'), findsOneWidget);
-    });
-
-    testWidgets('renders tactile Command Actions Matrix', (tester) async {
-      await tester.pumpWidget(createTestApp(
-        dashboardData: testDashboardData,
-        user: testUser,
-      ));
-      await tester.pump();
-
-      expect(find.text('COMMAND ACTIONS'), findsOneWidget);
-      expect(find.text('Scan Crop'), findsOneWidget);
-      expect(find.text('AI Crop Diagnostics'), findsOneWidget);
+      // All 12 application tools rendered directly as icons
+      expect(find.text('Crop Doctor'), findsOneWidget);
+      expect(find.text('Spray Window'), findsOneWidget);
+      expect(find.text('Tank Mix'), findsOneWidget);
+      expect(find.text('Seed Calculator'), findsOneWidget);
+      expect(find.text('Soil Health'), findsOneWidget);
+      expect(find.text('My Farms'), findsOneWidget);
+      expect(find.text('Weather'), findsOneWidget);
+      expect(find.text('Alerts'), findsOneWidget);
+      expect(find.text('GIS Map'), findsOneWidget);
       expect(find.text('EthioFarm AI'), findsOneWidget);
-      expect(find.text('Bilingual AI Agronomist'), findsOneWidget);
-      expect(find.text('Weather'), findsWidgets);
-      expect(find.text('Microclimate & Rain'), findsOneWidget);
-      expect(find.text('Register Plot'), findsOneWidget);
+      expect(find.text('Hazards'), findsOneWidget);
+      expect(find.text('Analytics'), findsOneWidget);
     });
 
-    testWidgets('renders Climatology & Agronomic Advisory Card', (tester) async {
+    testWidgets('verifies that categories and extra texts are avoided on home screen', (tester) async {
       await tester.pumpWidget(createTestApp(
         dashboardData: testDashboardData,
         user: testUser,
       ));
       await tester.pump();
 
-      expect(find.text('Today\'s Microclimate'), findsOneWidget);
-      expect(find.text('PARTLY CLOUDY'), findsOneWidget);
-      expect(find.text('56%'), findsOneWidget);
-      expect(find.text('14 km/h'), findsOneWidget);
-      expect(find.textContaining('Seasonal Advisory:'), findsOneWidget);
+      // Categorizations of icons are avoided
+      expect(find.text('COMMAND ACTIONS'), findsNothing);
+      expect(find.text('LIVE SATELLITE & IOT HUD'), findsNothing);
+      expect(find.text('PLANT HEALTH & CROP DOCTOR'), findsNothing);
+      expect(find.text('CROP PROTECTION TOOLS'), findsNothing);
+      expect(find.text('ENTERPRISE OPERATIONS'), findsNothing);
+      expect(find.text('SMART AGRI-INTELLIGENCE'), findsNothing);
+
+      // Standalone separate duplicate apps should NOT exist
+      expect(find.text('Weed Detector'), findsNothing);
+      expect(find.text('Nutrient Scanner'), findsNothing);
+      expect(find.text('Pest Scout'), findsNothing);
     });
 
-    testWidgets('renders active emergency alert ribbon when alerts exist', (tester) async {
+    testWidgets('renders active emergency alert badge count on Alerts icon when alerts exist', (tester) async {
       final activeAlert = AlertModel(
         id: 'alt_emer_99',
         woredaId: 'wor_adama',
@@ -272,72 +257,154 @@ void main() {
       ));
       await tester.pump();
 
-      expect(find.textContaining('ACTIVE EMERGENCY ALERT (1)'), findsOneWidget);
-      expect(find.text('Severe Belg Drought Warning'), findsOneWidget);
+      expect(find.text('Alerts'), findsOneWidget);
+      expect(find.text('1'), findsWidgets); // Notification badge count
     });
 
-    testWidgets('renders agro-climatic stability ribbon when no alerts exist', (tester) async {
+    testWidgets('renders all icons for farmer role without category separation', (tester) async {
+      final farmerUser = testUser.copyWith(role: UserRole.farmer);
       await tester.pumpWidget(createTestApp(
         dashboardData: testDashboardData,
-        user: testUser,
-        activeAlerts: const [],
+        user: farmerUser,
       ));
       await tester.pump();
 
-      expect(find.textContaining('Agro-Climatic Stability: All monitored woredas in normal range'), findsOneWidget);
-      expect(find.text('3D GIS Map >'), findsOneWidget);
-    });
-
-    testWidgets('renders Smart Agricultural Intelligence Suite Hub Card with 8 AI engines & Open Hub action', (tester) async {
-      await tester.pumpWidget(createTestApp(
-        dashboardData: testDashboardData,
-        user: testUser,
-      ));
-      await tester.pump();
-
-      // Verify Smart Agri-Intelligence Hub Card
-      expect(find.text('SMART AGRI-INTELLIGENCE'), findsOneWidget);
-      expect(find.text('8 ENGINES'), findsOneWidget);
-      expect(find.text('Open Hub'), findsOneWidget);
-
-      // Verify quick engine pills
-      expect(find.text('Disease Doctor'), findsOneWidget);
-      expect(find.text('Voice Agronomist'), findsOneWidget);
-      expect(find.text('Weed Detector'), findsWidgets);
-      expect(find.text('Spray Radar'), findsWidgets);
-      expect(find.text('Nutrient Scan'), findsOneWidget);
-      expect(find.text('Pest Scout'), findsWidgets);
-      expect(find.text('Tank-Mix'), findsOneWidget);
-      expect(find.text('Seed Calc'), findsOneWidget);
-    });
-
-    testWidgets('renders Enterprise Operations directory and filters by category tabs', (tester) async {
-      await tester.pumpWidget(createTestApp(
-        dashboardData: testDashboardData,
-        user: testUser,
-      ));
-      await tester.pump();
-
-      // Verify Enterprise Operations section
-      expect(find.text('ENTERPRISE OPERATIONS'), findsOneWidget);
-      expect(find.text('All Operations'), findsOneWidget);
-      expect(find.text('Smart AI Suite'), findsOneWidget);
-      expect(find.text('Earth & Climate'), findsOneWidget);
-      expect(find.text('Field Ops'), findsOneWidget);
-      expect(find.text('Executive BI'), findsOneWidget);
-
-      // Scroll down and switch to Smart AI Suite filter
-      await tester.drag(find.byType(SingleChildScrollView).first, const Offset(0, -800));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Smart AI Suite'));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Weed Detector'), findsWidgets);
-      expect(find.text('Spray Radar'), findsWidgets);
-      expect(find.text('Nutrient Scanner'), findsOneWidget);
-      expect(find.text('Pest Scout & ETL'), findsOneWidget);
-      expect(find.text('Tank-Mix Validator'), findsOneWidget);
+      expect(find.text('Crop Doctor'), findsOneWidget);
+      expect(find.text('Spray Window'), findsOneWidget);
+      expect(find.text('Tank Mix'), findsOneWidget);
       expect(find.text('Seed Calculator'), findsOneWidget);
+      expect(find.text('Soil Health'), findsOneWidget);
+      expect(find.text('My Farms'), findsOneWidget);
+      expect(find.text('Weather'), findsOneWidget);
+      expect(find.text('Alerts'), findsOneWidget);
+      expect(find.text('GIS Map'), findsOneWidget);
+      expect(find.text('EthioFarm AI'), findsOneWidget);
+
+      // No category headers for farmer either
+      expect(find.text('COMMAND ACTIONS'), findsNothing);
+      expect(find.text('CROP PROTECTION TOOLS'), findsNothing);
+    });
+
+    testWidgets('renders app bar with user profile avatar and language selector', (tester) async {
+      await tester.pumpWidget(createTestApp(
+        dashboardData: testDashboardData,
+        user: testUser,
+      ));
+      await tester.pump();
+
+      // Profile avatar with first initial
+      expect(find.text('D'), findsOneWidget);
+      // Language switcher button
+      expect(find.text('EN'), findsOneWidget);
+    });
+
+    testWidgets('all 12 home launchpad icons have valid routes and labels', (tester) async {
+      await tester.pumpWidget(createTestApp(
+        dashboardData: testDashboardData,
+        user: testUser,
+      ));
+      await tester.pump();
+
+      final iconLabels = [
+        'Crop Doctor',
+        'Spray Window',
+        'Tank Mix',
+        'Seed Calculator',
+        'Soil Health',
+        'My Farms',
+        'Weather',
+        'Alerts',
+        'GIS Map',
+        'EthioFarm AI',
+        'Hazards',
+        'Analytics',
+      ];
+
+      for (final label in iconLabels) {
+        final finder = find.text(label);
+        expect(finder, findsOneWidget);
+      }
+    });
+
+    testWidgets('Soil Health, GIS Map, and Analytics navigate via GoRouter when tapped', (tester) async {
+      final pushedRoutes = <String>[];
+      final testRouter = GoRouter(
+        initialLocation: '/home',
+        routes: [
+          GoRoute(path: '/home', builder: (c, s) => const HomeScreen()),
+          GoRoute(path: '/create-diagnosis', builder: (c, s) { pushedRoutes.add('/create-diagnosis'); return const SizedBox(); }),
+          GoRoute(path: '/crop-protection/spray-window', builder: (c, s) { pushedRoutes.add('/crop-protection/spray-window'); return const SizedBox(); }),
+          GoRoute(path: '/crop-protection/tank-mix', builder: (c, s) { pushedRoutes.add('/crop-protection/tank-mix'); return const SizedBox(); }),
+          GoRoute(path: '/crop-protection/seed-calculator', builder: (c, s) { pushedRoutes.add('/crop-protection/seed-calculator'); return const SizedBox(); }),
+          GoRoute(path: '/soil-degradation', builder: (c, s) { pushedRoutes.add('/soil-degradation'); return const SizedBox(); }),
+          GoRoute(path: '/farms', builder: (c, s) { pushedRoutes.add('/farms'); return const SizedBox(); }),
+          GoRoute(path: '/weather', builder: (c, s) { pushedRoutes.add('/weather'); return const SizedBox(); }),
+          GoRoute(path: '/alerts', builder: (c, s) { pushedRoutes.add('/alerts'); return const SizedBox(); }),
+          GoRoute(path: '/risks', builder: (c, s) { pushedRoutes.add('/risks'); return const SizedBox(); }),
+          GoRoute(path: '/ai-assistant', builder: (c, s) { pushedRoutes.add('/ai-assistant'); return const SizedBox(); }),
+          GoRoute(path: '/disasters', builder: (c, s) { pushedRoutes.add('/disasters'); return const SizedBox(); }),
+          GoRoute(path: '/analytics', builder: (c, s) { pushedRoutes.add('/analytics'); return const SizedBox(); }),
+        ],
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            currentUserProvider.overrideWithValue(testUser),
+            authProvider.overrideWith((ref) => FakeAuthNotifier(AuthState(
+                  user: testUser,
+                  isAuthenticated: true,
+                  isInitializing: false,
+                ))),
+            dashboardProvider.overrideWith((ref) => FakeDashboardNotifier(DashboardState(
+                  data: testDashboardData,
+                  isLoading: false,
+                ))),
+            alertListProvider.overrideWith((ref) => FakeAlertNotifier(const AsyncValue.data([]))),
+          ],
+          child: MaterialApp.router(
+            routerConfig: testRouter,
+            locale: const Locale('en'),
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: const [
+              Locale('en'),
+              Locale('am'),
+            ],
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Tap Soil Health
+      await tester.ensureVisible(find.text('Soil Health'));
+      await tester.tap(find.text('Soil Health'));
+      await tester.pumpAndSettle();
+      expect(pushedRoutes.contains('/soil-degradation'), isTrue);
+
+      // Return to home
+      testRouter.go('/home');
+      await tester.pumpAndSettle();
+
+      // Tap GIS Map
+      await tester.ensureVisible(find.text('GIS Map'));
+      await tester.tap(find.text('GIS Map'));
+      await tester.pumpAndSettle();
+      expect(pushedRoutes.contains('/risks'), isTrue);
+
+      // Return to home
+      testRouter.go('/home');
+      await tester.pumpAndSettle();
+
+      // Tap Analytics
+      await tester.ensureVisible(find.text('Analytics'));
+      await tester.tap(find.text('Analytics'));
+      await tester.pumpAndSettle();
+      expect(pushedRoutes.contains('/analytics'), isTrue);
     });
   });
 }

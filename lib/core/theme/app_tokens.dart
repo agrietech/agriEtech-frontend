@@ -39,7 +39,8 @@ class AppRadii {
   static const BorderRadius roundedLg = BorderRadius.all(Radius.circular(lg));
   static const BorderRadius roundedXl = BorderRadius.all(Radius.circular(xl));
   static const BorderRadius roundedXxl = BorderRadius.all(Radius.circular(xxl));
-  static const BorderRadius roundedPill = BorderRadius.all(Radius.circular(pill));
+  static const BorderRadius roundedPill =
+      BorderRadius.all(Radius.circular(pill));
 
   // Legacy aliases
   static const BorderRadius radiusSm = roundedSm;
@@ -175,6 +176,14 @@ class AppTypography {
     letterSpacing: 0.8,
     height: 1.2,
   );
+
+  // Material-style aliases keep feature modules on the design-token system
+  // instead of creating ad-hoc text styles.
+  static const TextStyle headlineMedium = display;
+  static const TextStyle headlineSmall = titleLarge;
+  static const TextStyle titleSmall = subtitle;
+  static const TextStyle bodyLarge = body;
+  static const TextStyle bodyMedium = body;
 }
 
 /// Physics-based Animation Duration and Curve Tokens
@@ -194,4 +203,3 @@ class AppCurves {
   static const Curve smooth = Curves.easeInOutCubic;
   static const Curve snappy = Curves.easeOutCubic;
 }
-

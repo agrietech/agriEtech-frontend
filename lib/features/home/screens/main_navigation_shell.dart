@@ -10,9 +10,9 @@ import '../../analytics/screens/analytics_screen.dart';
 import '../../farms/screens/farms_list_screen.dart';
 import '../../sensors/screens/sensors_list_screen.dart';
 import '../../weather/screens/weather_screen.dart';
+import '../../alerts/screens/alerts_list_screen.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/screens/profile_screen.dart';
-import '../../crop_protection/screens/crop_protection_hub_screen.dart';
 import 'home_screen.dart';
 
 /// State provider for active bottom navigation index
@@ -26,13 +26,13 @@ class MainNavigationShell extends ConsumerStatefulWidget {
   /// Role-adaptive tab keys list based on authenticated user
   static List<String> getNavTabLabels(AuthState authState) {
     if (authState.isFarmer) {
-      return const ['Home', 'Smart AI', 'Farms', 'Weather', 'Profile'];
+      return const ['Home', 'Farms', 'Alerts', 'Weather', 'Profile'];
     } else if (authState.isDevelopmentAgent) {
-      return const ['Home', 'Smart AI', 'Farms', 'Sensors', 'Profile'];
+      return const ['Home', 'Farms', 'Alerts', 'Sensors', 'Profile'];
     } else if (authState.isResearcher) {
-      return const ['Home', 'Smart AI', 'Analytics', 'Weather', 'Profile'];
+      return const ['Home', 'Analytics', 'Alerts', 'Weather', 'Profile'];
     } else {
-      return const ['Home', 'Smart AI', 'Sensors', 'Analytics', 'Profile'];
+      return const ['Home', 'Alerts', 'Sensors', 'Analytics', 'Profile'];
     }
   }
 
@@ -56,24 +56,24 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
     if (authState.isFarmer) {
       return const [
         _NavTabConfig('home', 'Home', Icons.home_outlined, Icons.home_rounded, HomeScreen()),
-        _NavTabConfig('smartAi', 'Smart AI', Icons.psychology_outlined, Icons.psychology_rounded, CropProtectionHubScreen()),
         _NavTabConfig('farms', 'Farms', Icons.agriculture_outlined, Icons.agriculture_rounded, FarmsListScreen()),
+        _NavTabConfig('alerts', 'Alerts', Icons.notifications_none_rounded, Icons.notifications_rounded, AlertsListScreen()),
         _NavTabConfig('weather', 'Weather', Icons.wb_cloudy_outlined, Icons.wb_cloudy_rounded, WeatherScreen()),
         _NavTabConfig('profile', 'Profile', Icons.person_outline_rounded, Icons.person_rounded, ProfileScreen()),
       ];
     } else if (authState.isDevelopmentAgent) {
       return const [
         _NavTabConfig('home', 'Home', Icons.home_outlined, Icons.home_rounded, HomeScreen()),
-        _NavTabConfig('smartAi', 'Smart AI', Icons.psychology_outlined, Icons.psychology_rounded, CropProtectionHubScreen()),
         _NavTabConfig('farms', 'Farms', Icons.agriculture_outlined, Icons.agriculture_rounded, FarmsListScreen()),
+        _NavTabConfig('alerts', 'Alerts', Icons.notifications_none_rounded, Icons.notifications_rounded, AlertsListScreen()),
         _NavTabConfig('sensors', 'Sensors', Icons.sensors_outlined, Icons.sensors_rounded, SensorsListScreen()),
         _NavTabConfig('profile', 'Profile', Icons.person_outline_rounded, Icons.person_rounded, ProfileScreen()),
       ];
     } else if (authState.isResearcher) {
       return const [
         _NavTabConfig('home', 'Home', Icons.home_outlined, Icons.home_rounded, HomeScreen()),
-        _NavTabConfig('smartAi', 'Smart AI', Icons.psychology_outlined, Icons.psychology_rounded, CropProtectionHubScreen()),
         _NavTabConfig('analytics', 'Analytics', Icons.insights_outlined, Icons.insights_rounded, AnalyticsScreen()),
+        _NavTabConfig('alerts', 'Alerts', Icons.notifications_none_rounded, Icons.notifications_rounded, AlertsListScreen()),
         _NavTabConfig('weather', 'Weather', Icons.wb_cloudy_outlined, Icons.wb_cloudy_rounded, WeatherScreen()),
         _NavTabConfig('profile', 'Profile', Icons.person_outline_rounded, Icons.person_rounded, ProfileScreen()),
       ];
@@ -81,7 +81,7 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
       // Officers & National Administrator
       return const [
         _NavTabConfig('home', 'Home', Icons.home_outlined, Icons.home_rounded, HomeScreen()),
-        _NavTabConfig('smartAi', 'Smart AI', Icons.psychology_outlined, Icons.psychology_rounded, CropProtectionHubScreen()),
+        _NavTabConfig('alerts', 'Alerts', Icons.notifications_none_rounded, Icons.notifications_rounded, AlertsListScreen()),
         _NavTabConfig('sensors', 'Sensors', Icons.sensors_outlined, Icons.sensors_rounded, SensorsListScreen()),
         _NavTabConfig('analytics', 'Analytics', Icons.insights_outlined, Icons.insights_rounded, AnalyticsScreen()),
         _NavTabConfig('profile', 'Profile', Icons.person_outline_rounded, Icons.person_rounded, ProfileScreen()),
@@ -265,7 +265,7 @@ class NavigationHelper {
 
     String? targetLabel;
     if (route == '/home') targetLabel = 'Home';
-    if (route == '/crop-protection' || route == '/smart-ai' || route == '/intelligence') targetLabel = 'Smart AI';
+    if (route == '/alerts') targetLabel = 'Alerts';
     if (route == '/farms') targetLabel = 'Farms';
     if (route == '/weather') targetLabel = 'Weather';
     if (route == '/risks') targetLabel = 'Risks';

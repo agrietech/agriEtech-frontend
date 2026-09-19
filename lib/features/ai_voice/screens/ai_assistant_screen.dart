@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/utils/date_formatter.dart';
+import '../../../core/widgets/loading_indicator.dart';
 import '../providers/ai_voice_provider.dart';
 import '../services/voice_synthesis_service.dart';
 
@@ -247,7 +248,8 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
                     isAm ? 'ኢትዮፋርም AI' : 'EthioFarm AI',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 15),
                   ),
                 ),
               ],
@@ -267,14 +269,13 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
                 const SizedBox(width: 5),
                 Flexible(
                   child: Text(
-                    isAm
-                        ? 'የቀጥታ ድምፅና ፅሁፍ ረዳት'
-                        : 'Voice & Text Assistant',
+                    isAm ? 'የቀጥታ ድምፅና ፅሁፍ ረዳት' : 'Voice & Text Assistant',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 10.5,
-                      color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                      color:
+                          isDark ? Colors.grey.shade400 : Colors.grey.shade600,
                     ),
                   ),
                 ),
@@ -295,12 +296,16 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
                 ? (isAm ? 'ራስ-ሰር ድምፅ አጫውት በርቷል' : 'Auto-speak enabled')
                 : (isAm ? 'ራስ-ሰር ድምፅ አጫውት ጠፍቷል' : 'Auto-speak disabled'),
             onPressed: () {
-              ref.read(aiVoiceProvider.notifier).setAutoSpeak(!aiState.autoSpeak);
+              ref
+                  .read(aiVoiceProvider.notifier)
+                  .setAutoSpeak(!aiState.autoSpeak);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(!aiState.autoSpeak
                       ? (isAm ? 'ራስ-ሰር ድምፅ አጫውት ነቅቷል' : 'Auto-speak enabled')
-                      : (isAm ? 'ራስ-ሰር ድምፅ አጫውት ተሰናክሏል' : 'Auto-speak disabled')),
+                      : (isAm
+                          ? 'ራስ-ሰር ድምፅ አጫውት ተሰናክሏል'
+                          : 'Auto-speak disabled')),
                   duration: const Duration(seconds: 1),
                   behavior: SnackBarBehavior.floating,
                 ),
@@ -355,7 +360,8 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
                 value: 'clear',
                 child: Row(
                   children: [
-                    const Icon(Icons.delete_sweep_rounded, size: 18, color: Colors.red),
+                    const Icon(Icons.delete_sweep_rounded,
+                        size: 18, color: Colors.red),
                     const SizedBox(width: 8),
                     Text(isAm ? 'ውይይቱን አጽዳ' : 'Clear Conversation'),
                   ],
@@ -372,7 +378,8 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
             _buildTelemetryBanner(context, isDark, isAm),
 
             // Live Speaking Banner
-            if (aiState.isSpeaking) _buildSpeakingLiveBanner(context, isDark, isAm),
+            if (aiState.isSpeaking)
+              _buildSpeakingLiveBanner(context, isDark, isAm),
 
             // Main Content: Voice Mode vs Chat Mode
             Expanded(
@@ -382,7 +389,8 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
             ),
 
             // Error Banner if present
-            if (aiState.error != null) _buildErrorBanner(context, aiState.error!, isAm),
+            if (aiState.error != null)
+              _buildErrorBanner(context, aiState.error!, isAm),
 
             // Universal Bottom Bar (Voice Recording or Input Field)
             _buildBottomControlBar(context, aiState, isDark, isAm),
@@ -424,7 +432,8 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
         color: isDark ? const Color(0xFF112214) : const Color(0xFFF0FDF4),
         border: Border(
           bottom: BorderSide(
-            color: const Color(0xFF22C55E).withValues(alpha: isDark ? 0.3 : 0.4),
+            color:
+                const Color(0xFF22C55E).withValues(alpha: isDark ? 0.3 : 0.4),
           ),
         ),
       ),
@@ -447,7 +456,8 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: isDark ? const Color(0xFF86EFAC) : const Color(0xFF15803D),
+                color:
+                    isDark ? const Color(0xFF86EFAC) : const Color(0xFF15803D),
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -487,7 +497,8 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
     );
   }
 
-  Widget _buildSpeakingLiveBanner(BuildContext context, bool isDark, bool isAm) {
+  Widget _buildSpeakingLiveBanner(
+      BuildContext context, bool isDark, bool isAm) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -507,7 +518,8 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
               return Icon(
                 Icons.graphic_eq_rounded,
                 size: 20,
-                color: Color.lerp(const Color(0xFF2563EB), const Color(0xFF60A5FA), _pulseController.value),
+                color: Color.lerp(const Color(0xFF2563EB),
+                    const Color(0xFF60A5FA), _pulseController.value),
               );
             },
           ),
@@ -520,7 +532,8 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
-                color: isDark ? const Color(0xFF93C5FD) : const Color(0xFF1D4ED8),
+                color:
+                    isDark ? const Color(0xFF93C5FD) : const Color(0xFF1D4ED8),
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -533,7 +546,8 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               minimumSize: Size.zero,
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(6)),
             ),
             onPressed: () {
               HapticFeedback.lightImpact();
@@ -614,12 +628,16 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
       subText = isAm ? 'ጥያቄዎን አሁን ይናገሩ...' : 'Speak your question clearly...';
     } else if (isThinking) {
       orbColor = const Color(0xFFD97706);
-      statusText = isAm ? 'ኢትዮፋርም AI በማሰብ ላይ...' : 'EthioFarm AI is analyzing...';
-      subText = isAm ? 'የግብርና መፍትሄዎችን በማቀናጀት ላይ ነው' : 'Synthesizing agronomic response';
+      statusText =
+          isAm ? 'ኢትዮፋርም AI በማሰብ ላይ...' : 'EthioFarm AI is analyzing...';
+      subText = isAm
+          ? 'የግብርና መፍትሄዎችን በማቀናጀት ላይ ነው'
+          : 'Synthesizing agronomic response';
     } else if (isSpeaking) {
       orbColor = const Color(0xFF2563EB);
       statusText = isAm ? 'መልስ በማሰማት ላይ...' : 'EthioFarm AI is speaking...';
-      subText = isAm ? 'ድምፁን ለማቆም የድምፅ ቁልፉን ይጫኑ' : 'Tap stop icon to pause audio';
+      subText =
+          isAm ? 'ድምፁን ለማቆም የድምፅ ቁልፉን ይጫኑ' : 'Tap stop icon to pause audio';
     }
 
     return Column(
@@ -632,7 +650,9 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
               animation: _pulseController,
               builder: (context, child) {
                 final scale = isRec
-                    ? 1.0 + (_pulseController.value * 0.3) + (state.soundLevel.clamp(0.0, 10.0) * 0.03)
+                    ? 1.0 +
+                        (_pulseController.value * 0.3) +
+                        (state.soundLevel.clamp(0.0, 10.0) * 0.03)
                     : 1.0 + (_pulseController.value * 0.08);
                 return Container(
                   width: 170 * scale,
@@ -678,7 +698,9 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
                           ? Icons.stop_rounded
                           : (isSpeaking
                               ? Icons.volume_up_rounded
-                              : (isThinking ? Icons.hourglass_top_rounded : Icons.mic_rounded)),
+                              : (isThinking
+                                  ? Icons.hourglass_top_rounded
+                                  : Icons.mic_rounded)),
                       color: Colors.white,
                       size: 54,
                     ),
@@ -741,7 +763,9 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    isAm ? 'የቀጥታ ንግግር ቅጂ (SPEECH-TO-TEXT)' : 'LIVE SPEECH TRANSCRIBER',
+                    isAm
+                        ? 'የቀጥታ ንግግር ቅጂ (SPEECH-TO-TEXT)'
+                        : 'LIVE SPEECH TRANSCRIBER',
                     style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
@@ -765,7 +789,9 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
           const SizedBox(height: 8),
           Text(
             state.liveTranscript.isEmpty
-                ? (isAm ? 'በማዳመጥ ላይ ነው... እባክዎ ይናገሩ...' : 'Listening... speak into your microphone...')
+                ? (isAm
+                    ? 'በማዳመጥ ላይ ነው... እባክዎ ይናገሩ...'
+                    : 'Listening... speak into your microphone...')
                 : state.liveTranscript,
             style: TextStyle(
               fontSize: 15,
@@ -784,11 +810,13 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
                   backgroundColor: const Color(0xFF16A34A),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 10),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
                 ),
                 onPressed: _handleMicPressed,
                 icon: const Icon(Icons.send_rounded, size: 16),
-                label: Text(isAm ? 'ንግግሩን ጨርስና ጠይቅ' : 'Finish & Submit Inquiry'),
+                label:
+                    Text(isAm ? 'ንግግሩን ጨርስና ጠይቅ' : 'Finish & Submit Inquiry'),
               ),
             ),
           ],
@@ -797,7 +825,8 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
     );
   }
 
-  Widget _buildActiveVoiceResponseCard(ChatMessage msg, bool isDark, bool isAm) {
+  Widget _buildActiveVoiceResponseCard(
+      ChatMessage msg, bool isDark, bool isAm) {
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(top: 8),
@@ -843,11 +872,23 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
                 height: 1.55,
                 color: isDark ? Colors.grey.shade200 : const Color(0xFF1E293B),
               ),
-              h1: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF16A34A)),
-              h2: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF16A34A)),
-              h3: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.bold, color: Color(0xFF16A34A)),
-              strong: TextStyle(fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black87),
-              listBullet: const TextStyle(color: Color(0xFF16A34A), fontWeight: FontWeight.bold),
+              h1: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF16A34A)),
+              h2: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF16A34A)),
+              h3: const TextStyle(
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF16A34A)),
+              strong: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : Colors.black87),
+              listBullet: const TextStyle(
+                  color: Color(0xFF16A34A), fontWeight: FontWeight.bold),
               blockSpacing: 8.0,
             ),
           ),
@@ -858,11 +899,14 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
             InkWell(
               onTap: () {
                 HapticFeedback.selectionClick();
-                ref.read(aiVoiceProvider.notifier).toggleMessageLanguage(msg.id);
+                ref
+                    .read(aiVoiceProvider.notifier)
+                    .toggleMessageLanguage(msg.id);
               },
               borderRadius: BorderRadius.circular(8),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
                   color: isDark ? Colors.grey.shade800 : Colors.grey.shade200,
                   borderRadius: BorderRadius.circular(8),
@@ -870,10 +914,13 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.translate_rounded, size: 14, color: Color(0xFF16A34A)),
+                    const Icon(Icons.translate_rounded,
+                        size: 14, color: Color(0xFF16A34A)),
                     const SizedBox(width: 6),
                     Text(
-                      (msg.displayedLanguage ?? ref.watch(aiVoiceProvider).language) == 'am'
+                      (msg.displayedLanguage ??
+                                  ref.watch(aiVoiceProvider).language) ==
+                              'am'
                           ? 'Switch to English 🇺🇸'
                           : 'ወደ አማርኛ ቀይር 🇪🇹',
                       style: const TextStyle(
@@ -897,7 +944,8 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.check_circle_outline, size: 14, color: Color(0xFF16A34A)),
+                  const Icon(Icons.check_circle_outline,
+                      size: 14, color: Color(0xFF16A34A)),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
@@ -919,19 +967,27 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
   }
 
   Widget _buildQuickPrompts(bool isAm) {
-    final cat = _promptCategories[_selectedCategoryIndex.clamp(0, _promptCategories.length - 1)];
-    final prompts = (isAm ? cat['promptsAm'] : cat['promptsEn']) as List<String>;
+    final cat = _promptCategories[
+        _selectedCategoryIndex.clamp(0, _promptCategories.length - 1)];
+    final prompts =
+        (isAm ? cat['promptsAm'] : cat['promptsEn']) as List<String>;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            const Icon(Icons.explore_outlined, size: 16, color: Color(0xFF16A34A)),
+            const Icon(Icons.explore_outlined,
+                size: 16, color: Color(0xFF16A34A)),
             const SizedBox(width: 6),
             Text(
-              isAm ? 'የተለመዱ የግብርና ጥያቄዎችን ይምረጡ፡' : 'Browse agronomic topics by category:',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey.shade600),
+              isAm
+                  ? 'የተለመዱ የግብርና ጥያቄዎችን ይምረጡ፡'
+                  : 'Browse agronomic topics by category:',
+              style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey.shade600),
             ),
           ],
         ),
@@ -946,7 +1002,8 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
             separatorBuilder: (_, __) => const SizedBox(width: 6),
             itemBuilder: (context, index) {
               final c = _promptCategories[index];
-              final label = isAm ? c['nameAm'] as String : c['nameEn'] as String;
+              final label =
+                  isAm ? c['nameAm'] as String : c['nameEn'] as String;
               final isSelected = index == _selectedCategoryIndex;
 
               return InkWell(
@@ -956,7 +1013,8 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
                 },
                 borderRadius: BorderRadius.circular(20),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
                     color: isSelected
                         ? const Color(0xFF16A34A)
@@ -965,14 +1023,17 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
                             : Colors.grey.shade200),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: isSelected ? const Color(0xFF16A34A) : Colors.transparent,
+                      color: isSelected
+                          ? const Color(0xFF16A34A)
+                          : Colors.transparent,
                     ),
                   ),
                   child: Text(
                     label,
                     style: TextStyle(
                       fontSize: 11.5,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      fontWeight:
+                          isSelected ? FontWeight.bold : FontWeight.normal,
                       color: isSelected
                           ? Colors.white
                           : (Theme.of(context).brightness == Brightness.dark
@@ -999,7 +1060,8 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
               side: BorderSide(color: Colors.grey.shade300),
               label: Text(
                 p,
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                style:
+                    const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
               ),
               onPressed: () => _submitTextQuery(p),
             );
@@ -1040,8 +1102,11 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
               ),
               const SizedBox(height: 16),
               Text(
-                isAm ? 'እንኳን ወደ ኢትዮፋርም AI በደህና መጡ!' : 'Welcome to EthioFarm AI!',
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                isAm
+                    ? 'እንኳን ወደ ኢትዮፋርም AI በደህና መጡ!'
+                    : 'Welcome to EthioFarm AI!',
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 6),
               Text(
@@ -1085,7 +1150,8 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
               color: Color(0xFF16A34A),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.psychology_rounded, size: 16, color: Colors.white),
+            child: const Icon(Icons.psychology_rounded,
+                size: 16, color: Colors.white),
           ),
           const SizedBox(width: 8),
           Container(
@@ -1100,11 +1166,13 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
                 const SizedBox(
                   width: 14,
                   height: 14,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF16A34A)),
+                  child: AppLoadingIndicator.small(color: Color(0xFF16A34A)),
                 ),
                 const SizedBox(width: 10),
                 Text(
-                  isAm ? 'ኢትዮፋርም AI በማሰብ ላይ ነው...' : 'EthioFarm AI is analyzing...',
+                  isAm
+                      ? 'ኢትዮፋርም AI በማሰብ ላይ ነው...'
+                      : 'EthioFarm AI is analyzing...',
                   style: TextStyle(
                     fontSize: 13,
                     fontStyle: FontStyle.italic,
@@ -1121,12 +1189,14 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
 
   Widget _buildMessageBubble(ChatMessage msg, bool isDark, bool isAm) {
     final isUser = msg.isUser;
-    final isPlaying = ref.watch(aiVoiceProvider).currentlyPlayingMessageId == msg.id;
+    final isPlaying =
+        ref.watch(aiVoiceProvider).currentlyPlayingMessageId == msg.id;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 14.0),
       child: Row(
-        mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment:
+            isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (!isUser) ...[
@@ -1136,7 +1206,8 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
                 color: Color(0xFF16A34A),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.psychology_rounded, size: 16, color: Colors.white),
+              child: const Icon(Icons.psychology_rounded,
+                  size: 16, color: Colors.white),
             ),
             const SizedBox(width: 8),
           ],
@@ -1158,7 +1229,9 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
                     : Border.all(
                         color: isPlaying
                             ? const Color(0xFF16A34A)
-                            : (isDark ? Colors.grey.shade800 : Colors.grey.shade200),
+                            : (isDark
+                                ? Colors.grey.shade800
+                                : Colors.grey.shade200),
                         width: isPlaying ? 1.5 : 1.0,
                       ),
                 boxShadow: isUser
@@ -1193,13 +1266,28 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
                         p: TextStyle(
                           fontSize: 14,
                           height: 1.55,
-                          color: isDark ? Colors.grey.shade100 : const Color(0xFF0F172A),
+                          color: isDark
+                              ? Colors.grey.shade100
+                              : const Color(0xFF0F172A),
                         ),
-                        h1: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF16A34A)),
-                        h2: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF16A34A)),
-                        h3: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.bold, color: Color(0xFF16A34A)),
-                        strong: TextStyle(fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black87),
-                        listBullet: const TextStyle(color: Color(0xFF16A34A), fontWeight: FontWeight.bold),
+                        h1: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF16A34A)),
+                        h2: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF16A34A)),
+                        h3: const TextStyle(
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF16A34A)),
+                        strong: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? Colors.white : Colors.black87),
+                        listBullet: const TextStyle(
+                            color: Color(0xFF16A34A),
+                            fontWeight: FontWeight.bold),
                         blockSpacing: 8.0,
                       ),
                     ),
@@ -1214,22 +1302,32 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
                     InkWell(
                       onTap: () {
                         HapticFeedback.selectionClick();
-                        ref.read(aiVoiceProvider.notifier).toggleMessageLanguage(msg.id);
+                        ref
+                            .read(aiVoiceProvider.notifier)
+                            .toggleMessageLanguage(msg.id);
                       },
                       borderRadius: BorderRadius.circular(8),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: (isDark ? Colors.grey.shade800 : Colors.grey.shade200),
+                          color: (isDark
+                              ? Colors.grey.shade800
+                              : Colors.grey.shade200),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.translate_rounded, size: 14, color: Color(0xFF16A34A)),
+                            const Icon(Icons.translate_rounded,
+                                size: 14, color: Color(0xFF16A34A)),
                             const SizedBox(width: 5),
                             Text(
-                              (msg.displayedLanguage ?? ref.watch(aiVoiceProvider).language) == 'am'
+                              (msg.displayedLanguage ??
+                                          ref
+                                              .watch(aiVoiceProvider)
+                                              .language) ==
+                                      'am'
                                   ? 'Translate to English 🇺🇸'
                                   : 'ወደ አማርኛ ተርጉም 🇪🇹',
                               style: const TextStyle(
@@ -1254,7 +1352,8 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
                         _buildVoiceAudioBar(msg, isAm),
                         // Copy Button
                         IconButton(
-                          icon: const Icon(Icons.copy_rounded, size: 16, color: Colors.grey),
+                          icon: const Icon(Icons.copy_rounded,
+                              size: 16, color: Colors.grey),
                           tooltip: 'Copy advice',
                           onPressed: () {
                             Clipboard.setData(ClipboardData(text: msg.text));
@@ -1274,14 +1373,16 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
                     if (msg.aiResponse?.recommendedAction != null) ...[
                       const SizedBox(height: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(
                           color: const Color(0xFF16A34A).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.task_alt, size: 14, color: Color(0xFF16A34A)),
+                            const Icon(Icons.task_alt,
+                                size: 14, color: Color(0xFF16A34A)),
                             const SizedBox(width: 6),
                             Expanded(
                               child: Text(
@@ -1306,9 +1407,11 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
                       onPressed: () => ref
                           .read(aiVoiceProvider.notifier)
                           .retryQuestion(msg.failedQuestion!),
-                      icon: const Icon(Icons.refresh, size: 16, color: Colors.red),
+                      icon: const Icon(Icons.refresh,
+                          size: 16, color: Colors.red),
                       label: Text(isAm ? 'እንደገና ሞክር' : 'Retry Query',
-                          style: const TextStyle(color: Colors.red, fontSize: 12)),
+                          style:
+                              const TextStyle(color: Colors.red, fontSize: 12)),
                     ),
                   ],
 
@@ -1320,7 +1423,9 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
                       fontSize: 10,
                       color: isUser
                           ? Colors.white70
-                          : (isDark ? Colors.grey.shade500 : Colors.grey.shade400),
+                          : (isDark
+                              ? Colors.grey.shade500
+                              : Colors.grey.shade400),
                     ),
                   ),
                 ],
@@ -1334,7 +1439,8 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
 
   Widget _buildVoiceAudioBar(ChatMessage msg, bool isAm) {
     final aiState = ref.watch(aiVoiceProvider);
-    final isPlaying = aiState.isSpeaking && aiState.currentlyPlayingMessageId == msg.id;
+    final isPlaying =
+        aiState.isSpeaking && aiState.currentlyPlayingMessageId == msg.id;
     final currentMsgLang = msg.displayedLanguage ?? aiState.language;
     final altLang = currentMsgLang == 'am' ? 'en' : 'am';
 
@@ -1344,22 +1450,27 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
         // Play / Stop Button
         ElevatedButton.icon(
           style: ElevatedButton.styleFrom(
-            backgroundColor: isPlaying ? const Color(0xFFDC2626) : const Color(0xFF16A34A),
+            backgroundColor:
+                isPlaying ? const Color(0xFFDC2626) : const Color(0xFF16A34A),
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             minimumSize: Size.zero,
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             elevation: isPlaying ? 2 : 0,
           ),
           onPressed: () {
             HapticFeedback.lightImpact();
-            ref.read(aiVoiceProvider.notifier).speakResponse(msg, targetLang: currentMsgLang);
+            ref
+                .read(aiVoiceProvider.notifier)
+                .speakResponse(msg, targetLang: currentMsgLang);
           },
           icon: isPlaying
               ? AnimatedBuilder(
                   animation: _pulseController,
-                  builder: (context, child) => const Icon(Icons.graphic_eq_rounded, size: 15),
+                  builder: (context, child) =>
+                      const Icon(Icons.graphic_eq_rounded, size: 15),
                 )
               : const Icon(Icons.volume_up_rounded, size: 15),
           label: Text(
@@ -1377,7 +1488,9 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
           InkWell(
             onTap: () {
               HapticFeedback.lightImpact();
-              ref.read(aiVoiceProvider.notifier).speakResponse(msg, targetLang: altLang);
+              ref
+                  .read(aiVoiceProvider.notifier)
+                  .speakResponse(msg, targetLang: altLang);
             },
             borderRadius: BorderRadius.circular(6),
             child: Container(
@@ -1451,7 +1564,8 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
               children: [
                 // Pulsing Red Recording Indicator
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
                     color: Colors.red.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(8),
@@ -1485,7 +1599,8 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
                     state.liveTranscript.isEmpty
                         ? (isAm ? 'ድምፅ በመቅዳት ላይ...' : 'Listening to voice...')
                         : state.liveTranscript,
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                    style: const TextStyle(
+                        fontSize: 13, fontWeight: FontWeight.w600),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -1496,7 +1611,8 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
                   onPressed: _handleCancelRecording,
                 ),
                 IconButton(
-                  icon: const Icon(Icons.check_circle, color: Color(0xFF16A34A), size: 30),
+                  icon: const Icon(Icons.check_circle,
+                      color: Color(0xFF16A34A), size: 30),
                   tooltip: 'Submit',
                   onPressed: _handleMicPressed,
                 ),
@@ -1511,7 +1627,8 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
                     shape: BoxShape.circle,
                   ),
                   child: IconButton(
-                    icon: const Icon(Icons.mic_rounded, color: Colors.white, size: 22),
+                    icon: const Icon(Icons.mic_rounded,
+                        color: Colors.white, size: 22),
                     tooltip: isAm ? 'ድምፅ ለመቅረጽ ይጫኑ' : 'Record voice',
                     onPressed: _handleMicPressed,
                   ),
@@ -1523,10 +1640,14 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                      color: isDark
+                          ? const Color(0xFF1E293B)
+                          : const Color(0xFFF1F5F9),
                       borderRadius: BorderRadius.circular(24),
                       border: Border.all(
-                        color: isDark ? Colors.grey.shade700 : Colors.grey.shade300,
+                        color: isDark
+                            ? Colors.grey.shade700
+                            : Colors.grey.shade300,
                       ),
                     ),
                     child: TextField(
@@ -1540,7 +1661,9 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
                             : 'Type question or tap mic...',
                         hintStyle: TextStyle(
                           fontSize: 13,
-                          color: isDark ? Colors.grey.shade400 : Colors.grey.shade500,
+                          color: isDark
+                              ? Colors.grey.shade400
+                              : Colors.grey.shade500,
                         ),
                         border: InputBorder.none,
                       ),
@@ -1551,7 +1674,8 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen>
 
                 // Text Submit Button
                 IconButton(
-                  icon: const Icon(Icons.send_rounded, color: Color(0xFF16A34A)),
+                  icon:
+                      const Icon(Icons.send_rounded, color: Color(0xFF16A34A)),
                   tooltip: 'Send text',
                   onPressed: () => _submitTextQuery(_textController.text),
                 ),

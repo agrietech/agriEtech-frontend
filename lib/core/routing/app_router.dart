@@ -10,11 +10,14 @@ import '../../features/auth/screens/register_screen.dart';
 import '../../features/auth/screens/change_password_screen.dart';
 import '../../features/auth/screens/profile_screen.dart';
 import '../../features/auth/screens/role_application_screen.dart';
+import '../../features/auth/screens/security_settings_screen.dart';
 import '../../features/home/screens/main_navigation_shell.dart';
 import '../../features/dashboard/screens/dashboard_screen.dart';
 import '../../features/farms/screens/farms_list_screen.dart';
 import '../../features/farms/screens/farm_detail_screen.dart';
 import '../../features/farms/screens/add_farm_screen.dart';
+import '../../features/farms/screens/farm_intelligence_screen.dart';
+import '../models/farm_model.dart';
 import '../../features/alerts/screens/alerts_list_screen.dart';
 import '../../features/alerts/screens/create_alert_screen.dart';
 import '../../features/alerts/screens/alert_detail_screen.dart';
@@ -29,7 +32,6 @@ import '../../features/risk/screens/flood_intelligence_screen.dart';
 import '../../features/risk/screens/volcanic_hazard_screen.dart';
 import '../../features/analytics/screens/ussd_alert_console_screen.dart';
 
-import '../../features/diagnosis/screens/diagnosis_list_screen.dart';
 import '../../features/diagnosis/screens/create_diagnosis_screen.dart';
 import '../../features/diagnosis/screens/diagnosis_detail_screen.dart';
 import '../../features/diagnosis/models/diagnosis_models.dart';
@@ -37,13 +39,10 @@ import '../../features/sensors/screens/sensors_list_screen.dart';
 import '../../features/sensors/screens/register_sensor_screen.dart';
 import '../../features/weather/screens/weather_screen.dart';
 import '../../features/boundaries/screens/boundaries_screen.dart';
+import '../../features/boundaries/screens/kebele_boundary_editor_screen.dart';
 import '../../features/analytics/screens/analytics_screen.dart';
 import '../../features/ai_voice/screens/ai_assistant_screen.dart';
-import '../../features/crop_protection/screens/crop_protection_hub_screen.dart';
-import '../../features/crop_protection/screens/weed_detector_screen.dart';
 import '../../features/crop_protection/screens/spray_window_screen.dart';
-import '../../features/crop_protection/screens/nutrient_scanner_screen.dart';
-import '../../features/crop_protection/screens/pest_scout_screen.dart';
 import '../../features/crop_protection/screens/tank_mix_screen.dart';
 import '../../features/crop_protection/screens/seed_calculator_screen.dart';
 
@@ -73,8 +72,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final isAuthenticated = authState.isAuthenticated;
       final isInitializing = authState.isInitializing;
       final currentLoc = state.matchedLocation;
-      final isAuthRoute = currentLoc.startsWith('/login') ||
-          currentLoc.startsWith('/register');
+      final isAuthRoute =
+          currentLoc.startsWith('/login') || currentLoc.startsWith('/register');
 
       // 1. If initializing, stay on splash screen
       if (isInitializing) {
@@ -113,26 +112,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         }
 
         // USSD console — only officers and admin
-        if (currentLoc == '/ussd-console' &&
-            !authState.canAccessUssdConsole) {
+        if (currentLoc == '/ussd-console' && !authState.canAccessUssdConsole) {
           return '/home';
         }
 
-        // Analytics — only officers, researchers, and admin
-        if (currentLoc == '/analytics' &&
-            !RoleUtils.canViewAnalytics(role)) {
+        // Farm registration & editing — strictly farmers only
+        if ((currentLoc == '/farms/add' || currentLoc.endsWith('/edit')) &&
+            !RoleUtils.canAddFarm(role)) {
           return '/home';
         }
 
-        // Farm registration — only farmers and DAs
-        if (currentLoc == '/farms/add' &&
-            !RoleUtils.canManageFarms(role)) {
-          return '/home';
-        }
-
-        // Disease diagnosis creation — only farmers, DAs, and officers
-        if ((currentLoc == '/diagnosis/create' || currentLoc == '/create-diagnosis') &&
-            !RoleUtils.canCreateDiagnosis(role)) {
+        // Kebele GIS boundary editor — only Development Agents & Admin
+        if (currentLoc == '/boundaries/kebele-polygon' &&
+            !RoleUtils.canEditKebeleBoundary(role)) {
           return '/home';
         }
       }
@@ -175,6 +167,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/change-password',
         builder: (context, state) => const ChangePasswordScreen(),
       ),
+      GoRoute(
+        path: '/security',
+        builder: (context, state) => const SecuritySettingsScreen(),
+      ),
 
       // Role Application route
       GoRoute(
@@ -196,11 +192,25 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const AddFarmScreen(),
       ),
       GoRoute(
+        path: '/farms/:id/edit',
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          final farm = state.extra as FarmModel?;
+          return AddFarmScreen(farmToEdit: farm, farmId: id);
+        },
+      ),
+      GoRoute(
         path: '/farms/:id',
         builder: (context, state) {
           final id = state.pathParameters['id']!;
           return FarmDetailScreen(farmId: id);
         },
+      ),
+      GoRoute(
+        path: '/farms/:id/intelligence',
+        builder: (context, state) => FarmIntelligenceScreen(
+          farmId: state.pathParameters['id']!,
+        ),
       ),
 
       // Alerts routes
@@ -216,7 +226,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/alerts/:id',
         builder: (context, state) {
           final id = state.pathParameters['id']!;
-          final alert = state.extra is AlertModel ? state.extra as AlertModel : null;
+          final alert =
+              state.extra is AlertModel ? state.extra as AlertModel : null;
           return AlertDetailScreen(alertId: id, initialAlert: alert);
         },
       ),
@@ -231,8 +242,20 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         redirect: (context, state) => '/risks',
       ),
       GoRoute(
+        path: '/map',
+        redirect: (context, state) => '/risks',
+      ),
+      GoRoute(
+        path: '/gis-map',
+        redirect: (context, state) => '/risks',
+      ),
+      GoRoute(
         path: '/disasters',
         builder: (context, state) => const DisasterIntelligenceScreen(),
+      ),
+      GoRoute(
+        path: '/hazards',
+        redirect: (context, state) => '/disasters',
       ),
       GoRoute(
         path: '/seismology',
@@ -241,6 +264,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/soil-degradation',
         builder: (context, state) => const SoilDegradationScreen(),
+      ),
+      GoRoute(
+        path: '/soil',
+        redirect: (context, state) => '/soil-degradation',
+      ),
+      GoRoute(
+        path: '/soil-health',
+        redirect: (context, state) => '/soil-degradation',
       ),
       GoRoute(
         path: '/landslides',
@@ -267,15 +298,22 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const UssdAlertConsoleScreen(),
       ),
 
-
       // Diagnosis routes
       GoRoute(
         path: '/diagnosis',
-        builder: (context, state) => const DiagnosisListScreen(),
+        redirect: (context, state) => '/diagnosis/create',
+      ),
+      GoRoute(
+        path: '/crop-doctor',
+        redirect: (context, state) => '/diagnosis/create',
       ),
       GoRoute(
         path: '/diagnosis/create',
-        builder: (context, state) => const CreateDiagnosisScreen(),
+        builder: (context, state) {
+          final modeParam = state.uri.queryParameters['mode'];
+          return CreateDiagnosisScreen(
+              initialMode: CropScanMode.fromString(modeParam));
+        },
       ),
       GoRoute(
         path: '/create-diagnosis',
@@ -285,15 +323,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/diagnosis/:id',
         builder: (context, state) {
           final id = state.pathParameters['id']!;
-          final diagnosis =
-              state.extra is DiagnosisModel ? state.extra as DiagnosisModel : null;
+          final diagnosis = state.extra is DiagnosisModel
+              ? state.extra as DiagnosisModel
+              : null;
           return DiagnosisDetailScreen(
             diagnosisId: id,
             initialDiagnosis: diagnosis,
           );
         },
       ),
-
 
       // Sensor routes
       GoRoute(
@@ -316,6 +354,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/boundaries',
         builder: (context, state) => const BoundariesScreen(),
       ),
+      GoRoute(
+        path: '/boundaries/kebele-polygon',
+        builder: (context, state) => const KebeleBoundaryEditorScreen(),
+      ),
 
       // AI & Analytics routes
       GoRoute(
@@ -327,30 +369,34 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         redirect: (context, state) => '/ai-assistant',
       ),
       GoRoute(
+        path: '/voice-ai',
+        redirect: (context, state) => '/ai-assistant',
+      ),
+      GoRoute(
         path: '/analytics',
         builder: (context, state) => const AnalyticsScreen(),
       ),
 
-      // 15. Smart Crop Protection & Precision Management Suite
+      // 15. Crop Protection & Agronomy Utilities
       GoRoute(
         path: '/crop-protection',
-        builder: (context, state) => const CropProtectionHubScreen(),
+        redirect: (context, state) => '/diagnosis',
       ),
       GoRoute(
         path: '/smart-ai',
-        redirect: (context, state) => '/crop-protection',
+        redirect: (context, state) => '/diagnosis',
       ),
       GoRoute(
         path: '/intelligence',
-        redirect: (context, state) => '/crop-protection',
+        redirect: (context, state) => '/diagnosis',
       ),
       GoRoute(
         path: '/crop-protection/weed-detector',
-        builder: (context, state) => const WeedDetectorScreen(),
+        redirect: (context, state) => '/diagnosis/create?mode=weed',
       ),
       GoRoute(
         path: '/weed-detector',
-        redirect: (context, state) => '/crop-protection/weed-detector',
+        redirect: (context, state) => '/diagnosis/create?mode=weed',
       ),
       GoRoute(
         path: '/crop-protection/spray-window',
@@ -362,19 +408,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/crop-protection/nutrient-scanner',
-        builder: (context, state) => const NutrientScannerScreen(),
+        redirect: (context, state) => '/diagnosis/create?mode=nutrient',
       ),
       GoRoute(
         path: '/nutrient-scanner',
-        redirect: (context, state) => '/crop-protection/nutrient-scanner',
+        redirect: (context, state) => '/diagnosis/create?mode=nutrient',
       ),
       GoRoute(
         path: '/crop-protection/pest-scout',
-        builder: (context, state) => const PestScoutScreen(),
+        redirect: (context, state) => '/diagnosis/create?mode=pest',
       ),
       GoRoute(
         path: '/pest-scout',
-        redirect: (context, state) => '/crop-protection/pest-scout',
+        redirect: (context, state) => '/diagnosis/create?mode=pest',
       ),
       GoRoute(
         path: '/crop-protection/tank-mix',
@@ -402,7 +448,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         child: AppErrorView(
           icon: Icons.explore_off_rounded,
           title: 'Page Not Found',
-          message: 'The requested page (${state.uri.toString()}) does not exist or has been moved.',
+          message:
+              'The requested page (${state.uri.toString()}) does not exist or has been moved.',
           actionLabel: 'Go to Home',
           onRetry: () => context.go('/home'),
         ),
