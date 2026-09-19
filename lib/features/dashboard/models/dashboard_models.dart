@@ -5,6 +5,7 @@ import 'dart:math' as math;
 
 /// Dashboard summary data
 class DashboardData {
+  // Old structure (backward compatibility)
   final RiskSummary riskSummary;
   final List<RecentAlert> recentAlerts;
   final WeatherSummary weatherSummary;
@@ -13,6 +14,29 @@ class DashboardData {
   final DashboardTelemetry telemetry;
   final JurisdictionMetrics jurisdictionMetrics;
   final DateTime? updatedAt;
+  
+  // New role-adaptive structure (from backend v2)
+  final Map<String, dynamic>? userProfile;
+  final List<dynamic>? quickActions;
+  final List<dynamic>? farmOverview;
+  final List<dynamic>? activeAlerts;
+  final Map<String, dynamic>? sensors;
+  final List<dynamic>? recentDiagnoses;
+  final List<dynamic>? advisories;
+  
+  // Officer-specific fields
+  final Map<String, dynamic>? jurisdiction;
+  final Map<String, dynamic>? emergencyPanel;
+  final Map<String, dynamic>? riskMap;
+  final Map<String, dynamic>? farmAnalytics;
+  final Map<String, dynamic>? sensorNetwork;
+  final Map<String, dynamic>? developmentAgents;
+  
+  // Admin-specific fields
+  final Map<String, dynamic>? systemOverview;
+  final Map<String, dynamic>? userMetrics;
+  final Map<String, dynamic>? recentActivity;
+  final Map<String, dynamic>? securityStatus;
 
   const DashboardData({
     required this.riskSummary,
@@ -23,9 +47,104 @@ class DashboardData {
     this.telemetry = const DashboardTelemetry(),
     this.jurisdictionMetrics = const JurisdictionMetrics(),
     this.updatedAt,
+    // New fields
+    this.userProfile,
+    this.quickActions,
+    this.farmOverview,
+    this.activeAlerts,
+    this.sensors,
+    this.recentDiagnoses,
+    this.advisories,
+    this.jurisdiction,
+    this.emergencyPanel,
+    this.riskMap,
+    this.farmAnalytics,
+    this.sensorNetwork,
+    this.developmentAgents,
+    this.systemOverview,
+    this.userMetrics,
+    this.recentActivity,
+    this.securityStatus,
   });
 
   factory DashboardData.fromJson(Map<String, dynamic> json) {
+    // Check if this is new role-adaptive format
+    if (json['role'] != null && json['dashboard'] != null) {
+      return DashboardData._fromNewFormat(json);
+    }
+    
+    // Fall back to old format parsing
+    return DashboardData._fromOldFormat(json);
+  }
+  
+  /// Parse new role-adaptive dashboard format
+  factory DashboardData._fromNewFormat(Map<String, dynamic> json) {
+    final dashboardData = json['dashboard'] as Map<String, dynamic>;
+    
+    // Create minimal old-format objects for backward compatibility
+    const riskSummary = RiskSummary(
+      totalWoredas: 0,
+      lowRisk: 0,
+      moderateRisk: 0,
+      highRisk: 0,
+      criticalRisk: 0,
+      affectedPopulation: 0,
+    );
+    
+    const weatherSummary = WeatherSummary(
+      current: CurrentWeather(
+        temperature: 22.5,
+        humidity: 55.0,
+        rainfall: 0.0,
+        windSpeed: 11.0,
+        condition: 'Partly Cloudy',
+      ),
+    );
+    
+    const farmSummary = FarmSummary(
+      totalFarms: 0,
+      totalArea: 0,
+      farmsAtRisk: 0,
+      activeSensors: 0,
+    );
+    
+    const systemHealth = SystemHealth(
+      status: 'OPERATIONAL',
+      activeUsers: 0,
+      dataPointsToday: 0,
+      apiHealthy: true,
+    );
+    
+    return DashboardData(
+      riskSummary: riskSummary,
+      recentAlerts: [],
+      weatherSummary: weatherSummary,
+      farmSummary: farmSummary,
+      systemHealth: systemHealth,
+      updatedAt: DateTime.now(),
+      // New fields from backend
+      userProfile: dashboardData['userProfile'] as Map<String, dynamic>?,
+      quickActions: dashboardData['quickActions'] as List<dynamic>?,
+      farmOverview: dashboardData['farmOverview'] as List<dynamic>?,
+      activeAlerts: dashboardData['activeAlerts'] as List<dynamic>?,
+      sensors: dashboardData['sensors'] as Map<String, dynamic>?,
+      recentDiagnoses: dashboardData['recentDiagnoses'] as List<dynamic>?,
+      advisories: dashboardData['advisories'] as List<dynamic>?,
+      jurisdiction: dashboardData['jurisdiction'] as Map<String, dynamic>?,
+      emergencyPanel: dashboardData['emergencyPanel'] as Map<String, dynamic>?,
+      riskMap: dashboardData['riskMap'] as Map<String, dynamic>?,
+      farmAnalytics: dashboardData['farmAnalytics'] as Map<String, dynamic>?,
+      sensorNetwork: dashboardData['sensorNetwork'] as Map<String, dynamic>?,
+      developmentAgents: dashboardData['developmentAgents'] as Map<String, dynamic>?,
+      systemOverview: dashboardData['systemOverview'] as Map<String, dynamic>?,
+      userMetrics: dashboardData['userMetrics'] as Map<String, dynamic>?,
+      recentActivity: dashboardData['recentActivity'] as Map<String, dynamic>?,
+      securityStatus: dashboardData['securityStatus'] as Map<String, dynamic>?,
+    );
+  }
+  
+  /// Parse old dashboard format (backward compatibility)
+  factory DashboardData._fromOldFormat(Map<String, dynamic> json) {
     final raw = json['data'] is Map ? json['data'] as Map<String, dynamic> : json;
     final map = Map<String, dynamic>.from(raw);
 

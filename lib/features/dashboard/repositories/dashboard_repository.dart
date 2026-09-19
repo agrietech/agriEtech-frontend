@@ -16,7 +16,8 @@ class DashboardRepository {
   /// Get cached dashboard data if available
   DashboardData? get cachedData => _cachedData;
 
-  /// Get dashboard summary data with offline fallback and jurisdiction filtering
+  /// Get dashboard summary data with role-adaptive backend integration
+  /// Backend auto-detects role and returns appropriate dashboard
   Future<DashboardData> getDashboardData({
     String? woredaId,
     String? zoneId,
@@ -32,7 +33,13 @@ class DashboardRepository {
     }
 
     try {
-      AppLogger.info('Fetching dashboard data from backend');
+      AppLogger.info('Fetching role-adaptive dashboard data from backend');
+      
+      // Backend /api/v1/dashboard auto-detects user role from JWT and returns appropriate dashboard
+      // Farmer → Farmer Dashboard (my farms, alerts, sensors, diagnoses)
+      // Officer → Officer Command Center (jurisdiction stats, emergency panel, risk map)
+      // Admin → Admin Control Panel (system overview, user metrics, security status)
+      
       final queryParams = <String, dynamic>{};
       if (woredaId != null) queryParams['woredaId'] = woredaId;
       if (zoneId != null) queryParams['zoneId'] = zoneId;
@@ -42,8 +49,16 @@ class DashboardRepository {
         ApiConstants.dashboard,
         queryParameters: queryParams.isNotEmpty ? queryParams : null,
       );
+      
       final raw = response.data is Map ? (response.data['data'] ?? response.data) : response.data;
-      final data = DashboardData.fromJson(raw as Map<String, dynamic>);
+      
+      // Extract role and dashboard from response
+      final role = raw is Map ? raw['role'] : null;
+      final dashboardData = raw is Map ? (raw['dashboard'] ?? raw) : raw;
+      
+      AppLogger.info('Received role-adaptive dashboard for role: $role');
+      
+      final data = DashboardData.fromJson(dashboardData as Map<String, dynamic>);
 
       _cachedData = data;
       AppLogger.info('Dashboard data fetched and cached successfully');
@@ -62,6 +77,45 @@ class DashboardRepository {
         return _cachedData!;
       }
       throw UnknownError(message: 'Failed to fetch dashboard: ${e.toString()}');
+    }
+  }
+  
+  /// Get farmer-specific dashboard (explicit endpoint)
+  Future<Map<String, dynamic>> getFarmerDashboard() async {
+    try {
+      AppLogger.info('Fetching farmer dashboard');
+      final response = await _dioClient.get('${ApiConstants.dashboard}/farmer');
+      final raw = response.data is Map ? (response.data['data'] ?? response.data) : response.data;
+      return raw as Map<String, dynamic>;
+    } catch (e) {
+      AppLogger.error('Failed to fetch farmer dashboard', e);
+      rethrow;
+    }
+  }
+  
+  /// Get officer command center dashboard (explicit endpoint)
+  Future<Map<String, dynamic>> getOfficerDashboard() async {
+    try {
+      AppLogger.info('Fetching officer dashboard');
+      final response = await _dioClient.get('${ApiConstants.dashboard}/officer');
+      final raw = response.data is Map ? (response.data['data'] ?? response.data) : response.data;
+      return raw as Map<String, dynamic>;
+    } catch (e) {
+      AppLogger.error('Failed to fetch officer dashboard', e);
+      rethrow;
+    }
+  }
+  
+  /// Get admin control panel dashboard (explicit endpoint)
+  Future<Map<String, dynamic>> getAdminDashboard() async {
+    try {
+      AppLogger.info('Fetching admin dashboard');
+      final response = await _dioClient.get('${ApiConstants.dashboard}/admin');
+      final raw = response.data is Map ? (response.data['data'] ?? response.data) : response.data;
+      return raw as Map<String, dynamic>;
+    } catch (e) {
+      AppLogger.error('Failed to fetch admin dashboard', e);
+      rethrow;
     }
   }
 
