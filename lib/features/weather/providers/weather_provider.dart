@@ -7,6 +7,7 @@ import '../models/forecast_model.dart';
 import '../models/hourly_forecast_model.dart';
 import '../models/weather_forecast_model.dart';
 import '../repositories/weather_repository.dart';
+import '../../auth/providers/auth_provider.dart';
 
 class WeatherState {
   final List<HistoricalWeatherModel> historical;
@@ -97,7 +98,16 @@ class WeatherState {
 
 class WeatherNotifier extends StateNotifier<WeatherState> {
   final WeatherRepository _repo;
-  WeatherNotifier(this._repo) : super(const WeatherState());
+  final String? _initialWoredaId;
+  final String? _initialWoredaName;
+
+  WeatherNotifier(this._repo, {String? initialWoredaId, String? initialWoredaName})
+      : _initialWoredaId = initialWoredaId,
+        _initialWoredaName = initialWoredaName,
+        super(WeatherState(
+          selectedWoredaId: initialWoredaId,
+          selectedWoredaName: initialWoredaName,
+        ));
 
   Future<void> loadForecast({
     String? woredaId,
@@ -120,8 +130,8 @@ class WeatherNotifier extends StateNotifier<WeatherState> {
       );
 
       final loc = result.location;
-      final resolvedWoredaId = loc?['woredaId']?.toString() ?? woredaId ?? 'ET_ADDIS';
-      final resolvedWoredaName = loc?['nameEn']?.toString() ?? 'Addis Ababa';
+      final resolvedWoredaId = loc?['woredaId']?.toString() ?? woredaId ?? _initialWoredaId ?? 'ET_ADDIS';
+      final resolvedWoredaName = loc?['nameEn']?.toString() ?? _initialWoredaName ?? 'Addis Ababa';
 
       // Load historical CHIRPS data in parallel for trend charts
       List<HistoricalWeatherModel> hist = [];
@@ -156,5 +166,10 @@ class WeatherNotifier extends StateNotifier<WeatherState> {
 }
 
 final weatherProvider = StateNotifierProvider<WeatherNotifier, WeatherState>((ref) {
-  return WeatherNotifier(ref.watch(weatherRepositoryProvider));
+  final user = ref.watch(currentUserProvider);
+  return WeatherNotifier(
+    ref.watch(weatherRepositoryProvider),
+    initialWoredaId: user?.woredaId,
+    initialWoredaName: user?.woreda?.name,
+  );
 });

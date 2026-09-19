@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/utils/validators.dart';
+import '../../../core/widgets/rbac_guard.dart';
 import '../../boundaries/providers/boundary_provider.dart';
 import '../models/alert_models.dart';
 import '../providers/alert_provider.dart';
@@ -54,363 +55,391 @@ class _CreateAlertScreenState extends ConsumerState<CreateAlertScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final woredasAsync = ref.watch(allWoredasProvider);
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Create Alert'),
-      ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16.0),
-          children: [
-            // Alert Type Card
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Alert Type',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Hazard Type
-                    DropdownButtonFormField<String>(
-                      isExpanded: true,
-                      initialValue: _selectedHazardType,
-                      decoration: const InputDecoration(
-                        label: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text('Hazard Type'),
-                            Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
-                          ],
-                        ),
-                        prefixIcon: Icon(Icons.warning_amber),
-                        border: OutlineInputBorder(),
+    final woredasAsync = ref.watch(scopedWoredasProvider);
+    return CanCreateAlerts(
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Create Alert'),
+        ),
+        body: Form(
+          key: _formKey,
+          child: ListView(
+            padding: const EdgeInsets.all(16.0),
+            children: [
+              // Alert Type Card
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Alert Type',
+                        style: Theme.of(context).textTheme.titleMedium,
                       ),
-                      items: _hazardTypes.map((type) {
-                        return DropdownMenuItem(
-                          value: type,
-                          child: Text(
-                            _formatHazardType(type),
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 1,
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        setState(() => _selectedHazardType = value!);
-                      },
-                    ),
-                    const SizedBox(height: 16),
+                      const SizedBox(height: 16),
 
-                    // Severity Level
-                    DropdownButtonFormField<String>(
-                      isExpanded: true,
-                      initialValue: _selectedSeverity,
-                      decoration: InputDecoration(
-                        label: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text('Severity Level'),
-                            Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
-                          ],
-                        ),
-                        prefixIcon: Icon(
-                          Icons.signal_cellular_alt,
-                          color: _getSeverityColor(_selectedSeverity),
-                        ),
-                        border: const OutlineInputBorder(),
-                      ),
-                      items: _severityLevels.map((severity) {
-                        return DropdownMenuItem(
-                          value: severity,
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 12,
-                                height: 12,
-                                decoration: BoxDecoration(
-                                  color: _getSeverityColor(severity),
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  _formatSeverity(severity),
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 1,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        setState(() => _selectedSeverity = value!);
-                      },
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Priority
-                    DropdownButtonFormField<int>(
-                      isExpanded: true,
-                      initialValue: _priority,
-                      decoration: const InputDecoration(
-                        label: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text('Priority'),
-                            Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
-                          ],
-                        ),
-                        prefixIcon: Icon(Icons.priority_high),
-                        border: OutlineInputBorder(),
-                        helperText: '1 = Highest, 5 = Lowest',
-                      ),
-                      items: [1, 2, 3, 4, 5].map((priority) {
-                        return DropdownMenuItem(
-                          value: priority,
-                          child: Text('Priority $priority'),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        setState(() => _priority = value!);
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // Content Card
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Alert Content',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Title
-                    TextFormField(
-                      controller: _titleController,
-                      decoration: const InputDecoration(
-                        label: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text('Alert Title'),
-                            Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
-                          ],
-                        ),
-                        prefixIcon: Icon(Icons.title),
-                        border: OutlineInputBorder(),
-                        helperText: 'Brief headline for the alert',
-                      ),
-                      maxLength: 100,
-                      validator: (value) => Validators.validateRequired(
-                        value,
-                        'Alert title',
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Message
-                    TextFormField(
-                      controller: _messageController,
-                      decoration: const InputDecoration(
-                        label: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text('Alert Message'),
-                            Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
-                          ],
-                        ),
-                        prefixIcon: Icon(Icons.message),
-                        border: OutlineInputBorder(),
-                        helperText: 'Detailed warning message',
-                        alignLabelWithHint: true,
-                      ),
-                      maxLines: 5,
-                      maxLength: 500,
-                      validator: (value) => Validators.validateRequired(
-                        value,
-                        'Alert message',
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Action Items
-                    TextFormField(
-                      controller: _actionItemsController,
-                      decoration: const InputDecoration(
-                        labelText: 'Recommended Action Items',
-                        prefixIcon: Icon(Icons.checklist),
-                        border: OutlineInputBorder(),
-                        helperText:
-                            'Recommended emergency mitigation actions, one per line',
-                        alignLabelWithHint: true,
-                      ),
-                      maxLines: 4,
-                      maxLength: 300,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // Location Card
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Target Geographic Scope',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 16),
-
-                    woredasAsync.when(
-                      data: (woredas) {
-                        final validWoredaId = woredas.any((w) => w.id == _selectedWoredaId)
-                            ? _selectedWoredaId
-                            : (woredas.isNotEmpty ? woredas.first.id : null);
-                        if (_selectedWoredaId == null && validWoredaId != null) {
-                          _selectedWoredaId = validWoredaId;
-                          final match = woredas.firstWhere((w) => w.id == validWoredaId);
-                          _selectedWoredaName = match.name;
-                        }
-                        return DropdownButtonFormField<String>(
-                          key: ValueKey('alert_woreda_$validWoredaId'),
-                          isExpanded: true,
-                          initialValue: validWoredaId,
-                          decoration: const InputDecoration(
-                            label: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text('Target Woreda Jurisdiction'),
-                                Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
-                              ],
-                            ),
-                            prefixIcon: Icon(Icons.location_on),
-                            border: OutlineInputBorder(),
-                            helperText: 'Jurisdiction receiving broadcast emergency telemetry',
-                          ),
-                          items: woredas.map((w) {
-                            final regionName = w.zone?.region?.name ?? '';
-                            final subtitle = regionName.isNotEmpty ? ' ($regionName)' : '';
-                            return DropdownMenuItem(
-                              value: w.id,
-                              child: Text(
-                                '${w.name}$subtitle',
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
-                              ),
-                            );
-                          }).toList(),
-                          onChanged: _isSubmitting
-                              ? null
-                              : (value) {
-                                  if (value != null) {
-                                    final matched = woredas.firstWhere((w) => w.id == value);
-                                    setState(() {
-                                      _selectedWoredaId = matched.id;
-                                      _selectedWoredaName = matched.name;
-                                    });
-                                  }
-                                },
-                        );
-                      },
-                      loading: () => const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 8),
-                        child: LinearProgressIndicator(),
-                      ),
-                      error: (_, __) => TextFormField(
-                        controller: _woredaNameController,
+                      // Hazard Type
+                      DropdownButtonFormField<String>(
+                        isExpanded: true,
+                        initialValue: _selectedHazardType,
                         decoration: const InputDecoration(
                           label: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text('Woreda Name'),
-                              Text(' *', style: TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.bold)),
+                              Text('Hazard Type'),
+                              Text(' *',
+                                  style: TextStyle(
+                                      color: Color(0xFFDC2626),
+                                      fontWeight: FontWeight.bold)),
                             ],
                           ),
-                          prefixIcon: Icon(Icons.location_on),
+                          prefixIcon: Icon(Icons.warning_amber),
                           border: OutlineInputBorder(),
                         ),
+                        items: _hazardTypes.map((type) {
+                          return DropdownMenuItem(
+                            value: type,
+                            child: Text(
+                              _formatHazardType(type),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setState(() => _selectedHazardType = value!);
+                        },
                       ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+                      const SizedBox(height: 16),
 
-            const SizedBox(height: 24),
-
-            // Submit Button
-            SizedBox(
-              height: 50,
-              child: ElevatedButton.icon(
-                onPressed: _isSubmitting ? null : _submitAlert,
-                icon: _isSubmitting
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor:
-                              AlwaysStoppedAnimation<Color>(Colors.white),
+                      // Severity Level
+                      DropdownButtonFormField<String>(
+                        isExpanded: true,
+                        initialValue: _selectedSeverity,
+                        decoration: InputDecoration(
+                          label: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text('Severity Level'),
+                              Text(' *',
+                                  style: TextStyle(
+                                      color: Color(0xFFDC2626),
+                                      fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                          prefixIcon: Icon(
+                            Icons.signal_cellular_alt,
+                            color: _getSeverityColor(_selectedSeverity),
+                          ),
+                          border: const OutlineInputBorder(),
                         ),
-                      )
-                    : const Icon(Icons.send),
-                label: Text(_isSubmitting ? 'Creating...' : 'Create Alert'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _getSeverityColor(_selectedSeverity),
-                  foregroundColor: Colors.white,
+                        items: _severityLevels.map((severity) {
+                          return DropdownMenuItem(
+                            value: severity,
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 12,
+                                  height: 12,
+                                  decoration: BoxDecoration(
+                                    color: _getSeverityColor(severity),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    _formatSeverity(severity),
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setState(() => _selectedSeverity = value!);
+                        },
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Priority
+                      DropdownButtonFormField<int>(
+                        isExpanded: true,
+                        initialValue: _priority,
+                        decoration: const InputDecoration(
+                          label: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text('Priority'),
+                              Text(' *',
+                                  style: TextStyle(
+                                      color: Color(0xFFDC2626),
+                                      fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                          prefixIcon: Icon(Icons.priority_high),
+                          border: OutlineInputBorder(),
+                          helperText: '1 = Highest, 5 = Lowest',
+                        ),
+                        items: [1, 2, 3, 4, 5].map((priority) {
+                          return DropdownMenuItem(
+                            value: priority,
+                            child: Text('Priority $priority'),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setState(() => _priority = value!);
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
 
-            const SizedBox(height: 16),
+              const SizedBox(height: 16),
 
-            // Info Card
-            const Card(
-              color: Color(0xFFE8F5E9),
-              child: Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Row(
-                  children: [
-                    Icon(Icons.info_outline, color: Color(0xFF2E7D32)),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'Alert will be dispatched via push notifications and WebSocket to all affected users.',
-                        style: TextStyle(
-                          color: Color(0xFF1B5E20),
-                          fontSize: 13,
+              // Content Card
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Alert Content',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Title
+                      TextFormField(
+                        controller: _titleController,
+                        decoration: const InputDecoration(
+                          label: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text('Alert Title'),
+                              Text(' *',
+                                  style: TextStyle(
+                                      color: Color(0xFFDC2626),
+                                      fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                          prefixIcon: Icon(Icons.title),
+                          border: OutlineInputBorder(),
+                          helperText: 'Brief headline for the alert',
+                        ),
+                        maxLength: 100,
+                        validator: (value) => Validators.validateRequired(
+                          value,
+                          'Alert title',
                         ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 16),
+
+                      // Message
+                      TextFormField(
+                        controller: _messageController,
+                        decoration: const InputDecoration(
+                          label: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text('Alert Message'),
+                              Text(' *',
+                                  style: TextStyle(
+                                      color: Color(0xFFDC2626),
+                                      fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                          prefixIcon: Icon(Icons.message),
+                          border: OutlineInputBorder(),
+                          helperText: 'Detailed warning message',
+                          alignLabelWithHint: true,
+                        ),
+                        maxLines: 5,
+                        maxLength: 500,
+                        validator: (value) => Validators.validateRequired(
+                          value,
+                          'Alert message',
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Action Items
+                      TextFormField(
+                        controller: _actionItemsController,
+                        decoration: const InputDecoration(
+                          labelText: 'Recommended Action Items',
+                          prefixIcon: Icon(Icons.checklist),
+                          border: OutlineInputBorder(),
+                          helperText:
+                              'Recommended emergency mitigation actions, one per line',
+                          alignLabelWithHint: true,
+                        ),
+                        maxLines: 4,
+                        maxLength: 300,
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+
+              const SizedBox(height: 16),
+
+              // Location Card
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Target Geographic Scope',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 16),
+                      woredasAsync.when(
+                        data: (woredas) {
+                          final validWoredaId = woredas
+                                  .any((w) => w.id == _selectedWoredaId)
+                              ? _selectedWoredaId
+                              : (woredas.isNotEmpty ? woredas.first.id : null);
+                          if (_selectedWoredaId == null &&
+                              validWoredaId != null) {
+                            _selectedWoredaId = validWoredaId;
+                            final match = woredas
+                                .firstWhere((w) => w.id == validWoredaId);
+                            _selectedWoredaName = match.name;
+                          }
+                          return DropdownButtonFormField<String>(
+                            key: ValueKey('alert_woreda_$validWoredaId'),
+                            isExpanded: true,
+                            initialValue: validWoredaId,
+                            decoration: const InputDecoration(
+                              label: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text('Target Woreda Jurisdiction'),
+                                  Text(' *',
+                                      style: TextStyle(
+                                          color: Color(0xFFDC2626),
+                                          fontWeight: FontWeight.bold)),
+                                ],
+                              ),
+                              prefixIcon: Icon(Icons.location_on),
+                              border: OutlineInputBorder(),
+                              helperText:
+                                  'Jurisdiction receiving broadcast emergency telemetry',
+                            ),
+                            items: woredas.map((w) {
+                              final regionName = w.zone?.region?.name ?? '';
+                              final subtitle =
+                                  regionName.isNotEmpty ? ' ($regionName)' : '';
+                              return DropdownMenuItem(
+                                value: w.id,
+                                child: Text(
+                                  '${w.name}$subtitle',
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                ),
+                              );
+                            }).toList(),
+                            onChanged: _isSubmitting
+                                ? null
+                                : (value) {
+                                    if (value != null) {
+                                      final matched = woredas
+                                          .firstWhere((w) => w.id == value);
+                                      setState(() {
+                                        _selectedWoredaId = matched.id;
+                                        _selectedWoredaName = matched.name;
+                                      });
+                                    }
+                                  },
+                          );
+                        },
+                        loading: () => const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 8),
+                          child: LinearProgressIndicator(),
+                        ),
+                        error: (_, __) => TextFormField(
+                          controller: _woredaNameController,
+                          decoration: const InputDecoration(
+                            label: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text('Woreda Name'),
+                                Text(' *',
+                                    style: TextStyle(
+                                        color: Color(0xFFDC2626),
+                                        fontWeight: FontWeight.bold)),
+                              ],
+                            ),
+                            prefixIcon: Icon(Icons.location_on),
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              // Submit Button
+              SizedBox(
+                height: 50,
+                child: ElevatedButton.icon(
+                  onPressed: _isSubmitting ? null : _submitAlert,
+                  icon: _isSubmitting
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : const Icon(Icons.send),
+                  label: Text(_isSubmitting ? 'Creating...' : 'Create Alert'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _getSeverityColor(_selectedSeverity),
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Info Card
+              const Card(
+                color: Color(0xFFE8F5E9),
+                child: Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Row(
+                    children: [
+                      Icon(Icons.info_outline, color: Color(0xFF2E7D32)),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Alert will be dispatched via push notifications and WebSocket to all affected users.',
+                          style: TextStyle(
+                            color: Color(0xFF1B5E20),
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -437,7 +466,10 @@ class _CreateAlertScreenState extends ConsumerState<CreateAlertScreen> {
         headline: _titleController.text.trim(),
         message: _messageController.text.trim(),
         woredaId: _selectedWoredaId ?? 'ET040101',
-        woredaName: _selectedWoredaName ?? (_woredaNameController.text.trim().isNotEmpty ? _woredaNameController.text.trim() : 'Adama Zuria'),
+        woredaName: _selectedWoredaName ??
+            (_woredaNameController.text.trim().isNotEmpty
+                ? _woredaNameController.text.trim()
+                : 'Adama Zuria'),
         actionItems: actionItems,
         priority: _priority,
         language: 'en',

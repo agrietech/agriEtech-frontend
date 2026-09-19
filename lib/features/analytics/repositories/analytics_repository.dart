@@ -154,6 +154,62 @@ class AnalyticsRepository {
     }
   }
 
+  /// Send input to the USSD gateway. Kept here so presentation code has no
+  /// knowledge of transport details.
+  Future<String> sendUssdInput({
+    required String sessionId,
+    required String phoneNumber,
+    required String text,
+  }) async {
+    try {
+      final response = await _dioClient.post(
+        ApiConstants.ussdGateway,
+        data: {'sessionId': sessionId, 'phoneNumber': phoneNumber, 'text': text},
+        options: Options(responseType: ResponseType.plain),
+      );
+      return response.data?.toString() ?? '';
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// Return audience reachability for a targeted broadcast.
+  Future<Map<String, dynamic>> getFarmerAudience({String? woredaId}) async {
+    try {
+      final response = await _dioClient.get(
+        ApiConstants.adminFarmerAudience,
+        queryParameters: woredaId?.isNotEmpty == true ? {'woredaId': woredaId} : null,
+      );
+      final raw = response.data;
+      if (raw is Map) {
+        final data = raw['data'];
+        return Map<String, dynamic>.from(data is Map ? data : raw);
+      }
+      return const {};
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// Dispatch an authorized emergency broadcast and return its delivery data.
+  Future<Map<String, dynamic>> dispatchEmergencyBroadcast(
+      Map<String, dynamic> payload) async {
+    try {
+      final response = await _dioClient.post(
+        ApiConstants.adminBroadcastAlert,
+        data: payload,
+      );
+      final raw = response.data;
+      if (raw is Map) {
+        final data = raw['data'];
+        return Map<String, dynamic>.from(data is Map ? data : raw);
+      }
+      return const {};
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
   String _handleError(DioException error) {
     if (error.response != null) {
       final message =

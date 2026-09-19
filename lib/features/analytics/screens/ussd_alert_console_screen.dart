@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/network/dio_client.dart';
-import '../../../core/constants/api_constants.dart';
+import '../repositories/analytics_repository.dart';
 
 class UssdAlertConsoleScreen extends ConsumerStatefulWidget {
   const UssdAlertConsoleScreen({super.key});
@@ -101,19 +100,12 @@ class _UssdAlertConsoleScreenState extends ConsumerState<UssdAlertConsoleScreen>
       _ussdSessionHistory = 'Dialing $_ussdDialCode...\n';
     });
 
-    final client = ref.read(dioClientProvider);
-
     try {
-      final response = await client.dio.post<String>(
-        ApiConstants.ussdGateway,
-        data: {
-          'sessionId': 'flutter_sim_${DateTime.now().millisecondsSinceEpoch}',
-          'phoneNumber': '+251911223344',
-          'text': '',
-        },
+      final respText = await ref.read(analyticsRepositoryProvider).sendUssdInput(
+        sessionId: 'flutter_sim_${DateTime.now().millisecondsSinceEpoch}',
+        phoneNumber: '+251911223344',
+        text: '',
       );
-
-      final respText = response.data ?? '';
       _handleUssdResponse(respText);
     } catch (_) {
       // Local fallback simulation if offline
@@ -140,19 +132,12 @@ class _UssdAlertConsoleScreenState extends ConsumerState<UssdAlertConsoleScreen>
       _ussdSessionHistory += '\n> $input\n';
     });
 
-    final client = ref.read(dioClientProvider);
-
     try {
-      final response = await client.dio.post<String>(
-        ApiConstants.ussdGateway,
-        data: {
-          'sessionId': 'flutter_sim_active',
-          'phoneNumber': '+251911223344',
-          'text': input,
-        },
+      final respText = await ref.read(analyticsRepositoryProvider).sendUssdInput(
+        sessionId: 'flutter_sim_active',
+        phoneNumber: '+251911223344',
+        text: input,
       );
-
-      final respText = response.data ?? '';
       _handleUssdResponse(respText);
     } catch (_) {
       // Intelligent offline simulation
@@ -737,12 +722,11 @@ class _UssdAlertConsoleScreenState extends ConsumerState<UssdAlertConsoleScreen>
 
   Future<void> _fetchFarmerAudience() async {
     setState(() => _isLoadingAudience = true);
-    final client = ref.read(dioClientProvider);
     try {
-      final query = _selectedWoredaId.isNotEmpty ? '?woredaId=$_selectedWoredaId' : '';
-      final response = await client.dio.get('${ApiConstants.adminFarmerAudience}$query');
-      if (response.data != null && response.data['success'] == true) {
-        final data = response.data['data'];
+      final data = await ref.read(analyticsRepositoryProvider).getFarmerAudience(
+            woredaId: _selectedWoredaId.isEmpty ? null : _selectedWoredaId,
+          );
+      if (data.isNotEmpty) {
         if (mounted) {
           setState(() {
             _totalFarmersCount = data['totalSignedUpFarmers'] ?? data['totalFarmers'] ?? 45;
@@ -797,8 +781,6 @@ class _UssdAlertConsoleScreenState extends ConsumerState<UssdAlertConsoleScreen>
     }
 
     setState(() => _isBroadcasting = true);
-    final client = ref.read(dioClientProvider);
-
     try {
       final payload = {
         'woredaId': _selectedWoredaId.isNotEmpty ? _selectedWoredaId : null,
@@ -812,14 +794,11 @@ class _UssdAlertConsoleScreenState extends ConsumerState<UssdAlertConsoleScreen>
         'sendUssd': _sendUssdFlash,
       };
 
-      final response = await client.dio.post(
-        ApiConstants.adminBroadcastAlert,
-        data: payload,
-      );
-
-      final respData = response.data;
-      final int count = respData?['data']?['recipientsCount'] ?? _reachableFarmersCount;
-      final List channels = respData?['data']?['channels'] ?? ['USSD (*212#)', 'SMS'];
+      final respData = await ref
+          .read(analyticsRepositoryProvider)
+          .dispatchEmergencyBroadcast(payload);
+      final int count = respData['recipientsCount'] ?? _reachableFarmersCount;
+      final List channels = respData['channels'] ?? ['USSD (*212#)', 'SMS'];
 
       if (!mounted) return;
       _showBroadcastSuccessDialog(count, channels);

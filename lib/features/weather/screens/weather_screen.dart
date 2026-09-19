@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/l10n/app_localizations.dart';
 import '../../../core/theme/app_theme.dart';
@@ -94,6 +95,9 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
+    final authState = ref.watch(authProvider);
+    final isLockedToWoreda = authState.isFarmer || authState.isDevelopmentAgent || authState.isWoredaOfficer;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -103,11 +107,22 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
         ),
         elevation: 0,
         actions: [
-          // Location Selector Action Chip
+          // Location Selector Action Chip (strictly scoped by RBAC role)
           Padding(
             padding: const EdgeInsets.only(right: 12),
             child: InkWell(
-              onTap: () => _showWoredaPicker(context),
+              onTap: isLockedToWoreda
+                  ? () {
+                      HapticFeedback.lightImpact();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Weather is locked to your assigned jurisdiction: ${weatherState.selectedWoredaName ?? "Ada'a"}.'),
+                          duration: const Duration(seconds: 2),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    }
+                  : () => _showWoredaPicker(context),
               borderRadius: AppRadii.roundedPill,
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -122,12 +137,16 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.location_on_rounded, size: 14, color: AppTheme.primaryColor),
+                    Icon(
+                      isLockedToWoreda ? Icons.lock_rounded : Icons.location_on_rounded,
+                      size: 14,
+                      color: AppTheme.primaryColor,
+                    ),
                     const SizedBox(width: 4),
                     ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 95),
+                      constraints: const BoxConstraints(maxWidth: 110),
                       child: Text(
-                        weatherState.selectedWoredaName ?? 'Addis Ababa',
+                        weatherState.selectedWoredaName ?? "Ada'a",
                         overflow: TextOverflow.ellipsis,
                         maxLines: 1,
                         style: const TextStyle(
@@ -137,8 +156,10 @@ class _WeatherScreenState extends ConsumerState<WeatherScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 2),
-                    const Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: AppTheme.primaryColor),
+                    if (!isLockedToWoreda) ...[
+                      const SizedBox(width: 2),
+                      const Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: AppTheme.primaryColor),
+                    ],
                   ],
                 ),
               ),
@@ -385,7 +406,7 @@ class _WoredaPickerBottomSheetState extends ConsumerState<_WoredaPickerBottomShe
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final woredasAsync = ref.watch(allWoredasProvider);
+    final woredasAsync = ref.watch(scopedWoredasProvider);
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.72,
