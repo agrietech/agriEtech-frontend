@@ -61,6 +61,10 @@ class FarmDetailScreen extends ConsumerWidget {
       ),
       body: farmAsync.when(
         data: (farm) {
+          final safeLat = (farm.latitude >= 3.2 && farm.latitude <= 15.2) ? farm.latitude : 8.54;
+          final safeLng = (farm.longitude >= 32.8 && farm.longitude <= 48.2) ? farm.longitude : 39.27;
+          final farmLatLng = LatLng(safeLat, safeLng);
+
           return SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -70,16 +74,10 @@ class FarmDetailScreen extends ConsumerWidget {
                   height: 250,
                   child: FlutterMap(
                     options: MapOptions(
-                      initialCenter: LatLng(farm.latitude, farm.longitude),
+                      initialCenter: farmLatLng,
                       initialZoom: 15,
                       minZoom: 5.6,
                       maxZoom: 18.0,
-                      cameraConstraint: CameraConstraint.containCenter(
-                        bounds: LatLngBounds(
-                          const LatLng(3.2, 32.8),
-                          const LatLng(15.2, 48.2),
-                        ),
-                      ),
                     ),
                     children: [
                       TileLayer(
@@ -93,7 +91,7 @@ class FarmDetailScreen extends ConsumerWidget {
                       MarkerLayer(
                         markers: [
                           Marker(
-                            point: LatLng(farm.latitude, farm.longitude),
+                            point: farmLatLng,
                             width: 40,
                             height: 40,
                             child: const Icon(

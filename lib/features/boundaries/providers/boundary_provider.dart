@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/dio_client.dart';
+import '../../../core/models/user_model.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../models/boundary_models.dart';
 import '../repositories/boundary_local_cache.dart';
 import '../repositories/boundary_repository.dart';
@@ -36,6 +38,59 @@ final woredasByZoneProvider =
 final allWoredasProvider = FutureProvider<List<WoredaModel>>((ref) async {
   final repository = ref.watch(boundaryRepositoryProvider);
   return await repository.getAllWoredas();
+});
+
+/// Scoped woredas provider respecting user RBAC & jurisdictional level
+final scopedWoredasProvider = FutureProvider<List<WoredaModel>>((ref) async {
+  final allWoredas = await ref.watch(allWoredasProvider.future);
+  final user = ref.watch(currentUserProvider);
+  if (user == null) return allWoredas;
+
+  switch (user.role) {
+    case UserRole.farmer:
+    case UserRole.developmentAgent:
+    case UserRole.woredaOfficer:
+      final woredaId = user.woredaId;
+      final woredaName = user.woreda?.name;
+      final filtered = allWoredas.where((w) =>
+        (woredaId != null && w.id == woredaId) ||
+        (woredaName != null && w.name.toLowerCase() == woredaName.toLowerCase())
+      ).toList();
+      if (filtered.isNotEmpty) return filtered;
+      if (woredaId != null || woredaName != null) {
+        return [
+          WoredaModel(
+            id: woredaId ?? 'ET040706',
+            name: woredaName ?? "Ada'a",
+            centerLat: 8.84,
+            centerLng: 39.09,
+          ),
+        ];
+      }
+      return allWoredas;
+
+    case UserRole.zonalOfficer:
+      final zoneId = user.zoneId;
+      final zoneName = user.zone?.name;
+      final filtered = allWoredas.where((w) =>
+        (zoneId != null && w.zoneId == zoneId) ||
+        (zoneName != null && w.zone?.name.toLowerCase() == zoneName.toLowerCase())
+      ).toList();
+      return filtered.isNotEmpty ? filtered : allWoredas;
+
+    case UserRole.regionalOfficer:
+      final regionId = user.regionId;
+      final regionName = user.region?.name;
+      final filtered = allWoredas.where((w) =>
+        (regionId != null && w.zone?.region?.id == regionId) ||
+        (regionName != null && w.zone?.region?.name.toLowerCase() == regionName.toLowerCase())
+      ).toList();
+      return filtered.isNotEmpty ? filtered : allWoredas;
+
+    case UserRole.researcher:
+    case UserRole.admin:
+      return allWoredas;
+  }
 });
 
 /// Woreda details provider

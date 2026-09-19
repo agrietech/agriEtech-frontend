@@ -222,4 +222,24 @@ class BoundaryRepository {
       zonesByRegion: zonesByRegion,
     );
   }
+
+  /// Update Kebele GIS polygon boundary (Development Agent / Admin)
+  Future<bool> updateKebelePolygon(String kebeleId, Map<String, dynamic> polygonGeojson) async {
+    try {
+      AppLogger.info('Updating Kebele polygon in GIS for $kebeleId');
+      final response = await _dioClient.put(
+        '/boundaries/kebeles/$kebeleId/polygon',
+        data: {'polygonGeojson': polygonGeojson},
+      );
+      final isSuccess = response.data is Map && response.data['success'] == true;
+      AppLogger.success('Successfully updated Kebele $kebeleId GIS polygon');
+      return isSuccess;
+    } on DioException catch (e) {
+      AppLogger.error('Failed to update Kebele polygon: $e');
+      throw ErrorHandler.handleError(e);
+    } catch (e) {
+      AppLogger.error('Unexpected error updating Kebele polygon: $e');
+      throw UnknownError(message: 'Failed to update Kebele GIS polygon: $e');
+    }
+  }
 }
