@@ -156,6 +156,38 @@ class RiskRepository {
       throw UnknownError(message: 'Failed to fetch trends: ${e.toString()}');
     }
   }
+
+  /// Fetch a location-specific intelligence payload and unwrap the standard
+  /// backend response envelope. Screens use this rather than accessing Dio.
+  Future<Map<String, dynamic>> getLocationIntelligence(
+    String endpoint, {
+    required double lat,
+    required double lng,
+    required String woredaName,
+    double? slopePct,
+  }) async {
+    try {
+      final queryParameters = <String, dynamic>{
+        'lat': lat,
+        'lng': lng,
+        'woredaName': woredaName,
+      };
+      if (slopePct != null) queryParameters['slopePct'] = slopePct;
+
+      final response = await _dioClient.get(
+        endpoint,
+        queryParameters: queryParameters,
+      );
+      final raw = response.data;
+      if (raw is Map) {
+        final data = raw['data'];
+        return Map<String, dynamic>.from(data is Map ? data : raw);
+      }
+      return const {};
+    } on DioException catch (e) {
+      throw NetworkError.fromDioException(e);
+    }
+  }
 }
 
 /// Provider for RiskRepository
