@@ -34,7 +34,8 @@ class RoleApplicationScreen extends ConsumerStatefulWidget {
   const RoleApplicationScreen({super.key});
 
   @override
-  ConsumerState<RoleApplicationScreen> createState() => _RoleApplicationScreenState();
+  ConsumerState<RoleApplicationScreen> createState() =>
+      _RoleApplicationScreenState();
 }
 
 class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
@@ -56,8 +57,10 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
       roleKey: 'DEVELOPMENT_AGENT',
       title: 'Development Agent (DA)',
       amharicTitle: 'የልማት ጣቢያ ባለሙያ',
-      subtitle: 'Kebele farmer registries, field sensor deployment, and pest reports',
-      fullDescription: 'Authorizes field agents to register local smallholders, calibrate LoRaWAN IoT telemetry sensors, and submit pest reports.',
+      subtitle:
+          'Kebele farmer registries, field sensor deployment, and pest reports',
+      fullDescription:
+          'Authorizes field agents to register local smallholders, calibrate LoRaWAN IoT telemetry sensors, and submit pest reports.',
       icon: Icons.support_agent_rounded,
       color: Color(0xFF0284C7),
       permissions: [
@@ -71,8 +74,10 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
       roleKey: 'WOREDA_OFFICER',
       title: 'Woreda Agronomy Officer',
       amharicTitle: 'የወረዳ ግብርና መኮንን',
-      subtitle: 'Woreda disaster alerts broadcast, USSD delivery, and GIS tracking',
-      fullDescription: 'Grants administrative authority across the entire woreda jurisdiction, enabling USSD *212# emergency broadcast and RUSLE soil loss monitoring.',
+      subtitle:
+          'Woreda disaster alerts broadcast, USSD delivery, and GIS tracking',
+      fullDescription:
+          'Grants administrative authority across the entire woreda jurisdiction, enabling USSD *212# emergency broadcast and RUSLE soil loss monitoring.',
       icon: Icons.admin_panel_settings_rounded,
       color: Color(0xFFD97706),
       permissions: [
@@ -86,8 +91,10 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
       roleKey: 'ZONAL_OFFICER',
       title: 'Zonal Agricultural Lead',
       amharicTitle: 'የዞን ግብርና መምሪያ',
-      subtitle: 'Multi-woreda strategic analytics, drought index, and resource planning',
-      fullDescription: 'Provides cross-woreda analytical oversight, SPI-3 drought indexing, river basin flood telemetry, and fertilizer allocation tools.',
+      subtitle:
+          'Multi-woreda strategic analytics, drought index, and resource planning',
+      fullDescription:
+          'Provides cross-woreda analytical oversight, SPI-3 drought indexing, river basin flood telemetry, and fertilizer allocation tools.',
       icon: Icons.domain_rounded,
       color: Color(0xFF7C3AED),
       permissions: [
@@ -102,7 +109,8 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
       title: 'Regional Bureau Director',
       amharicTitle: 'የክልል ግብርና ቢሮ',
       subtitle: 'Regional food security dashboard, seismic risk, and telemetry',
-      fullDescription: 'Comprehensive regional command access across all agricultural zones, seismic rift fault surveillance, and emergency mobilization.',
+      fullDescription:
+          'Comprehensive regional command access across all agricultural zones, seismic rift fault surveillance, and emergency mobilization.',
       icon: Icons.account_balance_rounded,
       color: Color(0xFFDC2626),
       permissions: [
@@ -116,8 +124,10 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
       roleKey: 'RESEARCHER',
       title: 'Agricultural Scientist / Researcher',
       amharicTitle: 'ተመራማሪ / ሳይንቲስት',
-      subtitle: 'Satellite datasets, RUSLE soil erosion, and downscaled forecast exports',
-      fullDescription: 'Designed for EIAR, universities, and research institutes to access raw Sentinel-2 MSI, Sentinel-1 SAR, DEM topography, and CSV exports.',
+      subtitle:
+          'Satellite datasets, RUSLE soil erosion, and downscaled forecast exports',
+      fullDescription:
+          'Designed for EIAR, universities, and research institutes to access raw Sentinel-2 MSI, Sentinel-1 SAR, DEM topography, and CSV exports.',
       icon: Icons.biotech_rounded,
       color: Color(0xFF0D9488),
       permissions: [
@@ -220,10 +230,12 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
     final hasPendingRequest = _myRequests.any((r) => r['status'] == 'PENDING');
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0B130E) : const Color(0xFFF7F9F7),
+      backgroundColor:
+          isDark ? const Color(0xFF0B130E) : const Color(0xFFF7F9F7),
       drawer: const EthioFarmAppDrawer(),
       appBar: AppBar(
-        title: const Text('Role & Governance Elevation', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        title: const Text('Role & Governance Elevation',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
         elevation: 0,
         actions: [
           IconButton(
@@ -237,7 +249,8 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
         child: _isSubmitted
             ? _buildSuccessView(context)
             : SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
                 child: Form(
                   key: _formKey,
                   child: Column(
@@ -251,7 +264,8 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
-                              color: AppTheme.primaryColor.withValues(alpha: 0.25),
+                              color:
+                                  AppTheme.primaryColor.withValues(alpha: 0.25),
                               blurRadius: 12,
                               offset: const Offset(0, 4),
                             ),
@@ -261,8 +275,10 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
                           children: [
                             CircleAvatar(
                               radius: 26,
-                              backgroundColor: Colors.white.withValues(alpha: 0.2),
-                              child: const Icon(Icons.verified_user_rounded, color: Colors.white, size: 28),
+                              backgroundColor:
+                                  Colors.white.withValues(alpha: 0.2),
+                              child: const Icon(Icons.verified_user_rounded,
+                                  color: Colors.white, size: 28),
                             ),
                             const SizedBox(width: 14),
                             Expanded(
@@ -271,30 +287,43 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
                                 children: [
                                   Text(
                                     user?.fullName ?? 'Authenticated User',
-                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                        color: Colors.white),
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
                                     'Active Role: ${RoleUtils.getRoleDisplayName(currentRole)}',
-                                    style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 12.5),
+                                    style: TextStyle(
+                                        color: Colors.white
+                                            .withValues(alpha: 0.85),
+                                        fontSize: 12.5),
                                   ),
                                   if (user?.region?.name != null)
                                     Text(
                                       'Jurisdiction: ${user?.region?.name ?? ""}${user?.woreda?.name != null ? " • ${user?.woreda?.name}" : ""}',
-                                      style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 11),
+                                      style: TextStyle(
+                                          color: Colors.white
+                                              .withValues(alpha: 0.7),
+                                          fontSize: 11),
                                     ),
                                 ],
                               ),
                             ),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 5),
                               decoration: BoxDecoration(
                                 color: const Color(0xFF4ADE80),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: const Text(
                                 'ACTIVE',
-                                style: TextStyle(color: Colors.black, fontSize: 11, fontWeight: FontWeight.bold),
+                                style: TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold),
                               ),
                             ),
                           ],
@@ -313,7 +342,8 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
                           ),
                           child: const Row(
                             children: [
-                              Icon(Icons.hourglass_top_rounded, color: Color(0xFFD97706), size: 22),
+                              Icon(Icons.hourglass_top_rounded,
+                                  color: Color(0xFFD97706), size: 22),
                               SizedBox(width: 12),
                               Expanded(
                                 child: Column(
@@ -321,12 +351,17 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
                                   children: [
                                     Text(
                                       'Application Under Review',
-                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF92400E)),
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13,
+                                          color: Color(0xFF92400E)),
                                     ),
                                     SizedBox(height: 2),
                                     Text(
                                       'You have an active role upgrade application pending approval by the woreda/regional administrator.',
-                                      style: TextStyle(fontSize: 11.5, color: Color(0xFFB45309)),
+                                      style: TextStyle(
+                                          fontSize: 11.5,
+                                          color: Color(0xFFB45309)),
                                     ),
                                   ],
                                 ),
@@ -344,7 +379,8 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
                       // Section 1: Choose Target Role
                       const Text(
                         '1. Select Desired Institutional Role',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 15),
                       ),
                       const SizedBox(height: 10),
                       ListView.separated(
@@ -356,17 +392,25 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
                           final opt = _availableRoles[index];
                           final isSelected = opt.roleKey == _selectedRole;
                           return InkWell(
-                            onTap: () => setState(() => _selectedRole = opt.roleKey),
+                            onTap: () =>
+                                setState(() => _selectedRole = opt.roleKey),
                             borderRadius: BorderRadius.circular(14),
                             child: Container(
                               padding: const EdgeInsets.all(14),
                               decoration: BoxDecoration(
                                 color: isSelected
-                                    ? opt.color.withValues(alpha: isDark ? 0.15 : 0.06)
-                                    : (isDark ? const Color(0xFF132116) : Colors.white),
+                                    ? opt.color
+                                        .withValues(alpha: isDark ? 0.15 : 0.06)
+                                    : (isDark
+                                        ? const Color(0xFF132116)
+                                        : Colors.white),
                                 borderRadius: BorderRadius.circular(14),
                                 border: Border.all(
-                                  color: isSelected ? opt.color : (isDark ? const Color(0xFF26382A) : const Color(0xFFE5E7EB)),
+                                  color: isSelected
+                                      ? opt.color
+                                      : (isDark
+                                          ? const Color(0xFF26382A)
+                                          : const Color(0xFFE5E7EB)),
                                   width: isSelected ? 2.0 : 1.0,
                                 ),
                               ),
@@ -379,15 +423,18 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
                                       color: opt.color.withValues(alpha: 0.15),
                                       borderRadius: BorderRadius.circular(10),
                                     ),
-                                    child: Icon(opt.icon, color: opt.color, size: 22),
+                                    child: Icon(opt.icon,
+                                        color: opt.color, size: 22),
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
                                           children: [
                                             Expanded(
                                               child: Text(
@@ -395,39 +442,63 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
                                                 style: TextStyle(
                                                   fontWeight: FontWeight.bold,
                                                   fontSize: 13.5,
-                                                  color: isSelected ? opt.color : null,
+                                                  color: isSelected
+                                                      ? opt.color
+                                                      : null,
                                                 ),
                                               ),
                                             ),
                                             if (isSelected)
-                                              Icon(Icons.check_circle, color: opt.color, size: 18),
+                                              Icon(Icons.check_circle,
+                                                  color: opt.color, size: 18),
                                           ],
                                         ),
                                         const SizedBox(height: 3),
                                         Text(
                                           opt.subtitle,
-                                          style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                                          style: TextStyle(
+                                              color: Colors.grey.shade600,
+                                              fontSize: 12),
                                         ),
                                         if (isSelected) ...[
                                           const SizedBox(height: 10),
                                           Container(
                                             padding: const EdgeInsets.all(10),
                                             decoration: BoxDecoration(
-                                              color: opt.color.withValues(alpha: 0.08),
-                                              borderRadius: BorderRadius.circular(8),
+                                              color: opt.color
+                                                  .withValues(alpha: 0.08),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
                                             ),
                                             child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
                                               children: [
-                                                const Text('Granted Capabilities:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+                                                const Text(
+                                                    'Granted Capabilities:',
+                                                    style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        fontSize: 11)),
                                                 const SizedBox(height: 4),
-                                                ...opt.permissions.map((p) => Row(
-                                                      children: [
-                                                        Icon(Icons.check_circle_outline, size: 12, color: opt.color),
-                                                        const SizedBox(width: 6),
-                                                        Expanded(child: Text(p, style: const TextStyle(fontSize: 11))),
-                                                      ],
-                                                    )),
+                                                ...opt.permissions
+                                                    .map((p) => Row(
+                                                          children: [
+                                                            Icon(
+                                                                Icons
+                                                                    .check_circle_outline,
+                                                                size: 12,
+                                                                color:
+                                                                    opt.color),
+                                                            const SizedBox(
+                                                                width: 6),
+                                                            Expanded(
+                                                                child: Text(p,
+                                                                    style: const TextStyle(
+                                                                        fontSize:
+                                                                            11))),
+                                                          ],
+                                                        )),
                                               ],
                                             ),
                                           ),
@@ -446,15 +517,20 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
                       // Section 2: Target Jurisdiction
                       const Text(
                         '2. Target Operational Jurisdiction',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 15),
                       ),
                       const SizedBox(height: 10),
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF132116) : Colors.white,
+                          color:
+                              isDark ? const Color(0xFF132116) : Colors.white,
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: isDark ? const Color(0xFF26382A) : const Color(0xFFE5E7EB)),
+                          border: Border.all(
+                              color: isDark
+                                  ? const Color(0xFF26382A)
+                                  : const Color(0xFFE5E7EB)),
                         ),
                         child: Column(
                           children: [
@@ -462,15 +538,22 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
                             DropdownButtonFormField<String>(
                               initialValue: hierarchy.selectedRegion?.id,
                               isExpanded: true,
-                              decoration: _inputDecoration('Target Region', Icons.public_rounded, isDark),
-                              items: hierarchy.regions.map((r) => DropdownMenuItem(value: r.id, child: Text(r.name))).toList(),
+                              decoration: _inputDecoration(
+                                  'Region', Icons.public_rounded, isDark),
+                              items: hierarchy.regions
+                                  .map((r) => DropdownMenuItem(
+                                      value: r.id, child: Text(r.name)))
+                                  .toList(),
                               onChanged: (val) {
                                 if (val != null) {
-                                  final match = hierarchy.regions.where((r) => r.id == val).firstOrNull;
+                                  final match = hierarchy.regions
+                                      .where((r) => r.id == val)
+                                      .firstOrNull;
                                   hierarchyNotifier.selectRegion(match);
                                 }
                               },
-                              validator: (v) => v == null ? 'Please select target Region' : null,
+                              validator: (v) =>
+                                  v == null ? 'Please select Region' : null,
                             ),
                             const SizedBox(height: 12),
 
@@ -478,13 +561,19 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
                             DropdownButtonFormField<String>(
                               initialValue: hierarchy.selectedZone?.id,
                               isExpanded: true,
-                              decoration: _inputDecoration('Target Zone', Icons.domain_rounded, isDark),
-                              items: hierarchy.zones.map((z) => DropdownMenuItem(value: z.id, child: Text(z.name))).toList(),
+                              decoration: _inputDecoration(
+                                  'Zone', Icons.domain_rounded, isDark),
+                              items: hierarchy.zones
+                                  .map((z) => DropdownMenuItem(
+                                      value: z.id, child: Text(z.name)))
+                                  .toList(),
                               onChanged: hierarchy.selectedRegion == null
                                   ? null
                                   : (val) {
                                       if (val != null) {
-                                        final match = hierarchy.zones.where((z) => z.id == val).firstOrNull;
+                                        final match = hierarchy.zones
+                                            .where((z) => z.id == val)
+                                            .firstOrNull;
                                         hierarchyNotifier.selectZone(match);
                                       }
                                     },
@@ -495,13 +584,19 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
                             DropdownButtonFormField<String>(
                               initialValue: hierarchy.selectedWoreda?.id,
                               isExpanded: true,
-                              decoration: _inputDecoration('Target Woreda', Icons.location_city_rounded, isDark),
-                              items: hierarchy.woredas.map((w) => DropdownMenuItem(value: w.id, child: Text(w.name))).toList(),
+                              decoration: _inputDecoration('Woreda',
+                                  Icons.location_city_rounded, isDark),
+                              items: hierarchy.woredas
+                                  .map((w) => DropdownMenuItem(
+                                      value: w.id, child: Text(w.name)))
+                                  .toList(),
                               onChanged: hierarchy.selectedZone == null
                                   ? null
                                   : (val) {
                                       if (val != null) {
-                                        final match = hierarchy.woredas.where((w) => w.id == val).firstOrNull;
+                                        final match = hierarchy.woredas
+                                            .where((w) => w.id == val)
+                                            .firstOrNull;
                                         hierarchyNotifier.selectWoreda(match);
                                       }
                                     },
@@ -514,35 +609,54 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
                       // Section 3: Official Verification Credentials
                       const Text(
                         '3. Official Verification Credentials',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 15),
                       ),
                       const SizedBox(height: 10),
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF132116) : Colors.white,
+                          color:
+                              isDark ? const Color(0xFF132116) : Colors.white,
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: isDark ? const Color(0xFF26382A) : const Color(0xFFE5E7EB)),
+                          border: Border.all(
+                              color: isDark
+                                  ? const Color(0xFF26382A)
+                                  : const Color(0xFFE5E7EB)),
                         ),
                         child: Column(
                           children: [
                             TextFormField(
                               controller: _organizationController,
-                              decoration: _inputDecoration('Bureau / Institute / University', Icons.business_rounded, isDark),
-                              validator: (v) => (v == null || v.trim().isEmpty) ? 'Organization name is required' : null,
+                              decoration: _inputDecoration('Bureau / Institute',
+                                  Icons.business_rounded, isDark),
+                              validator: (v) => (v == null || v.trim().isEmpty)
+                                  ? 'Organization name is required'
+                                  : null,
                             ),
                             const SizedBox(height: 12),
                             TextFormField(
                               controller: _staffIdController,
-                              decoration: _inputDecoration('Government Staff ID / Badge No.', Icons.badge_rounded, isDark),
-                              validator: (v) => (v == null || v.trim().isEmpty) ? 'Staff ID is required' : null,
+                              decoration: _inputDecoration(
+                                  'Government Staff ID / Badge No.',
+                                  Icons.badge_rounded,
+                                  isDark),
+                              validator: (v) => (v == null || v.trim().isEmpty)
+                                  ? 'Staff ID is required'
+                                  : null,
                             ),
                             const SizedBox(height: 12),
                             TextFormField(
                               controller: _justificationController,
                               maxLines: 3,
-                              decoration: _inputDecoration('Operational mandate and justification...', Icons.description_rounded, isDark),
-                              validator: (v) => (v == null || v.trim().length < 10) ? 'Provide at least 10 characters' : null,
+                              decoration: _inputDecoration(
+                                  'Operational mandate and justification...',
+                                  Icons.description_rounded,
+                                  isDark),
+                              validator: (v) =>
+                                  (v == null || v.trim().length < 10)
+                                      ? 'Provide at least 10 characters'
+                                      : null,
                             ),
                           ],
                         ),
@@ -555,13 +669,20 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
                         child: ElevatedButton.icon(
                           onPressed: _isSubmitting ? null : _submitApplication,
                           icon: _isSubmitting
-                              ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                      strokeWidth: 2, color: Colors.white))
                               : const Icon(Icons.send_rounded),
-                          label: const Text('Submit Role Elevation Application', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                          label: const Text('Submit Role Elevation Application',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 15)),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF1B5E20),
                             foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
                           ),
                         ),
                       ),
@@ -571,11 +692,14 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
                       if (!_loadingRequests && _myRequests.isNotEmpty) ...[
                         const Text(
                           'Application History & Status',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 15),
                         ),
                         const SizedBox(height: 10),
                         ..._myRequests.map((req) {
-                          final status = (req['status'] ?? 'PENDING').toString().toUpperCase();
+                          final status = (req['status'] ?? 'PENDING')
+                              .toString()
+                              .toUpperCase();
                           Color badgeColor = Colors.orange;
                           if (status == 'APPROVED') badgeColor = Colors.green;
                           if (status == 'REJECTED') badgeColor = Colors.red;
@@ -583,27 +707,42 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
                           return Card(
                             margin: const EdgeInsets.only(bottom: 10),
                             elevation: 0,
-                            color: isDark ? const Color(0xFF132116) : Colors.white,
+                            color:
+                                isDark ? const Color(0xFF132116) : Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
-                              side: BorderSide(color: isDark ? const Color(0xFF26382A) : const Color(0xFFE5E7EB)),
+                              side: BorderSide(
+                                  color: isDark
+                                      ? const Color(0xFF26382A)
+                                      : const Color(0xFFE5E7EB)),
                             ),
                             child: ListTile(
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                              title: Text('Applied for: ${req['requestedRole'] ?? "N/A"}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5)),
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 14, vertical: 6),
+                              title: Text(
+                                  'Applied for: ${req['requestedRole'] ?? "N/A"}',
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13.5)),
                               subtitle: Text(
                                 'Organization: ${req['organizationName'] ?? "None"}\nSubmitted: ${req['createdAt']?.toString().split("T").first ?? "Recent"}',
-                                style: TextStyle(fontSize: 11.5, color: Colors.grey.shade600),
+                                style: TextStyle(
+                                    fontSize: 11.5,
+                                    color: Colors.grey.shade600),
                               ),
                               trailing: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 4),
                                 decoration: BoxDecoration(
                                   color: badgeColor.withValues(alpha: 0.15),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
                                   status,
-                                  style: TextStyle(color: badgeColor, fontWeight: FontWeight.bold, fontSize: 11),
+                                  style: TextStyle(
+                                      color: badgeColor,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 11),
                                 ),
                               ),
                             ),
@@ -633,12 +772,14 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF132116) : Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: isDark ? const Color(0xFF26382A) : const Color(0xFFE5E7EB)),
+        border: Border.all(
+            color: isDark ? const Color(0xFF26382A) : const Color(0xFFE5E7EB)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('National Agricultural Governance Progression:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+          const Text('National Agricultural Governance Progression:',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
           const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -651,7 +792,9 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
                     height: 26,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: isCurrent ? const Color(0xFF1B5E20) : Colors.grey.shade300,
+                      color: isCurrent
+                          ? const Color(0xFF1B5E20)
+                          : Colors.grey.shade300,
                     ),
                     child: Center(
                       child: Icon(
@@ -666,8 +809,11 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
                     s['label'] as String,
                     style: TextStyle(
                       fontSize: 9.5,
-                      fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
-                      color: isCurrent ? const Color(0xFF1B5E20) : Colors.grey.shade600,
+                      fontWeight:
+                          isCurrent ? FontWeight.bold : FontWeight.normal,
+                      color: isCurrent
+                          ? const Color(0xFF1B5E20)
+                          : Colors.grey.shade600,
                     ),
                   ),
                 ],
@@ -686,7 +832,8 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 72),
+            const Icon(Icons.check_circle_rounded,
+                color: Color(0xFF16A34A), size: 72),
             const SizedBox(height: 16),
             const Text(
               'Application Submitted Successfully!',
@@ -708,7 +855,8 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF1B5E20),
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
               ),
               child: const Text('Return to Profile'),
             ),
@@ -725,7 +873,7 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
         title: const Text('Ethiopian Agricultural Governance Matrix'),
         content: const SingleChildScrollView(
           child: Text(
-            'The EthioFarm platform operates under hierarchical mandate levels aligned with the Ethiopian Ministry of Agriculture:\n\n'
+            'The EthioFarm platform operates under hierarchical mandate levels:\n\n'
             '• Smallholder: Farm-level inputs, localized disease diagnosis, and micro-climate advisories.\n'
             '• Development Agent: Kebele plots registry, IoT sensor calibration, and ground scouting.\n'
             '• Woreda Officer: Woreda disaster broadcast, USSD *212# push, and spatial hazard management.\n'
@@ -736,7 +884,9 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Understood')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Understood')),
         ],
       ),
     );
@@ -751,7 +901,8 @@ class _RoleApplicationScreenState extends ConsumerState<RoleApplicationScreen> {
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: BorderSide(color: isDark ? const Color(0xFF26382A) : const Color(0xFFE5E7EB)),
+        borderSide: BorderSide(
+            color: isDark ? const Color(0xFF26382A) : const Color(0xFFE5E7EB)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),

@@ -11,7 +11,17 @@ class RoleUtils {
         role == UserRole.developmentAgent;
   }
 
-  /// Check if user can manage farm plots
+  /// Check if user can add a new farm plot (Strictly FARMER only)
+  static bool canAddFarm(UserRole? role) {
+    return role == UserRole.farmer;
+  }
+
+  /// Check if user can edit Kebele boundary in GIS (Development Agent & Admin only)
+  static bool canEditKebeleBoundary(UserRole? role) {
+    return role == UserRole.developmentAgent || role == UserRole.admin;
+  }
+
+  /// Check if user can manage or inspect farm plots (scoped by jurisdiction)
   static bool canManageFarms(UserRole? role) {
     return role == UserRole.farmer ||
         role == UserRole.developmentAgent ||

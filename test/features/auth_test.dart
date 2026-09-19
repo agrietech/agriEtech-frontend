@@ -132,5 +132,45 @@ void main() {
       expect(result.phone, '+251912345678');
       expect(result.user.isPhoneVerified, isFalse);
     });
+
+    test('Zonal Officer permissions are correctly evaluated', () {
+      final zonalUser = UserModel(
+        id: 'u-4',
+        fullName: 'Tolera Gemechu',
+        phone: '+251944112233',
+        email: 'zonal.demo@agrietech.et',
+        role: UserRole.zonalOfficer,
+        preferredLang: 'en',
+        isActive: true,
+        createdAt: DateTime(2025, 1, 1),
+      );
+
+      final state = AuthState(user: zonalUser, isAuthenticated: true);
+      expect(state.isZonalOfficer, isTrue);
+      expect(state.isOfficer, isTrue);
+      expect(state.canCreateAlerts, isTrue);
+      expect(state.canExportData, isTrue);
+      expect(state.canViewAggregateData, isTrue);
+    });
+
+    test('Regional Officer permissions are correctly evaluated', () {
+      final regionalUser = UserModel(
+        id: 'u-5',
+        fullName: 'Chala Dejene',
+        phone: '+251955667788',
+        email: 'regional.demo@agrietech.et',
+        role: UserRole.regionalOfficer,
+        preferredLang: 'en',
+        isActive: true,
+        createdAt: DateTime(2025, 1, 1),
+      );
+
+      final state = AuthState(user: regionalUser, isAuthenticated: true);
+      expect(state.isRegionalOfficer, isTrue);
+      expect(state.isOfficer, isTrue);
+      expect(state.canCreateAlerts, isTrue);
+      expect(state.canExportData, isTrue);
+      expect(state.canViewAggregateData, isTrue);
+    });
   });
 }

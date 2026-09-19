@@ -23,7 +23,7 @@ void main() {
   }
 
   group('LoginScreen Standardization Tests', () {
-    testWidgets('Renders dual tabs (Password and SMS OTP) and demo roles button', (tester) async {
+    testWidgets('Renders streamlined password login without OTP tabs or language options', (tester) async {
       tester.view.physicalSize = const Size(1200, 1600);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -31,59 +31,19 @@ void main() {
       await tester.pumpWidget(createTestWidget(const LoginScreen()));
       await tester.pumpAndSettle();
 
-      expect(find.text('Agricultural Command Access'), findsOneWidget);
-      expect(find.byKey(const Key('tab_password_login')), findsOneWidget);
-      expect(find.byKey(const Key('tab_otp_login')), findsOneWidget);
-      expect(find.byKey(const Key('demo_accounts_button')), findsOneWidget);
+      expect(find.text('Welcome to EthioFarm'), findsOneWidget);
+      expect(find.byKey(const Key('tab_password_login')), findsNothing);
+      expect(find.byKey(const Key('tab_otp_login')), findsNothing);
+      expect(find.text('EN'), findsNothing);
+      expect(find.text('\u12a0\u121b'), findsNothing);
+      expect(find.text('ORO'), findsNothing);
+      expect(find.byKey(const Key('demo_accounts_button')), findsNothing);
       expect(find.byKey(const Key('phone_field')), findsOneWidget);
       expect(find.byKey(const Key('password_field')), findsOneWidget);
       expect(find.byKey(const Key('sign_in_button')), findsOneWidget);
     });
 
-    testWidgets('Switching to SMS OTP tab displays Send SMS Login Code button', (tester) async {
-      tester.view.physicalSize = const Size(1200, 1600);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.resetPhysicalSize);
 
-      await tester.pumpWidget(createTestWidget(const LoginScreen()));
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.byKey(const Key('tab_otp_login')));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Send SMS Login Code'), findsOneWidget);
-    });
-
-    testWidgets('Tapping Demo Roles button displays modal sheet with verified roles', (tester) async {
-      tester.view.physicalSize = const Size(1200, 1600);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.resetPhysicalSize);
-
-      await tester.pumpWidget(createTestWidget(const LoginScreen()));
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.byKey(const Key('demo_accounts_button')));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Select Enterprise Role for Testing'), findsOneWidget);
-      expect(find.text('Smallholder Farmer (አርሶ አደር)'), findsOneWidget);
-      expect(find.text('Development Agent (የልማት ጣቢያ)'), findsOneWidget);
-      expect(find.text('Woreda Agronomy Officer (የወረዳ መኮንን)'), findsOneWidget);
-    });
-
-    testWidgets('Typing Ethio Telecom number detects and shows carrier badge', (tester) async {
-      tester.view.physicalSize = const Size(1200, 1600);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.resetPhysicalSize);
-
-      await tester.pumpWidget(createTestWidget(const LoginScreen()));
-      await tester.pumpAndSettle();
-
-      await tester.enterText(find.byKey(const Key('phone_field')), '0911223344');
-      await tester.pumpAndSettle();
-
-      expect(find.text('Ethio Telecom (ኢትዮ ቴሌኮም)'), findsOneWidget);
-    });
   });
 
   group('RegisterScreen Guided Stepper Tests', () {

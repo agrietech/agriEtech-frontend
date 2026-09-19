@@ -22,7 +22,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   void _showEditProfileDialog(BuildContext context, dynamic user) {
     final nameController = TextEditingController(text: user?.fullName ?? '');
     final emailController = TextEditingController(text: user?.email ?? '');
-    final kebeleController = TextEditingController(text: user?.kebeleName ?? '');
+    final kebeleController =
+        TextEditingController(text: user?.kebeleName ?? '');
     bool isSaving = false;
 
     showModalBottomSheet(
@@ -42,7 +43,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               ),
               decoration: BoxDecoration(
                 color: isDark ? const Color(0xFF132116) : Colors.white,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(20)),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -53,9 +55,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     children: [
                       const Row(
                         children: [
-                          Icon(Icons.edit_note_rounded, color: Color(0xFF1B5E20), size: 24),
+                          Icon(Icons.edit_note_rounded,
+                              color: Color(0xFF1B5E20), size: 24),
                           SizedBox(width: 8),
-                          Text('Edit Profile Information', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                          Text('Edit Profile Information',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 16)),
                         ],
                       ),
                       IconButton(
@@ -67,21 +72,27 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   const SizedBox(height: 14),
 
                   // Full Name
-                  const Text('Full Name', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12.5)),
+                  const Text('Full Name',
+                      style: TextStyle(
+                          fontWeight: FontWeight.w600, fontSize: 12.5)),
                   const SizedBox(height: 6),
                   TextFormField(
                     controller: nameController,
                     decoration: InputDecoration(
                       hintText: 'Your legal name',
                       prefixIcon: const Icon(Icons.person_outline, size: 18),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 12),
                     ),
                   ),
                   const SizedBox(height: 12),
 
                   // Email
-                  const Text('Email Address', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12.5)),
+                  const Text('Email Address',
+                      style: TextStyle(
+                          fontWeight: FontWeight.w600, fontSize: 12.5)),
                   const SizedBox(height: 6),
                   TextFormField(
                     controller: emailController,
@@ -89,22 +100,29 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     decoration: InputDecoration(
                       hintText: 'officer@ethiofarm.et',
                       prefixIcon: const Icon(Icons.email_outlined, size: 18),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 12),
                     ),
                   ),
                   const SizedBox(height: 12),
 
                   // Kebele
-                  const Text('Kebele Name (Village)', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12.5)),
+                  const Text('Kebele Name (Village)',
+                      style: TextStyle(
+                          fontWeight: FontWeight.w600, fontSize: 12.5)),
                   const SizedBox(height: 6),
                   TextFormField(
                     controller: kebeleController,
                     decoration: InputDecoration(
                       hintText: 'e.g. Kebele 01 / Dobi Korme',
-                      prefixIcon: const Icon(Icons.holiday_village_outlined, size: 18),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      prefixIcon:
+                          const Icon(Icons.holiday_village_outlined, size: 18),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 12),
                     ),
                   ),
                   const SizedBox(height: 18),
@@ -119,10 +137,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           : () async {
                               setSheetState(() => isSaving = true);
                               try {
-                                await ref.read(authProvider.notifier).updateProfile({
+                                await ref
+                                    .read(authProvider.notifier)
+                                    .updateProfile({
                                   'fullName': nameController.text.trim(),
-                                  'email': emailController.text.trim().isEmpty ? null : emailController.text.trim(),
-                                  'kebeleName': kebeleController.text.trim().isEmpty ? null : kebeleController.text.trim(),
+                                  'email': emailController.text.trim().isEmpty
+                                      ? null
+                                      : emailController.text.trim(),
+                                  'kebeleName':
+                                      kebeleController.text.trim().isEmpty
+                                          ? null
+                                          : kebeleController.text.trim(),
                                 });
                                 if (context.mounted) {
                                   Navigator.pop(ctx);
@@ -130,7 +155,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                     const SnackBar(
                                       content: Row(
                                         children: [
-                                          Icon(Icons.check_circle, color: Colors.white, size: 18),
+                                          Icon(Icons.check_circle,
+                                              color: Colors.white, size: 18),
                                           SizedBox(width: 8),
                                           Text('Profile updated successfully!'),
                                         ],
@@ -144,7 +170,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: Text('Failed to update: ${e.toString()}'),
+                                      content: Text(
+                                          'Failed to update: ${e.toString()}'),
                                       backgroundColor: const Color(0xFFDC2626),
                                     ),
                                   );
@@ -154,11 +181,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF1B5E20),
                         foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
                       ),
                       child: isSaving
-                          ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                          : const Text('Save Changes', style: TextStyle(fontWeight: FontWeight.bold)),
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: Colors.white))
+                          : const Text('Save Changes',
+                              style: TextStyle(fontWeight: FontWeight.bold)),
                     ),
                   ),
                 ],
@@ -179,7 +212,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           children: [
             Icon(Icons.logout_rounded, color: Color(0xFFDC2626)),
             SizedBox(width: 10),
-            Text('Sign Out', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            Text('Sign Out',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
           ],
         ),
         content: const Text(
@@ -195,7 +229,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFDC2626),
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
             ),
             onPressed: () async {
               Navigator.pop(ctx);
@@ -242,7 +277,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenPadding, vertical: AppSpacing.md),
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.screenPadding, vertical: AppSpacing.md),
         child: Column(
           children: [
             // ─── User Profile Executive Card ─────────────────────────────
@@ -274,7 +310,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         ),
                         child: Center(
                           child: Text(
-                            userName.isNotEmpty ? userName[0].toUpperCase() : 'U',
+                            userName.isNotEmpty
+                                ? userName[0].toUpperCase()
+                                : 'U',
                             style: AppTypography.display.copyWith(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
@@ -288,12 +326,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         child: Container(
                           padding: const EdgeInsets.all(4),
                           decoration: BoxDecoration(
-                            color: isPhoneVerified ? const Color(0xFF16A34A) : const Color(0xFFF59E0B),
+                            color: isPhoneVerified
+                                ? const Color(0xFF16A34A)
+                                : const Color(0xFFF59E0B),
                             shape: BoxShape.circle,
                             border: Border.all(color: Colors.white, width: 1.5),
                           ),
                           child: Icon(
-                            isPhoneVerified ? Icons.verified : Icons.warning_amber_rounded,
+                            isPhoneVerified
+                                ? Icons.verified
+                                : Icons.warning_amber_rounded,
                             size: 14,
                             color: Colors.white,
                           ),
@@ -312,7 +354,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ),
                   const SizedBox(height: 6),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 5),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.md, vertical: 5),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.15),
                       borderRadius: AppRadii.roundedXl,
@@ -322,7 +365,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.shield_rounded, color: Color(0xFF4ADE80), size: 14),
+                          const Icon(Icons.shield_rounded,
+                              color: Color(0xFF4ADE80), size: 14),
                           const SizedBox(width: 6),
                           Text(
                             userRole,
@@ -332,7 +376,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             ),
                           ),
                           const SizedBox(width: 6),
-                          const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white70, size: 10),
+                          const Icon(Icons.arrow_forward_ios_rounded,
+                              color: Colors.white70, size: 10),
                         ],
                       ),
                     ),
@@ -361,7 +406,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: isPhoneVerified
                             ? const Color(0xFF16A34A).withValues(alpha: 0.12)
@@ -372,18 +418,26 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         onTap: isPhoneVerified
                             ? null
                             : () async {
-                                final verified = await VerifyPhoneDialog.show(context, phone: userPhone);
+                                final verified = await VerifyPhoneDialog.show(
+                                    context,
+                                    phone: userPhone);
                                 if (verified == true) {
-                                  ref.read(authProvider.notifier).refreshProfile();
+                                  ref
+                                      .read(authProvider.notifier)
+                                      .refreshProfile();
                                 }
                               },
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
-                              isPhoneVerified ? Icons.check_circle : Icons.sms_failed_rounded,
+                              isPhoneVerified
+                                  ? Icons.check_circle
+                                  : Icons.sms_failed_rounded,
                               size: 13,
-                              color: isPhoneVerified ? const Color(0xFF16A34A) : const Color(0xFFD97706),
+                              color: isPhoneVerified
+                                  ? const Color(0xFF16A34A)
+                                  : const Color(0xFFD97706),
                             ),
                             const SizedBox(width: 4),
                             Text(
@@ -391,7 +445,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
-                                color: isPhoneVerified ? const Color(0xFF16A34A) : const Color(0xFFD97706),
+                                color: isPhoneVerified
+                                    ? const Color(0xFF16A34A)
+                                    : const Color(0xFFD97706),
                               ),
                             ),
                           ],
@@ -438,11 +494,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   _buildInfoRow(
                     icon: Icons.holiday_village_outlined,
                     label: 'Woreda (District)',
-                    value: user?.woreda?.name ?? user?.woredaId ?? 'District Scope',
+                    value: user?.woreda?.name ??
+                        user?.woredaId ??
+                        'District Scope',
                     isDark: isDark,
                   ),
                 ],
-                if (user?.kebeleName != null && user!.kebeleName!.isNotEmpty) ...[
+                if (user?.kebeleName != null &&
+                    user!.kebeleName!.isNotEmpty) ...[
                   const Divider(height: 20),
                   _buildInfoRow(
                     icon: Icons.home_work_outlined,
@@ -467,8 +526,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   isExpanded: true,
                   initialValue: currentLang,
                   decoration: InputDecoration(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    border: const OutlineInputBorder(borderRadius: AppRadii.roundedMd),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 10),
+                    border: const OutlineInputBorder(
+                        borderRadius: AppRadii.roundedMd),
                     filled: true,
                     fillColor: isDark ? AppTheme.cardDark : Colors.grey.shade50,
                   ),
@@ -486,7 +547,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   onChanged: (val) {
                     if (val != null) {
                       ref.read(appLocaleProvider.notifier).state = val;
-                      ref.read(authProvider.notifier).updateProfile({'preferredLang': val});
+                      ref
+                          .read(authProvider.notifier)
+                          .updateProfile({'preferredLang': val});
                     }
                   },
                 ),
@@ -522,7 +585,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ],
                   selected: <ThemeMode>{ref.watch(themeModeProvider)},
                   onSelectionChanged: (Set<ThemeMode> selection) {
-                    ref.read(themeModeProvider.notifier).state = selection.first;
+                    ref.read(themeModeProvider.notifier).state =
+                        selection.first;
                   },
                 ),
               ],
@@ -537,6 +601,45 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               isDark: isDark,
               children: [
                 InkWell(
+                  onTap: () => context.push('/security'),
+                  borderRadius: AppRadii.roundedSm,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color:
+                                const Color(0xFF0F766E).withValues(alpha: 0.12),
+                            borderRadius: AppRadii.roundedSm,
+                          ),
+                          child: const Icon(Icons.admin_panel_settings_outlined,
+                              color: Color(0xFF0F766E), size: 20),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Account security',
+                                  style: AppTypography.subtitle),
+                              const SizedBox(height: 2),
+                              Text(
+                                  'Two-factor authentication and active sessions',
+                                  style: AppTypography.caption
+                                      .copyWith(color: Colors.grey)),
+                            ],
+                          ),
+                        ),
+                        const Icon(Icons.arrow_forward_ios_rounded,
+                            size: 14, color: Colors.grey),
+                      ],
+                    ),
+                  ),
+                ),
+                const Divider(height: 16),
+                InkWell(
                   onTap: () => context.push('/apply-role'),
                   borderRadius: AppRadii.roundedSm,
                   child: Padding(
@@ -546,10 +649,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF2563EB).withValues(alpha: 0.12),
+                            color:
+                                const Color(0xFF2563EB).withValues(alpha: 0.12),
                             borderRadius: AppRadii.roundedSm,
                           ),
-                          child: const Icon(Icons.assignment_ind_rounded, color: Color(0xFF2563EB), size: 20),
+                          child: const Icon(Icons.assignment_ind_rounded,
+                              color: Color(0xFF2563EB), size: 20),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -561,11 +666,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 style: AppTypography.subtitle,
                               ),
                               const SizedBox(height: 2),
-                              Text('Apply for Woreda, Zonal, Regional, or Researcher role', style: AppTypography.caption.copyWith(color: Colors.grey)),
+                              Text(
+                                  'Apply for Woreda, Zonal, Regional, or Researcher role',
+                                  style: AppTypography.caption
+                                      .copyWith(color: Colors.grey)),
                             ],
                           ),
                         ),
-                        const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.grey),
+                        const Icon(Icons.arrow_forward_ios_rounded,
+                            size: 14, color: Colors.grey),
                       ],
                     ),
                   ),
@@ -581,10 +690,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF64748B).withValues(alpha: 0.12),
+                            color:
+                                const Color(0xFF64748B).withValues(alpha: 0.12),
                             borderRadius: AppRadii.roundedSm,
                           ),
-                          child: const Icon(Icons.lock_outline_rounded, color: Color(0xFF64748B), size: 20),
+                          child: const Icon(Icons.lock_outline_rounded,
+                              color: Color(0xFF64748B), size: 20),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -596,11 +707,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 style: AppTypography.subtitle,
                               ),
                               const SizedBox(height: 2),
-                              Text('Update authentication password and credentials', style: AppTypography.caption.copyWith(color: Colors.grey)),
+                              Text(
+                                  'Update authentication password and credentials',
+                                  style: AppTypography.caption
+                                      .copyWith(color: Colors.grey)),
                             ],
                           ),
                         ),
-                        const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.grey),
+                        const Icon(Icons.arrow_forward_ios_rounded,
+                            size: 14, color: Colors.grey),
                       ],
                     ),
                   ),
@@ -615,7 +730,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               height: 48,
               child: OutlinedButton.icon(
                 onPressed: () => _confirmSignOut(context),
-                icon: const Icon(Icons.logout_rounded, color: AppTheme.errorColor),
+                icon: const Icon(Icons.logout_rounded,
+                    color: AppTheme.errorColor),
                 label: Text(
                   context.tr('signOut'),
                   style: AppTypography.subtitle.copyWith(
@@ -623,8 +739,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ),
                 ),
                 style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: AppTheme.errorColor.withValues(alpha: 0.4)),
-                  shape: const RoundedRectangleBorder(borderRadius: AppRadii.roundedLg),
+                  side: BorderSide(
+                      color: AppTheme.errorColor.withValues(alpha: 0.4)),
+                  shape: const RoundedRectangleBorder(
+                      borderRadius: AppRadii.roundedLg),
                 ),
               ),
             ),

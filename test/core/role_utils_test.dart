@@ -17,7 +17,18 @@ void main() {
   });
 
   group('RoleUtils - Farm Management Permissions', () {
-    test('farmers, agents, officers, and admin can manage farms', () {
+    test('strictly farmers only can add new farm plots', () {
+      expect(RoleUtils.canAddFarm(UserRole.farmer), isTrue);
+      expect(RoleUtils.canAddFarm(UserRole.developmentAgent), isFalse);
+      expect(RoleUtils.canAddFarm(UserRole.woredaOfficer), isFalse);
+      expect(RoleUtils.canAddFarm(UserRole.zonalOfficer), isFalse);
+      expect(RoleUtils.canAddFarm(UserRole.regionalOfficer), isFalse);
+      expect(RoleUtils.canAddFarm(UserRole.researcher), isFalse);
+      expect(RoleUtils.canAddFarm(UserRole.admin), isFalse);
+      expect(RoleUtils.canAddFarm(null), isFalse);
+    });
+
+    test('farmers, agents, officers, and admin can manage/inspect farms', () {
       expect(RoleUtils.canManageFarms(UserRole.farmer), isTrue);
       expect(RoleUtils.canManageFarms(UserRole.developmentAgent), isTrue);
       expect(RoleUtils.canManageFarms(UserRole.woredaOfficer), isTrue);
@@ -26,6 +37,17 @@ void main() {
       expect(RoleUtils.canManageFarms(UserRole.admin), isTrue);
       expect(RoleUtils.canManageFarms(UserRole.researcher), isFalse);
       expect(RoleUtils.canManageFarms(null), isFalse);
+    });
+
+    test('development agents and admin can edit Kebele boundary in GIS', () {
+      expect(RoleUtils.canEditKebeleBoundary(UserRole.developmentAgent), isTrue);
+      expect(RoleUtils.canEditKebeleBoundary(UserRole.admin), isTrue);
+      expect(RoleUtils.canEditKebeleBoundary(UserRole.farmer), isFalse);
+      expect(RoleUtils.canEditKebeleBoundary(UserRole.woredaOfficer), isFalse);
+      expect(RoleUtils.canEditKebeleBoundary(UserRole.zonalOfficer), isFalse);
+      expect(RoleUtils.canEditKebeleBoundary(UserRole.regionalOfficer), isFalse);
+      expect(RoleUtils.canEditKebeleBoundary(UserRole.researcher), isFalse);
+      expect(RoleUtils.canEditKebeleBoundary(null), isFalse);
     });
   });
 

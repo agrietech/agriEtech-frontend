@@ -20,13 +20,21 @@ class ApiConstants {
   static const String updatePassword = '$auth/update-password';
   static const String forgotPassword = '$auth/forgot-password';
   static const String resetPassword = '$auth/reset-password';
-  static const String requestLoginOtp = '$auth/request-login-otp';
-  static const String verifyLoginOtp = '$auth/verify-login-otp';
   static const String verifyPhoneOtp = '$auth/verify-phone-otp';
   static const String resendPhoneOtp = '$auth/resend-phone-otp';
   static const String verifyEmail = '$auth/verify-email';
   static const String resendVerification = '$auth/resend-verification';
   static const String roleRequests = '$auth/role-requests';
+
+  // 1A. Multi-Factor Authentication (MFA)
+  static const String mfaSetup = '$auth/mfa/setup';
+  static const String mfaVerify = '$auth/mfa/verify';
+  static const String mfaDisable = '$auth/mfa/disable';
+
+  // 1B. Session Management
+  static const String sessions = '$auth/sessions';
+  static String terminateSession(String id) => '$sessions/$id';
+  static const String terminateOtherSessions = '$sessions/terminate-others';
 
   // 2. Administrative Boundary Endpoints (/boundaries)
   static const String boundaries = '/boundaries';
@@ -39,27 +47,39 @@ class ApiConstants {
   static String woredaById(String id) => '$boundaries/woredas/$id';
   static String kebeleById(String id) => '$boundaries/kebeles/$id';
 
-
   // 3. Farm Plot Registry Endpoints (/farms)
   static const String farms = '/farms';
   static String farmById(String id) => '$farms/$id';
+
+  // 3A. Farm Planning & Analytics
+  static String farmRotationPlan(String id) => '$farms/$id/planning/rotation';
+  static String farmPlantingCalendar(String id) =>
+      '$farms/$id/planning/calendar';
+  static String farmInputRequirements(String id) =>
+      '$farms/$id/planning/inputs';
+  static String farmAnalytics(String id) => '$farms/$id/analytics';
+  static String farmBenchmarks(String id) => '$farms/$id/benchmarks';
 
   // 4. IoT Sensor Telemetry Endpoints (/sensors)
   static const String sensors = '/sensors';
   static const String telemetry = '$sensors/telemetry';
   static String farmSensors(String farmId) => '$sensors/farm/$farmId';
-  static String sensorLatest(String hardwareId) => '$sensors/$hardwareId/latest';
-  static String sensorTelemetryHistory(String hardwareId) => '$sensors/$hardwareId/telemetry';
+  static String sensorLatest(String hardwareId) =>
+      '$sensors/$hardwareId/latest';
+  static String sensorTelemetryHistory(String hardwareId) =>
+      '$sensors/$hardwareId/telemetry';
 
   // 5. Satellite & Climate Observations (/satellite-observations)
   static const String satelliteObservations = '/satellite-observations';
-  static String satelliteWoreda(String woredaId) => '$satelliteObservations/woreda/$woredaId';
+  static String satelliteWoreda(String woredaId) =>
+      '$satelliteObservations/woreda/$woredaId';
   static const String satelliteIngest = '$satelliteObservations/ingest';
 
   // 6. Integrated Risk Assessment Endpoints (/risk-assessments)
   static const String riskAssessments = '/risk-assessments';
   static const String evaluateRisk = '$riskAssessments/evaluate';
-  static String riskByWoreda(String woredaId) => '$riskAssessments/woreda/$woredaId';
+  static String riskByWoreda(String woredaId) =>
+      '$riskAssessments/woreda/$woredaId';
   static const String riskStatistics = '$riskAssessments/statistics';
   static String riskStats([String? period]) => '$riskAssessments/statistics';
 
@@ -67,6 +87,12 @@ class ApiConstants {
   static const String alerts = '/alerts';
   static String alertById(String id) => '$alerts/$id';
   static String alertMarkRead(String id) => '$alerts/$id/read';
+
+  // 7A. Alert Campaigns & Targeting
+  static const String targetedAlertCampaigns = '/alerts/campaigns/targeted';
+  static const String alertTemplates = '/alerts/templates';
+  static String dispatchAlertTemplate(String id) =>
+      '$alertTemplates/$id/dispatch';
 
   // 7A. Notification Endpoints (/notifications)
   static const String notifications = '/notifications';
@@ -82,14 +108,20 @@ class ApiConstants {
   // 8. AI Crop Disease Diagnosis Endpoints (/disease-diagnosis)
   static const String diseaseDiagnosis = '/disease-diagnosis';
   static const String diagnose = '$diseaseDiagnosis/diagnose';
-  static String farmDiagnoses(String farmId) => '$diseaseDiagnosis/farm/$farmId';
+  static String farmDiagnoses(String farmId) =>
+      '$diseaseDiagnosis/farm/$farmId';
 
   // 9. Analytics & Agronomic Advisories (/analytics)
   static const String analytics = '/analytics';
-  static const String dashboard = '$analytics/dashboard';
   static const String regionalBreakdown = '$analytics/regional-breakdown';
   static const String temporalTrends = '$analytics/temporal-trends';
   static const String agronomicAdvisories = '$analytics/agronomic-advisories';
+
+  // 9A. Role-Adaptive Dashboards (/dashboard) - NEW BACKEND API
+  static const String dashboard = '/dashboard';
+  static const String dashboardFarmer = '$dashboard/farmer';
+  static const String dashboardOfficer = '$dashboard/officer';
+  static const String dashboardAdmin = '$dashboard/admin';
   static const String analyticsAiInsights = '$analytics/ai-insights';
   static const String hyperLocal = '$analytics/hyper-local';
   static const String soilProfile = '$analytics/soil-profile';
@@ -100,17 +132,18 @@ class ApiConstants {
   static const String naturalDisasters = '$analytics/natural-disasters';
   static const String analyticsExport = '$analytics/export';
 
-
-
   // 9A. Location-Based Map & Analytics (/analytics/location)
   static const String locationMap = '$analytics/location/map';
   static const String locationAnalytics = '$analytics/location/analytics';
   static String regionMap(String regionId) => '$analytics/region/$regionId/map';
-  static String regionAnalytics(String regionId) => '$analytics/region/$regionId/analytics';
+  static String regionAnalytics(String regionId) =>
+      '$analytics/region/$regionId/analytics';
   static String zoneMap(String zoneId) => '$analytics/zone/$zoneId/map';
-  static String zoneAnalytics(String zoneId) => '$analytics/zone/$zoneId/analytics';
+  static String zoneAnalytics(String zoneId) =>
+      '$analytics/zone/$zoneId/analytics';
   static String woredaMap(String woredaId) => '$analytics/woreda/$woredaId/map';
-  static String woredaAnalytics(String woredaId) => '$analytics/woreda/$woredaId/analytics';
+  static String woredaAnalytics(String woredaId) =>
+      '$analytics/woreda/$woredaId/analytics';
 
   // 10. AI Voice & Multimodal Assistant (/ai)
   static const String aiVoiceInquiry = '/ai/voice-inquiry';

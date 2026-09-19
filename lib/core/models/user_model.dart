@@ -67,6 +67,7 @@ class UserModel {
   final String? deviceToken;
   final bool isActive;
   final bool isPhoneVerified;
+  final bool mfaEnabled;
   final DateTime? lastLoginAt;
   final DateTime? createdAt;
   final DateTime? updatedAt;
@@ -90,6 +91,7 @@ class UserModel {
     this.deviceToken,
     this.isActive = true,
     this.isPhoneVerified = false,
+    this.mfaEnabled = false,
     this.lastLoginAt,
     this.createdAt,
     this.updatedAt,
@@ -128,6 +130,7 @@ class UserModel {
       deviceToken: json['deviceToken'] as String?,
       isActive: json['isActive'] is bool ? json['isActive'] as bool : true,
       isPhoneVerified: json['isPhoneVerified'] is bool ? json['isPhoneVerified'] as bool : false,
+      mfaEnabled: json['mfaEnabled'] is bool ? json['mfaEnabled'] as bool : false,
       lastLoginAt: json['lastLoginAt'] != null
           ? DateTime.tryParse(json['lastLoginAt'].toString())
           : null,
@@ -159,6 +162,7 @@ class UserModel {
     if (deviceToken != null) 'deviceToken': deviceToken,
     'isActive': isActive,
     'isPhoneVerified': isPhoneVerified,
+    'mfaEnabled': mfaEnabled,
     if (lastLoginAt != null) 'lastLoginAt': lastLoginAt!.toIso8601String(),
     if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
     if (updatedAt != null) 'updatedAt': updatedAt!.toIso8601String(),
@@ -183,6 +187,7 @@ class UserModel {
     String? deviceToken,
     bool? isActive,
     bool? isPhoneVerified,
+    bool? mfaEnabled,
     DateTime? lastLoginAt,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -206,6 +211,7 @@ class UserModel {
       deviceToken: deviceToken ?? this.deviceToken,
       isActive: isActive ?? this.isActive,
       isPhoneVerified: isPhoneVerified ?? this.isPhoneVerified,
+      mfaEnabled: mfaEnabled ?? this.mfaEnabled,
       lastLoginAt: lastLoginAt ?? this.lastLoginAt,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,

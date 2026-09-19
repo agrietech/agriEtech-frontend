@@ -5,6 +5,7 @@ import '../../../core/services/notification_service.dart';
 import '../../../core/error/app_error.dart';
 import '../../../core/utils/logger.dart';
 import '../../../core/utils/role_utils.dart';
+import '../models/mfa_model.dart';
 
 /// Authentication state
 class AuthState {
@@ -573,35 +574,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  /// Request SMS OTP for passwordless login
-  Future<Map<String, dynamic>> requestLoginOtp(String phone) async {
-    state = state.copyWith(isLoading: true, clearError: true);
-    try {
-      final res = await _authRepository.requestLoginOtp(phone);
-      state = state.copyWith(isLoading: false);
-      return res;
-    } catch (e) {
-      state = state.copyWith(isLoading: false);
-      rethrow;
-    }
-  }
-
-  /// Verify SMS OTP for passwordless login
-  Future<void> verifyLoginOtp({required String phone, required String code}) async {
-    state = state.copyWith(isLoading: true, clearError: true);
-    try {
-      final response = await _authRepository.verifyLoginOtp(phone: phone, code: code);
-      state = state.copyWith(
-        user: response.user,
-        isAuthenticated: true,
-        isLoading: false,
-      );
-      AppLogger.info('Login OTP verified successfully for phone: $phone');
-    } catch (e) {
-      state = state.copyWith(isLoading: false);
-      rethrow;
-    }
-  }
 
   /// Get role requests for the current user
   Future<List<Map<String, dynamic>>> getMyRoleRequests() async {
@@ -689,6 +661,112 @@ class AuthNotifier extends StateNotifier<AuthState> {
   /// Clear account lockout message
   void clearLockout() {
     state = state.copyWith(clearLockout: true);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // MFA (Multi-Factor Authentication) Methods
+  // ═══════════════════════════════════════════════════════════════════════
+
+  /// Setup MFA - Get QR code and secret
+  Future<MfaSetupResponse> setupMfa() async {
+    try {
+      AppLogger.info('Setting up MFA for user');
+      final response = await _authRepository.setupMfa();
+      AppLogger.info('MFA setup successful');
+      return response;
+    } catch (e) {
+      AppLogger.error('MFA setup failed', e);
+      rethrow;
+    }
+  }
+
+  /// Verify MFA token and enable MFA
+  Future<bool> verifyMfa(String token) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      AppLogger.info('Verifying MFA token');
+      final success = await _authRepository.verifyMfa(token);
+      
+      if (success) {
+        // Update user state to reflect MFA enabled
+        final updatedUser = state.user?.copyWith(mfaEnabled: true);
+        state = state.copyWith(
+          user: updatedUser,
+          isLoading: false,
+        );
+        AppLogger.info('MFA enabled successfully');
+      } else {
+        state = state.copyWith(isLoading: false);
+      }
+      
+      return success;
+    } catch (e) {
+      AppLogger.error('MFA verification failed', e);
+      state = state.copyWith(isLoading: false);
+      rethrow;
+    }
+  }
+
+  /// Disable MFA
+  Future<void> disableMfa(String password) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      AppLogger.info('Disabling MFA');
+      await _authRepository.disableMfa(password);
+      
+      // Update user state to reflect MFA disabled
+      final updatedUser = state.user?.copyWith(mfaEnabled: false);
+      state = state.copyWith(
+        user: updatedUser,
+        isLoading: false,
+      );
+      AppLogger.info('MFA disabled successfully');
+    } catch (e) {
+      AppLogger.error('MFA disable failed', e);
+      state = state.copyWith(isLoading: false);
+      rethrow;
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // Session Management Methods
+  // ═══════════════════════════════════════════════════════════════════════
+
+  /// Get all active sessions for current user
+  Future<List<SessionModel>> getSessions() async {
+    try {
+      AppLogger.info('Fetching user sessions');
+      final sessions = await _authRepository.getSessions();
+      AppLogger.info('Fetched ${sessions.length} sessions');
+      return sessions;
+    } catch (e) {
+      AppLogger.error('Failed to fetch sessions', e);
+      rethrow;
+    }
+  }
+
+  /// Terminate a specific session
+  Future<void> terminateSession(String sessionId) async {
+    try {
+      AppLogger.info('Terminating session: $sessionId');
+      await _authRepository.terminateSession(sessionId);
+      AppLogger.info('Session terminated successfully');
+    } catch (e) {
+      AppLogger.error('Failed to terminate session', e);
+      rethrow;
+    }
+  }
+
+  /// Terminate all other sessions (keep current)
+  Future<void> terminateOtherSessions() async {
+    try {
+      AppLogger.info('Terminating all other sessions');
+      await _authRepository.terminateOtherSessions();
+      AppLogger.info('Other sessions terminated successfully');
+    } catch (e) {
+      AppLogger.error('Failed to terminate other sessions', e);
+      rethrow;
+    }
   }
 }
 
