@@ -45,6 +45,7 @@ import '../../features/ai_voice/screens/ai_assistant_screen.dart';
 import '../../features/crop_protection/screens/spray_window_screen.dart';
 import '../../features/crop_protection/screens/tank_mix_screen.dart';
 import '../../features/crop_protection/screens/seed_calculator_screen.dart';
+import '../../features/animal_health/screens/animal_health_screen.dart';
 
 /// Listenable that notifies GoRouter whenever AuthState changes
 class AuthChangeNotifier extends ChangeNotifier {
@@ -437,6 +438,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/seed-calculator',
         redirect: (context, state) => '/crop-protection/seed-calculator',
+      ),
+
+      // 16. Animal Health & Livestock Disease Surveillance
+      GoRoute(
+        path: '/animal-health',
+        builder: (context, state) => const AnimalHealthScreen(),
+      ),
+      GoRoute(
+        path: '/livestock',
+        redirect: (context, state) => '/animal-health',
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

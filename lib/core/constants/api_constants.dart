@@ -203,6 +203,28 @@ class ApiConstants {
   static const String seedCalculator = '$cropProtection/seed-calculator';
   static const String seedCrops = '$cropProtection/seed-calculator/crops';
 
+  // 16. Animal Health & Livestock Disease Surveillance (/animal-health)
+  static const String animalHealth = '/animal-health';
+  static const String animalOutbreaks = '$animalHealth/outbreaks';
+  static String animalOutbreakById(String id) => '$animalHealth/outbreaks/$id';
+  static const String animalCampaigns = '$animalHealth/campaigns';
+  static const String animalPasture = '$animalHealth/pasture';
+  static const String animalVetCalendar = '$animalHealth/vet-calendar';
+  static const String animalHealthStats = '$animalHealth/stats';
+
+  // 17. Multi-Hazard Geospatial Intelligence & Disaster Maps (/hazards)
+  static const String hazards = '/hazards';
+  static const String hazardAssess = '$hazards/assess';
+  static const String hazardEarthquakes = '$hazards/earthquakes';
+  static const String hazardSoilDegradation = '$hazards/soil-degradation';
+  static const String hazardLandslides = '$hazards/landslides';
+  static const String hazardVolcanic = '$hazards/volcanic';
+  static const String hazardNationalSummary = '$hazards/national-summary';
+  static const String hazardMapLayers = '$hazards/map/layers';
+  static const String hazardMapRegions = '$hazards/map/regions';
+  static String hazardMapZones(String regionId) => '$hazards/map/zones/$regionId';
+  static String hazardMapWoredas(String zoneId) => '$hazards/map/woredas/$zoneId';
+
   // Request Timeouts
   static Duration get defaultTimeout => AppEnv.apiTimeout;
   static Duration get longTimeout => AppEnv.longApiTimeout;

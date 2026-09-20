@@ -91,6 +91,14 @@ class HomeAllIconsGrid extends ConsumerWidget {
         route: '/farms',
       ),
       const HomeIconItem(
+        id: 'animal_health',
+        icon: Icons.pets_rounded,
+        labelEn: 'Animal Health',
+        labelAm: 'የእንስሳት ጤና',
+        accentColor: Color(0xFFE11D48),
+        route: '/animal-health',
+      ),
+      const HomeIconItem(
         id: 'weather',
         icon: Icons.wb_sunny_rounded,
         labelEn: 'Weather',

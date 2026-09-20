@@ -165,6 +165,7 @@ class EthioFarmAppDrawer extends ConsumerWidget {
                   _buildNavTile(context, ref, icon: Icons.polyline_rounded, label: 'Kebele GIS Boundary', route: '/boundaries/kebele-polygon', color: const Color(0xFF0284C7)),
                 _buildNavTile(context, ref, icon: Icons.biotech_rounded, label: context.tr('diagnosis'), route: '/diagnosis', color: const Color(0xFF0D9488)),
                 _buildNavTile(context, ref, icon: Icons.wb_cloudy_rounded, label: context.tr('weather'), route: '/weather', color: const Color(0xFF0284C7)),
+                _buildNavTile(context, ref, icon: Icons.pets_rounded, label: 'Livestock & Health', route: '/animal-health', color: const Color(0xFFE11D48)),
 
                 _buildDivider(isDark),
 
